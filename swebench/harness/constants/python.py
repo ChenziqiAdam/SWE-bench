@@ -37,10 +37,23 @@ SPECS_SKLEARN.update(
             "python": "3.9",
             "packages": "'numpy==1.19.2' 'scipy==1.5.2' 'cython==3.0.10' pytest 'pandas<2.0.0' 'matplotlib<3.9.0' setuptools pytest joblib threadpoolctl",
             "install": "python -m pip install -v --no-build-isolation -e .",
-            "pip_packages": ["cython", "setuptools", "numpy", "scipy"],
+            # pin numpy<2 to keep numpy.distutils available (removed in numpy 2.0)
+            "pip_packages": ["cython", "setuptools", "numpy<2", "scipy"],
             "test_cmd": TEST_PYTEST,
         }
-        for k in ["1.2", "1.3", "1.4", "1.5", "1.6"]
+        for k in ["1.2", "1.3", "1.4", "1.5"]
+    }
+)
+SPECS_SKLEARN.update(
+    {
+        "1.6": {
+            "python": "3.9",
+            "packages": "'numpy==1.19.2' 'scipy==1.5.2' 'cython==3.0.10' pytest 'pandas<2.0.0' 'matplotlib<3.9.0' setuptools pytest joblib threadpoolctl",
+            "install": "python -m pip install -v --no-build-isolation -e .",
+            # sklearn 1.6 switched to meson build backend
+            "pip_packages": ["cython", "setuptools", "numpy<2", "scipy", "meson-python", "ninja"],
+            "test_cmd": TEST_PYTEST,
+        }
     }
 )
 SPECS_SKLEARN.update(

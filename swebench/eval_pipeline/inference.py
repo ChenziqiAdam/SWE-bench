@@ -67,6 +67,27 @@ def _calc_cost(model_name: str, input_tokens: int, output_tokens: int) -> float:
     return cost_in + cost_out
 
 
+def _clean_patch(patch: str) -> str:
+    """Clean common model-output artifacts from a patch string."""
+    if not patch:
+        return patch
+
+    # Strip markdown code fences (```diff ... ``` or ``` ... ```)
+    import re
+    patch = re.sub(r"^```[a-zA-Z]*\n?", "", patch.strip())
+    patch = re.sub(r"\n?```$", "", patch)
+
+    # Strip unclosed/closed <patch> tags
+    patch = re.sub(r"^\s*<patch>\s*", "", patch)
+    patch = re.sub(r"\s*</patch>\s*$", "", patch)
+
+    # Ensure patch ends with a newline
+    if patch and not patch.endswith("\n"):
+        patch += "\n"
+
+    return patch
+
+
 # ── per-backend call functions ────────────────────────────────────────────────
 
 @retry(wait=wait_random_exponential(min=30, max=300), stop=stop_after_attempt(5))
@@ -125,7 +146,10 @@ def _call_openai_compat(
         else:
             raise
 
-    text = response.choices[0].message.content
+    text = response.choices[0].message.content or ""
+    if not text.strip():
+        finish_reason = getattr(response.choices[0], "finish_reason", "unknown")
+        raise ValueError(f"Model returned empty response (finish_reason={finish_reason})")
     input_tokens = getattr(getattr(response, "usage", None), "prompt_tokens", 0) or 0
     output_tokens = getattr(getattr(response, "usage", None), "completion_tokens", 0) or 0
     cost = _calc_cost(model_name, input_tokens, output_tokens)
@@ -206,9 +230,7 @@ def run_inference_for_level(
                     max_tokens=max_tokens,
                 )
                 patch = extract_diff(response_text)
-                # Strip unclosed <patch> tag (model truncated before </patch>)
-                if patch and patch.lstrip().startswith("<patch>"):
-                    patch = patch.lstrip()[len("<patch>"):]
+                patch = _clean_patch(patch)
                 total_cost += cost
                 logger.info(f"{instance_id}: cost=${cost:.4f}, total=${total_cost:.2f}")
 
