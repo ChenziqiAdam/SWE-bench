@@ -25,14 +25,21 @@ from swebench.harness.log_parsers import MAP_REPO_TO_PARSER
 
 # MARK: Utility functions
 def test_passed(case: str, sm: dict[str, str]) -> bool:
-    return case in sm and sm[case] in [TestStatus.PASSED.value, TestStatus.XFAIL.value]
+    if case in sm:
+        return sm[case] in [TestStatus.PASSED.value, TestStatus.XFAIL.value]
+    # Parametrized tests: case is base name, sm has "case[param]" variants
+    variants = [v for k, v in sm.items() if k.startswith(case + "[") or k.startswith(case + " ")]
+    return bool(variants) and all(v in [TestStatus.PASSED.value, TestStatus.XFAIL.value] for v in variants)
 
 
 def test_failed(case: str, sm: dict[str, str]) -> bool:
-    return case not in sm or sm[case] in [
-        TestStatus.FAILED.value,
-        TestStatus.ERROR.value,
-    ]
+    if case in sm:
+        return sm[case] in [TestStatus.FAILED.value, TestStatus.ERROR.value]
+    # Parametrized tests: any variant failed → considered failed
+    variants = {k: v for k, v in sm.items() if k.startswith(case + "[") or k.startswith(case + " ")}
+    if variants:
+        return any(v in [TestStatus.FAILED.value, TestStatus.ERROR.value] for v in variants.values())
+    return True  # not found at all → failed
 
 
 # MARK: Evaluation report functions

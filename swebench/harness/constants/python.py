@@ -36,11 +36,23 @@ SPECS_SKLEARN.update(
         k: {
             "python": "3.9",
             "packages": "'numpy==1.19.2' 'scipy==1.5.2' 'cython==3.0.10' pytest 'pandas<2.0.0' 'matplotlib<3.9.0' setuptools pytest joblib threadpoolctl",
-            "install": "python -m pip install -v --no-use-pep517 --no-build-isolation -e .",
+            "install": "python -m pip install -v --no-build-isolation -e .",
             "pip_packages": ["cython", "setuptools", "numpy", "scipy"],
             "test_cmd": TEST_PYTEST,
         }
-        for k in ["1.3", "1.4", "1.5", "1.6"]
+        for k in ["1.2", "1.3", "1.4", "1.5", "1.6"]
+    }
+)
+SPECS_SKLEARN.update(
+    {
+        k: {
+            "python": "3.11",
+            "packages": "numpy scipy cython pytest pandas matplotlib setuptools joblib threadpoolctl",
+            "install": "python -m pip install --no-build-isolation -e .",
+            "pip_packages": ["cython", "setuptools", "numpy", "scipy", "meson-python", "ninja"],
+            "test_cmd": TEST_PYTEST,
+        }
+        for k in ["1.7", "1.8", "1.9"]
     }
 )
 
@@ -902,6 +914,54 @@ SPECS_PYDICOM.update(
 
 SPECS_HUMANEVAL = {k: {"python": "3.9", "test_cmd": "python"} for k in ["1.0"]}
 
+# scipy — modern versions use meson-python build system, require Python 3.12+ and gfortran
+SPECS_SCIPY = {
+    k: {
+        "python": "3.12",
+        "packages": "numpy cython pytest",
+        "pre_install": [
+            "apt-get update && apt-get install -y gfortran pkg-config libopenblas-dev",
+            "git submodule update --init",
+        ],
+        "install": "python -m pip install --no-build-isolation -e .",
+        "pip_packages": [
+            "meson-python", "ninja", "pybind11", "pythran",
+            "numpy>=2.0", "cython>=3.0", "pytest", "pytest-xdist", "pooch",
+        ],
+        "test_cmd": TEST_PYTEST,
+    }
+    for k in ["1.14", "1.15", "1.16", "1.17", "1.18"]
+}
+
+# numpy — modern versions use meson-python build system, require Python 3.12+
+SPECS_NUMPY = {
+    k: {
+        "python": "3.12",
+        "packages": "cython pytest",
+        "install": "python -m pip install --no-build-isolation -e .",
+        "pip_packages": [
+            "meson-python", "ninja", "cython", "pytest", "pytest-xdist",
+        ],
+        "test_cmd": TEST_PYTEST,
+    }
+    for k in ["1.25", "1.26", "2.0", "2.1", "2.2", "2.3", "2.4"]
+}
+
+# pandas — modern versions use meson-python build system, require Python 3.12+
+SPECS_PANDAS = {
+    k: {
+        "python": "3.12",
+        "packages": "numpy cython pytest",
+        "install": "python -m pip install --no-build-isolation -e .",
+        "pip_packages": [
+            "meson-python", "ninja", "cython", "numpy",
+            "python-dateutil", "pytz", "pytest", "pytest-xdist", "hypothesis",
+        ],
+        "test_cmd": TEST_PYTEST,
+    }
+    for k in ["1.5", "2.0", "2.1", "2.2", "3.0"]
+}
+
 # Constants - Task Instance Instllation Environment
 MAP_REPO_VERSION_TO_SPECS_PY = {
     "astropy/astropy": SPECS_ASTROPY,
@@ -919,7 +979,10 @@ MAP_REPO_VERSION_TO_SPECS_PY = {
     "pylint-dev/pylint": SPECS_PYLINT,
     "pytest-dev/pytest": SPECS_PYTEST,
     "pyvista/pyvista": SPECS_PYVISTA,
+    "numpy/numpy": SPECS_NUMPY,
+    "pandas-dev/pandas": SPECS_PANDAS,
     "scikit-learn/scikit-learn": SPECS_SKLEARN,
+    "scipy/scipy": SPECS_SCIPY,
     "sphinx-doc/sphinx": SPECS_SPHINX,
     "sqlfluff/sqlfluff": SPECS_SQLFLUFF,
     "swe-bench/humaneval": SPECS_HUMANEVAL,
