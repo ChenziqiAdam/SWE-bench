@@ -90,16 +90,9 @@ def _clean_patch(patch: str) -> str:
 
 def _repair_patch(patch: str) -> str:
     """
-    Fix the most common model diff error: context lines that are missing the
-    required leading space. Models often output Python-indented code directly
-    without the diff prefix, causing 'malformed patch' errors.
-
-    A line is a context line (needs a leading space) if it:
-      - doesn't start with +, -, @, \\, or 'diff'/'---'/'+++'
-      - is not blank
-      - appears between hunk headers
-
-    We only repair lines inside hunks (after a @@ header) that look like code.
+    Fix two common model diff errors:
+    1. Context lines missing the required leading space.
+    2. Wrong line counts in @@ hunk headers (model miscounts added/removed lines).
     """
     import re
     if not patch:
@@ -122,7 +115,33 @@ def _repair_patch(patch: str) -> str:
         else:
             repaired.append(line)
 
-    return "\n".join(repaired)
+    # Second pass: recompute hunk header line counts from actual content
+    _hunk_re = re.compile(r"^(@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@)(.*)")
+    fixed = []
+    i = 0
+    while i < len(repaired):
+        line = repaired[i]
+        m = _hunk_re.match(line)
+        if m:
+            old_start = int(m.group(2))
+            new_start = int(m.group(3))
+            suffix = m.group(4)
+            # Collect hunk body
+            body = []
+            i += 1
+            while i < len(repaired) and not (repaired[i].startswith("@@") or repaired[i].startswith("diff ")):
+                body.append(repaired[i])
+                i += 1
+            # Count actual lines
+            old_count = sum(1 for l in body if l.startswith(" ") or l.startswith("-"))
+            new_count = sum(1 for l in body if l.startswith(" ") or l.startswith("+"))
+            fixed.append(f"@@ -{old_start},{old_count} +{new_start},{new_count} @@{suffix}")
+            fixed.extend(body)
+        else:
+            fixed.append(line)
+            i += 1
+
+    return "\n".join(fixed)
 
 
 # ── per-backend call functions ────────────────────────────────────────────────
