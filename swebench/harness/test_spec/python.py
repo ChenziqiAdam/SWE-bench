@@ -396,7 +396,7 @@ def make_env_script_list_py(instance, specs, env_name) -> list:
 
     # Install additional packages if specified
     if "pip_packages" in specs:
-        pip_packages = " ".join(specs["pip_packages"])
+        pip_packages = " ".join(f'"{p}"' for p in specs["pip_packages"])
         cmd = f"python -m pip install {pip_packages}"
         reqs_commands.append(cmd)
     return reqs_commands
