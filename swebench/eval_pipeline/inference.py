@@ -109,6 +109,9 @@ def _repair_patch(patch: str) -> str:
         elif line.startswith(("diff ", "--- ", "+++ ", "index ", "new file", "deleted file")):
             in_hunk = False
             repaired.append(line)
+        elif in_hunk and line == "":
+            # Bare empty line inside a hunk must be a context line with a leading space
+            repaired.append(" ")
         elif in_hunk and line and not line.startswith(("+", "-", " ", "\\")):
             # Missing leading space on a context line — add it
             repaired.append(" " + line)
