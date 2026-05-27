@@ -30,6 +30,39 @@ def _get_diff(pull) -> str:
     return requests.get(diff_url).text
 
 
+def _fetch_file_contents(
+    repo_full: str,
+    base_commit: str,
+    patch: str,
+    github_token: Optional[str] = None,
+) -> dict[str, str]:
+    """
+    Fetch the content of each non-test file touched by the patch at base_commit.
+    Returns {path: content}. Silently skips files that fail to fetch.
+    """
+    file_paths = re.findall(r"^\+\+\+ b/(.+)$", patch, re.MULTILINE)
+    # Exclude test files and non-Python files (docs, build files)
+    impl_paths = [
+        p for p in file_paths
+        if not any(x in p for x in ["test", "tests", "e2e"])
+        and p.endswith((".py", ".pyx", ".pxd", ".h", ".cpp", ".cxx"))
+    ]
+
+    headers = {"Authorization": f"token {github_token}"} if github_token else {}
+    contents = {}
+    for path in impl_paths:
+        url = f"https://raw.githubusercontent.com/{repo_full}/{base_commit}/{path}"
+        try:
+            resp = requests.get(url, headers=headers, timeout=15)
+            if resp.status_code == 200:
+                contents[path] = resp.text
+            else:
+                logger.debug(f"Could not fetch {path} at {base_commit}: HTTP {resp.status_code}")
+        except Exception as e:
+            logger.debug(f"Error fetching {path}: {e}")
+    return contents
+
+
 def _split_patches(diff_text: str) -> tuple[str, str]:
     """
     Split a PR diff into implementation patch and test patch.
@@ -114,6 +147,9 @@ def build_instance(row: dict, github_token: Optional[str] = None) -> Optional[di
         logger.warning(f"No implementation patch for {instance_id}, skipping")
         return None
 
+    # Fetch file contents at base_commit for prompt context
+    file_contents = _fetch_file_contents(repo_full, base_commit, patch, github_token)
+
     # Build problem statement from linked issues
     issue_data = row.get("issue_data", {})
     problem_statement = ""
@@ -155,6 +191,7 @@ def build_instance(row: dict, github_token: Optional[str] = None) -> Optional[di
         "issue_numbers": row.get("issue_numbers", []),
         "category": row.get("Category", ""),
         "algorithm_name": row.get("Algorithm Name", ""),
+        "file_contents": file_contents,
     }
 
 

@@ -19,6 +19,26 @@ _LEVEL_DESCRIPTIONS = {
     3: "Related paper reference + repo context",
 }
 
+# Max chars per file to include in the prompt (~200k chars fits in DeepSeek 1M context)
+_MAX_FILE_CHARS = 200_000
+
+
+def _format_file_contents(instance: dict) -> str:
+    """
+    Format the relevant file contents from instance['file_contents'] for inclusion
+    in the prompt. Returns an empty string if no contents available.
+    """
+    file_contents: dict = instance.get("file_contents") or {}
+    if not file_contents:
+        return ""
+
+    parts = ["Here are the current contents of the files you will need to modify:\n"]
+    for path, content in file_contents.items():
+        if len(content) > _MAX_FILE_CHARS:
+            content = content[:_MAX_FILE_CHARS] + "\n... [truncated]"
+        parts.append(f"<file path=\"{path}\">\n{content}\n</file>")
+    return "\n".join(parts) + "\n\n"
+
 
 def build_level1_prompt(instance: dict) -> Optional[str]:
     """
@@ -33,12 +53,14 @@ def build_level1_prompt(instance: dict) -> Optional[str]:
         return None
 
     task_text = f"PR Title: {pr_title}\n\n{pr_body}" if pr_body else f"PR Title: {pr_title}"
+    file_ctx = _format_file_contents(instance)
 
     return (
         f"{SYSTEM_MESSAGE}\n"
         f"Repository: {repo}\n\n"
         f"Here is the pull request that needs to be implemented:\n"
         f"<pr>\n{task_text}\n</pr>\n\n"
+        f"{file_ctx}"
         f"{PATCH_INSTRUCTION}"
     )
 
@@ -54,11 +76,14 @@ def build_level2_prompt(instance: dict) -> Optional[str]:
         logger.warning(f"[{instance['instance_id']}] No problem statement for level 2")
         return None
 
+    file_ctx = _format_file_contents(instance)
+
     return (
         f"{SYSTEM_MESSAGE}\n"
         f"Repository: {repo}\n\n"
         f"Here is the issue that needs to be resolved:\n"
         f"<issue>\n{problem_statement}\n</issue>\n\n"
+        f"{file_ctx}"
         f"{PATCH_INSTRUCTION}"
     )
 
@@ -76,12 +101,14 @@ def build_level3_prompt(instance: dict) -> Optional[str]:
         return None
 
     algo_hint = f" specifically the '{algorithm_name}' algorithm" if algorithm_name else ""
+    file_ctx = _format_file_contents(instance)
 
     return (
         f"{SYSTEM_MESSAGE}\n"
         f"Repository: {repo}\n\n"
         f"Implement{algo_hint} as described in the following paper reference:\n"
         f"<paper>\n{paper_ref}\n</paper>\n\n"
+        f"{file_ctx}"
         f"Study the existing codebase, understand how similar algorithms are implemented, "
         f"and produce a patch that adds this algorithm in a consistent style.\n\n"
         f"{PATCH_INSTRUCTION}"

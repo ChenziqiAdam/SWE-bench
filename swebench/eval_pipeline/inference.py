@@ -72,8 +72,8 @@ def _clean_patch(patch: str) -> str:
     if not patch:
         return patch
 
-    # Strip markdown code fences (```diff ... ``` or ``` ... ```)
     import re
+    # Strip markdown code fences (```diff ... ``` or ``` ... ```)
     patch = re.sub(r"^```[a-zA-Z]*\n?", "", patch.strip())
     patch = re.sub(r"\n?```$", "", patch)
 
@@ -86,6 +86,43 @@ def _clean_patch(patch: str) -> str:
         patch += "\n"
 
     return patch
+
+
+def _repair_patch(patch: str) -> str:
+    """
+    Fix the most common model diff error: context lines that are missing the
+    required leading space. Models often output Python-indented code directly
+    without the diff prefix, causing 'malformed patch' errors.
+
+    A line is a context line (needs a leading space) if it:
+      - doesn't start with +, -, @, \\, or 'diff'/'---'/'+++'
+      - is not blank
+      - appears between hunk headers
+
+    We only repair lines inside hunks (after a @@ header) that look like code.
+    """
+    import re
+    if not patch:
+        return patch
+
+    lines = patch.split("\n")
+    repaired = []
+    in_hunk = False
+
+    for line in lines:
+        if line.startswith("@@"):
+            in_hunk = True
+            repaired.append(line)
+        elif line.startswith(("diff ", "--- ", "+++ ", "index ", "new file", "deleted file")):
+            in_hunk = False
+            repaired.append(line)
+        elif in_hunk and line and not line.startswith(("+", "-", " ", "\\")):
+            # Missing leading space on a context line — add it
+            repaired.append(" " + line)
+        else:
+            repaired.append(line)
+
+    return "\n".join(repaired)
 
 
 # ── per-backend call functions ────────────────────────────────────────────────
@@ -231,6 +268,7 @@ def run_inference_for_level(
                 )
                 patch = extract_diff(response_text)
                 patch = _clean_patch(patch)
+                patch = _repair_patch(patch)
                 total_cost += cost
                 logger.info(f"{instance_id}: cost=${cost:.4f}, total=${total_cost:.2f}")
 

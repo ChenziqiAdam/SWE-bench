@@ -121,6 +121,17 @@ def main():
                     instances.append(json.loads(line))
         logger.info(f"Loaded {len(instances)} instances")
 
+        # Backfill file_contents for instances that were ingested before this field existed
+        missing_fc = [i for i in instances if not i.get("file_contents")]
+        if missing_fc and not args.skip_inference:
+            logger.info(f"Backfilling file_contents for {len(missing_fc)} instances...")
+            from swebench.eval_pipeline.instance_builder import _fetch_file_contents
+            for inst in missing_fc:
+                inst["file_contents"] = _fetch_file_contents(
+                    inst["repo"], inst["base_commit"], inst.get("patch", ""), github_token
+                )
+            logger.info("Done backfilling file_contents")
+
     # Apply instance_ids filter
     if filter_ids:
         instances = [i for i in instances if i["instance_id"] in filter_ids]
