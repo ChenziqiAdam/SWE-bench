@@ -123,7 +123,7 @@ def main():
 
         # Backfill file_contents for instances that were ingested before this field existed
         missing_fc = [i for i in instances if not i.get("file_contents")]
-        if missing_fc and not args.skip_inference:
+        if missing_fc:
             logger.info(f"Backfilling file_contents for {len(missing_fc)} instances...")
             from swebench.eval_pipeline.instance_builder import _fetch_file_contents
             for inst in missing_fc:

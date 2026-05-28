@@ -81,6 +81,11 @@ def _clean_patch(patch: str) -> str:
     patch = re.sub(r"^\s*<patch>\s*", "", patch)
     patch = re.sub(r"\s*</patch>\s*$", "", patch)
 
+    # Strip trailing incomplete context lines (e.g. patch ends with '\n ' — a space
+    # with no following newline, which causes GNU patch "ends in middle of line" error)
+    import re as _re
+    patch = _re.sub(r"\n[ \t]+$", "\n", patch)
+
     # Ensure patch ends with a newline
     if patch and not patch.endswith("\n"):
         patch += "\n"
