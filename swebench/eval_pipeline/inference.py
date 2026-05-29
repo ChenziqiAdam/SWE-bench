@@ -67,6 +67,43 @@ def _calc_cost(model_name: str, input_tokens: int, output_tokens: int) -> float:
     return cost_in + cost_out
 
 
+def _extract_diff(response: str) -> str:
+    """Extract a unified diff from a model response.
+
+    Improves on the shared extract_diff() for two failure modes seen with
+    chatty models:
+      1. Model emits a throwaway <patch>...</patch> block, then a better,
+         refined block later — we prefer the LAST diff block, not the first.
+      2. The final/best block is truncated (hit max_tokens) so its closing
+         </patch> / ``` is missing — we salvage the trailing unclosed block.
+    """
+    import re
+    if not response:
+        return response or ""
+
+    candidates: list[str] = []
+
+    # Closed <patch>/<diff> tags and ```diff/```patch fences (in document order)
+    for m in re.finditer(r"<(patch|diff)>(.*?)</\1>", response, re.DOTALL):
+        candidates.append(m.group(2))
+    for m in re.finditer(r"```(?:diff|patch)?\n(.*?)```", response, re.DOTALL):
+        if "diff --git" in m.group(1) or "@@" in m.group(1):
+            candidates.append(m.group(1))
+
+    # Salvage a trailing UNCLOSED <patch>/<diff> block (truncated output)
+    open_tag = re.search(r"<(patch|diff)>(?!.*</\1>)(.*)$", response, re.DOTALL)
+    if open_tag and "diff --git" in open_tag.group(2):
+        candidates.append(open_tag.group(2))
+
+    # Keep only candidates that actually look like a diff; prefer the last one
+    diffs = [c for c in candidates if "diff --git" in c or c.lstrip().startswith(("--- ", "@@"))]
+    if diffs:
+        return diffs[-1].strip("\n") + "\n"
+
+    # Fall back to the shared extractor (handles bare diffs, other formats)
+    return extract_diff(response)
+
+
 def _clean_patch(patch: str) -> str:
     """Clean common model-output artifacts from a patch string."""
     if not patch:
@@ -293,7 +330,7 @@ def run_inference_for_level(
                     openai_compat_client=openai_compat_client,
                     max_tokens=max_tokens,
                 )
-                patch = extract_diff(response_text)
+                patch = _extract_diff(response_text)
                 patch = _clean_patch(patch)
                 patch = _repair_patch(patch)
                 total_cost += cost

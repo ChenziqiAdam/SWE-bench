@@ -54,8 +54,10 @@ def parse_args():
                    help="Parallel workers for Docker evaluation")
     p.add_argument("--max_cost", type=float, default=None,
                    help="Max inference cost in USD before stopping")
-    p.add_argument("--max_tokens", type=int, default=16384,
-                   help="Max output tokens per LLM call (default 16384). "
+    p.add_argument("--max_tokens", type=int, default=32768,
+                   help="Max output tokens per LLM call (default 32768). "
+                        "Large multi-file diffs plus chatty reasoning can exceed "
+                        "16k and get truncated mid-patch. "
                         "Set lower for small models, e.g. --max_tokens 2048 for Qwen3-8B.")
     p.add_argument("--instance_ids", default=None,
                    help="Comma-separated instance_ids to run, e.g. "

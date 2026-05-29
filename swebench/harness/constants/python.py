@@ -35,11 +35,12 @@ SPECS_SKLEARN.update(
     {
         k: {
             "python": "3.9",
-            # pip<24 required: newer pip uses dataclass(slots=) which is 3.10+ only
-            "packages": "'pip<24' 'numpy==1.19.2' 'scipy==1.5.2' 'cython==3.0.10' pytest 'pandas<2.0.0' 'matplotlib<3.9.0' setuptools pytest joblib threadpoolctl",
+            # pip<24: newer pip uses dataclass(slots=) which is 3.10+ only
+            # setuptools<74: numpy.distutils needs distutils.msvccompiler, dropped in setuptools 74
+            "packages": "'pip<24' 'setuptools<74' 'numpy==1.19.2' 'scipy==1.5.2' 'cython==3.0.10' pytest 'pandas<2.0.0' 'matplotlib<3.9.0' pytest joblib threadpoolctl",
             "install": "python -m pip install -v --no-build-isolation -e .",
             # pin numpy<2 to keep numpy.distutils available (removed in numpy 2.0)
-            "pip_packages": ["cython", "setuptools", "numpy<2", "scipy"],
+            "pip_packages": ["cython", "setuptools<74", "numpy<2", "scipy"],
             "test_cmd": TEST_PYTEST,
         }
         for k in ["1.2", "1.3", "1.4", "1.5"]
@@ -49,8 +50,9 @@ SPECS_SKLEARN.update(
     {
         "1.6": {
             "python": "3.9",
-            # pip<24 required: newer pip uses dataclass(slots=) which is 3.10+ only
-            "packages": "'pip<24' 'numpy==1.19.2' 'scipy==1.5.2' 'cython==3.0.10' pytest 'pandas<2.0.0' 'matplotlib<3.9.0' setuptools pytest joblib threadpoolctl",
+            # pip<24: newer pip uses dataclass(slots=) which is 3.10+ only
+            # numpy>=1.19.5: sklearn 1.6 meson build requires it (rejects 1.19.2)
+            "packages": "'pip<24' 'numpy==1.19.5' 'scipy==1.5.2' 'cython==3.0.10' pytest 'pandas<2.0.0' 'matplotlib<3.9.0' setuptools pytest joblib threadpoolctl",
             "install": "python -m pip install -v --no-build-isolation -e .",
             # sklearn 1.6 switched to meson build backend
             "pip_packages": ["cython", "setuptools", "numpy<2", "scipy", "meson-python", "ninja"],
