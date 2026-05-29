@@ -125,12 +125,13 @@ def main():
         missing_fc = [i for i in instances if not i.get("file_contents")]
         if missing_fc:
             logger.info(f"Backfilling file_contents for {len(missing_fc)} instances...")
-            from swebench.eval_pipeline.instance_builder import _fetch_file_contents
+            from swebench.eval_pipeline.instance_builder import _fetch_file_contents, write_instances_jsonl
             for inst in missing_fc:
                 inst["file_contents"] = _fetch_file_contents(
                     inst["repo"], inst["base_commit"], inst.get("patch", ""), github_token
                 )
-            logger.info("Done backfilling file_contents")
+            write_instances_jsonl(instances, instances_path)
+            logger.info(f"Done backfilling file_contents; wrote back to {instances_path}")
 
     # Apply instance_ids filter
     if filter_ids:
