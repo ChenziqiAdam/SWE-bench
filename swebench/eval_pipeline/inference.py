@@ -95,8 +95,28 @@ def _extract_diff(response: str) -> str:
     if open_tag and "diff --git" in open_tag.group(2):
         candidates.append(open_tag.group(2))
 
-    # Keep only candidates that actually look like a diff; prefer the last one
+    # Keep only candidates that look like a diff
     diffs = [c for c in candidates if "diff --git" in c or c.lstrip().startswith(("--- ", "@@"))]
+
+    # Prefer the LAST candidate whose body is structurally valid (no prose contamination).
+    # A valid diff body is composed of: file headers (diff/---/+++/index/new file/deleted file),
+    # hunk headers (@@), body lines (+/-/space/backslash), or blank lines. Anything else is prose.
+    def _is_clean(d: str) -> bool:
+        for ln in d.split("\n"):
+            if not ln:
+                continue
+            if ln.startswith(("diff ", "--- ", "+++ ", "@@ ", "index ", "new file", "deleted file",
+                              "+", "-", " ", "\\", "rename from", "rename to", "similarity index",
+                              "Binary files")):
+                continue
+            return False
+        return True
+
+    for c in reversed(diffs):
+        if _is_clean(c):
+            return c.strip("\n") + "\n"
+
+    # No clean candidate — fall back to the last extracted block (best effort)
     if diffs:
         return diffs[-1].strip("\n") + "\n"
 
@@ -180,6 +200,11 @@ def _repair_patch(patch: str) -> str:
             # Count actual lines
             old_count = sum(1 for l in body if l.startswith(" ") or l.startswith("-"))
             new_count = sum(1 for l in body if l.startswith(" ") or l.startswith("+"))
+            n_changes = sum(1 for l in body if l.startswith("+") or l.startswith("-"))
+            # GNU patch rejects no-op hunks (only context, no +/-) as "malformed".
+            # Skip them — they encode no change anyway.
+            if n_changes == 0:
+                continue
             fixed.append(f"@@ -{old_start},{old_count} +{new_start},{new_count} @@{suffix}")
             fixed.extend(body)
         else:
@@ -388,7 +413,8 @@ def make_clients(
     if endpoint:
         # Generic OpenAI-compatible path — works for any provider
         resolved_key = api_key or os.environ.get("OPENAI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY") or "none"
-        openai_compat_client = openai_mod.OpenAI(base_url=endpoint, api_key=resolved_key)
+        # timeout=600s prevents a hung remote socket from blocking the whole pipeline
+        openai_compat_client = openai_mod.OpenAI(base_url=endpoint, api_key=resolved_key, timeout=600.0)
         logger.info(f"Using OpenAI-compatible endpoint: {endpoint} (model={model_name})")
 
     elif model_name.lower().startswith("claude"):
@@ -403,7 +429,7 @@ def make_clients(
         resolved_key = api_key or os.environ.get("OPENAI_API_KEY")
         if not resolved_key:
             raise ValueError("OpenAI API key required. Set OPENAI_API_KEY or pass --api_key.")
-        openai_compat_client = openai_mod.OpenAI(api_key=resolved_key)
+        openai_compat_client = openai_mod.OpenAI(api_key=resolved_key, timeout=600.0)
         logger.info(f"Using OpenAI native API (model={model_name})")
 
     return anthropic_client, openai_compat_client

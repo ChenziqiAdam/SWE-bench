@@ -81,7 +81,54 @@ def parse_args():
                    help="Skip Docker evaluation; only run reporting")
     p.add_argument("--log_dir", default="logs/run_evaluation",
                    help="Log directory for run_evaluation output")
+    p.add_argument("--eval_wallclock_per_instance", type=int, default=900,
+                   help="Wall-clock budget per instance (seconds) for the Docker eval stage. "
+                        "Total budget = N_instances * this. Kills the eval if a worker hangs "
+                        "outside the per-test timeout (e.g. stuck docker build / container start). "
+                        "Default 900s (15 min/instance).")
     return p.parse_args()
+
+
+def _eval_subprocess_target(kw):
+    """Module-level target for spawn-pickling; runs the harness eval."""
+    from swebench.harness.run_evaluation import main as run_eval
+    run_eval(**kw)
+
+
+def _run_eval_with_timeout(timeout_seconds: int, **eval_kwargs) -> bool:
+    """Run swebench.harness.run_evaluation.main in a subprocess with a wall-clock cap.
+
+    Returns True if it finished within the budget, False if it had to be killed.
+    Reports/logs already written to disk are preserved either way.
+    """
+    import multiprocessing as mp
+
+    ctx = mp.get_context("spawn")
+    proc = ctx.Process(target=_eval_subprocess_target, args=(eval_kwargs,), daemon=False)
+    proc.start()
+    proc.join(timeout=timeout_seconds)
+    if proc.is_alive():
+        logger.warning(
+            f"Eval exceeded wall-clock budget ({timeout_seconds}s); terminating. "
+            f"Killing leftover sweb containers."
+        )
+        proc.terminate()
+        proc.join(timeout=30)
+        if proc.is_alive():
+            proc.kill()
+            proc.join()
+        import subprocess
+        try:
+            ids = subprocess.check_output(
+                ["docker", "ps", "-q", "--filter", "name=sweb.eval"],
+                text=True, timeout=30,
+            ).split()
+            if ids:
+                subprocess.run(["docker", "rm", "-f", *ids], timeout=60)
+        except Exception as e:
+            logger.warning(f"Container cleanup failed: {e}")
+        return False
+    return True
 
 
 def main():
@@ -189,7 +236,6 @@ def main():
     run_ids: dict[int, str] = {}
     if not args.skip_eval:
         logger.info("=== Stage 5: Running Docker evaluation ===")
-        from swebench.harness.run_evaluation import main as run_eval
 
         for level in levels:
             predictions_path = str(output_dir / f"level{level}_predictions.jsonl")
@@ -199,10 +245,15 @@ def main():
 
             run_id = f"{args.run_id}_level{level}"
             run_ids[level] = run_id
-            logger.info(f"--- Evaluating level {level} (run_id={run_id}) ---")
-
             eval_instance_ids = [i["instance_id"] for i in instances]
-            run_eval(
+            wallclock = args.eval_wallclock_per_instance * max(1, len(eval_instance_ids))
+            logger.info(
+                f"--- Evaluating level {level} (run_id={run_id}, "
+                f"wallclock_budget={wallclock}s for {len(eval_instance_ids)} instances) ---"
+            )
+
+            finished = _run_eval_with_timeout(
+                timeout_seconds=wallclock,
                 dataset_name=instances_path,
                 split="test",
                 instance_ids=eval_instance_ids,
@@ -218,6 +269,11 @@ def main():
                 rewrite_reports=False,
                 modal=False,
             )
+            if not finished:
+                logger.warning(
+                    f"Level {level} eval hit wall-clock cap; continuing to next level. "
+                    f"Partial reports under {args.log_dir}/{run_id}/ are preserved."
+                )
     else:
         # Reconstruct run_ids from expected names
         for level in levels:
