@@ -72,11 +72,20 @@ def collect_results(
     return results
 
 
-def compute_pass_rates(results: dict[str, dict[int, Optional[bool]]]) -> dict[int, float]:
-    """Return {level: pass_rate} where pass_rate = resolved / total_with_data."""
+def compute_pass_rates(
+    results: dict[str, dict[int, Optional[bool]]],
+    exclude_ids: set[str] | None = None,
+) -> dict[int, float]:
+    """Return {level: pass_rate} where pass_rate = resolved / total_with_data.
+
+    Instances in exclude_ids (e.g. non-buildable) are dropped from both numerator and
+    denominator so the rate reflects only fair comparisons.
+    """
+    exclude_ids = exclude_ids or set()
     rates = {}
     for level in [1, 2, 3]:
-        vals = [v[level] for v in results.values() if v[level] is not None]
+        vals = [v[level] for iid, v in results.items()
+                if iid not in exclude_ids and v[level] is not None]
         rates[level] = sum(vals) / len(vals) if vals else 0.0
     return rates
 
@@ -85,6 +94,7 @@ def render_comparison_table(
     results: dict[str, dict[int, Optional[bool]]],
     instances: list[dict],
     output_csv: str,
+    build_validation: dict[str, dict] | None = None,
 ) -> None:
     """
     Write a CSV and print an ASCII summary table.
@@ -96,15 +106,19 @@ def render_comparison_table(
     """
     # Build metadata lookup
     meta = {inst["instance_id"]: inst for inst in instances}
+    build_validation = build_validation or {}
+    unbuildable_ids = {iid for iid, v in build_validation.items() if not v.get("buildable", True)}
 
     rows = []
     for instance_id, level_results in sorted(results.items()):
         inst = meta.get(instance_id, {})
+        bv = build_validation.get(instance_id, {})
         rows.append({
             "instance_id": instance_id,
             "repo": inst.get("repo", ""),
             "pr_number": inst.get("pull_number", ""),
             "category": inst.get("category", ""),
+            "buildable": "" if not build_validation else ("yes" if bv.get("buildable", True) else "no"),
             "level1_resolved": _bool_str(level_results.get(1)),
             "level2_resolved": _bool_str(level_results.get(2)),
             "level3_resolved": _bool_str(level_results.get(3)),
@@ -112,7 +126,7 @@ def render_comparison_table(
 
     # Write CSV
     Path(output_csv).parent.mkdir(parents=True, exist_ok=True)
-    fieldnames = ["instance_id", "repo", "pr_number", "category",
+    fieldnames = ["instance_id", "repo", "pr_number", "category", "buildable",
                   "level1_resolved", "level2_resolved", "level3_resolved"]
     with open(output_csv, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -120,29 +134,36 @@ def render_comparison_table(
         writer.writerows(rows)
     logger.info(f"Results written to {output_csv}")
 
-    # Print ASCII table
-    rates = compute_pass_rates(results)
+    # Pass rates: raw (all instances) and clean (buildable only)
+    rates_raw = compute_pass_rates(results)
+    rates_clean = compute_pass_rates(results, exclude_ids=unbuildable_ids)
     total = len(results)
+    n_buildable = total - len(unbuildable_ids & set(results.keys()))
 
-    print("\n" + "=" * 70)
-    print(f"{'EVALUATION RESULTS':^70}")
-    print("=" * 70)
-    print(f"{'Instance':<40} {'L1':^6} {'L2':^6} {'L3':^6}")
-    print("-" * 70)
+    print("\n" + "=" * 78)
+    print(f"{'EVALUATION RESULTS':^78}")
+    print("=" * 78)
+    print(f"{'Instance':<40} {'Build':^6} {'L1':^6} {'L2':^6} {'L3':^6}")
+    print("-" * 78)
     for row in rows:
         print(
             f"{row['instance_id']:<40} "
+            f"{(row['buildable'] or '-'):^6} "
             f"{row['level1_resolved']:^6} "
             f"{row['level2_resolved']:^6} "
             f"{row['level3_resolved']:^6}"
         )
-    print("=" * 70)
-    print(f"{'PASS RATE':<40} "
-          f"{rates[1]:^6.1%} "
-          f"{rates[2]:^6.1%} "
-          f"{rates[3]:^6.1%}")
-    print(f"Total instances evaluated: {total}")
-    print("=" * 70 + "\n")
+    print("=" * 78)
+    print(f"{'PASS RATE (all instances)':<40} {'':^6} "
+          f"{rates_raw[1]:^6.1%} {rates_raw[2]:^6.1%} {rates_raw[3]:^6.1%}")
+    if build_validation:
+        print(f"{'PASS RATE (buildable only)':<40} {'':^6} "
+              f"{rates_clean[1]:^6.1%} {rates_clean[2]:^6.1%} {rates_clean[3]:^6.1%}")
+        print(f"Total instances: {total}  |  buildable: {n_buildable}  |  "
+              f"non-buildable: {total - n_buildable}")
+    else:
+        print(f"Total instances evaluated: {total}")
+    print("=" * 78 + "\n")
 
 
 def _bool_str(val: Optional[bool]) -> str:

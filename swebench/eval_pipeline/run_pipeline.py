@@ -71,6 +71,10 @@ def parse_args():
                         "Useful to focus on L2-eligible PRs.")
     p.add_argument("--has_tests", action="store_true",
                    help="Only run instances with non-empty FAIL_TO_PASS (heuristically identified test functions).")
+    p.add_argument("--verified_only", action="store_true",
+                   help="Only run instances where mined FAIL_TO_PASS is non-empty "
+                        "(i.e. the gold patch demonstrably fixes at least one test). "
+                        "Applied after Stage 2.6 mining; requires --skip_mining=False.")
     p.add_argument("--limit", type=int, default=None,
                    help="Process only first N rows from the spreadsheet (for testing)")
     p.add_argument("--skip_ingest", action="store_true",
@@ -81,6 +85,21 @@ def parse_args():
                    help="Skip Docker evaluation; only run reporting")
     p.add_argument("--log_dir", default="logs/run_evaluation",
                    help="Log directory for run_evaluation output")
+    p.add_argument("--skip_validation", action="store_true",
+                   help="Skip Stage 2.5 base_commit build validation. Non-buildable instances "
+                        "will then fail at the eval stage and clutter the bucket counts.")
+    p.add_argument("--revalidate", action="store_true",
+                   help="Re-run build validation even for instance_ids already cached in "
+                        "build_validation.json.")
+    p.add_argument("--skip_mining", action="store_true",
+                   help="Skip Stage 2.6 FAIL_TO_PASS / PASS_TO_PASS mining. Falls back to "
+                        "regex-extracted test names from test_patch (less accurate).")
+    p.add_argument("--remine", action="store_true",
+                   help="Re-run test mining even for instance_ids already cached in "
+                        "test_mining.json.")
+    p.add_argument("--mine_workers", type=int, default=2,
+                   help="Parallel containers for Stage 2.6 mining (default 2). Each one "
+                        "runs the test suite twice, so total CPU/memory load can be heavy.")
     p.add_argument("--eval_wallclock_per_instance", type=int, default=900,
                    help="Wall-clock budget per instance (seconds) for the Docker eval stage. "
                         "Total budget = N_instances * this. Kills the eval if a worker hangs "
@@ -202,6 +221,57 @@ def main():
         instances = [i for i in instances if i.get("FAIL_TO_PASS")]
         logger.info(f"--has_tests: kept {len(instances)}/{before} instances with FAIL_TO_PASS tests")
 
+    # ── Stage 2.5: Base-commit Build Validation ──────────────────────────────
+    build_validation: dict[str, dict] = {}
+    if not args.skip_validation:
+        logger.info("=== Stage 2.5: Validating base_commit builds ===")
+        from swebench.eval_pipeline.validate_base import validate_buildable
+        build_validation = validate_buildable(
+            instances=instances,
+            cache_path=output_dir / "build_validation.json",
+            max_workers=args.max_workers,
+            force=args.revalidate,
+        )
+        n_bad = sum(1 for iid in (i["instance_id"] for i in instances)
+                    if not build_validation.get(iid, {}).get("buildable", True))
+        if n_bad:
+            logger.info(f"{n_bad}/{len(instances)} instance(s) flagged non-buildable; "
+                        f"they will still run but be marked in the report.")
+
+    # ── Stage 2.6: FAIL_TO_PASS / PASS_TO_PASS Mining ────────────────────────
+    if not args.skip_mining:
+        logger.info("=== Stage 2.6: Mining FAIL_TO_PASS / PASS_TO_PASS ===")
+        from swebench.eval_pipeline.mine_tests import mine_fail_to_pass, apply_mined_to_instances
+        mining = mine_fail_to_pass(
+            instances=instances,
+            cache_path=output_dir / "test_mining.json",
+            run_id=args.run_id,
+            max_workers=args.mine_workers,
+            force=args.remine,
+            build_validation=build_validation,
+        )
+        instances = apply_mined_to_instances(instances, mining)
+        # Persist mined FAIL_TO_PASS / PASS_TO_PASS into instances.jsonl so the
+        # harness grader uses them downstream.
+        with open(instances_path, "w") as f:
+            for inst in instances:
+                f.write(json.dumps(inst) + "\n")
+        logger.info(f"Rewrote {instances_path} with mined FAIL_TO_PASS / PASS_TO_PASS")
+
+    # ── Stage 2.7: Verified-solvable filter ──────────────────────────────────
+    if args.verified_only:
+        if args.skip_mining:
+            logger.warning(
+                "--verified_only with --skip_mining: FAIL_TO_PASS values are regex-parsed "
+                "(not ground-truth mined); filter may be inaccurate."
+            )
+        before = len(instances)
+        instances = [i for i in instances if i.get("FAIL_TO_PASS")]
+        logger.info(
+            f"--verified_only: kept {len(instances)}/{before} instances with "
+            f"non-empty FAIL_TO_PASS"
+        )
+
     # ── Stage 3: Prompt Building ──────────────────────────────────────────────
     logger.info("=== Stage 3: Building prompts ===")
     from swebench.eval_pipeline.prompt_builder import build_all_prompts
@@ -285,7 +355,12 @@ def main():
 
     results = collect_results(run_ids=run_ids, log_dir=args.log_dir)
     output_csv = str(output_dir / f"{args.run_id}_results.csv")
-    render_comparison_table(results=results, instances=instances, output_csv=output_csv)
+    render_comparison_table(
+        results=results,
+        instances=instances,
+        output_csv=output_csv,
+        build_validation=build_validation,
+    )
     logger.info(f"Done. Results saved to {output_csv}")
 
 
