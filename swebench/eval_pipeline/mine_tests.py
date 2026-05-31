@@ -138,7 +138,7 @@ def _mine_one(instance: dict, run_id: str, timeout: int = 1800) -> dict:
     client = docker.from_env()
     container = None
     try:
-        container = build_container(spec, client, run_id, inst_logger, rm_image=False, force_rebuild=False)
+        container = build_container(spec, client, run_id, inst_logger, nocache=False, force_rebuild=False)
         container.start()
 
         # Stage gold patch as DOCKER_PATCH inside the container for Pass B.
