@@ -147,6 +147,9 @@ def build_instance(row: dict, github_token: Optional[str] = None) -> Optional[di
         logger.warning(f"No implementation patch for {instance_id}, skipping")
         return None
 
+    # base_commit (used below for file fetch + version lookup)
+    base_commit = pull["base"]["sha"] if hasattr(pull, "__getitem__") else pull.base.sha
+
     # Fetch file contents at base_commit for prompt context
     file_contents = _fetch_file_contents(repo_full, base_commit, patch, github_token)
 
@@ -163,7 +166,6 @@ def build_instance(row: dict, github_token: Optional[str] = None) -> Optional[di
     fail_to_pass = _parse_fail_to_pass(test_patch)
 
     # version: attempt to get from the base commit tag, fall back to "0"
-    base_commit = pull["base"]["sha"] if hasattr(pull, "__getitem__") else pull.base.sha
     version = _get_version(repo_full, base_commit, github_token)
 
     return {
