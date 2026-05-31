@@ -33,6 +33,19 @@ SPECS_SKLEARN = {
 }
 SPECS_SKLEARN.update(
     {
+        # sklearn 1.2's _libsvm.pyx uses legacy Cython 2 syntax (e.g. `IF ... ELIF`
+        # blocks) that Cython 3.x rejects with a CompileError. Pin cython<3 here.
+        "1.2": {
+            "python": "3.9",
+            "packages": "'pip<24' 'setuptools<74' 'numpy==1.19.2' 'scipy==1.5.2' 'cython<3' pytest 'pandas<2.0.0' 'matplotlib<3.9.0' pytest joblib threadpoolctl",
+            "install": "python -m pip install -v --no-build-isolation -e .",
+            "pip_packages": ["cython<3", "setuptools<74", "numpy<2", "scipy"],
+            "test_cmd": TEST_PYTEST,
+        },
+    }
+)
+SPECS_SKLEARN.update(
+    {
         k: {
             "python": "3.9",
             # pip<24: newer pip uses dataclass(slots=) which is 3.10+ only
@@ -43,7 +56,7 @@ SPECS_SKLEARN.update(
             "pip_packages": ["cython", "setuptools<74", "numpy<2", "scipy"],
             "test_cmd": TEST_PYTEST,
         }
-        for k in ["1.2", "1.3", "1.4", "1.5"]
+        for k in ["1.3", "1.4", "1.5"]
     }
 )
 SPECS_SKLEARN.update(
@@ -52,10 +65,11 @@ SPECS_SKLEARN.update(
             "python": "3.9",
             # pip<24: newer pip uses dataclass(slots=) which is 3.10+ only
             # numpy>=1.19.5: sklearn 1.6 meson build requires it (rejects 1.19.2)
-            "packages": "'pip<24' 'numpy==1.19.5' 'scipy==1.5.2' 'cython==3.0.10' pytest 'pandas<2.0.0' 'matplotlib<3.9.0' setuptools pytest joblib threadpoolctl",
+            # scipy>=1.6.0: sklearn 1.6's meson.build asserts scipy>=1.6.0 (rejects 1.5.2)
+            "packages": "'pip<24' 'numpy==1.19.5' 'scipy>=1.6,<1.12' 'cython==3.0.10' pytest 'pandas<2.0.0' 'matplotlib<3.9.0' setuptools pytest joblib threadpoolctl",
             "install": "python -m pip install -v --no-build-isolation -e .",
             # sklearn 1.6 switched to meson build backend
-            "pip_packages": ["cython", "setuptools", "numpy<2", "scipy", "meson-python", "ninja"],
+            "pip_packages": ["cython", "setuptools", "numpy<2", "scipy>=1.6,<1.12", "meson-python", "ninja"],
             "test_cmd": TEST_PYTEST,
         }
     }

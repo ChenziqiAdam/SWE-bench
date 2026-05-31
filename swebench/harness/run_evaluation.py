@@ -63,6 +63,9 @@ from swebench.harness.utils import (
 
 GIT_APPLY_CMDS = [
     "git apply --verbose",
+    # 3way uses blob index + git merge to reconcile stale context lines —
+    # rescues model patches whose context drifted a few lines from base.
+    "git apply --verbose --3way",
     "git apply --verbose --reject",
     "patch --batch --fuzz=5 -p1 -i",
 ]
