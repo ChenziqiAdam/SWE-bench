@@ -47,7 +47,7 @@ def validate_buildable(
         tag="latest",
         env_image_tag="latest",
     )
-    ok_ids = {s.instance_id for s in successful}
+    ok_ids = {s[0].instance_id for s in successful}
 
     for inst in todo:
         iid = inst["instance_id"]
