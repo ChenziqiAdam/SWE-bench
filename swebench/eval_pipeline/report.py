@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 def collect_results(
     run_ids: dict[int, str],
     log_dir: str = "logs/run_evaluation",
+    instance_ids: set[str] | None = None,
 ) -> dict[str, dict[int, Optional[bool]]]:
     """
     Read evaluation results for each level's run.
@@ -43,6 +44,8 @@ def collect_results(
                 with open(report_file) as f:
                     data = json.load(f)
                 for instance_id, info in data.items():
+                    if instance_ids is not None and instance_id not in instance_ids:
+                        continue
                     if instance_id not in results:
                         results[instance_id] = {1: None, 2: None, 3: None}
                     results[instance_id][level] = info.get("resolved", False)
@@ -61,6 +64,8 @@ def collect_results(
                 logger.info(f"Level {level} summary ({summary_file.name}): "
                             f"{len(submitted_ids)} submitted, {len(resolved_ids)} resolved")
                 for instance_id in submitted_ids:
+                    if instance_ids is not None and instance_id not in instance_ids:
+                        continue
                     if instance_id not in results:
                         results[instance_id] = {1: None, 2: None, 3: None}
                     # Only fill in if not already set by per-instance report.json

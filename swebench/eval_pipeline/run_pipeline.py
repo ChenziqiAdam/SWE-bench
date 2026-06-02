@@ -353,7 +353,11 @@ def main():
     logger.info("=== Stage 6: Generating report ===")
     from swebench.eval_pipeline.report import collect_results, render_comparison_table
 
-    results = collect_results(run_ids=run_ids, log_dir=args.log_dir)
+    results = collect_results(
+        run_ids=run_ids,
+        log_dir=args.log_dir,
+        instance_ids={i["instance_id"] for i in instances},
+    )
     output_csv = str(output_dir / f"{args.run_id}_results.csv")
     render_comparison_table(
         results=results,
