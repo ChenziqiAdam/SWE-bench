@@ -138,6 +138,16 @@ def _mine_one(instance: dict, run_id: str, timeout: int = 1800) -> dict:
     client = docker.from_env()
     container = None
     try:
+        # Remove any stale container from a previous crashed/interrupted run with
+        # the same name to avoid Docker 409 Conflict errors.
+        stale_name = spec.get_instance_container_name(run_id)
+        try:
+            stale = client.containers.get(stale_name)
+            inst_logger.warning(f"Removing stale container {stale_name} from previous run")
+            stale.remove(force=True)
+        except docker.errors.NotFound:
+            pass
+
         container = build_container(spec, client, run_id, inst_logger, nocache=False, force_rebuild=False)
         container.start()
 

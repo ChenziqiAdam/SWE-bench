@@ -152,15 +152,28 @@ def _clean_patch(patch: str) -> str:
 
 def _repair_patch(patch: str) -> str:
     """
-    Fix two common model diff errors:
-    1. Context lines missing the required leading space.
-    2. Wrong line counts in @@ hunk headers (model miscounts added/removed lines).
+    Fix common model diff errors:
+    1. Missing "index HASH..HASH MODE" line after "diff --git" header (causes
+       "patch unexpectedly ends in middle of line" with git apply and GNU patch).
+    2. Context lines missing the required leading space.
+    3. Wrong line counts in @@ hunk headers (model miscounts added/removed lines).
     """
     import re
     if not patch:
         return patch
 
-    lines = patch.split("\n")
+    # Pass 0: insert a synthetic "index" line after any "diff --git" header that
+    # is immediately followed by "--- " instead of "index ".
+    lines_raw = patch.split("\n")
+    with_index = []
+    for i, line in enumerate(lines_raw):
+        with_index.append(line)
+        if line.startswith("diff --git "):
+            next_line = lines_raw[i + 1] if i + 1 < len(lines_raw) else ""
+            if not next_line.startswith("index "):
+                with_index.append("index 0000000..0000000 100644")
+
+    lines = with_index
     repaired = []
     in_hunk = False
 
