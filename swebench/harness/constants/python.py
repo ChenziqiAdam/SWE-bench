@@ -33,6 +33,17 @@ SPECS_SKLEARN = {
 }
 SPECS_SKLEARN.update(
     {
+        "1.1": {
+            "python": "3.9",
+            "packages": "'pip<24' 'setuptools<74' 'numpy==1.19.2' 'scipy==1.5.2' 'cython<3' pytest 'pandas<2.0.0' 'matplotlib<3.9.0' joblib threadpoolctl",
+            "install": "python -m pip install -v --no-build-isolation -e .",
+            "pip_packages": ["cython<3", "setuptools<74", "numpy<2", "scipy"],
+            "test_cmd": TEST_PYTEST,
+        },
+    }
+)
+SPECS_SKLEARN.update(
+    {
         # sklearn 1.2's _libsvm.pyx uses legacy Cython 2 syntax (e.g. `IF ... ELIF`
         # blocks) that Cython 3.x rejects with a CompileError. Pin cython<3 here.
         "1.2": {
@@ -947,8 +958,19 @@ SPECS_HUMANEVAL = {k: {"python": "3.9", "test_cmd": "python"} for k in ["1.0"]}
 
 # scipy — modern versions use meson-python build system, require Python 3.12+ and gfortran
 SPECS_SCIPY = {
-    k: {
-        "python": "3.12",
+    "1.7": {
+        "python": "3.9",
+        "packages": "numpy cython pytest",
+        "pre_install": [
+            "apt-get update && apt-get install -y gfortran pkg-config libopenblas-dev",
+            "git submodule update --init",
+        ],
+        "install": "python -m pip install -v --no-build-isolation -e .",
+        "pip_packages": ["cython<3", "setuptools", "numpy<2", "pybind11", "pythran", "pytest", "pytest-xdist"],
+        "test_cmd": TEST_PYTEST,
+    },
+    "1.11": {
+        "python": "3.11",
         "packages": "numpy cython pytest",
         "pre_install": [
             "apt-get update && apt-get install -y gfortran pkg-config libopenblas-dev",
@@ -957,26 +979,70 @@ SPECS_SCIPY = {
         "install": "python -m pip install --no-build-isolation -e .",
         "pip_packages": [
             "meson-python", "ninja", "pybind11", "pythran",
-            "numpy>=2.0", "cython>=3.0", "pytest", "pytest-xdist", "pooch",
+            "numpy>=1.22,<2.0", "cython>=0.29.33", "pytest", "pytest-xdist", "pooch",
         ],
         "test_cmd": TEST_PYTEST,
-    }
-    for k in ["1.14", "1.15", "1.16", "1.17", "1.18"]
+    },
 }
+SPECS_SCIPY.update(
+    {
+        k: {
+            "python": "3.12",
+            "packages": "numpy cython pytest",
+            "pre_install": [
+                "apt-get update && apt-get install -y gfortran pkg-config libopenblas-dev",
+                "git submodule update --init",
+            ],
+            "install": "python -m pip install --no-build-isolation -e .",
+            "pip_packages": [
+                "meson-python", "ninja", "pybind11", "pythran",
+                "numpy>=2.0", "cython>=3.0", "pytest", "pytest-xdist", "pooch",
+            ],
+            "test_cmd": TEST_PYTEST,
+        }
+        for k in ["1.14", "1.15", "1.16", "1.17", "1.18"]
+    }
+)
 
-# numpy — modern versions use meson-python build system, require Python 3.12+
+# numpy — old versions (pre-meson, setuptools-based)
 SPECS_NUMPY = {
-    k: {
-        "python": "3.12",
-        "packages": "cython pytest",
-        "install": "python -m pip install --no-build-isolation -e .",
-        "pip_packages": [
-            "meson-python", "ninja", "cython", "pytest", "pytest-xdist",
-        ],
+    "1.17": {
+        "python": "3.8",
+        "packages": "numpy cython pytest",
+        "install": "python -m pip install -v --no-build-isolation -e .",
+        "pip_packages": ["cython<3", "setuptools", "pytest", "pytest-xdist"],
         "test_cmd": TEST_PYTEST,
-    }
-    for k in ["1.25", "1.26", "2.0", "2.1", "2.2", "2.3", "2.4"]
+    },
+    "1.20": {
+        "python": "3.9",
+        "packages": "numpy cython pytest",
+        "install": "python -m pip install -v --no-build-isolation -e .",
+        "pip_packages": ["cython<3", "setuptools", "pytest", "pytest-xdist"],
+        "test_cmd": TEST_PYTEST,
+    },
+    "1.22": {
+        "python": "3.9",
+        "packages": "numpy cython pytest",
+        "install": "python -m pip install -v --no-build-isolation -e .",
+        "pip_packages": ["cython<3", "setuptools", "pytest", "pytest-xdist"],
+        "test_cmd": TEST_PYTEST,
+    },
 }
+# numpy — modern versions use meson-python build system, require Python 3.12+
+SPECS_NUMPY.update(
+    {
+        k: {
+            "python": "3.12",
+            "packages": "cython pytest",
+            "install": "python -m pip install --no-build-isolation -e .",
+            "pip_packages": [
+                "meson-python", "ninja", "cython", "pytest", "pytest-xdist",
+            ],
+            "test_cmd": TEST_PYTEST,
+        }
+        for k in ["1.25", "1.26", "2.0", "2.1", "2.2", "2.3", "2.4", "2.5"]
+    }
+)
 
 # pandas — modern versions use meson-python build system, require Python 3.12+
 SPECS_PANDAS = {
@@ -992,6 +1058,34 @@ SPECS_PANDAS = {
     }
     for k in ["1.5", "2.0", "2.1", "2.2", "3.0"]
 }
+# pandas — old versions (pre-meson, setuptools-based)
+SPECS_PANDAS.update(
+    {
+        k: {
+            "python": "3.8",
+            "packages": "numpy cython pytest",
+            "install": "python -m pip install -v --no-build-isolation -e .",
+            "pip_packages": ["cython<3", "setuptools", "numpy", "python-dateutil", "pytz", "pytest"],
+            "test_cmd": TEST_PYTEST,
+        }
+        for k in ["0.6", "0.24", "1.0", "1.3"]
+    }
+)
+# pandas 3.1 (same meson-python setup as 3.0)
+SPECS_PANDAS.update(
+    {
+        "3.1": {
+            "python": "3.12",
+            "packages": "numpy cython pytest",
+            "install": "python -m pip install --no-build-isolation -e .",
+            "pip_packages": [
+                "meson-python", "ninja", "cython", "numpy",
+                "python-dateutil", "pytz", "pytest", "pytest-xdist", "hypothesis",
+            ],
+            "test_cmd": TEST_PYTEST,
+        },
+    }
+)
 
 # Constants - Task Instance Instllation Environment
 MAP_REPO_VERSION_TO_SPECS_PY = {

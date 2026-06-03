@@ -206,10 +206,76 @@ def _get_version(repo_full: str, base_commit: str, github_token: Optional[str]) 
         from swebench.versioning.get_versions import get_version
         stub = {"repo": repo_full, "base_commit": base_commit, "instance_id": ""}
         version = get_version(stub)
-        return version or "0"
+        if version:
+            return version
     except Exception as e:
         logger.debug(f"Version lookup failed for {repo_full}@{base_commit}: {e}")
-        return "0"
+
+    # Fallback: repos with dynamic versioning (pandas, old numpy/scipy) need
+    # alternative lookup strategies.
+    return _get_version_fallback(repo_full, base_commit, github_token) or "0"
+
+
+def _get_version_fallback(repo_full: str, base_commit: str, github_token: Optional[str]) -> Optional[str]:
+    """Fallback version detection for repos that use dynamic versioning."""
+    import re
+    import requests
+
+    headers: dict = {}
+    if github_token:
+        headers["Authorization"] = f"token {github_token}"
+
+    raw_base = f"https://raw.githubusercontent.com/{repo_full}/{base_commit}"
+
+    def fetch(path: str) -> Optional[str]:
+        try:
+            r = requests.get(f"{raw_base}/{path}", headers=headers, timeout=10)
+            return r.text if r.status_code == 200 else None
+        except Exception:
+            return None
+
+    if repo_full == "pandas-dev/pandas":
+        # pandas whatsnew/index.rst lists versions newest-first
+        text = fetch("doc/source/whatsnew/index.rst")
+        if text:
+            m = re.search(r"v(\d+\.\d+)", text)
+            if m:
+                return m.group(1)
+        # Older pandas (pre-meson): setup.py has version= string
+        text = fetch("setup.py")
+        if text:
+            m = re.search(r'version\s*=\s*["\'](\d+\.\d+)', text)
+            if m:
+                return m.group(1)
+
+    elif repo_full == "numpy/numpy":
+        # Old numpy: check release notes directory for highest version present
+        for v in ["1.26", "1.25", "1.24", "1.23", "1.22", "1.21", "1.20", "1.19", "1.18", "1.17"]:
+            text = fetch(f"doc/release/{v}.0-notes.rst")
+            if text:
+                return v
+        # Also try doc/source/release.rst which lists versions newest-first
+        text = fetch("doc/source/release.rst")
+        if text:
+            m = re.search(r"(\d+\.\d+)\.\d+ <release/", text)
+            if m:
+                return m.group(1)
+
+    elif repo_full == "scipy/scipy":
+        # meson.build has: version: 'X.Y.Z'
+        text = fetch("meson.build")
+        if text:
+            m = re.search(r"version\s*:\s*['\"](\d+\.\d+)", text)
+            if m:
+                return m.group(1)
+        # doc/source/release.rst lists versions newest-first
+        text = fetch("doc/source/release.rst")
+        if text:
+            m = re.search(r"release\.(\d+\.\d+)", text)
+            if m:
+                return m.group(1)
+
+    return None
 
 
 def build_all_instances(
