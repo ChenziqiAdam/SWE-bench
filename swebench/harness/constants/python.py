@@ -1045,10 +1045,16 @@ SPECS_NUMPY.update(
 )
 
 # pandas — modern versions use meson-python build system, require Python 3.12+
+_PANDAS_MESON_PRE_INSTALL = [
+    # pandas meson build calls `generate_version.py --print` which falls back to
+    # versioneer (requires git tags). Stub out _version_meson.py so it short-circuits.
+    "printf '__version__=\"0.0.0+stub\"\\n__git_version__=\"unknown\"\\n' > pandas/_version_meson.py",
+]
 SPECS_PANDAS = {
     k: {
         "python": "3.12",
         "packages": "numpy cython pytest",
+        "pre_install": _PANDAS_MESON_PRE_INSTALL,
         "install": "python -m pip install --no-build-isolation -e .",
         "pip_packages": [
             "meson-python", "ninja", "cython", "numpy",
@@ -1077,6 +1083,7 @@ SPECS_PANDAS.update(
         "3.1": {
             "python": "3.12",
             "packages": "numpy cython pytest",
+            "pre_install": _PANDAS_MESON_PRE_INSTALL,
             "install": "python -m pip install --no-build-isolation -e .",
             "pip_packages": [
                 "meson-python", "ninja", "cython", "numpy",
