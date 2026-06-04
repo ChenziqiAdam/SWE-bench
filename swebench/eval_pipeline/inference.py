@@ -224,7 +224,14 @@ def _repair_patch(patch: str) -> str:
             fixed.append(line)
             i += 1
 
-    return "\n".join(fixed)
+    result = "\n".join(fixed)
+    # Ensure the patch ends with exactly one newline (split/join can drop the trailing \n,
+    # and the empty-string-to-space rule can turn it into '\n ' which triggers
+    # "patch unexpectedly ends in middle of line" in GNU patch).
+    result = result.rstrip(" \t")
+    if not result.endswith("\n"):
+        result += "\n"
+    return result
 
 
 # ── per-backend call functions ────────────────────────────────────────────────

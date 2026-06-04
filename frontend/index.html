@@ -464,7 +464,14 @@ async function loadDetail(instanceId) {
   document.getElementById('tab-panels').innerHTML = '<div id="loading">Loading…</div>';
   document.getElementById('tab-bar').innerHTML = '';
 
-  const data = await apiFetch(`/api/runs/${state.run}/instance/${instanceId}`);
+  let data;
+  try {
+    data = await apiFetch(`/api/runs/${state.run}/instance/${instanceId}`);
+  } catch (e) {
+    document.getElementById('tab-panels').innerHTML =
+      `<div class="empty-state">Failed to load instance: ${esc(String(e))}</div>`;
+    return;
+  }
   const inst = data.instance;
   const levels = data.levels;
 
@@ -475,11 +482,10 @@ async function loadDetail(instanceId) {
     ['PR #', inst.pull_number],
     ['Category', inst.category],
     ['Algorithm', inst.algorithm_name || '—'],
-    ['Buildable', inst.buildable_status || levels['1']?.resolved !== undefined ? '' : ''],
     ['Version', inst.version],
     ['Created', inst.created_at?.slice(0, 10)],
     ['Base commit', inst.base_commit?.slice(0, 8)],
-  ].map(([label, val]) => val !== '' ? `
+  ].map(([label, val]) => val != null && val !== '' ? `
     <div class="meta-item">
       <span class="meta-label">${esc(label)}:</span>
       <span>${esc(val)}</span>
