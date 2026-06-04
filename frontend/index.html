@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWE-bench LLM Eval Viewer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface2: #273449;
+    --border: #334155;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --pass: #22c55e;
+    --pass-bg: rgba(34,197,94,0.15);
+    --fail: #ef4444;
+    --fail-bg: rgba(239,68,68,0.15);
+    --accent: #38bdf8;
+    --diff-add: rgba(34,197,94,0.18);
+    --diff-add-text: #86efac;
+    --diff-del: rgba(239,68,68,0.18);
+    --diff-del-text: #fca5a5;
+    --diff-hunk: rgba(56,189,248,0.18);
+    --diff-hunk-text: #7dd3fc;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ── header ── */
+  #header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  #header h1 { font-size: 1.1rem; font-weight: 600; color: var(--accent); white-space: nowrap; }
+  #header label { color: var(--text-muted); font-size: 0.85rem; }
+  select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  select:focus { outline: 2px solid var(--accent); }
+
+  /* ── main ── */
+  #main { padding: 24px; }
+
+  /* ── overview ── */
+  #controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  #search {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    width: 240px;
+  }
+  #search::placeholder { color: var(--text-muted); }
+  #search:focus { outline: 2px solid var(--accent); }
+  #filter-cat { min-width: 160px; }
+
+  .stats { color: var(--text-muted); font-size: 0.82rem; margin-left: auto; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  thead th {
+    background: var(--surface);
+    color: var(--text-muted);
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+    white-space: nowrap;
+    position: sticky;
+    top: 53px;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: var(--surface2); }
+  td { padding: 8px 12px; vertical-align: middle; }
+  td.instance-id { font-family: ui-monospace, monospace; font-size: 0.78rem; color: var(--accent); }
+  td.repo { color: var(--text-muted); font-size: 0.8rem; }
+
+  /* ── badges ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge-pass { background: var(--pass-bg); color: var(--pass); }
+  .badge-fail { background: var(--fail-bg); color: var(--fail); }
+  .badge-na { background: var(--surface2); color: var(--text-muted); }
+  .badge-yes { background: var(--pass-bg); color: var(--pass); }
+  .badge-no { background: var(--fail-bg); color: var(--fail); }
+
+  /* ── detail view ── */
+  #detail-view { display: none; }
+
+  #back-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #back-btn:hover { background: var(--border); }
+
+  .meta-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
+  .meta-title {
+    font-family: ui-monospace, monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px 16px;
+  }
+  .meta-item { font-size: 0.82rem; }
+  .meta-label { color: var(--text-muted); margin-right: 4px; }
+
+  /* ── tabs ── */
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── level panel ── */
+  .level-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .level-desc { color: var(--text-muted); font-size: 0.82rem; }
+
+  .section { margin-bottom: 20px; }
+  .section-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  details { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  details summary {
+    padding: 8px 12px;
+    cursor: pointer;
+    background: var(--surface);
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  details summary:hover { color: var(--text); }
+  details[open] summary { border-bottom: 1px solid var(--border); }
+
+  pre {
+    background: var(--surface2);
+    padding: 12px;
+    overflow: auto;
+    font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    white-space: pre;
+    border-radius: 4px;
+    max-height: 420px;
+  }
+  details pre { border-radius: 0; max-height: 480px; }
+
+  .copy-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    cursor: pointer;
+  }
+  .copy-btn:hover { color: var(--text); }
+
+  /* ── diff ── */
+  .diff-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 900px) { .diff-grid { grid-template-columns: 1fr; } }
+  .diff-pane { min-width: 0; }
+  .diff-pane-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .diff-line { display: block; }
+  .diff-line.add { background: var(--diff-add); color: var(--diff-add-text); }
+  .diff-line.del { background: var(--diff-del); color: var(--diff-del-text); }
+  .diff-line.hunk { background: var(--diff-hunk); color: var(--diff-hunk-text); }
+
+  /* ── tests tab ── */
+  .test-list { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+  .test-item {
+    font-family: ui-monospace, monospace;
+    font-size: 0.78rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .test-item.ftp { background: var(--fail-bg); color: var(--diff-del-text); }
+  .test-item.ptp { background: var(--pass-bg); color: var(--diff-add-text); }
+
+  .empty-state {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 32px;
+    text-align: center;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+  }
+
+  #loading { color: var(--text-muted); padding: 48px; text-align: center; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>SWE-bench Eval Viewer</h1>
+  <label for="run-select">Run:</label>
+  <select id="run-select"></select>
+</div>
+
+<div id="main">
+  <!-- Overview -->
+  <div id="overview-view">
+    <div id="controls">
+      <input id="search" type="text" placeholder="Search instance, repo, algorithm…">
+      <select id="filter-cat">
+        <option value="">All categories</option>
+      </select>
+      <span class="stats" id="stats"></span>
+    </div>
+    <div id="table-wrap">
+      <div id="loading">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Detail -->
+  <div id="detail-view">
+    <button id="back-btn">← Back to overview</button>
+    <div class="meta-card">
+      <div class="meta-title" id="d-instance-id"></div>
+      <div class="meta-grid" id="d-meta"></div>
+    </div>
+    <div class="tab-bar" id="tab-bar"></div>
+    <div id="tab-panels"></div>
+  </div>
+</div>
+
+<script>
+// ── state ──────────────────────────────────────────────────────────────────
+const state = {
+  run: null,
+  overview: [],
+  activeTab: 0,
+};
+
+const LEVEL_LABELS = {
+  1: 'Level 1 — PR Description',
+  2: 'Level 2 — Issue Only',
+  3: 'Level 3 — Paper + Repo',
+};
+
+// ── utils ──────────────────────────────────────────────────────────────────
+function esc(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function badge(val) {
+  if (!val) return '<span class="badge badge-na">—</span>';
+  const v = val.toUpperCase();
+  if (v === 'PASS' || v === 'YES') return `<span class="badge badge-pass">${esc(val)}</span>`;
+  if (v === 'FAIL' || v === 'NO') return `<span class="badge badge-fail">${esc(val)}</span>`;
+  return `<span class="badge badge-na">${esc(val)}</span>`;
+}
+
+function renderDiff(text) {
+  if (!text) return '<span style="color:var(--text-muted)">No patch</span>';
+  return text.split('\n').map(line => {
+    const cls = line.startsWith('+++') || line.startsWith('---') ? ''
+              : line.startsWith('+') ? 'add'
+              : line.startsWith('-') ? 'del'
+              : line.startsWith('@@') ? 'hunk'
+              : '';
+    return `<span class="diff-line ${cls}">${esc(line)}</span>`;
+  }).join('\n');
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); } catch (_) {}
+}
+
+// ── API calls ─────────────────────────────────────────────────────────────
+async function apiFetch(path) {
+  const r = await fetch(path);
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return r.json();
+}
+
+// ── runs ──────────────────────────────────────────────────────────────────
+async function initRuns() {
+  const runs = await apiFetch('/api/runs');
+  const sel = document.getElementById('run-select');
+  sel.innerHTML = runs.map(r => `<option value="${esc(r)}">${esc(r)}</option>`).join('');
+  sel.addEventListener('change', () => loadOverview(sel.value));
+  if (runs.length) loadOverview(runs[0]);
+}
+
+// ── overview ──────────────────────────────────────────────────────────────
+async function loadOverview(run) {
+  state.run = run;
+  showView('overview');
+  document.getElementById('table-wrap').innerHTML = '<div id="loading">Loading…</div>';
+
+  const rows = await apiFetch(`/api/runs/${run}/overview`);
+  state.overview = rows;
+
+  // Populate category filter
+  const cats = [...new Set(rows.map(r => r.category).filter(Boolean))].sort();
+  const catSel = document.getElementById('filter-cat');
+  catSel.innerHTML = '<option value="">All categories</option>' +
+    cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+
+  renderTable(rows);
+}
+
+function renderTable(rows) {
+  const search = document.getElementById('search').value.toLowerCase();
+  const cat = document.getElementById('filter-cat').value;
+
+  const filtered = rows.filter(r => {
+    if (cat && r.category !== cat) return false;
+    if (search) {
+      const hay = [r.instance_id, r.repo, r.algorithm_name, r.pr_title].join(' ').toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('stats').textContent = `${filtered.length} / ${rows.length} instances`;
+
+  const tbody = filtered.map(r => `
+    <tr data-id="${esc(r.instance_id)}">
+      <td class="instance-id">${esc(r.instance_id)}</td>
+      <td class="repo">${esc(r.repo)}</td>
+      <td>${esc(r.category)}</td>
+      <td>${esc(r.algorithm_name)}</td>
+      <td>${badge(r.buildable)}</td>
+      <td>${badge(r.level1_resolved)}</td>
+      <td>${badge(r.level2_resolved)}</td>
+      <td>${badge(r.level3_resolved)}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('table-wrap').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Instance ID</th>
+          <th>Repo</th>
+          <th>Category</th>
+          <th>Algorithm</th>
+          <th>Buildable</th>
+          <th>L1</th>
+          <th>L2</th>
+          <th>L3</th>
+        </tr>
+      </thead>
+      <tbody>${tbody}</tbody>
+    </table>
+  `;
+
+  document.querySelectorAll('tbody tr').forEach(tr => {
+    tr.addEventListener('click', () => loadDetail(tr.dataset.id));
+  });
+}
+
+// ── detail ────────────────────────────────────────────────────────────────
+async function loadDetail(instanceId) {
+  showView('detail');
+  document.getElementById('tab-panels').innerHTML = '<div id="loading">Loading…</div>';
+  document.getElementById('tab-bar').innerHTML = '';
+
+  const data = await apiFetch(`/api/runs/${state.run}/instance/${instanceId}`);
+  const inst = data.instance;
+  const levels = data.levels;
+
+  // Metadata
+  document.getElementById('d-instance-id').textContent = inst.instance_id;
+  document.getElementById('d-meta').innerHTML = [
+    ['Repo', inst.repo],
+    ['PR #', inst.pull_number],
+    ['Category', inst.category],
+    ['Algorithm', inst.algorithm_name || '—'],
+    ['Buildable', inst.buildable_status || levels['1']?.resolved !== undefined ? '' : ''],
+    ['Version', inst.version],
+    ['Created', inst.created_at?.slice(0, 10)],
+    ['Base commit', inst.base_commit?.slice(0, 8)],
+  ].map(([label, val]) => val !== '' ? `
+    <div class="meta-item">
+      <span class="meta-label">${esc(label)}:</span>
+      <span>${esc(val)}</span>
+    </div>` : '').join('');
+
+  // Tabs: Level 1, 2, 3, Tests, Gold Patch
+  const tabs = ['Level 1', 'Level 2', 'Level 3', 'Tests', 'Gold Patch'];
+  const tabBar = document.getElementById('tab-bar');
+  const panelsDiv = document.getElementById('tab-panels');
+
+  tabBar.innerHTML = tabs.map((t, i) => `
+    <button class="tab-btn${i === 0 ? ' active' : ''}" data-tab="${i}">${esc(t)}</button>
+  `).join('');
+
+  panelsDiv.innerHTML = tabs.map((_, i) => `
+    <div class="tab-panel${i === 0 ? ' active' : ''}" id="panel-${i}"></div>
+  `).join('');
+
+  tabBar.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active');
+    });
+  });
+
+  // Render level panels (1, 2, 3)
+  for (let lvl = 1; lvl <= 3; lvl++) {
+    const panel = document.getElementById(`panel-${lvl - 1}`);
+    const ld = levels[String(lvl)];
+    renderLevelPanel(panel, lvl, ld, inst.patch);
+  }
+
+  // Tests panel
+  renderTestsPanel(document.getElementById('panel-3'), inst);
+
+  // Gold patch panel
+  document.getElementById('panel-4').innerHTML = `
+    <div class="section">
+      <div class="section-title">Gold Patch (PR #${esc(inst.pull_number)})</div>
+      <pre class="diff">${renderDiff(inst.patch)}</pre>
+    </div>
+  `;
+}
+
+function renderLevelPanel(panel, lvl, ld, goldPatch) {
+  const resolved = ld?.resolved;
+  const hasPrompt = ld?.prompt != null;
+  const hasPred = ld?.model_patch != null || ld?.full_output != null;
+
+  if (!hasPrompt && !hasPred) {
+    panel.innerHTML = `<div class="empty-state">No data for Level ${lvl} in this run.</div>`;
+    return;
+  }
+
+  const statusBadge = resolved ? badge(resolved) : '<span class="badge badge-na">Not evaluated</span>';
+  const modelName = ld?.model_name_or_path || '';
+
+  let promptHtml = '';
+  if (ld?.prompt) {
+    const promptId = `prompt-${lvl}`;
+    promptHtml = `
+      <div class="section">
+        <div class="section-title">
+          Prompt
+          <button class="copy-btn" onclick="copyText(window._prompts[${lvl}])">Copy</button>
+        </div>
+        <details>
+          <summary>${esc(LEVEL_LABELS[lvl])} · ${esc(ld.prompt.length.toLocaleString())} chars <span style="float:right">▼</span></summary>
+          <pre>${esc(ld.prompt)}</pre>
+        </details>
+      </div>
+    `;
+    window._prompts = window._prompts || {};
+    window._prompts[lvl] = ld.prompt;
+  }
+
+  let outputHtml = '';
+  if (ld?.full_output) {
+    outputHtml = `
+      <div class="section">
+        <div class="section-title">
+          Full LLM Output
+          <button class="copy-btn" onclick="copyText(window._outputs[${lvl}])">Copy</button>
+        </div>
+        <pre>${esc(ld.full_output)}</pre>
+      </div>
+    `;
+    window._outputs = window._outputs || {};
+    window._outputs[lvl] = ld.full_output;
+  }
+
+  const diffHtml = `
+    <div class="section">
+      <div class="section-title">Patch Comparison</div>
+      <div class="diff-grid">
+        <div class="diff-pane">
+          <div class="diff-pane-title">Model Patch</div>
+          <pre class="diff">${renderDiff(ld?.model_patch)}</pre>
+        </div>
+        <div class="diff-pane">
+          <div class="diff-pane-title">Gold Patch</div>
+          <pre class="diff">${renderDiff(goldPatch)}</pre>
+        </div>
+      </div>
+    </div>
+  `;
+
+  panel.innerHTML = `
+    <div class="level-header">
+      ${statusBadge}
+      ${modelName ? `<span class="level-desc">Model: ${esc(modelName)}</span>` : ''}
+    </div>
+    ${promptHtml}
+    ${outputHtml}
+    ${diffHtml}
+  `;
+}
+
+function renderTestsPanel(panel, inst) {
+  const ftp = inst.FAIL_TO_PASS || [];
+  const ptp = inst.PASS_TO_PASS || [];
+
+  const ftpHtml = ftp.length
+    ? ftp.map(t => `<div class="test-item ftp">${esc(t)}</div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:0.82rem">None</div>';
+
+  const ptpHtml = ptp.length
+    ? ptp.map(t => `<div class="test-item ptp">${esc(t)}</div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:0.82rem">None</div>';
+
+  panel.innerHTML = `
+    <div class="section">
+      <div class="section-title" style="color:var(--diff-del-text)">FAIL → PASS (${ftp.length})</div>
+      <div class="test-list">${ftpHtml}</div>
+    </div>
+    <div class="section" style="margin-top:20px">
+      <div class="section-title" style="color:var(--diff-add-text)">PASS → PASS (${ptp.length})</div>
+      <div class="test-list">${ptpHtml}</div>
+    </div>
+  `;
+}
+
+// ── view switching ────────────────────────────────────────────────────────
+function showView(view) {
+  document.getElementById('overview-view').style.display = view === 'overview' ? '' : 'none';
+  document.getElementById('detail-view').style.display = view === 'detail' ? '' : 'none';
+}
+
+// ── wiring ────────────────────────────────────────────────────────────────
+document.getElementById('back-btn').addEventListener('click', () => showView('overview'));
+document.getElementById('search').addEventListener('input', () => renderTable(state.overview));
+document.getElementById('filter-cat').addEventListener('change', () => renderTable(state.overview));
+
+initRuns();
+</script>
+</body>
+</html>
