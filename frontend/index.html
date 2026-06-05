@@ -632,8 +632,8 @@ function renderTestsPanel(panel, inst) {
 
 // ── view switching ────────────────────────────────────────────────────────
 function showView(view) {
-  document.getElementById('overview-view').style.display = view === 'overview' ? '' : 'none';
-  document.getElementById('detail-view').style.display = view === 'detail' ? '' : 'none';
+  document.getElementById('overview-view').style.display = view === 'overview' ? 'block' : 'none';
+  document.getElementById('detail-view').style.display = view === 'detail' ? 'block' : 'none';
 }
 
 // ── wiring ────────────────────────────────────────────────────────────────
