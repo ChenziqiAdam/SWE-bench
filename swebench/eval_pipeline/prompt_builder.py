@@ -32,11 +32,19 @@ def _format_file_contents(instance: dict) -> str:
     if not file_contents:
         return ""
 
-    parts = ["Here are the current contents of the files you will need to modify:\n"]
+    parts = [
+        "Here are the current contents of the files you will need to modify. "
+        "Each line is prefixed with its 1-based line number followed by a tab — "
+        "use these EXACT line numbers when constructing your @@ hunk headers. "
+        "Do NOT include the line-number prefix in the diff itself.\n"
+    ]
     for path, content in file_contents.items():
         if len(content) > _MAX_FILE_CHARS:
             content = content[:_MAX_FILE_CHARS] + "\n... [truncated]"
-        parts.append(f"<file path=\"{path}\">\n{content}\n</file>")
+        numbered = "\n".join(
+            f"{i}\t{line}" for i, line in enumerate(content.split("\n"), start=1)
+        )
+        parts.append(f"<file path=\"{path}\">\n{numbered}\n</file>")
     return "\n".join(parts) + "\n\n"
 
 
