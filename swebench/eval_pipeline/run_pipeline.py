@@ -178,7 +178,28 @@ def main():
         logger.info("=== Stage 2: Building SWEbench instances ===")
         from swebench.eval_pipeline.instance_builder import build_all_instances, write_instances_jsonl
         instances = build_all_instances(enriched_rows, github_token=github_token)
-        write_instances_jsonl(instances, instances_path)
+        # Merge with any existing jsonl so a partial ingest (e.g. --repos numpy/numpy
+        # or --limit 5) doesn't wipe rows ingested in prior runs.
+        if Path(instances_path).exists() and (filter_repos or filter_ids or args.limit):
+            existing = []
+            with open(instances_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        existing.append(json.loads(line))
+            new_by_id = {i["instance_id"]: i for i in instances}
+            merged = [new_by_id.get(i["instance_id"], i) for i in existing]
+            existing_ids = {i["instance_id"] for i in existing}
+            for i in instances:
+                if i["instance_id"] not in existing_ids:
+                    merged.append(i)
+            logger.info(
+                f"Merging {len(instances)} freshly-ingested instance(s) into existing "
+                f"{instances_path} ({len(existing)} on disk → {len(merged)} total)."
+            )
+            write_instances_jsonl(merged, instances_path)
+        else:
+            write_instances_jsonl(instances, instances_path)
     else:
         logger.info(f"Skipping ingest; loading instances from {instances_path}")
         instances = []
@@ -252,11 +273,30 @@ def main():
         )
         instances = apply_mined_to_instances(instances, mining)
         # Persist mined FAIL_TO_PASS / PASS_TO_PASS into instances.jsonl so the
-        # harness grader uses them downstream.
+        # harness grader uses them downstream. Merge onto the FULL on-disk set
+        # so user filters (--instance_ids, --has_issue, --has_tests) do not
+        # destructively prune the cache.
+        full_on_disk = []
+        with open(instances_path) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    full_on_disk.append(json.loads(line))
+        by_id = {i["instance_id"]: i for i in instances}
+        merged = [by_id.get(i["instance_id"], i) for i in full_on_disk]
+        # Append any in-memory instances not present on disk (shouldn't normally
+        # happen, but keeps the merge total-preserving).
+        on_disk_ids = {i["instance_id"] for i in full_on_disk}
+        for i in instances:
+            if i["instance_id"] not in on_disk_ids:
+                merged.append(i)
         with open(instances_path, "w") as f:
-            for inst in instances:
+            for inst in merged:
                 f.write(json.dumps(inst) + "\n")
-        logger.info(f"Rewrote {instances_path} with mined FAIL_TO_PASS / PASS_TO_PASS")
+        logger.info(
+            f"Rewrote {instances_path} with mined FAIL_TO_PASS / PASS_TO_PASS "
+            f"({len(merged)} total instances preserved, {len(instances)} updated this run)"
+        )
 
     # ── Stage 2.7: Verified-solvable filter ──────────────────────────────────
     if args.verified_only:

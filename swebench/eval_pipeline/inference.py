@@ -31,8 +31,13 @@ from swebench.eval_pipeline.constants import (
 logger = logging.getLogger(__name__)
 
 
-def _load_existing_ids(output_file: str) -> set[str]:
-    """Return instance_ids already written to the output file (for resuming)."""
+def _load_existing_ids(output_file: str, model_name: str | None = None) -> set[str]:
+    """Return instance_ids already written to the output file (for resuming).
+
+    If model_name is provided, only count rows whose model_name_or_path matches —
+    this prevents re-runs with a different model from silently inheriting another
+    model's predictions.
+    """
     existing = set()
     path = Path(output_file)
     if not path.exists():
@@ -44,6 +49,8 @@ def _load_existing_ids(output_file: str) -> set[str]:
                 continue
             try:
                 obj = json.loads(line)
+                if model_name is not None and obj.get("model_name_or_path") != model_name:
+                    continue
                 existing.add(obj["instance_id"])
             except (json.JSONDecodeError, KeyError):
                 pass
@@ -334,9 +341,9 @@ def run_inference_for_level(
         anthropic_client: Anthropic SDK client (for claude-* on api.anthropic.com)
         openai_compat_client: openai.OpenAI client (for any OpenAI-compatible endpoint)
     """
-    existing_ids = _load_existing_ids(output_file)
+    existing_ids = _load_existing_ids(output_file, model_name=model_name)
     if existing_ids:
-        logger.info(f"Resuming: {len(existing_ids)} predictions already written")
+        logger.info(f"Resuming: {len(existing_ids)} predictions already written for {model_name}")
 
     Path(output_file).parent.mkdir(parents=True, exist_ok=True)
     total_cost = 0.0
