@@ -107,6 +107,9 @@ def overview(run: str) -> list[dict]:
             "has_level1": bool(preds_by_level[1].get(iid, {}).get("model_patch") or preds_by_level[1].get(iid, {}).get("full_output")),
             "has_level2": bool(preds_by_level[2].get(iid, {}).get("model_patch") or preds_by_level[2].get(iid, {}).get("full_output")),
             "has_level3": bool(preds_by_level[3].get(iid, {}).get("model_patch") or preds_by_level[3].get(iid, {}).get("full_output")),
+            "skipped_level1": bool(preds_by_level[1].get(iid, {}).get("skipped")),
+            "skipped_level2": bool(preds_by_level[2].get(iid, {}).get("skipped")),
+            "skipped_level3": bool(preds_by_level[3].get(iid, {}).get("skipped")),
         })
     return rows
 

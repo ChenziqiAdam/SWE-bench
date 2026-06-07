@@ -131,6 +131,29 @@ def _load_nonempty_prediction_ids(predictions_paths: dict[int, str]) -> dict[int
     return out
 
 
+def _load_skipped_prediction_ids(predictions_paths: dict[int, str]) -> dict[int, set[str]]:
+    """Return {level: {instance_id, ...}} for instances marked skipped=True."""
+    out: dict[int, set[str]] = {1: set(), 2: set(), 3: set()}
+    for level, path in predictions_paths.items():
+        level = int(level)
+        if level not in out:
+            out[level] = set()
+        if not path or not Path(path).exists():
+            continue
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if row.get("skipped"):
+                    out[level].add(row["instance_id"])
+    return out
+
+
 def render_comparison_table(
     results: dict[str, dict[int, Optional[bool]]],
     instances: list[dict],
@@ -153,6 +176,7 @@ def render_comparison_table(
     unbuildable_ids = {iid for iid, v in build_validation.items() if not v.get("buildable", True)}
 
     nonempty = _load_nonempty_prediction_ids(predictions_paths or {})
+    skipped = _load_skipped_prediction_ids(predictions_paths or {})
 
     rows = []
     for instance_id, level_results in sorted(results.items()):
@@ -164,9 +188,9 @@ def render_comparison_table(
             "pr_number": inst.get("pull_number", ""),
             "category": inst.get("category", ""),
             "buildable": "" if not build_validation else ("yes" if bv.get("buildable", True) else "no"),
-            "level1_resolved": _bool_str(level_results.get(1)),
-            "level2_resolved": _bool_str(level_results.get(2)),
-            "level3_resolved": _bool_str(level_results.get(3)),
+            "level1_resolved": _bool_str(level_results.get(1), instance_id in skipped[1]),
+            "level2_resolved": _bool_str(level_results.get(2), instance_id in skipped[2]),
+            "level3_resolved": _bool_str(level_results.get(3), instance_id in skipped[3]),
             "level1_has_pred": "yes" if instance_id in nonempty[1] else "no",
             "level2_has_pred": "yes" if instance_id in nonempty[2] else "no",
             "level3_has_pred": "yes" if instance_id in nonempty[3] else "no",
@@ -232,7 +256,9 @@ def render_comparison_table(
     print("=" * 78 + "\n")
 
 
-def _bool_str(val: Optional[bool]) -> str:
+def _bool_str(val: Optional[bool], skipped: bool = False) -> str:
+    if skipped:
+        return "SKIP"
     if val is None:
         return "N/A"
     return "PASS" if val else "FAIL"

@@ -364,11 +364,13 @@ function esc(s) {
     .replace(/"/g, '&quot;');
 }
 
-function badge(val) {
+function badge(val, skipped) {
+  if (skipped) return '<span class="badge badge-skip">Skip</span>';
   if (!val) return '<span class="badge badge-na">—</span>';
   const v = val.toUpperCase();
   if (v === 'PASS' || v === 'YES') return `<span class="badge badge-pass">${esc(val)}</span>`;
   if (v === 'FAIL' || v === 'NO') return `<span class="badge badge-fail">${esc(val)}</span>`;
+  if (v === 'SKIP') return `<span class="badge badge-skip">Skip</span>`;
   return `<span class="badge badge-na">${esc(val)}</span>`;
 }
 
@@ -450,9 +452,9 @@ function renderTable(rows) {
       <td>${esc(r.category)}</td>
       <td>${esc(r.algorithm_name)}</td>
       <td>${badge(r.buildable)}</td>
-      <td>${badge(r.level1_resolved)}</td>
-      <td>${badge(r.level2_resolved)}</td>
-      <td>${badge(r.level3_resolved)}</td>
+      <td>${badge(r.level1_resolved, r.skipped_level1)}</td>
+      <td>${badge(r.level2_resolved, r.skipped_level2)}</td>
+      <td>${badge(r.level3_resolved, r.skipped_level3)}</td>
     </tr>
   `).join('');
 
