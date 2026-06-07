@@ -85,11 +85,6 @@ def overview(run: str) -> list[dict]:
     instances = _load_instances(run_dir)
     eval_results = _load_eval_results(run_dir)
 
-    has = {
-        level: bool(_load_predictions(run_dir, level))
-        for level in (1, 2, 3)
-    }
-    # Build per-instance has_levelN from prediction presence
     preds_by_level = {
         level: _load_predictions(run_dir, level)
         for level in (1, 2, 3)
@@ -109,9 +104,9 @@ def overview(run: str) -> list[dict]:
             "level1_resolved": ev.get("level1_resolved", ""),
             "level2_resolved": ev.get("level2_resolved", ""),
             "level3_resolved": ev.get("level3_resolved", ""),
-            "has_level1": iid in preds_by_level[1],
-            "has_level2": iid in preds_by_level[2],
-            "has_level3": iid in preds_by_level[3],
+            "has_level1": bool(preds_by_level[1].get(iid, {}).get("model_patch") or preds_by_level[1].get(iid, {}).get("full_output")),
+            "has_level2": bool(preds_by_level[2].get(iid, {}).get("model_patch") or preds_by_level[2].get(iid, {}).get("full_output")),
+            "has_level3": bool(preds_by_level[3].get(iid, {}).get("model_patch") or preds_by_level[3].get(iid, {}).get("full_output")),
         })
     return rows
 
@@ -148,6 +143,7 @@ def instance_detail(run: str, instance_id: str) -> dict:
             "model_patch": pred.get("model_patch"),
             "model_name_or_path": pred.get("model_name_or_path"),
             "resolved": ev.get(resolved_key, ""),
+            "skipped": pred.get("skipped", False),
         }
 
     # Strip file_contents from the instance before returning (large, embedded in prompts)

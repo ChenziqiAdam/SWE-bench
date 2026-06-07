@@ -132,6 +132,7 @@
   .badge-na { background: var(--surface2); color: var(--text-muted); }
   .badge-yes { background: var(--pass-bg); color: var(--pass); }
   .badge-no { background: var(--fail-bg); color: var(--fail); }
+  .badge-skip { background: rgba(148,163,184,0.15); color: #94a3b8; }
 
   /* ── detail view ── */
   #detail-view { display: none; }
@@ -556,9 +557,30 @@ function renderLevelPanel(panel, lvl, ld, goldPatch) {
   const resolved = ld?.resolved;
   const hasPrompt = ld?.prompt != null;
   const hasPred = ld?.model_patch != null || ld?.full_output != null;
+  const skipped = ld?.skipped;
 
-  if (!hasPrompt && !hasPred) {
+  if (!hasPrompt && !hasPred && !skipped) {
     panel.innerHTML = `<div class="empty-state">No data for Level ${lvl} in this run.</div>`;
+    return;
+  }
+
+  if (skipped) {
+    panel.innerHTML = `
+      <div class="level-header">
+        <span class="badge badge-skip">Skipped</span>
+        ${ld?.model_name_or_path ? `<span class="level-desc">Model: ${esc(ld.model_name_or_path)}</span>` : ''}
+      </div>
+      ${hasPrompt ? `
+      <div class="section">
+        <div class="section-title">Prompt <button class="copy-btn" onclick="copyText(window._prompts[${lvl}])">Copy</button></div>
+        <details>
+          <summary>${esc(LEVEL_LABELS[lvl])} · ${esc(ld.prompt.length.toLocaleString())} chars <span style="float:right">▼</span></summary>
+          <pre>${esc(ld.prompt)}</pre>
+        </details>
+      </div>` : ''}
+      <div class="empty-state" style="margin-top:12px">This instance was skipped — no patch was generated.</div>
+    `;
+    if (hasPrompt) { window._prompts = window._prompts || {}; window._prompts[lvl] = ld.prompt; }
     return;
   }
 
