@@ -401,7 +401,7 @@ def main():
     output_csv = str(output_dir / f"{args.run_id}_results.csv")
     predictions_paths = {
         int(level): str(output_dir / f"level{int(level)}_predictions.jsonl")
-        for level in args.levels
+        for level in args.levels.split(",")
     }
     run_config = {
         "model": args.model,
