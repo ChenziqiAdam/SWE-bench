@@ -83,6 +83,17 @@
   #search:focus { outline: 2px solid var(--accent); }
   #filter-cat { min-width: 160px; }
 
+  .check-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+  }
+  .check-filter input { accent-color: var(--accent); cursor: pointer; }
+
   .stats { color: var(--text-muted); font-size: 0.82rem; margin-left: auto; }
 
   table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
@@ -306,6 +317,9 @@
       <select id="filter-cat">
         <option value="">All categories</option>
       </select>
+      <label class="check-filter"><input type="checkbox" id="fl1"> Has L1</label>
+      <label class="check-filter"><input type="checkbox" id="fl2"> Has L2</label>
+      <label class="check-filter"><input type="checkbox" id="fl3"> Has L3</label>
       <span class="stats" id="stats"></span>
     </div>
     <div id="table-wrap">
@@ -410,9 +424,15 @@ async function loadOverview(run) {
 function renderTable(rows) {
   const search = document.getElementById('search').value.toLowerCase();
   const cat = document.getElementById('filter-cat').value;
+  const fl1 = document.getElementById('fl1').checked;
+  const fl2 = document.getElementById('fl2').checked;
+  const fl3 = document.getElementById('fl3').checked;
 
   const filtered = rows.filter(r => {
     if (cat && r.category !== cat) return false;
+    if (fl1 && !r.has_level1) return false;
+    if (fl2 && !r.has_level2) return false;
+    if (fl3 && !r.has_level3) return false;
     if (search) {
       const hay = [r.instance_id, r.repo, r.algorithm_name, r.pr_title].join(' ').toLowerCase();
       if (!hay.includes(search)) return false;
@@ -640,6 +660,9 @@ function showView(view) {
 document.getElementById('back-btn').addEventListener('click', () => showView('overview'));
 document.getElementById('search').addEventListener('input', () => renderTable(state.overview));
 document.getElementById('filter-cat').addEventListener('change', () => renderTable(state.overview));
+document.getElementById('fl1').addEventListener('change', () => renderTable(state.overview));
+document.getElementById('fl2').addEventListener('change', () => renderTable(state.overview));
+document.getElementById('fl3').addEventListener('change', () => renderTable(state.overview));
 
 initRuns();
 </script>
