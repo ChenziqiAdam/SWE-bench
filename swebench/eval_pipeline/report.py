@@ -112,6 +112,9 @@ def _load_nonempty_prediction_ids(predictions_paths: dict[int, str]) -> dict[int
     """Return {level: {instance_id, ...}} for instances with a non-empty model_patch."""
     out: dict[int, set[str]] = {1: set(), 2: set(), 3: set()}
     for level, path in predictions_paths.items():
+        level = int(level)
+        if level not in out:
+            out[level] = set()
         if not path or not Path(path).exists():
             continue
         with open(path) as f:
