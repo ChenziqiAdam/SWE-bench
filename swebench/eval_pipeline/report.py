@@ -137,6 +137,7 @@ def render_comparison_table(
     output_csv: str,
     build_validation: dict[str, dict] | None = None,
     predictions_paths: dict[int, str] | None = None,
+    run_config: dict | None = None,
 ) -> None:
     """
     Write a CSV and print an ASCII summary table.
@@ -199,6 +200,11 @@ def render_comparison_table(
     print("\n" + "=" * 78)
     print(f"{'EVALUATION RESULTS':^78}")
     print("=" * 78)
+    if run_config:
+        print("RUN CONFIGURATION")
+        for k, v in run_config.items():
+            print(f"  {k:<28} {v}")
+        print("-" * 78)
     print(f"{'Instance':<40} {'Build':^6} {'L1':^6} {'L2':^6} {'L3':^6}")
     print("-" * 78)
     for row in rows:

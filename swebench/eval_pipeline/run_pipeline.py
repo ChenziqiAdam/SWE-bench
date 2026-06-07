@@ -403,12 +403,36 @@ def main():
         int(level): str(output_dir / f"level{int(level)}_predictions.jsonl")
         for level in args.levels
     }
+    run_config = {
+        "model": args.model,
+        "levels": args.levels,
+        "run_id": args.run_id,
+        "output_dir": str(output_dir),
+        "max_tokens": args.max_tokens,
+        "max_workers": args.max_workers,
+        "max_cost": args.max_cost,
+        "limit": args.limit,
+        "instance_ids": args.instance_ids or "(all)",
+        "repos": args.repos or "(all)",
+        "has_issue": args.has_issue,
+        "has_tests": args.has_tests,
+        "verified_only": args.verified_only,
+        "skip_ingest": args.skip_ingest,
+        "skip_inference": args.skip_inference,
+        "skip_eval": args.skip_eval,
+        "skip_validation": args.skip_validation,
+        "skip_mining": args.skip_mining,
+        "revalidate": args.revalidate,
+        "remine": args.remine,
+        "mine_workers": args.mine_workers,
+    }
     render_comparison_table(
         results=results,
         instances=instances,
         output_csv=output_csv,
         build_validation=build_validation,
         predictions_paths=predictions_paths,
+        run_config=run_config,
     )
     logger.info(f"Done. Results saved to {output_csv}")
 
