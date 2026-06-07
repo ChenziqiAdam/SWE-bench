@@ -1004,50 +1004,49 @@ SPECS_SCIPY.update(
     }
 )
 
-# numpy — old versions (pre-meson, setuptools-based)
+# numpy — old versions (pre-meson, setuptools-based).
+# numpy.distutils was removed in Python 3.12, so old versions must use ≤3.10.
+# setuptools >=60 removed legacy distutils helpers these versions rely on, so pin <60.
 SPECS_NUMPY = {
-    "1.17": {
-        "python": "3.8",
+    k: {
+        "python": "3.9" if k in ("1.17", "1.20", "1.22") else "3.10",
         "packages": "numpy cython pytest",
         "install": "python -m pip install -v --no-build-isolation -e .",
-        "pip_packages": ["cython<3", "setuptools", "pytest", "pytest-xdist"],
+        "pip_packages": [
+            "cython<3", "setuptools<60", "wheel", "pytest", "pytest-xdist",
+        ],
         "test_cmd": TEST_PYTEST,
-    },
-    "1.20": {
-        "python": "3.9",
-        "packages": "numpy cython pytest",
-        "install": "python -m pip install -v --no-build-isolation -e .",
-        "pip_packages": ["cython<3", "setuptools", "pytest", "pytest-xdist"],
-        "test_cmd": TEST_PYTEST,
-    },
-    "1.22": {
-        "python": "3.9",
-        "packages": "numpy cython pytest",
-        "install": "python -m pip install -v --no-build-isolation -e .",
-        "pip_packages": ["cython<3", "setuptools", "pytest", "pytest-xdist"],
-        "test_cmd": TEST_PYTEST,
-    },
+    }
+    for k in ["1.17", "1.20", "1.22", "1.25"]  # 1.25 still uses numpy.distutils
 }
-# numpy — modern versions use meson-python build system, require Python 3.12+
+# numpy — modern versions use meson-python build system, require Python 3.12+.
+# The vendored meson lives in a git submodule; init it before pip can use it.
+_NUMPY_MESON_PRE_INSTALL = [
+    "git submodule update --init --recursive || true",
+]
 SPECS_NUMPY.update(
     {
         k: {
             "python": "3.12",
             "packages": "cython pytest",
+            "pre_install": _NUMPY_MESON_PRE_INSTALL,
             "install": "python -m pip install --no-build-isolation -e .",
             "pip_packages": [
                 "meson-python", "ninja", "cython", "pytest", "pytest-xdist",
             ],
             "test_cmd": TEST_PYTEST,
         }
-        for k in ["1.25", "1.26", "2.0", "2.1", "2.2", "2.3", "2.4", "2.5"]
+        for k in ["1.26", "2.0", "2.1", "2.2", "2.3", "2.4", "2.5"]
     }
 )
 
 # pandas — modern versions use meson-python build system, require Python 3.12+
 _PANDAS_MESON_PRE_INSTALL = [
-    # pandas meson build calls `generate_version.py --print` which falls back to
-    # versioneer (requires git tags). Stub out _version_meson.py so it short-circuits.
+    # pandas meson build calls `generate_version.py --print`, which delegates to
+    # versioneer / `git describe`. That fails when the checkout has no tags. Create
+    # a synthetic tag at HEAD so versioneer returns a valid version string. Also
+    # pre-seed _version_meson.py as a belt-and-suspenders fallback.
+    "git -c user.email=ci@swebench -c user.name=swebench tag -a v0.0.0 -m stub 2>/dev/null || true",
     "printf '__version__=\"0.0.0+stub\"\\n__git_version__=\"unknown\"\\n' > pandas/_version_meson.py",
 ]
 SPECS_PANDAS = {

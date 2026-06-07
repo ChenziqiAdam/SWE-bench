@@ -399,11 +399,16 @@ def main():
         instance_ids={i["instance_id"] for i in instances},
     )
     output_csv = str(output_dir / f"{args.run_id}_results.csv")
+    predictions_paths = {
+        level: str(output_dir / f"level{level}_predictions.jsonl")
+        for level in args.levels
+    }
     render_comparison_table(
         results=results,
         instances=instances,
         output_csv=output_csv,
         build_validation=build_validation,
+        predictions_paths=predictions_paths,
     )
     logger.info(f"Done. Results saved to {output_csv}")
 

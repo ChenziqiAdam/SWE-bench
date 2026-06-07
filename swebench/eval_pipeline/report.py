@@ -80,19 +80,52 @@ def collect_results(
 def compute_pass_rates(
     results: dict[str, dict[int, Optional[bool]]],
     exclude_ids: set[str] | None = None,
-) -> dict[int, float]:
-    """Return {level: pass_rate} where pass_rate = resolved / total_with_data.
+    per_level_eligible: dict[int, set[str]] | None = None,
+) -> dict[int, tuple[float, int, int]]:
+    """Return {level: (rate, resolved, denominator)}.
 
-    Instances in exclude_ids (e.g. non-buildable) are dropped from both numerator and
-    denominator so the rate reflects only fair comparisons.
+    - exclude_ids drops instances at every level (e.g. non-buildable).
+    - per_level_eligible[level], if provided, further restricts the denominator at
+      that level to the listed instance_ids — used for "had a non-empty prompt/patch"
+      fair-denominator views.
     """
     exclude_ids = exclude_ids or set()
-    rates = {}
+    rates: dict[int, tuple[float, int, int]] = {}
     for level in [1, 2, 3]:
-        vals = [v[level] for iid, v in results.items()
-                if iid not in exclude_ids and v[level] is not None]
-        rates[level] = sum(vals) / len(vals) if vals else 0.0
+        eligible = per_level_eligible.get(level) if per_level_eligible else None
+        vals = []
+        for iid, v in results.items():
+            if iid in exclude_ids:
+                continue
+            if eligible is not None and iid not in eligible:
+                continue
+            if v[level] is None:
+                continue
+            vals.append(v[level])
+        denom = len(vals)
+        resolved = sum(1 for x in vals if x)
+        rates[level] = (resolved / denom if denom else 0.0, resolved, denom)
     return rates
+
+
+def _load_nonempty_prediction_ids(predictions_paths: dict[int, str]) -> dict[int, set[str]]:
+    """Return {level: {instance_id, ...}} for instances with a non-empty model_patch."""
+    out: dict[int, set[str]] = {1: set(), 2: set(), 3: set()}
+    for level, path in predictions_paths.items():
+        if not path or not Path(path).exists():
+            continue
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if (row.get("model_patch") or "").strip():
+                    out[level].add(row["instance_id"])
+    return out
 
 
 def render_comparison_table(
@@ -100,6 +133,7 @@ def render_comparison_table(
     instances: list[dict],
     output_csv: str,
     build_validation: dict[str, dict] | None = None,
+    predictions_paths: dict[int, str] | None = None,
 ) -> None:
     """
     Write a CSV and print an ASCII summary table.
@@ -114,6 +148,8 @@ def render_comparison_table(
     build_validation = build_validation or {}
     unbuildable_ids = {iid for iid, v in build_validation.items() if not v.get("buildable", True)}
 
+    nonempty = _load_nonempty_prediction_ids(predictions_paths or {})
+
     rows = []
     for instance_id, level_results in sorted(results.items()):
         inst = meta.get(instance_id, {})
@@ -127,23 +163,35 @@ def render_comparison_table(
             "level1_resolved": _bool_str(level_results.get(1)),
             "level2_resolved": _bool_str(level_results.get(2)),
             "level3_resolved": _bool_str(level_results.get(3)),
+            "level1_has_pred": "yes" if instance_id in nonempty[1] else "no",
+            "level2_has_pred": "yes" if instance_id in nonempty[2] else "no",
+            "level3_has_pred": "yes" if instance_id in nonempty[3] else "no",
         })
 
     # Write CSV
     Path(output_csv).parent.mkdir(parents=True, exist_ok=True)
     fieldnames = ["instance_id", "repo", "pr_number", "category", "buildable",
-                  "level1_resolved", "level2_resolved", "level3_resolved"]
+                  "level1_resolved", "level2_resolved", "level3_resolved",
+                  "level1_has_pred", "level2_has_pred", "level3_has_pred"]
     with open(output_csv, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
     logger.info(f"Results written to {output_csv}")
 
-    # Pass rates: raw (all instances) and clean (buildable only)
     rates_raw = compute_pass_rates(results)
     rates_clean = compute_pass_rates(results, exclude_ids=unbuildable_ids)
+    rates_fair = compute_pass_rates(
+        results,
+        exclude_ids=unbuildable_ids,
+        per_level_eligible=nonempty,
+    )
     total = len(results)
     n_buildable = total - len(unbuildable_ids & set(results.keys()))
+
+    def _fmt(r):
+        rate, res, denom = r
+        return f"{rate:6.1%} ({res}/{denom})"
 
     print("\n" + "=" * 78)
     print(f"{'EVALUATION RESULTS':^78}")
@@ -159,11 +207,15 @@ def render_comparison_table(
             f"{row['level3_resolved']:^6}"
         )
     print("=" * 78)
-    print(f"{'PASS RATE (all instances)':<40} {'':^6} "
-          f"{rates_raw[1]:^6.1%} {rates_raw[2]:^6.1%} {rates_raw[3]:^6.1%}")
+    print(f"{'PASS RATE (all instances)':<32} "
+          f"{_fmt(rates_raw[1]):>14} {_fmt(rates_raw[2]):>14} {_fmt(rates_raw[3]):>14}")
     if build_validation:
-        print(f"{'PASS RATE (buildable only)':<40} {'':^6} "
-              f"{rates_clean[1]:^6.1%} {rates_clean[2]:^6.1%} {rates_clean[3]:^6.1%}")
+        print(f"{'PASS RATE (buildable only)':<32} "
+              f"{_fmt(rates_clean[1]):>14} {_fmt(rates_clean[2]):>14} {_fmt(rates_clean[3]):>14}")
+    if predictions_paths:
+        print(f"{'PASS RATE (non-empty pred, fair)':<32} "
+              f"{_fmt(rates_fair[1]):>14} {_fmt(rates_fair[2]):>14} {_fmt(rates_fair[3]):>14}")
+    if build_validation:
         print(f"Total instances: {total}  |  buildable: {n_buildable}  |  "
               f"non-buildable: {total - n_buildable}")
     else:
