@@ -10,7 +10,7 @@ from typing import Optional
 from unidiff import PatchSet
 
 from swebench.collect.utils import Repo
-from swebench.eval_pipeline.constants import COL_REPO, COL_PR_NUMBER, COL_PAPER_REFERENCE
+from swebench.eval_pipeline.constants import COL_REPO, COL_PR_NUMBER, COL_PAPER_REFERENCE, COL_HAS_ISSUE
 
 logger = logging.getLogger(__name__)
 
@@ -191,6 +191,7 @@ def build_instance(row: dict, github_token: Optional[str] = None) -> Optional[di
         "pr_body": (pull["body"] or "") if hasattr(pull, "__getitem__") else (pull.body or ""),
         "paper_reference": row.get(COL_PAPER_REFERENCE) or "",
         "issue_numbers": row.get("issue_numbers", []),
+        "has_issue": str(row.get(COL_HAS_ISSUE) or "").strip().lower() == "yes",
         "category": row.get("Category", ""),
         "algorithm_name": row.get("Algorithm Name", ""),
         "file_contents": file_contents,

@@ -10,6 +10,7 @@ COL_ALGORITHM_NAME = "Algorithm Name"
 COL_PAPER_REFERENCE = "Paper Reference"
 COL_HAS_TEST = "Has Test"
 COL_TEST_LINKS = "Test Links"
+COL_HAS_ISSUE = "Has Issue"
 
 # Model limits (tokens)
 MODEL_LIMITS = {

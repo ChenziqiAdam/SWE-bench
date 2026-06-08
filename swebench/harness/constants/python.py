@@ -1017,7 +1017,7 @@ SPECS_NUMPY = {
         ],
         "test_cmd": TEST_PYTEST,
     }
-    for k in ["1.17", "1.20", "1.22", "1.25"]  # 1.25 still uses numpy.distutils
+    for k in ["1.17", "1.18", "1.19", "1.20", "1.21", "1.22", "1.23", "1.24", "1.25"]  # 1.25 still uses numpy.distutils
 }
 # numpy — modern versions use meson-python build system, require Python 3.12+.
 # The vendored meson lives in a git submodule; init it before pip can use it.

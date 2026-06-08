@@ -12,7 +12,7 @@ from swebench.collect.utils import Repo, PR_KEYWORDS
 from swebench.eval_pipeline.constants import (
     COL_REPO, COL_PR_NUMBER, COL_TITLE, COL_URL,
     COL_CATEGORY, COL_ALGORITHM_NAME, COL_PAPER_REFERENCE,
-    COL_HAS_TEST, COL_TEST_LINKS,
+    COL_HAS_TEST, COL_TEST_LINKS, COL_HAS_ISSUE,
 )
 
 logger = logging.getLogger(__name__)
@@ -163,6 +163,14 @@ def fetch_all(
         if pull is None:
             row["issue_numbers"] = []
             row["issue_data"] = {}
+            enriched.append(row)
+            continue
+
+        has_issue_flag = str(row.get(COL_HAS_ISSUE) or "").strip().lower()
+        if has_issue_flag == "no":
+            row["issue_numbers"] = []
+            row["issue_data"] = {}
+            logger.debug(f"  Skipping issue scan for {repo_full}#{pr_number} (Has Issue=No)")
             enriched.append(row)
             continue
 

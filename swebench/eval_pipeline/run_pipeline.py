@@ -230,10 +230,10 @@ def main():
             logger.warning(f"instance_ids not found in instances.jsonl: {missing}")
         logger.info(f"Filtered to {len(instances)} instance(s): {[i['instance_id'] for i in instances]}")
 
-    # Apply --has_issue filter (problem_statement non-empty = has linked issue)
+    # Apply --has_issue filter using the Has Issue column from the spreadsheet
     if args.has_issue:
         before = len(instances)
-        instances = [i for i in instances if i.get("problem_statement", "").strip()]
+        instances = [i for i in instances if i.get("has_issue")]
         logger.info(f"--has_issue: kept {len(instances)}/{before} instances with a linked issue")
 
     # Apply --has_tests filter (non-empty FAIL_TO_PASS = testable)
