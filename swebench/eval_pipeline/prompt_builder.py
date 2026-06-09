@@ -104,16 +104,19 @@ def build_level3_prompt(instance: dict) -> Optional[str]:
     paper_ref = (instance.get("paper_reference") or "").strip()
     repo = instance["repo"]
     algorithm_name = (instance.get("algorithm_name") or "").strip()
+    category = (instance.get("category") or "").strip()
 
     if not paper_ref:
         return None
 
     algo_hint = f" specifically the '{algorithm_name}' algorithm" if algorithm_name else ""
+    category_line = f"PR category: {category}\n\n" if category and category != "not_algorithm" else ""
     file_ctx = _format_file_contents(instance)
 
     return (
         f"{SYSTEM_MESSAGE}\n"
         f"Repository: {repo}\n\n"
+        f"{category_line}"
         f"Implement{algo_hint} as described in the following paper reference:\n"
         f"<paper>\n{paper_ref}\n</paper>\n\n"
         f"{file_ctx}"
