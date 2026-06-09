@@ -317,6 +317,17 @@ def main():
     from swebench.eval_pipeline.prompt_builder import build_all_prompts
     all_prompts = build_all_prompts(instances)
 
+    for level in levels:
+        prompts_path = output_dir / f"level{level}_prompts.jsonl"
+        with open(prompts_path, "w") as pf:
+            for iid, p_by_level in all_prompts.items():
+                pf.write(json.dumps({
+                    "instance_id": iid,
+                    "level": level,
+                    "prompt": p_by_level.get(level),
+                }) + "\n")
+        logger.info(f"Wrote prompts for level {level} → {prompts_path}")
+
     # ── Stage 4: Inference ────────────────────────────────────────────────────
     if not args.skip_inference:
         logger.info("=== Stage 4: Running inference ===")

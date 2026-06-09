@@ -1007,10 +1007,18 @@ SPECS_SCIPY.update(
 # numpy — old versions (pre-meson, setuptools-based).
 # numpy.distutils was removed in Python 3.12, so old versions must use ≤3.10.
 # setuptools >=60 removed legacy distutils helpers these versions rely on, so pin <60.
+# pip>=24 requires the PEP 660 `build_editable` hook for `-e .`, which
+# setuptools<60 does not implement — so we must pin pip<24 to allow legacy
+# editable installs to succeed. Editable mode is required so that patches
+# applied to /testbed/numpy/* take effect at test time.
+_NUMPY_LEGACY_PRE_INSTALL = [
+    "python -m pip install --no-deps 'pip<24'",
+]
 SPECS_NUMPY = {
     k: {
         "python": "3.9" if k in ("1.17", "1.20", "1.22") else "3.10",
         "packages": "numpy cython pytest",
+        "pre_install": _NUMPY_LEGACY_PRE_INSTALL,
         "install": "python -m pip install -v --no-build-isolation -e .",
         "pip_packages": [
             "cython<3", "setuptools<60", "wheel", "pytest", "pytest-xdist",
@@ -1042,11 +1050,16 @@ SPECS_NUMPY.update(
 
 # pandas — modern versions use meson-python build system, require Python 3.12+
 _PANDAS_MESON_PRE_INSTALL = [
-    # pandas meson build calls `generate_version.py --print`, which delegates to
-    # versioneer / `git describe`. That fails when the checkout has no tags. Create
-    # a synthetic tag at HEAD so versioneer returns a valid version string. Also
-    # pre-seed _version_meson.py as a belt-and-suspenders fallback.
+    # pandas meson build calls `generate_version.py --print`, which does:
+    #   sys.path.insert(0, "")
+    #   try: import _version_meson
+    #   except ImportError: versioneer.get_version()
+    # versioneer fails when the checkout has no annotated tag. Belt-and-suspenders:
+    # (1) create a synthetic annotated tag so versioneer can succeed if it runs;
+    # (2) pre-seed `_version_meson.py` at the repo root (cwd of generate_version.py)
+    #     so the `try: import _version_meson` branch short-circuits versioneer entirely.
     "git -c user.email=ci@swebench -c user.name=swebench tag -a v0.0.0 -m stub 2>/dev/null || true",
+    "printf '__version__=\"0.0.0+stub\"\\n__git_version__=\"unknown\"\\n' > _version_meson.py",
     "printf '__version__=\"0.0.0+stub\"\\n__git_version__=\"unknown\"\\n' > pandas/_version_meson.py",
 ]
 SPECS_PANDAS = {
@@ -1064,13 +1077,20 @@ SPECS_PANDAS = {
     for k in ["1.5", "2.0", "2.1", "2.2", "3.0"]
 }
 # pandas — old versions (pre-meson, setuptools-based)
+# These setup.py files contain non-PEP-440 install_requires specs (e.g. "pytz >= 2011k").
+# Modern setuptools rejects them, and modern pip>=24 requires PEP 660 for editable
+# installs. Pin both to legacy versions to allow `pip install -e .` to succeed.
+_PANDAS_LEGACY_PRE_INSTALL = [
+    "python -m pip install --no-deps 'pip<24'",
+]
 SPECS_PANDAS.update(
     {
         k: {
             "python": "3.8",
             "packages": "numpy cython pytest",
+            "pre_install": _PANDAS_LEGACY_PRE_INSTALL,
             "install": "python -m pip install -v --no-build-isolation -e .",
-            "pip_packages": ["cython<3", "setuptools", "numpy", "python-dateutil", "pytz", "pytest"],
+            "pip_packages": ["cython<3", "setuptools<58", "numpy", "python-dateutil", "pytz", "pytest"],
             "test_cmd": TEST_PYTEST,
         }
         for k in ["0.6", "0.24", "1.0", "1.3"]

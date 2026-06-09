@@ -121,7 +121,9 @@ def build_level3_prompt(instance: dict) -> Optional[str]:
         f"<paper>\n{paper_ref}\n</paper>\n\n"
         f"{file_ctx}"
         f"Study the existing codebase, understand how similar algorithms are implemented, "
-        f"and produce a patch that adds this algorithm in a consistent style.\n\n"
+        f"and produce a patch that adds this algorithm in a consistent style.\n"
+        f"Modify only library/source code. Do NOT create new test files or modify existing tests — "
+        f"the evaluation harness provides its own tests.\n\n"
         f"{PATCH_INSTRUCTION}"
     )
 
