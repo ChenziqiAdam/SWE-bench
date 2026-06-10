@@ -174,6 +174,11 @@ def _repair_patch(patch: str) -> str:
         return patch
 
     lines = patch.split("\n")
+    # split("\n") yields a trailing "" when patch ends with "\n". That sentinel is
+    # NOT part of any hunk body; if left in, the bare-empty → " " rule below turns
+    # it into a phantom context line and inflates the final hunk's counts by 1.
+    if lines and lines[-1] == "":
+        lines.pop()
     repaired = []
     in_hunk = False
 
