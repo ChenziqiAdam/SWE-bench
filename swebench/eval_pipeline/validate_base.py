@@ -11,7 +11,7 @@ from pathlib import Path
 import docker
 
 from swebench.harness.docker_build import build_instance_images
-from swebench.harness.test_spec.test_spec import make_test_spec
+from swebench.harness.test_spec.test_spec import MAP_REPO_VERSION_TO_SPECS, make_test_spec
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,23 @@ def validate_buildable(
         logger.info(f"Loaded {len(cache)} cached build-validation results from {cache_path}")
 
     todo = [i for i in instances if i["instance_id"] not in cache] if not force else instances
+
+    # Filter out instances whose repo/version has no spec — they can't be built.
+    skipped = []
+    buildable_todo = []
+    for inst in todo:
+        repo = inst.get("repo", "")
+        version = inst.get("version", "")
+        if repo not in MAP_REPO_VERSION_TO_SPECS or version not in MAP_REPO_VERSION_TO_SPECS.get(repo, {}):
+            logger.warning(
+                f"Skipping {inst['instance_id']}: no spec for {repo}@version={version!r}"
+            )
+            cache[inst["instance_id"]] = {"buildable": False, "error": f"no spec for version {version!r}"}
+            skipped.append(inst["instance_id"])
+        else:
+            buildable_todo.append(inst)
+    todo = buildable_todo
+
     if not todo:
         logger.info("All instances already validated; skipping build pass.")
         return cache
