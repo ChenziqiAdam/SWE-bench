@@ -956,34 +956,65 @@ SPECS_PYDICOM.update(
 
 SPECS_HUMANEVAL = {k: {"python": "3.9", "test_cmd": "python"} for k in ["1.0"]}
 
-# scipy — modern versions use meson-python build system, require Python 3.12+ and gfortran
-SPECS_SCIPY = {
-    "1.7": {
-        "python": "3.9",
-        "packages": "numpy cython pytest",
-        "pre_install": [
-            "apt-get update && apt-get install -y gfortran pkg-config libopenblas-dev",
-            "git submodule update --init",
-        ],
-        "install": "python -m pip install -v --no-build-isolation -e .",
-        "pip_packages": ["cython<3", "setuptools", "numpy<2", "pybind11", "pythran", "pytest", "pytest-xdist"],
-        "test_cmd": TEST_PYTEST,
-    },
-    "1.11": {
-        "python": "3.11",
-        "packages": "numpy cython pytest",
-        "pre_install": [
-            "apt-get update && apt-get install -y gfortran pkg-config libopenblas-dev",
-            "git submodule update --init",
-        ],
-        "install": "python -m pip install --no-build-isolation -e .",
-        "pip_packages": [
-            "meson-python", "ninja", "pybind11", "pythran",
-            "numpy>=1.22,<2.0", "cython>=0.29.33", "pytest", "pytest-xdist", "pooch",
-        ],
-        "test_cmd": TEST_PYTEST,
-    },
-}
+# scipy — legacy versions (setuptools-based, pre-meson)
+# These old versions use numpy.distutils / f2py via setup.py.
+# Python 3.8 is the latest that reliably supports these old setup chains.
+_SCIPY_LEGACY_PRE_INSTALL = [
+    "apt-get update && apt-get install -y gfortran libopenblas-dev liblapack-dev",
+    "python -m pip install --no-deps 'pip<24'",
+]
+SPECS_SCIPY = {}
+SPECS_SCIPY.update(
+    {
+        k: {
+            "python": "3.8",
+            "packages": "numpy cython pytest",
+            "pre_install": _SCIPY_LEGACY_PRE_INSTALL,
+            "install": "python -m pip install -v --no-build-isolation -e .",
+            "pip_packages": ["cython<3", "setuptools<60", "wheel", "numpy<2", "pytest", "pytest-xdist", "pybind11"],
+            "test_cmd": TEST_PYTEST,
+        }
+        for k in ["0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.19", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6"]
+    }
+)
+# scipy — intermediate versions (1.7–1.10): setuptools-based but need newer Python
+SPECS_SCIPY.update(
+    {
+        k: {
+            "python": "3.9",
+            "packages": "numpy cython pytest",
+            "pre_install": [
+                "apt-get update && apt-get install -y gfortran pkg-config libopenblas-dev",
+                "git submodule update --init",
+            ],
+            "install": "python -m pip install -v --no-build-isolation -e .",
+            "pip_packages": ["cython<3", "setuptools", "numpy<2", "pybind11", "pythran", "pytest", "pytest-xdist"],
+            "test_cmd": TEST_PYTEST,
+        }
+        for k in ["1.7", "1.8", "1.9", "1.10"]
+    }
+)
+# scipy — meson-based (1.11–1.13): Python 3.11
+SPECS_SCIPY.update(
+    {
+        k: {
+            "python": "3.11",
+            "packages": "numpy cython pytest",
+            "pre_install": [
+                "apt-get update && apt-get install -y gfortran pkg-config libopenblas-dev",
+                "git submodule update --init",
+            ],
+            "install": "python -m pip install --no-build-isolation -e .",
+            "pip_packages": [
+                "meson-python", "ninja", "pybind11", "pythran",
+                "numpy>=1.22,<2.0", "cython>=0.29.33", "pytest", "pytest-xdist", "pooch",
+            ],
+            "test_cmd": TEST_PYTEST,
+        }
+        for k in ["1.11", "1.12", "1.13"]
+    }
+)
+# scipy — meson-based (1.14+): Python 3.12
 SPECS_SCIPY.update(
     {
         k: {
@@ -1014,9 +1045,11 @@ SPECS_SCIPY.update(
 _NUMPY_LEGACY_PRE_INSTALL = [
     "python -m pip install --no-deps 'pip<24'",
 ]
+# version='0' covers very old PRs (2012–2019) whose version tag was unresolvable.
+# They span numpy 1.7–1.16 era; use Python 3.8 + legacy pip/setuptools.
 SPECS_NUMPY = {
-    k: {
-        "python": "3.9" if k in ("1.17", "1.20", "1.22") else "3.10",
+    "0": {
+        "python": "3.8",
         "packages": "numpy cython pytest",
         "pre_install": _NUMPY_LEGACY_PRE_INSTALL,
         "install": "python -m pip install -v --no-build-isolation -e .",
@@ -1024,9 +1057,23 @@ SPECS_NUMPY = {
             "cython<3", "setuptools<60", "wheel", "pytest", "pytest-xdist",
         ],
         "test_cmd": TEST_PYTEST,
-    }
-    for k in ["1.17", "1.18", "1.19", "1.20", "1.21", "1.22", "1.23", "1.24", "1.25"]  # 1.25 still uses numpy.distutils
+    },
 }
+SPECS_NUMPY.update(
+    {
+        k: {
+            "python": "3.9" if k in ("1.17", "1.20", "1.22") else "3.10",
+            "packages": "numpy cython pytest",
+            "pre_install": _NUMPY_LEGACY_PRE_INSTALL,
+            "install": "python -m pip install -v --no-build-isolation -e .",
+            "pip_packages": [
+                "cython<3", "setuptools<60", "wheel", "pytest", "pytest-xdist",
+            ],
+            "test_cmd": TEST_PYTEST,
+        }
+        for k in ["1.17", "1.18", "1.19", "1.20", "1.21", "1.22", "1.23", "1.24", "1.25"]  # 1.25 still uses numpy.distutils
+    }
+)
 # numpy — modern versions use meson-python build system, require Python 3.12+.
 # The vendored meson lives in a git submodule; init it before pip can use it.
 _NUMPY_MESON_PRE_INSTALL = [
