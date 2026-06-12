@@ -105,6 +105,12 @@ def parse_args():
                         "Total budget = N_instances * this. Kills the eval if a worker hangs "
                         "outside the per-test timeout (e.g. stuck docker build / container start). "
                         "Default 900s (15 min/instance).")
+    p.add_argument("--clean_images", action="store_true",
+                   help="Delete per-instance Docker images after eval (cache_level=instance). "
+                        "Saves disk space on large runs at the cost of slower re-runs. "
+                        "Env-level images (sweb.env.*) are always kept for reuse.")
+    p.add_argument("--no_ingest_cache", action="store_true",
+                   help="Ignore the ingest row cache and re-fetch all GitHub data from scratch.")
     return p.parse_args()
 
 
@@ -163,6 +169,9 @@ def main():
     filter_repos = set(args.repos.split(",")) if args.repos else None
 
     # ── Stage 1 & 2: Ingest + Instance Building ──────────────────────────────
+    ingest_cache_path = output_dir / "ingest_cache.jsonl"
+    instance_checkpoint_path = str(output_dir / "instances_checkpoint.jsonl")
+
     if not args.skip_ingest:
         logger.info("=== Stage 1: Ingesting spreadsheet and fetching GitHub data ===")
         from swebench.eval_pipeline.ingest import fetch_all, instance_ids_to_pr_filter
@@ -173,11 +182,16 @@ def main():
             limit=args.limit,
             pr_numbers=pr_filter,
             repos=filter_repos,
+            cache_path=None if args.no_ingest_cache else ingest_cache_path,
         )
 
         logger.info("=== Stage 2: Building SWEbench instances ===")
         from swebench.eval_pipeline.instance_builder import build_all_instances, write_instances_jsonl
-        instances = build_all_instances(enriched_rows, github_token=github_token)
+        instances = build_all_instances(
+            enriched_rows,
+            github_token=github_token,
+            checkpoint_path=instance_checkpoint_path,
+        )
         # Merge with any existing jsonl so a partial ingest (e.g. --repos numpy/numpy
         # or --limit 5) doesn't wipe rows ingested in prior runs.
         if Path(instances_path).exists() and (filter_repos or filter_ids or args.limit):
@@ -381,8 +395,8 @@ def main():
                 predictions_path=predictions_path,
                 max_workers=args.max_workers,
                 force_rebuild=False,
-                cache_level="env",
-                clean=False,
+                cache_level="instance" if args.clean_images else "env",
+                clean=args.clean_images,
                 open_file_limit=8192,
                 run_id=run_id,
                 timeout=1800,

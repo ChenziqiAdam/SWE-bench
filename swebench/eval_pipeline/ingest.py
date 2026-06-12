@@ -1,6 +1,7 @@
 """Stage 1: Parse PRs.xlsx and fetch GitHub PR/issue content."""
 from __future__ import annotations
 
+import json
 import logging
 import re
 from pathlib import Path
@@ -92,12 +93,54 @@ def find_linked_issue_numbers(pull) -> list[str]:
     return list(resolved)
 
 
+def _row_cache_key(repo_full: str, pr_number: int) -> str:
+    return f"{repo_full}#{pr_number}"
+
+
+def _load_ingest_cache(cache_path: Path) -> dict[str, dict]:
+    """Load previously-fetched rows from the ingest cache. Returns {key: row}."""
+    if not cache_path.exists():
+        return {}
+    cache: dict[str, dict] = {}
+    with open(cache_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+                key = _row_cache_key(row[COL_REPO], row[COL_PR_NUMBER])
+                cache[key] = row
+            except Exception:
+                pass
+    logger.info(f"Ingest cache: loaded {len(cache)} previously-fetched rows from {cache_path}")
+    return cache
+
+
+def _append_ingest_cache(cache_path: Path, row: dict) -> None:
+    """Append a single enriched row to the ingest cache file."""
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    # pr_data and issue_data may contain GitHub API objects; serialize to plain dicts.
+    serializable = {}
+    for k, v in row.items():
+        if k == "pr_data" and v is not None and not isinstance(v, dict):
+            serializable[k] = dict(v) if hasattr(v, "__iter__") else str(v)
+        elif k == "issue_data" and isinstance(v, dict):
+            serializable[k] = {inum: (dict(iss) if not isinstance(iss, dict) else iss)
+                                for inum, iss in v.items()}
+        else:
+            serializable[k] = v
+    with open(cache_path, "a") as f:
+        f.write(json.dumps(serializable, default=str) + "\n")
+
+
 def fetch_all(
     spreadsheet_path: str,
     github_token: Optional[str] = None,
     limit: Optional[int] = None,
     pr_numbers: Optional[dict[str, set[int]]] = None,
     repos: Optional[set[str]] = None,
+    cache_path: Optional[Path] = None,
 ) -> list[dict]:
     """
     Parse the spreadsheet and fetch GitHub data for each PR.
@@ -105,7 +148,9 @@ def fetch_all(
     Args:
         pr_numbers: optional {repo_full_name: {pr_number, ...}} filter.
                     When given, only those specific PRs are fetched.
-                    Build this from instance_ids with _instance_ids_to_pr_filter().
+        cache_path: if given, previously-fetched rows are loaded from this JSONL
+                    file and skipped; newly fetched rows are appended immediately
+                    so a crash mid-run loses at most the current row.
 
     Returns a list of enriched row dicts with added keys:
       - pr_data: raw GitHub PR object (or None)
@@ -134,14 +179,25 @@ def fetch_all(
     if limit:
         rows = rows[:limit]
 
+    # Load checkpoint cache so we can skip already-fetched rows
+    existing: dict[str, dict] = _load_ingest_cache(cache_path) if cache_path else {}
+
     # Cache Repo objects per owner/name
     repo_cache: dict[str, Repo] = {}
 
     enriched = []
+    skipped = 0
     for i, row in enumerate(rows):
         repo_full = row[COL_REPO]  # e.g. "numpy/numpy"
         pr_number = row[COL_PR_NUMBER]
         owner, name = repo_full.split("/", 1)
+        key = _row_cache_key(repo_full, pr_number)
+
+        # Resume: use cached row if available
+        if key in existing:
+            enriched.append(existing[key])
+            skipped += 1
+            continue
 
         logger.info(f"[{i+1}/{len(rows)}] Fetching {repo_full}#{pr_number}")
 
@@ -154,6 +210,8 @@ def fetch_all(
                 row["issue_numbers"] = []
                 row["issue_data"] = {}
                 enriched.append(row)
+                if cache_path:
+                    _append_ingest_cache(cache_path, row)
                 continue
 
         repo = repo_cache[repo_full]
@@ -164,6 +222,8 @@ def fetch_all(
             row["issue_numbers"] = []
             row["issue_data"] = {}
             enriched.append(row)
+            if cache_path:
+                _append_ingest_cache(cache_path, row)
             continue
 
         has_issue_flag = str(row.get(COL_HAS_ISSUE) or "").strip().lower()
@@ -172,6 +232,8 @@ def fetch_all(
             row["issue_data"] = {}
             logger.debug(f"  Skipping issue scan for {repo_full}#{pr_number} (Has Issue=No)")
             enriched.append(row)
+            if cache_path:
+                _append_ingest_cache(cache_path, row)
             continue
 
         issue_numbers = find_linked_issue_numbers(pull)
@@ -188,5 +250,9 @@ def fetch_all(
             logger.warning(f"  No linked issues found for {repo_full}#{pr_number}")
 
         enriched.append(row)
+        if cache_path:
+            _append_ingest_cache(cache_path, row)
 
+    if skipped:
+        logger.info(f"Resumed from cache: skipped {skipped}/{len(rows)} already-fetched rows")
     return enriched

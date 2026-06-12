@@ -282,14 +282,57 @@ def _get_version_fallback(repo_full: str, base_commit: str, github_token: Option
 def build_all_instances(
     enriched_rows: list[dict],
     github_token: Optional[str] = None,
+    checkpoint_path: Optional[str] = None,
 ) -> list[dict]:
-    """Build instances for all rows, skipping those that fail."""
-    instances = []
+    """Build instances for all rows, skipping those that fail.
+
+    If checkpoint_path is given, already-built instances are loaded from it on
+    startup and each newly built instance is appended immediately, so a crash
+    mid-run loses at most the current row.
+    """
+    # Load existing checkpoint
+    existing: dict[str, dict] = {}
+    if checkpoint_path and Path(checkpoint_path).exists():
+        with open(checkpoint_path) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        inst = json.loads(line)
+                        existing[inst["instance_id"]] = inst
+                    except Exception:
+                        pass
+        if existing:
+            logger.info(
+                f"Instance checkpoint: loaded {len(existing)} already-built instances "
+                f"from {checkpoint_path}"
+            )
+
+    instances = list(existing.values())
+    skipped = 0
+    built = 0
+
     for row in enriched_rows:
+        repo_full = row.get(COL_REPO, "")
+        pr_number = row.get(COL_PR_NUMBER, 0)
+        instance_id = _make_instance_id(repo_full, pr_number)
+
+        if instance_id in existing:
+            skipped += 1
+            continue
+
         inst = build_instance(row, github_token=github_token)
         if inst is not None:
             instances.append(inst)
-    logger.info(f"Built {len(instances)}/{len(enriched_rows)} instances")
+            built += 1
+            if checkpoint_path:
+                Path(checkpoint_path).parent.mkdir(parents=True, exist_ok=True)
+                with open(checkpoint_path, "a") as f:
+                    f.write(json.dumps(inst) + "\n")
+
+    if skipped:
+        logger.info(f"Instance checkpoint: skipped {skipped} already-built rows")
+    logger.info(f"Built {built} new + {skipped} cached = {len(instances)} total instances")
     return instances
 
 
