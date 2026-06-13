@@ -956,14 +956,45 @@ SPECS_PYDICOM.update(
 
 SPECS_HUMANEVAL = {k: {"python": "3.9", "test_cmd": "python"} for k in ["1.0"]}
 
-# scipy — legacy versions (setuptools-based, pre-meson)
-# These old versions use numpy.distutils / f2py via setup.py.
-# Python 3.8 is the latest that reliably supports these old setup chains.
+# scipy — legacy versions (setuptools/numpy.distutils + f2py via setup.py).
+# Python 3.8 is the last version supporting these old build chains.
+# - pip<24: prevents PEP 660 enforcement on editable installs (setuptools<60 lacks build_editable).
+# - setuptools<60: keeps legacy distutils helpers that old setup.py files rely on.
+# - export FFLAGS=-fcommon: GCC ≥10 changed default from -fcommon to -fno-common. Old scipy
+#   Fortran sources (ARPACK, VODE) have duplicate symbol definitions that -fno-common rejects.
+#   Exporting FFLAGS in pre_install makes it available to numpy.distutils at build time.
+# - touch *.c trick: scipy 0.x tools/cythonize.py checks mtime(.c) vs mtime(.pyx). Touching
+#   all .c files after install makes them look newer than .pyx, so cythonize is skipped on
+#   repeat runs. But the first install still runs cythonize. To skip it on the first pass,
+#   we touch the .pyx files to a very old date so .c files (already committed at any mtime)
+#   appear newer — forcing cythonize.py to skip re-generation and use committed .c files.
+#   This avoids "Signature not compatible" (streams.pyx:203) which is a Cython 0.29 strictness
+#   issue with syntax used in scipy 0.x .pyx files.
+_SCIPY_LEGACY_APT = "apt-get update && apt-get install -y gfortran libopenblas-dev liblapack-dev"
 _SCIPY_LEGACY_PRE_INSTALL = [
-    "apt-get update && apt-get install -y gfortran libopenblas-dev liblapack-dev",
+    _SCIPY_LEGACY_APT,
     "python -m pip install --no-deps 'pip<24'",
+    "export FFLAGS='-fcommon'",
 ]
 SPECS_SCIPY = {}
+# scipy 0.x: touch all .pyx to epoch so committed .c files appear newer → cythonize skipped.
+_SCIPY_0X_PRE_INSTALL = _SCIPY_LEGACY_PRE_INSTALL + [
+    "find /testbed -name '*.pyx' -exec touch -t 197001010000 {} \\; 2>/dev/null || true",
+]
+SPECS_SCIPY.update(
+    {
+        k: {
+            "python": "3.8",
+            "packages": "numpy cython pytest",
+            "pre_install": _SCIPY_0X_PRE_INSTALL,
+            "install": "python -m pip install -v --no-build-isolation -e .",
+            "pip_packages": ["cython<3", "setuptools<60", "wheel", "numpy<2", "pytest", "pytest-xdist", "pybind11"],
+            "test_cmd": TEST_PYTEST,
+        }
+        for k in ["0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.19"]
+    }
+)
+# scipy 1.0–1.6: cythonize works fine; only need -fcommon for Fortran linker.
 SPECS_SCIPY.update(
     {
         k: {
@@ -974,10 +1005,10 @@ SPECS_SCIPY.update(
             "pip_packages": ["cython<3", "setuptools<60", "wheel", "numpy<2", "pytest", "pytest-xdist", "pybind11"],
             "test_cmd": TEST_PYTEST,
         }
-        for k in ["0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.19", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6"]
+        for k in ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6"]
     }
 )
-# scipy — intermediate versions (1.7–1.10): setuptools-based but need newer Python
+# scipy 1.7–1.8: setuptools-based, Python 3.9; still needs -fcommon for Fortran linker.
 SPECS_SCIPY.update(
     {
         k: {
@@ -986,12 +1017,34 @@ SPECS_SCIPY.update(
             "pre_install": [
                 "apt-get update && apt-get install -y gfortran pkg-config libopenblas-dev",
                 "git submodule update --init",
+                "export FFLAGS='-fcommon'",
             ],
             "install": "python -m pip install -v --no-build-isolation -e .",
             "pip_packages": ["cython<3", "setuptools", "numpy<2", "pybind11", "pythran", "pytest", "pytest-xdist"],
             "test_cmd": TEST_PYTEST,
         }
-        for k in ["1.7", "1.8", "1.9", "1.10"]
+        for k in ["1.7", "1.8"]
+    }
+)
+# scipy 1.9–1.10: repo already has pyproject.toml+meson; the setuptools path fails with
+# "BackendUnavailable: Cannot import 'mesonpy'". Use meson-python like 1.11.
+SPECS_SCIPY.update(
+    {
+        k: {
+            "python": "3.11",
+            "packages": "numpy cython pytest",
+            "pre_install": [
+                "apt-get update && apt-get install -y gfortran pkg-config libopenblas-dev",
+                "git submodule update --init",
+            ],
+            "install": "python -m pip install --no-build-isolation -e .",
+            "pip_packages": [
+                "meson-python", "ninja", "pybind11", "pythran",
+                "numpy>=1.22,<2.0", "cython>=0.29.33", "pytest", "pytest-xdist", "pooch",
+            ],
+            "test_cmd": TEST_PYTEST,
+        }
+        for k in ["1.9", "1.10"]
     }
 )
 # scipy — meson-based (1.11–1.13): Python 3.11
