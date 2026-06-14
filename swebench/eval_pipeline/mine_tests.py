@@ -120,7 +120,7 @@ def _classify(initial: dict[str, str], final: dict[str, str]) -> tuple[list[str]
     return fail_to_pass, pass_to_pass
 
 
-def _mine_one(instance: dict, run_id: str, timeout: int = 1800) -> dict:
+def _mine_one(instance: dict, run_id: str, client: docker.DockerClient, timeout: int = 1800) -> dict:
     """Mine FAIL_TO_PASS / PASS_TO_PASS for one instance. Builds (or reuses) the
     instance image, then runs both passes inside one container."""
     instance_id = instance["instance_id"]
@@ -135,7 +135,6 @@ def _mine_one(instance: dict, run_id: str, timeout: int = 1800) -> dict:
         close_logger(inst_logger)
         return {"ok": False, "error": f"no log parser for {instance['repo']}"}
 
-    client = docker.from_env()
     container = None
     try:
         # Remove any stale container from a previous crashed/interrupted run with
@@ -220,8 +219,11 @@ def mine_fail_to_pass(
         return cache
 
     logger.info(f"Mining FAIL_TO_PASS for {len(todo)} instance(s) with {max_workers} workers...")
+    # Share one Docker client across all threads — avoids opening a new Unix socket
+    # per worker, which is wasteful and can hit connection limits on large runs.
+    shared_client = docker.from_env()
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        futs = {pool.submit(_mine_one, inst, run_id): inst for inst in todo}
+        futs = {pool.submit(_mine_one, inst, run_id, shared_client): inst for inst in todo}
         for fut in as_completed(futs):
             inst = futs[fut]
             iid = inst["instance_id"]

@@ -15,7 +15,9 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
 import traceback
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Optional
 
@@ -332,17 +334,22 @@ def run_inference_for_level(
     max_tokens: int = 4096,
     anthropic_client=None,
     openai_compat_client=None,
+    max_workers: int = 8,
 ) -> None:
     """
-    Run inference for one level across all instances.
+    Run inference for one level across all instances, parallelised across workers.
+
+    API calls are I/O-bound (network round-trips to the LLM provider), so
+    ThreadPoolExecutor gives near-linear speedup up to the provider's rate limit.
+    Default 8 workers is safe for most providers; reduce if you hit 429s.
 
     Args:
         instances: list of SWEbenchInstance dicts
         prompts: {instance_id: prompt_str or None} — None means skip this level
-        model_name: model identifier passed to the API (e.g. "claude-sonnet-4-6",
-                    "gpt-4o", "mistral-large", "llama3:70b", ...)
+        model_name: model identifier passed to the API
         output_file: path to write JSONL predictions
         max_cost: stop if cumulative cost exceeds this (USD)
+        max_workers: parallel API call threads (default 8)
         anthropic_client: Anthropic SDK client (for claude-* on api.anthropic.com)
         openai_compat_client: openai.OpenAI client (for any OpenAI-compatible endpoint)
     """
@@ -351,63 +358,83 @@ def run_inference_for_level(
         logger.info(f"Resuming: {len(existing_ids)} predictions already written for {model_name}")
 
     Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+
+    # Filter to instances that actually need work.
+    todo = [i for i in instances if i["instance_id"] not in existing_ids]
+
     total_cost = 0.0
+    cost_lock = threading.Lock()
+    write_lock = threading.Lock()
+    stop_event = threading.Event()
 
-    with open(output_file, "a") as f:
-        for inst in tqdm(instances, desc=f"Inference ({model_name})"):
-            instance_id = inst["instance_id"]
+    def _process_one(inst: dict) -> None:
+        nonlocal total_cost
+        if stop_event.is_set():
+            return
+        instance_id = inst["instance_id"]
+        prompt = prompts.get(instance_id)
 
-            if instance_id in existing_ids:
-                continue
+        if prompt is None:
+            logger.debug(f"Skipping {instance_id}: no prompt for this level")
+            record = {
+                "instance_id": instance_id,
+                "model_patch": "",
+                "model_name_or_path": model_name,
+                "skipped": True,
+            }
+            with write_lock:
+                with open(output_file, "a") as f:
+                    print(json.dumps(record), file=f, flush=True)
+            return
 
-            prompt = prompts.get(instance_id)
-            if prompt is None:
-                logger.debug(f"Skipping {instance_id}: no prompt for this level")
-                # Write empty patch so the eval harness can record it as unresolved
-                record = {
-                    "instance_id": instance_id,
-                    "model_patch": "",
-                    "model_name_or_path": model_name,
-                    "skipped": True,
-                }
-                print(json.dumps(record), file=f, flush=True)
-                continue
+        try:
+            response_text, cost = _call_model(
+                prompt, model_name,
+                anthropic_client=anthropic_client,
+                openai_compat_client=openai_compat_client,
+                max_tokens=max_tokens,
+            )
+            patch = _extract_diff(response_text)
+            patch = _clean_patch(patch)
+            patch = _repair_patch(patch)
 
-            try:
-                response_text, cost = _call_model(
-                    prompt, model_name,
-                    anthropic_client=anthropic_client,
-                    openai_compat_client=openai_compat_client,
-                    max_tokens=max_tokens,
-                )
-                patch = _extract_diff(response_text)
-                patch = _clean_patch(patch)
-                patch = _repair_patch(patch)
+            with cost_lock:
                 total_cost += cost
-                logger.info(f"{instance_id}: cost=${cost:.4f}, total=${total_cost:.2f}")
+                current_total = total_cost
+            logger.info(f"{instance_id}: cost=${cost:.4f}, total=${current_total:.2f}")
 
-                record = {
-                    "instance_id": instance_id,
-                    "model_patch": patch,
-                    "model_name_or_path": model_name,
-                    "full_output": response_text,
-                }
+            record = {
+                "instance_id": instance_id,
+                "model_patch": patch,
+                "model_name_or_path": model_name,
+                "full_output": response_text,
+            }
+        except Exception as e:
+            logger.error(f"Error on {instance_id}: {e}")
+            traceback.print_exc()
+            record = {
+                "instance_id": instance_id,
+                "model_patch": "",
+                "model_name_or_path": model_name,
+                "error": str(e),
+            }
+
+        with write_lock:
+            with open(output_file, "a") as f:
                 print(json.dumps(record), file=f, flush=True)
 
-            except Exception as e:
-                logger.error(f"Error on {instance_id}: {e}")
-                traceback.print_exc()
-                record = {
-                    "instance_id": instance_id,
-                    "model_patch": "",
-                    "model_name_or_path": model_name,
-                    "error": str(e),
-                }
-                print(json.dumps(record), file=f, flush=True)
+        if max_cost is not None:
+            with cost_lock:
+                if total_cost >= max_cost:
+                    logger.warning(f"Reached max cost ${max_cost:.2f}, stopping")
+                    stop_event.set()
 
-            if max_cost is not None and total_cost >= max_cost:
-                logger.warning(f"Reached max cost ${max_cost:.2f}, stopping")
-                break
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futs = {pool.submit(_process_one, inst): inst for inst in todo}
+        with tqdm(total=len(todo), desc=f"Inference ({model_name})") as pbar:
+            for fut in as_completed(futs):
+                fut.result()  # re-raise any unexpected exception
+                pbar.update(1)
 
     logger.info(f"Total inference cost: ${total_cost:.4f}")
 

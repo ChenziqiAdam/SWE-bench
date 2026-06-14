@@ -365,6 +365,7 @@ def main():
                 max_tokens=args.max_tokens,
                 anthropic_client=anthropic_client,
                 openai_compat_client=openai_compat_client,
+                max_workers=args.max_workers,
             )
 
     # ── Stage 5: Docker Evaluation ────────────────────────────────────────────
