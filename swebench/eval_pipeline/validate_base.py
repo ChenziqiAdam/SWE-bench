@@ -88,6 +88,8 @@ def validate_buildable(
         dataset=buildable_todo,
         force_rebuild=force,
         max_workers=max_workers,
+        instance_image_tag="latest",
+        env_image_tag="latest",
     )
     failed_env_keys = set(env_failed)
 
