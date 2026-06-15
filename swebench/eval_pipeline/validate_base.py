@@ -91,7 +91,8 @@ def validate_buildable(
         instance_image_tag="latest",
         env_image_tag="latest",
     )
-    failed_env_keys = set(env_failed)
+    # build_env_images returns payload tuples; element 0 is the env image_name (key).
+    failed_env_keys = {f[0] if isinstance(f, tuple) else f for f in env_failed}
 
     # Mark instances in failed-env groups immediately and remove from phase 2.
     instance_todo_p2: list[dict] = []
