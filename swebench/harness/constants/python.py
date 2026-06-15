@@ -970,25 +970,26 @@ SPECS_HUMANEVAL = {k: {"python": "3.9", "test_cmd": "python"} for k in ["1.0"]}
 #   appear newer — forcing cythonize.py to skip re-generation and use committed .c files.
 #   This avoids "Signature not compatible" (streams.pyx:203) which is a Cython 0.29 strictness
 #   issue with syntax used in scipy 0.x .pyx files.
-_SCIPY_LEGACY_APT = "apt-get update && apt-get install -y gfortran libopenblas-dev liblapack-dev"
+_SCIPY_LEGACY_APT = "apt-get update && apt-get install -y gfortran libopenblas-dev liblapack-dev pkg-config"
+# GCC 10+ also rejects ARPACK calls like svout(scalar) vs svout(array) as Rank mismatch.
+# -fallow-argument-mismatch downgrades that to a warning so the build proceeds.
+_SCIPY_LEGACY_FFLAGS = "export FFLAGS='-fcommon -fallow-argument-mismatch' && export FCFLAGS='-fcommon -fallow-argument-mismatch'"
 _SCIPY_LEGACY_PRE_INSTALL = [
     _SCIPY_LEGACY_APT,
     "python -m pip install --no-deps 'pip<24'",
-    "export FFLAGS='-fcommon'",
+    _SCIPY_LEGACY_FFLAGS,
 ]
 SPECS_SCIPY = {}
-# scipy 0.x: touch all .pyx to epoch so committed .c files appear newer → cythonize skipped.
-_SCIPY_0X_PRE_INSTALL = _SCIPY_LEGACY_PRE_INSTALL + [
-    "find /testbed -name '*.pyx' -exec touch -t 197001010000 {} \\; 2>/dev/null || true",
-]
+# scipy 0.x: streams.pyx uses pre-Cython-0.27 syntax that newer Cython rejects with
+# "Signature not compatible". Pin Cython to 0.25 which still accepts the old syntax.
 SPECS_SCIPY.update(
     {
         k: {
             "python": "3.8",
             "packages": "numpy cython pytest",
-            "pre_install": _SCIPY_0X_PRE_INSTALL,
+            "pre_install": _SCIPY_LEGACY_PRE_INSTALL,
             "install": "python -m pip install -v --no-build-isolation -e .",
-            "pip_packages": ["cython<3", "setuptools<60", "wheel", "numpy<2", "pytest", "pytest-xdist", "pybind11"],
+            "pip_packages": ["cython==0.25.2", "setuptools<60", "wheel", "numpy<1.20", "pytest", "pytest-xdist", "pybind11"],
             "test_cmd": TEST_PYTEST,
         }
         for k in ["0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.19"]
@@ -1017,7 +1018,7 @@ SPECS_SCIPY.update(
             "pre_install": [
                 "apt-get update && apt-get install -y gfortran pkg-config libopenblas-dev",
                 "git submodule update --init",
-                "export FFLAGS='-fcommon'",
+                _SCIPY_LEGACY_FFLAGS,
             ],
             "install": "python -m pip install -v --no-build-isolation -e .",
             "pip_packages": ["cython<3", "setuptools", "numpy<2", "pybind11", "pythran", "pytest", "pytest-xdist"],
@@ -1036,6 +1037,7 @@ SPECS_SCIPY.update(
             "pre_install": [
                 "apt-get update && apt-get install -y gfortran pkg-config libopenblas-dev",
                 "git submodule update --init",
+                _SCIPY_LEGACY_FFLAGS,
             ],
             "install": "python -m pip install --no-build-isolation -e .",
             "pip_packages": [
@@ -1056,6 +1058,7 @@ SPECS_SCIPY.update(
             "pre_install": [
                 "apt-get update && apt-get install -y gfortran pkg-config libopenblas-dev",
                 "git submodule update --init",
+                _SCIPY_LEGACY_FFLAGS,
             ],
             "install": "python -m pip install --no-build-isolation -e .",
             "pip_packages": [
@@ -1076,6 +1079,7 @@ SPECS_SCIPY.update(
             "pre_install": [
                 "apt-get update && apt-get install -y gfortran pkg-config libopenblas-dev",
                 "git submodule update --init",
+                _SCIPY_LEGACY_FFLAGS,
             ],
             "install": "python -m pip install --no-build-isolation -e .",
             "pip_packages": [
@@ -1096,6 +1100,9 @@ SPECS_SCIPY.update(
 # editable installs to succeed. Editable mode is required so that patches
 # applied to /testbed/numpy/* take effect at test time.
 _NUMPY_LEGACY_PRE_INSTALL = [
+    # glibc 2.26+ removed xlocale.h; old numpy C sources include it. Symlink locale.h.
+    "apt-get update && apt-get install -y gcc gfortran libopenblas-dev liblapack-dev pkg-config",
+    "ln -sf /usr/include/locale.h /usr/include/xlocale.h",
     "python -m pip install --no-deps 'pip<24'",
 ]
 # version='0' covers very old PRs (2012–2019) whose version tag was unresolvable.
@@ -1129,7 +1136,9 @@ SPECS_NUMPY.update(
 )
 # numpy — modern versions use meson-python build system, require Python 3.12+.
 # The vendored meson lives in a git submodule; init it before pip can use it.
+# meson detects BLAS via pkg-config; install openblas + pkg-config (and cmake fallback).
 _NUMPY_MESON_PRE_INSTALL = [
+    "apt-get update && apt-get install -y gfortran pkg-config cmake libopenblas-dev liblapack-dev",
     "git submodule update --init --recursive || true",
 ]
 SPECS_NUMPY.update(
