@@ -19,6 +19,8 @@ def parse_args():
         description="Evaluate LLM capability to implement algorithm PRs at 3 input levels"
     )
     p.add_argument("--spreadsheet", default="PRs.xlsx", help="Path to PRs.xlsx")
+    p.add_argument("--sheet", default=None,
+                   help="Sheet name to read from the spreadsheet (default: active/first sheet)")
     p.add_argument("--model", default="claude-sonnet-4-6",
                    help="Model name passed to the API (e.g. claude-sonnet-4-6, gpt-4o, "
                         "mistral-large, llama3:70b). When --endpoint is given this can be "
@@ -183,6 +185,7 @@ def main():
             pr_numbers=pr_filter,
             repos=filter_repos,
             cache_path=None if args.no_ingest_cache else ingest_cache_path,
+            sheet=args.sheet,
         )
 
         logger.info("=== Stage 2: Building SWEbench instances ===")

@@ -34,10 +34,15 @@ def instance_ids_to_pr_filter(instance_ids: set[str]) -> dict[str, set[int]]:
     return result
 
 
-def load_spreadsheet(path: str) -> list[dict]:
+def load_spreadsheet(path: str, sheet: Optional[str] = None) -> list[dict]:
     """Read PRs.xlsx and return a list of row dicts."""
     wb = openpyxl.load_workbook(path)
-    ws = wb.active
+    if sheet:
+        if sheet not in wb.sheetnames:
+            raise ValueError(f"Sheet {sheet!r} not found. Available: {wb.sheetnames}")
+        ws = wb[sheet]
+    else:
+        ws = wb.active
     headers = [cell.value for cell in ws[1]]
     rows = []
     for raw_row in ws.iter_rows(min_row=2, values_only=True):
@@ -141,6 +146,7 @@ def fetch_all(
     pr_numbers: Optional[dict[str, set[int]]] = None,
     repos: Optional[set[str]] = None,
     cache_path: Optional[Path] = None,
+    sheet: Optional[str] = None,
 ) -> list[dict]:
     """
     Parse the spreadsheet and fetch GitHub data for each PR.
@@ -163,7 +169,7 @@ def fetch_all(
             "Pass --github_token YOUR_TOKEN or set the GITHUB_TOKEN environment variable.\n"
             "Create one at: https://github.com/settings/tokens (no scopes needed for public repos)."
         )
-    rows = load_spreadsheet(spreadsheet_path)
+    rows = load_spreadsheet(spreadsheet_path, sheet=sheet)
 
     # Filter rows before hitting the GitHub API
     if repos:
