@@ -13,6 +13,12 @@ from swebench.collect.utils import Repo
 from swebench.eval_pipeline.constants import COL_REPO, COL_PR_NUMBER, COL_PAPER_REFERENCE, COL_HAS_ISSUE
 from swebench.harness.constants.c import MAP_REPO_VERSION_TO_SPECS_C
 
+# Manual version overrides for repos where auto-detection fails (e.g. versioneer).
+# Key: (repo_full, pr_number), Value: version string matching a key in the repo's SPECS dict.
+_PR_VERSION_OVERRIDES: dict[tuple[str, int], str] = {
+    ("mdtraj/mdtraj", 2038): "1.10",
+}
+
 logger = logging.getLogger(__name__)
 
 # Top-level test function: +def test_foo(
@@ -204,6 +210,10 @@ def _get_version(repo_full: str, base_commit: str, github_token: Optional[str], 
     Attempt to determine the repo version at base_commit.
     Falls back to "0" for repos not in SWE-bench's versioning map.
     """
+    # Manual overrides take highest priority (for versioneer/dynamic-versioning repos)
+    if pr_number is not None and (repo_full, pr_number) in _PR_VERSION_OVERRIDES:
+        return _PR_VERSION_OVERRIDES[(repo_full, pr_number)]
+
     if repo_full in MAP_REPO_VERSION_TO_SPECS_C:
         if pr_number is None:
             raise ValueError(f"pr_number required for C/C++ repo {repo_full!r}")
@@ -288,6 +298,10 @@ def _get_version_fallback(repo_full: str, base_commit: str, github_token: Option
             m = re.search(r"release\.(\d+\.\d+)", text)
             if m:
                 return m.group(1)
+
+    # For other dynamic-versioning repos (e.g. mdtraj/versioneer), add an entry
+    # to _PR_VERSION_OVERRIDES at the top of this file instead of implementing
+    # per-repo detection logic here.
 
     return None
 

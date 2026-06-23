@@ -290,7 +290,14 @@ SPECS_QGIS = {
 # → target: chiralityTestsCatch  (from rdkit_catch_test(chiralityTestsCatch ...))
 SPECS_RDKIT = {
     "8957": {
-        "apt-pkgs": ["libboost-all-dev", "libeigen3-dev", "libcairo2-dev", "pkg-config"],
+        # Ubuntu 22.04 apt ships Boost 1.74; RDKit requires >= 1.81.
+        # Install software-properties-common first, then add the Boost PPA.
+        "pre_install": [
+            "apt-get install -y software-properties-common libeigen3-dev pkg-config",
+            "add-apt-repository -y ppa:mhier/libboost-latest",
+            "apt-get update -q",
+            "apt-get install -y libboost1.83-all-dev",
+        ],
         "build": [
             "mkdir -p build",
             (
