@@ -11,6 +11,7 @@ from unidiff import PatchSet
 
 from swebench.collect.utils import Repo
 from swebench.eval_pipeline.constants import COL_REPO, COL_PR_NUMBER, COL_PAPER_REFERENCE, COL_HAS_ISSUE
+from swebench.harness.constants.c import MAP_REPO_VERSION_TO_SPECS_C
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ def _fetch_file_contents(
     impl_paths = [
         p for p in file_paths
         if not any(x in p for x in ["test", "tests", "e2e"])
-        and p.endswith((".py", ".pyx", ".pxd", ".h", ".cpp", ".cxx"))
+        and p.endswith((".py", ".pyx", ".pxd", ".h", ".cpp", ".cxx", ".cc"))
     ]
 
     headers = {"Authorization": f"token {github_token}"} if github_token else {}
@@ -166,7 +167,7 @@ def build_instance(row: dict, github_token: Optional[str] = None) -> Optional[di
     fail_to_pass = _parse_fail_to_pass(test_patch)
 
     # version: attempt to get from the base commit tag, fall back to "0"
-    version = _get_version(repo_full, base_commit, github_token)
+    version = _get_version(repo_full, base_commit, github_token, pr_number=pr_number)
 
     return {
         "repo": repo_full,
@@ -198,11 +199,23 @@ def build_instance(row: dict, github_token: Optional[str] = None) -> Optional[di
     }
 
 
-def _get_version(repo_full: str, base_commit: str, github_token: Optional[str]) -> str:
+def _get_version(repo_full: str, base_commit: str, github_token: Optional[str], pr_number: Optional[int] = None) -> str:
     """
     Attempt to determine the repo version at base_commit.
     Falls back to "0" for repos not in SWE-bench's versioning map.
     """
+    if repo_full in MAP_REPO_VERSION_TO_SPECS_C:
+        if pr_number is None:
+            raise ValueError(f"pr_number required for C/C++ repo {repo_full!r}")
+        version_key = str(pr_number)
+        if version_key not in MAP_REPO_VERSION_TO_SPECS_C[repo_full]:
+            raise KeyError(
+                f"No spec for {repo_full!r} PR #{pr_number}. "
+                f"Add key {version_key!r} to MAP_REPO_VERSION_TO_SPECS_C in "
+                f"swebench/harness/constants/c.py before running."
+            )
+        return version_key
+
     try:
         from swebench.versioning.get_versions import get_version
         stub = {"repo": repo_full, "base_commit": base_commit, "instance_id": ""}

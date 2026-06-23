@@ -1222,6 +1222,20 @@ SPECS_PANDAS.update(
     }
 )
 
+SPECS_MDTRAJ = {
+    k: {
+        "python": "3.11",
+        "install": "pip install -e . --no-build-isolation",
+        "pip_packages": [
+            "cython>=3.0", "numpy>=2.0,<3", "setuptools", "wheel",
+            "scipy", "pandas", "networkx", "pyparsing", "netCDF4",
+            "pytables", "gsd>=2.8", "pytest", "pytest-xdist",
+        ],
+        "test_cmd": TEST_PYTEST,
+    }
+    for k in ["1.9", "1.10", "1.11"]
+}
+
 # Constants - Task Instance Instllation Environment
 MAP_REPO_VERSION_TO_SPECS_PY = {
     "astropy/astropy": SPECS_ASTROPY,
@@ -1247,6 +1261,7 @@ MAP_REPO_VERSION_TO_SPECS_PY = {
     "sqlfluff/sqlfluff": SPECS_SQLFLUFF,
     "swe-bench/humaneval": SPECS_HUMANEVAL,
     "sympy/sympy": SPECS_SYMPY,
+    "mdtraj/mdtraj": SPECS_MDTRAJ,
 }
 
 # Constants - Repository Specific Installation Instructions

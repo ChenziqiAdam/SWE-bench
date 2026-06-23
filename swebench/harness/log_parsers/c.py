@@ -110,6 +110,49 @@ def parse_log_micropython_test(log: str, test_spec: TestSpec) -> dict[str, str]:
     return test_status_map
 
 
+def parse_log_catch2(log: str, test_spec: TestSpec) -> dict[str, str]:
+    """Parse Catch2 test output (used by rdkit and other CMake+Catch2 repos).
+
+    Catch2 v2/v3 emits lines like:
+        PASSED: TestName
+        FAILED: TestName
+    and section headers like:
+        -------------------------------------------------------------------------------
+        TestName
+        -------------------------------------------------------------------------------
+    We use the explicit PASSED/FAILED markers which are reliable across versions.
+    """
+    test_status_map = {}
+    passed_re = re.compile(r"^\s*PASSED:\s*\[([^\]]+)\]\s*(.+)$")
+    failed_re = re.compile(r"^\s*FAILED:\s*\[([^\]]+)\]\s*(.+)$")
+    # Catch2 also emits summary lines like "test cases: N | N passed | N failed"
+    # and per-test lines "  TestName  -  N assertion(s) failed"
+    per_test_re = re.compile(r"^\s*(PASSED|FAILED)\s*-\s*(.+)$")
+    # v3 style: "PASSED  <TestName>" or "FAILED  <TestName>"
+    simple_re = re.compile(r"^(PASSED|FAILED)\s{2,}(.+)$")
+
+    for line in log.split("\n"):
+        line = line.rstrip()
+        for pattern, status_group, name_group in [
+            (passed_re, 1, 2),
+            (failed_re, 1, 2),
+        ]:
+            m = pattern.match(line)
+            if m:
+                name = m.group(name_group).strip()
+                status = TestStatus.PASSED.value if "PASSED" in pattern.pattern else TestStatus.FAILED.value
+                test_status_map[name] = status
+                break
+        else:
+            m = simple_re.match(line)
+            if m:
+                status_str, name = m.group(1), m.group(2).strip()
+                test_status_map[name] = (
+                    TestStatus.PASSED.value if status_str == "PASSED" else TestStatus.FAILED.value
+                )
+    return test_status_map
+
+
 def parse_log_googletest(log: str, test_spec: TestSpec) -> dict[str, str]:
     test_status_map = {}
 
@@ -134,4 +177,9 @@ MAP_REPO_TO_PARSER_C = {
     "micropython/micropython": parse_log_micropython_test,
     "valkey-io/valkey": parse_log_redis,
     "fmtlib/fmt": parse_log_googletest,
+    "openbabel/openbabel": parse_log_googletest,
+    "openmm/openmm": parse_log_googletest,
+    "openmc-dev/openmc": parse_log_googletest,
+    "qgis/QGIS": parse_log_googletest,
+    "rdkit/rdkit": parse_log_catch2,
 }

@@ -242,6 +242,76 @@ SPECS_FMT = {
     },
 }
 
+# Template spec for CMake+CTest/GoogleTest repos.
+# Build commands and test targets must be filled in per PR.
+# Keys are PR number strings.
+SPECS_OPENBABEL = {
+    # Add entries here: "<PR_NUMBER>": {"build": [...], "test_cmd": [...]}
+    # Build pattern:
+    #   "mkdir -p build",
+    #   "cmake -B build -S . -DENABLE_TESTS=ON",
+    #   "cmake --build build --parallel $(nproc) --target <test_target>",
+    # Test pattern:
+    #   "ctest --test-dir build -V -R <test_regex>"
+}
+
+SPECS_OPENMM = {
+    # Add entries here: "<PR_NUMBER>": {"build": [...], "test_cmd": [...]}
+    # Build pattern:
+    #   "mkdir -p build",
+    #   "cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug",
+    #   "cmake --build build --parallel $(nproc) --target <test_target>",
+    # Test pattern:
+    #   "ctest --test-dir build -V -R <test_regex>"
+}
+
+SPECS_OPENMC = {
+    # Add entries here: "<PR_NUMBER>": {"build": [...], "test_cmd": [...]}
+    # Build pattern:
+    #   "mkdir -p build",
+    #   "cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug",
+    #   "cmake --build build --parallel $(nproc)",
+    # Test pattern:
+    #   "cd tests && python -m pytest -v <test_file>"
+}
+
+SPECS_QGIS = {
+    # Add entries here: "<PR_NUMBER>": {"build": [...], "test_cmd": [...]}
+    # Build pattern:
+    #   "mkdir -p build",
+    #   "cmake -B build -S . -DENABLE_TESTS=ON -DWITH_QTWEBKIT=OFF",
+    #   "cmake --build build --parallel $(nproc) --target <test_target>",
+    # Test pattern:
+    #   "ctest --test-dir build -V -R <test_regex>"
+}
+
+# rdkit uses Catch2; binary name = first arg to rdkit_catch_test() in CMakeLists.txt
+# PR 8957 touches Code/GraphMol/Chirality.cpp + catch_chirality.cpp
+# → target: chiralityTestsCatch  (from rdkit_catch_test(chiralityTestsCatch ...))
+SPECS_RDKIT = {
+    "8957": {
+        "apt-pkgs": ["libboost-all-dev", "libeigen3-dev", "libcairo2-dev", "pkg-config"],
+        "build": [
+            "mkdir -p build",
+            (
+                "cmake -B build -S . "
+                "-DCMAKE_BUILD_TYPE=Release "
+                "-DRDK_INSTALL_INTREE=ON "
+                "-DRDK_BUILD_CPP_TESTS=ON "
+                "-DRDK_BUILD_PYTHON_WRAPPERS=OFF "
+                "-DRDK_BUILD_INCHI_SUPPORT=OFF "
+                "-DRDK_BUILD_CAIRO_SUPPORT=OFF "
+                "-DRDK_BUILD_THREADSAFE_SSS=ON"
+            ),
+            "cmake --build build --parallel $(nproc) --target chiralityTestsCatch",
+        ],
+        "test_cmd": [
+            "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:$LD_LIBRARY_PATH "
+            "ctest --test-dir build -V -R chiralityTestsCatch"
+        ],
+    },
+}
+
 MAP_REPO_VERSION_TO_SPECS_C = {
     "redis/redis": SPECS_REDIS,  # c
     "jqlang/jq": SPECS_JQ,  # c
@@ -249,6 +319,11 @@ MAP_REPO_VERSION_TO_SPECS_C = {
     "micropython/micropython": SPECS_MICROPYTHON,  # c
     "valkey-io/valkey": SPECS_VALKEY,  # c
     "fmtlib/fmt": SPECS_FMT,  # c++
+    "openbabel/openbabel": SPECS_OPENBABEL,  # c++
+    "openmm/openmm": SPECS_OPENMM,  # c++
+    "openmc-dev/openmc": SPECS_OPENMC,  # c++
+    "qgis/QGIS": SPECS_QGIS,  # c++
+    "rdkit/rdkit": SPECS_RDKIT,  # c++
 }
 
 # Constants - Repository Specific Installation Instructions
