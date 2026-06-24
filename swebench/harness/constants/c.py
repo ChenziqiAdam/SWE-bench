@@ -291,10 +291,13 @@ SPECS_QGIS = {
 SPECS_RDKIT = {
     "8957": {
         # Ubuntu 22.04 apt ships Boost 1.74; RDKit requires >= 1.81.
-        # Install software-properties-common first, then add the Boost PPA.
+        # Refresh apt cache, install software-properties-common, then add Boost PPA.
         "pre_install": [
-            "apt-get install -y software-properties-common libeigen3-dev pkg-config",
-            "add-apt-repository -y ppa:mhier/libboost-latest",
+            "apt-get update -q",
+            "apt-get install -y libeigen3-dev pkg-config libfreetype-dev",
+            # Add Boost PPA repo file directly (avoids add-apt-repository's launchpadlib SSL dependency)
+            "echo 'deb https://ppa.launchpadcontent.net/mhier/libboost-latest/ubuntu jammy main' > /etc/apt/sources.list.d/mhier-libboost-latest.list",
+            "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 31F54F3E108EAD31",
             "apt-get update -q",
             "apt-get install -y libboost1.83-all-dev",
         ],
@@ -313,7 +316,7 @@ SPECS_RDKIT = {
             "cmake --build build --parallel $(nproc) --target chiralityTestsCatch",
         ],
         "test_cmd": [
-            "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:$LD_LIBRARY_PATH "
+            "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
             "ctest --test-dir build -V -R chiralityTestsCatch"
         ],
     },

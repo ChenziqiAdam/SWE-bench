@@ -1225,11 +1225,13 @@ SPECS_PANDAS.update(
 SPECS_MDTRAJ = {
     k: {
         "python": "3.11",
+        # Use pkgs/main only — avoids pkgs/r and pkgs/msys2 which time out on restricted networks
+        "conda_channels": ["https://repo.anaconda.com/pkgs/main"],
         "install": "pip install -e . --no-build-isolation",
         "pip_packages": [
-            "cython>=3.0", "numpy>=2.0,<3", "setuptools", "wheel",
+            "versioneer", "cython>=3.0", "numpy>=2.0,<3", "setuptools", "wheel",
             "scipy", "pandas", "networkx", "pyparsing", "netCDF4",
-            "pytables", "gsd>=2.8", "pytest", "pytest-xdist",
+            "tables", "gsd>=2.8", "pytest", "pytest-xdist",
         ],
         "test_cmd": TEST_PYTEST,
     }

@@ -344,6 +344,15 @@ def make_env_script_list_py(instance, specs, env_name) -> list:
     reqs_commands = [
         "source /opt/miniconda3/bin/activate",
     ]
+    # If the spec restricts conda channels (e.g. to avoid unreachable conda-forge),
+    # apply the override before any conda create call.
+    if "conda_channels" in specs:
+        channels = specs["conda_channels"]  # e.g. ["defaults"]
+        reqs_commands.append(
+            f"conda config --set channel_priority flexible && "
+            f"conda config --remove-key channels || true && "
+            + " && ".join(f"conda config --append channels {c}" for c in channels)
+        )
     # Create conda environment according to install instructinos
     pkgs = specs.get("packages", "")
     if pkgs == "requirements.txt":
