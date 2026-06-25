@@ -23,6 +23,7 @@ import os
 import re
 import sys
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Optional
@@ -167,11 +168,12 @@ def search_relevant_files(repo: str, issue_title: str, issue_body: str, token: s
         if len(found_files) >= max_files:
             break
         try:
+            time.sleep(1.2)  # GitHub search API: max 10 req/min for authenticated users
             resp = s.get(f"{_GH_API}/search/code", params={
                 "q": f"{kw} repo:{repo}",
                 "per_page": 3,
             })
-            if resp.status_code == 403:
+            if resp.status_code in (403, 429):
                 logger.warning("GitHub code search quota exceeded; stopping search")
                 break
             if not resp.ok:
