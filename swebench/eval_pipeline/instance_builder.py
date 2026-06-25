@@ -21,10 +21,10 @@ _PR_VERSION_OVERRIDES: dict[tuple[str, int], str] = {
 
 logger = logging.getLogger(__name__)
 
-# Top-level test function: +def test_foo(
-_TEST_FUNC_TOP_RE = re.compile(r"^\+(?:async\s+)?def\s+(test_\w+)\s*\(")
-# Class method test (4 spaces indent): +    def test_foo(
-_TEST_FUNC_METHOD_RE = re.compile(r"^\+    (?:async\s+)?def\s+(test_\w+)\s*\(")
+# Top-level test function: +def test_foo( or +def testFoo(
+_TEST_FUNC_TOP_RE = re.compile(r"^\+(?:async\s+)?def\s+(test\w+)\s*\(")
+# Class method test (4 spaces indent): +    def test_foo( or +    def testFoo(
+_TEST_FUNC_METHOD_RE = re.compile(r"^\+    (?:async\s+)?def\s+(test\w+)\s*\(")
 # Class definition in context lines (no +/-): class TestFoo:
 _CLASS_DEF_RE = re.compile(r"^ ?class\s+(\w+)\s*[:(]")
 # Regex to find test file path from diff header
@@ -117,8 +117,11 @@ def _parse_fail_to_pass(test_patch: str) -> list[str]:
             continue
         # Class method test
         m = _TEST_FUNC_METHOD_RE.match(line)
-        if m and current_class:
-            results.append(f"{current_file}::{current_class}::{m.group(1)}")
+        if m:
+            # current_class may be None if the class definition is not in the diff;
+            # fall back to the filename stem (e.g., TestAmberPrmtopFile.py → TestAmberPrmtopFile)
+            cls = current_class or Path(current_file).stem
+            results.append(f"{current_file}::{cls}::{m.group(1)}")
     return results
 
 

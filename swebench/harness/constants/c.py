@@ -256,13 +256,43 @@ SPECS_OPENBABEL = {
 }
 
 SPECS_OPENMM = {
-    # Add entries here: "<PR_NUMBER>": {"build": [...], "test_cmd": [...]}
-    # Build pattern:
-    #   "mkdir -p build",
-    #   "cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug",
-    #   "cmake --build build --parallel $(nproc) --target <test_target>",
-    # Test pattern:
-    #   "ctest --test-dir build -V -R <test_regex>"
+    # PR #4832: flexibleConstraints option for AmberPrmtopFile (Python-only change)
+    # openmm is installed via conda; the Python tests run directly with pytest.
+    # The harness will use the C eval path (build=[], test_cmd runs pytest).
+    "4832": {
+        "pre_install": [
+            "conda install -y -c conda-forge openmm",
+        ],
+        "build": [],
+        "test_cmd": [
+            "cd wrappers/python/tests && python -m pytest -xvs TestAmberPrmtopFile.py::TestAmberPrmtopFile::testFlexibleConstraints",
+        ],
+    },
+    # PR #4881: computeCurrentPressure() for MonteCarloBarostat (C++ change with GPU tests)
+    # The new tests (testLJPressure) require CUDA/OpenCL platform — not runnable without GPU.
+    # Using Reference platform-only C++ tests as best-effort fallback.
+    "4881": {
+        "pre_install": [
+            "apt-get update -q",
+            "apt-get install -y cmake doxygen swig libfftw3-dev",
+            "conda install -y -c conda-forge numpy",
+        ],
+        "build": [
+            "mkdir -p build",
+            (
+                "cmake -B build -S . "
+                "-DCMAKE_BUILD_TYPE=Release "
+                "-DOPENMM_BUILD_CUDA_LIB=OFF "
+                "-DOPENMM_BUILD_OPENCL_LIB=OFF "
+                "-DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF "
+                "-DOPENMM_BUILD_EXAMPLES=OFF"
+            ),
+            "cmake --build build --parallel $(nproc) --target TestReferenceMonteCarloBarostat",
+        ],
+        "test_cmd": [
+            "cd build && ./TestReferenceMonteCarloBarostat",
+        ],
+    },
 }
 
 SPECS_OPENMC = {
