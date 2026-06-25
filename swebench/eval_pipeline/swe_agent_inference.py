@@ -36,19 +36,30 @@ def _sweagent_bin() -> str:
 
     Checks in order:
     1. PATH (covers activated venv or system install)
-    2. Same bin/ directory as the running Python interpreter (covers venv not on PATH)
+    2. bin/ directory next to the running Python interpreter (works when called from venv Python)
+    3. <repo_root>/.venv/bin/sweagent or <repo_root>/venv/bin/sweagent — handles the case
+       where conda/system Python invokes code installed in a project venv
     """
+    import sys
+
     found = shutil.which("sweagent")
     if found:
         return found
-    # Same bin/ as the Python running this code (works when called from venv Python)
-    candidate = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent.parent / "bin" / "sweagent"
-    # More reliably: use sys.executable's directory
-    import sys
+
     venv_bin = Path(sys.executable).parent / "sweagent"
     if venv_bin.exists():
         return str(venv_bin)
-    return "sweagent"  # last resort — will raise FileNotFoundError at runtime if missing
+
+    # Repo-relative venv: __file__ is swebench/eval_pipeline/swe_agent_inference.py
+    repo_root = Path(os.path.abspath(__file__)).parent.parent.parent
+    for candidate in [
+        repo_root / ".venv" / "bin" / "sweagent",
+        repo_root / "venv" / "bin" / "sweagent",
+    ]:
+        if candidate.exists():
+            return str(candidate)
+
+    return "sweagent"  # last resort — raises FileNotFoundError at subprocess.run
 
 
 def _build_sweagent_config(

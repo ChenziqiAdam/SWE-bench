@@ -31,7 +31,9 @@ def collect_results(
     Returns:
         {instance_id: {1: resolved_bool_or_None, 2: ..., 3: ...}}
     """
-    results: dict[str, dict[int, Optional[bool]]] = {}
+    results: dict[str, dict] = {}
+    all_levels = list(run_ids.keys())
+    empty_row: dict = {k: None for k in all_levels}
 
     for level, run_id in run_ids.items():
         # Source 1: per-instance report.json (completed runs)
@@ -47,7 +49,7 @@ def collect_results(
                     if instance_ids is not None and instance_id not in instance_ids:
                         continue
                     if instance_id not in results:
-                        results[instance_id] = {1: None, 2: None, 3: None}
+                        results[instance_id] = dict(empty_row)
                     results[instance_id][level] = info.get("resolved", False)
             except Exception as e:
                 logger.error(f"Error reading {report_file}: {e}")
@@ -67,7 +69,7 @@ def collect_results(
                     if instance_ids is not None and instance_id not in instance_ids:
                         continue
                     if instance_id not in results:
-                        results[instance_id] = {1: None, 2: None, 3: None}
+                        results[instance_id] = dict(empty_row)
                     # Only fill in if not already set by per-instance report.json
                     if results[instance_id][level] is None:
                         results[instance_id][level] = instance_id in resolved_ids
@@ -112,7 +114,10 @@ def _load_nonempty_prediction_ids(predictions_paths: dict[int, str]) -> dict[int
     """Return {level: {instance_id, ...}} for instances with a non-empty model_patch."""
     out: dict[int, set[str]] = {1: set(), 2: set(), 3: set()}
     for level, path in predictions_paths.items():
-        level = int(level)
+        try:
+            level = int(level)
+        except (ValueError, TypeError):
+            continue  # skip non-integer keys like "agent"
         if level not in out:
             out[level] = set()
         if not path or not Path(path).exists():
@@ -135,7 +140,10 @@ def _load_skipped_prediction_ids(predictions_paths: dict[int, str]) -> dict[int,
     """Return {level: {instance_id, ...}} for instances marked skipped=True."""
     out: dict[int, set[str]] = {1: set(), 2: set(), 3: set()}
     for level, path in predictions_paths.items():
-        level = int(level)
+        try:
+            level = int(level)
+        except (ValueError, TypeError):
+            continue  # skip non-integer keys like "agent"
         if level not in out:
             out[level] = set()
         if not path or not Path(path).exists():
