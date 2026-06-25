@@ -52,9 +52,19 @@ def parse_args():
     p.add_argument("--agent", action="store_true",
                    help="Use agentic inference: multi-turn tool-use loop that explores the "
                         "cloned repo and writes files, instead of a single-shot LLM call. "
-                        "Requires --model to be a claude-* model (Anthropic tool_use API).")
+                        "Requires --model to be a claude-* model (Anthropic tool_use API) "
+                        "when --agent_backend builtin (default).")
+    p.add_argument("--agent_backend", default="builtin", choices=["builtin", "sweagent"],
+                   help="Which agent backend to use with --agent. "
+                        "'builtin' (default): homegrown multi-turn Anthropic tool-use loop. "
+                        "'sweagent': invoke SWE-agent CLI as a subprocess (requires `sweagent` "
+                        "to be installed: uv pip install swe-agent).")
+    p.add_argument("--sweagent_config", default=None,
+                   help="Optional path to a custom SWE-agent config YAML. When omitted a "
+                        "minimal config is auto-generated per instance. Only used with "
+                        "--agent_backend sweagent.")
     p.add_argument("--max_turns", type=int, default=30,
-                   help="Max agent turns per instance (only used with --agent, default 30).")
+                   help="Max agent turns per instance (only used with --agent --agent_backend builtin, default 30).")
     p.add_argument("--output_dir", default="outputs", help="Directory for output files")
     p.add_argument("--run_id", default="eval_run_001", help="Unique run identifier")
     p.add_argument("--github_token", default=None,
@@ -357,21 +367,33 @@ def main():
         logger.info("=== Stage 4: Running inference ===")
 
         if args.agent:
-            # Agentic loop: clones repo, explores with tools, produces patch via git diff
-            from swebench.eval_pipeline.inference import make_clients
-            from swebench.eval_pipeline.agent_inference import run_agent_inference_for_level
-            anthropic_client, _ = make_clients(args.model, endpoint=args.endpoint, api_key=args.api_key)
             agent_predictions_file = str(output_dir / "agent_predictions.jsonl")
-            logger.info(f"--- Agent inference (issue description) → {agent_predictions_file} ---")
-            run_agent_inference_for_level(
-                instances=instances,
-                output_file=agent_predictions_file,
-                model_name=args.model,
-                anthropic_client=anthropic_client,
-                github_token=github_token,
-                max_turns=args.max_turns,
-                max_workers=args.max_workers,
-            )
+            if args.agent_backend == "sweagent":
+                from swebench.eval_pipeline.swe_agent_inference import run_sweagent_inference
+                logger.info(f"--- SWE-agent inference → {agent_predictions_file} ---")
+                run_sweagent_inference(
+                    instances=instances,
+                    output_file=agent_predictions_file,
+                    model_name=args.model,
+                    github_token=github_token,
+                    max_workers=args.max_workers,
+                    sweagent_config=args.sweagent_config,
+                )
+            else:
+                # Builtin: multi-turn Anthropic tool-use loop
+                from swebench.eval_pipeline.inference import make_clients
+                from swebench.eval_pipeline.agent_inference import run_agent_inference_for_level
+                anthropic_client, _ = make_clients(args.model, endpoint=args.endpoint, api_key=args.api_key)
+                logger.info(f"--- Agent inference (builtin, issue description) → {agent_predictions_file} ---")
+                run_agent_inference_for_level(
+                    instances=instances,
+                    output_file=agent_predictions_file,
+                    model_name=args.model,
+                    anthropic_client=anthropic_client,
+                    github_token=github_token,
+                    max_turns=args.max_turns,
+                    max_workers=args.max_workers,
+                )
         else:
             from swebench.eval_pipeline.inference import run_inference_for_level, make_clients
             anthropic_client, openai_compat_client = make_clients(
