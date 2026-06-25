@@ -47,7 +47,14 @@ def parse_args():
     )
 
     p.add_argument("--levels", default="1,2,3",
-                   help="Comma-separated levels to run (e.g. 1,2 or 1,2,3)")
+                   help="Comma-separated levels to run (e.g. 1,2 or 1,2,3). "
+                        "Ignored when --agent is set (agent always runs L2 / issue description).")
+    p.add_argument("--agent", action="store_true",
+                   help="Use agentic inference: multi-turn tool-use loop that explores the "
+                        "cloned repo and writes files, instead of a single-shot LLM call. "
+                        "Requires --model to be a claude-* model (Anthropic tool_use API).")
+    p.add_argument("--max_turns", type=int, default=30,
+                   help="Max agent turns per instance (only used with --agent, default 30).")
     p.add_argument("--output_dir", default="outputs", help="Directory for output files")
     p.add_argument("--run_id", default="eval_run_001", help="Unique run identifier")
     p.add_argument("--github_token", default=None,
@@ -348,46 +355,68 @@ def main():
     # ── Stage 4: Inference ────────────────────────────────────────────────────
     if not args.skip_inference:
         logger.info("=== Stage 4: Running inference ===")
-        from swebench.eval_pipeline.inference import run_inference_for_level, make_clients
-        anthropic_client, openai_compat_client = make_clients(
-            args.model,
-            endpoint=args.endpoint,
-            api_key=args.api_key,
-        )
 
-        for level in levels:
-            output_file = str(output_dir / f"level{level}_predictions.jsonl")
-            logger.info(f"--- Level {level} → {output_file} ---")
-            level_prompts = {iid: p[level] for iid, p in all_prompts.items()}
-            run_inference_for_level(
+        if args.agent:
+            # Agentic loop: clones repo, explores with tools, produces patch via git diff
+            from swebench.eval_pipeline.inference import make_clients
+            from swebench.eval_pipeline.agent_inference import run_agent_inference_for_level
+            anthropic_client, _ = make_clients(args.model, endpoint=args.endpoint, api_key=args.api_key)
+            agent_predictions_file = str(output_dir / "agent_predictions.jsonl")
+            logger.info(f"--- Agent inference (issue description) → {agent_predictions_file} ---")
+            run_agent_inference_for_level(
                 instances=instances,
-                prompts=level_prompts,
+                output_file=agent_predictions_file,
                 model_name=args.model,
-                output_file=output_file,
-                max_cost=args.max_cost,
-                max_tokens=args.max_tokens,
                 anthropic_client=anthropic_client,
-                openai_compat_client=openai_compat_client,
+                github_token=github_token,
+                max_turns=args.max_turns,
                 max_workers=args.max_workers,
             )
+        else:
+            from swebench.eval_pipeline.inference import run_inference_for_level, make_clients
+            anthropic_client, openai_compat_client = make_clients(
+                args.model,
+                endpoint=args.endpoint,
+                api_key=args.api_key,
+            )
+
+            for level in levels:
+                output_file = str(output_dir / f"level{level}_predictions.jsonl")
+                logger.info(f"--- Level {level} → {output_file} ---")
+                level_prompts = {iid: p[level] for iid, p in all_prompts.items()}
+                run_inference_for_level(
+                    instances=instances,
+                    prompts=level_prompts,
+                    model_name=args.model,
+                    output_file=output_file,
+                    max_cost=args.max_cost,
+                    max_tokens=args.max_tokens,
+                    anthropic_client=anthropic_client,
+                    openai_compat_client=openai_compat_client,
+                    max_workers=args.max_workers,
+                )
 
     # ── Stage 5: Docker Evaluation ────────────────────────────────────────────
     run_ids: dict[int, str] = {}
     if not args.skip_eval:
         logger.info("=== Stage 5: Running Docker evaluation ===")
 
-        for level in levels:
-            predictions_path = str(output_dir / f"level{level}_predictions.jsonl")
+        if args.agent:
+            eval_levels_map = {"agent": str(output_dir / "agent_predictions.jsonl")}
+        else:
+            eval_levels_map = {level: str(output_dir / f"level{level}_predictions.jsonl") for level in levels}
+
+        for level_key, predictions_path in eval_levels_map.items():
             if not Path(predictions_path).exists():
-                logger.warning(f"Predictions file not found for level {level}: {predictions_path}")
+                logger.warning(f"Predictions file not found: {predictions_path}")
                 continue
 
-            run_id = f"{args.run_id}_level{level}"
-            run_ids[level] = run_id
+            run_id = f"{args.run_id}_agent" if args.agent else f"{args.run_id}_level{level_key}"
+            run_ids[level_key] = run_id
             eval_instance_ids = [i["instance_id"] for i in instances]
             wallclock = args.eval_wallclock_per_instance * max(1, len(eval_instance_ids))
             logger.info(
-                f"--- Evaluating level {level} (run_id={run_id}, "
+                f"--- Evaluating {level_key} (run_id={run_id}, "
                 f"wallclock_budget={wallclock}s for {len(eval_instance_ids)} instances) ---"
             )
 
@@ -410,13 +439,16 @@ def main():
             )
             if not finished:
                 logger.warning(
-                    f"Level {level} eval hit wall-clock cap; continuing to next level. "
+                    f"{level_key} eval hit wall-clock cap. "
                     f"Partial reports under {args.log_dir}/{run_id}/ are preserved."
                 )
     else:
         # Reconstruct run_ids from expected names
-        for level in levels:
-            run_ids[level] = f"{args.run_id}_level{level}"
+        if args.agent:
+            run_ids["agent"] = f"{args.run_id}_agent"
+        else:
+            for level in levels:
+                run_ids[level] = f"{args.run_id}_level{level}"
 
     # ── Stage 6: Reporting ────────────────────────────────────────────────────
     logger.info("=== Stage 6: Generating report ===")
@@ -428,10 +460,13 @@ def main():
         instance_ids={i["instance_id"] for i in instances},
     )
     output_csv = str(output_dir / f"{args.run_id}_results.csv")
-    predictions_paths = {
-        int(level): str(output_dir / f"level{int(level)}_predictions.jsonl")
-        for level in args.levels.split(",")
-    }
+    if args.agent:
+        predictions_paths = {"agent": str(output_dir / "agent_predictions.jsonl")}
+    else:
+        predictions_paths = {
+            int(level): str(output_dir / f"level{int(level)}_predictions.jsonl")
+            for level in args.levels.split(",")
+        }
     run_config = {
         "model": args.model,
         "levels": args.levels,

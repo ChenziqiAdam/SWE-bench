@@ -55,6 +55,60 @@ def load_spreadsheet(path: str, sheet: Optional[str] = None) -> list[dict]:
     return rows
 
 
+# Issues_v1.xlsx column names
+_COL_ISSUE_NUMBER = "Issue Number"
+_COL_CLOSING_PR = "Closing PR #"
+
+
+def load_spreadsheet_issues(path: str, sheet: Optional[str] = None) -> list[dict]:
+    """Read Issues_v1.xlsx and return rows in the same format as load_spreadsheet().
+
+    Each row must have a 'Closing PR #' to be eval-able (provides base_commit +
+    test suite). Rows without a closing PR are skipped with a warning.
+
+    The returned rows use the standard pipeline column keys so fetch_all() can
+    process them identically to PRs.xlsx rows.  The issue number is stored under
+    COL_ISSUE_NUMBER so instance_builder can fetch it directly instead of
+    discovering it via PR body keyword matching.
+    """
+    wb = openpyxl.load_workbook(path)
+    ws = wb[sheet] if sheet else wb.active
+    headers = [cell.value for cell in ws[1]]
+    rows = []
+    skipped = 0
+    for raw_row in ws.iter_rows(min_row=2, values_only=True):
+        row = dict(zip(headers, raw_row))
+        repo = row.get(COL_REPO)
+        issue_number = row.get(_COL_ISSUE_NUMBER)
+        closing_pr = row.get(_COL_CLOSING_PR)
+        if not repo or not issue_number:
+            continue
+        if not closing_pr:
+            logger.warning(
+                f"Skipping {repo}#{issue_number}: no closing PR — cannot build eval instance."
+            )
+            skipped += 1
+            continue
+        # Map to the standard pipeline schema
+        rows.append({
+            COL_REPO: repo,
+            COL_PR_NUMBER: int(closing_pr),
+            COL_HAS_ISSUE: "Yes",          # issue number IS the prompt source
+            _COL_ISSUE_NUMBER: int(issue_number),  # stored for direct fetch
+            # Optional metadata columns (may be absent)
+            COL_TITLE: row.get("Title", ""),
+            COL_CATEGORY: row.get("Type", ""),
+            COL_ALGORITHM_NAME: "",
+            COL_PAPER_REFERENCE: "",
+            COL_HAS_TEST: "Yes",
+            COL_TEST_LINKS: "",
+        })
+    if skipped:
+        logger.info(f"Skipped {skipped} issue row(s) with no closing PR.")
+    logger.info(f"Loaded {len(rows)} issue row(s) with paired PRs from {path}")
+    return rows
+
+
 def fetch_pr_data(repo: Repo, pr_number: int) -> Optional[dict]:
     """Fetch PR metadata from GitHub."""
     pull = repo.call_api(
@@ -169,7 +223,15 @@ def fetch_all(
             "Pass --github_token YOUR_TOKEN or set the GITHUB_TOKEN environment variable.\n"
             "Create one at: https://github.com/settings/tokens (no scopes needed for public repos)."
         )
-    rows = load_spreadsheet(spreadsheet_path, sheet=sheet)
+    # Auto-detect spreadsheet format: Issues_v1 has "Issue Number" column, PRs.xlsx has "PR Number"
+    wb_peek = openpyxl.load_workbook(spreadsheet_path, read_only=True)
+    ws_peek = wb_peek[sheet] if sheet else wb_peek.active
+    peek_headers = [cell.value for cell in next(ws_peek.iter_rows(max_row=1))]
+    wb_peek.close()
+    if _COL_ISSUE_NUMBER in peek_headers and COL_PR_NUMBER not in peek_headers:
+        rows = load_spreadsheet_issues(spreadsheet_path, sheet=sheet)
+    else:
+        rows = load_spreadsheet(spreadsheet_path, sheet=sheet)
 
     # Filter rows before hitting the GitHub API
     if repos:
@@ -242,7 +304,14 @@ def fetch_all(
                 _append_ingest_cache(cache_path, row)
             continue
 
-        issue_numbers = find_linked_issue_numbers(pull)
+        # If the row already has a direct issue number (Issues_v1.xlsx), use it;
+        # otherwise mine it from the PR body via keyword matching.
+        direct_issue = row.get(_COL_ISSUE_NUMBER)
+        if direct_issue is not None:
+            issue_numbers = [str(int(direct_issue))]
+            logger.debug(f"  Using direct issue number {direct_issue} for {repo_full}#{pr_number}")
+        else:
+            issue_numbers = find_linked_issue_numbers(pull)
         row["issue_numbers"] = issue_numbers
 
         issue_data = {}
