@@ -101,6 +101,8 @@ def compute_pass_rates(
                 continue
             if eligible is not None and iid not in eligible:
                 continue
+            if level not in v:
+                continue
             if v[level] is None:
                 continue
             vals.append(v[level])
