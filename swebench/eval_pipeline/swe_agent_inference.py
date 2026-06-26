@@ -73,12 +73,19 @@ def _build_sweagent_config(
     output_dir: Path,
     base_config: Optional[dict] = None,
     docker_image: str = _DEFAULT_DOCKER_IMAGE,
+    api_base: Optional[str] = None,
+    api_key: Optional[str] = None,
 ) -> dict:
     """Build a SWE-agent RunSingleConfig dict for one instance.
 
     Uses a Docker deployment: SWE-agent's local repo handler uploads the repo to
     ``/<repo_name>`` inside the container (where ``/`` is writable), avoiding the
     PermissionError that ``deployment: local`` hits when copying to the host root.
+
+    When ``api_base`` is given, the model is reached through an OpenAI-compatible
+    endpoint: litellm needs the ``openai/`` provider prefix on the model name plus
+    ``api_base``/``api_key``. Without this, litellm can't resolve a custom model
+    name like ``deepseek-v4-flash`` and the run hangs until timeout.
     """
     problem = (instance.get("problem_statement") or "").strip()
     if not problem:
@@ -86,11 +93,22 @@ def _build_sweagent_config(
         pr_body = (instance.get("pr_body") or "").strip()
         problem = f"{pr_title}\n\n{pr_body}".strip()
 
+    # litellm model name: prefix with openai/ for a custom OpenAI-compatible endpoint
+    litellm_name = model_name
+    model_cfg: dict = {"name": litellm_name}
+    if api_base:
+        if not litellm_name.startswith("openai/"):
+            model_cfg["name"] = f"openai/{litellm_name}"
+        model_cfg["api_base"] = api_base
+        if api_key:
+            model_cfg["api_key"] = api_key
+
     if base_config:
         cfg = json.loads(json.dumps(base_config))  # deep copy
+        cfg.setdefault("agent", {})["model"] = model_cfg
     else:
         cfg = {
-            "agent": {"model": {"name": model_name}},
+            "agent": {"model": model_cfg},
         }
 
     # Override env to use local repo uploaded into a Docker container.
@@ -133,6 +151,8 @@ def run_sweagent_inference(
     max_workers: int = 2,
     sweagent_config: Optional[str] = None,
     docker_image: str = _DEFAULT_DOCKER_IMAGE,
+    api_base: Optional[str] = None,
+    api_key: Optional[str] = None,
 ) -> None:
     """Run SWE-agent inference for all instances. Writes same JSONL format as inference.py."""
     base_config: Optional[dict] = None
@@ -173,7 +193,8 @@ def run_sweagent_inference(
             tmp_out = Path(tempfile.mkdtemp(prefix="sweagent_out_"))
 
             cfg = _build_sweagent_config(
-                inst, repo_dir, model_name, tmp_out, base_config, docker_image
+                inst, repo_dir, model_name, tmp_out, base_config,
+                docker_image, api_base, api_key,
             )
             tmp_cfg = Path(tempfile.mktemp(suffix=".yaml"))
             tmp_cfg.write_text(yaml.dump(cfg))
@@ -209,8 +230,12 @@ def run_sweagent_inference(
                 "model_patch": patch,
                 "model_name_or_path": model_name,
             }
-        except subprocess.TimeoutExpired:
-            logger.error(f"[{instance_id}] sweagent timed out after {_SWEAGENT_TIMEOUT}s")
+        except subprocess.TimeoutExpired as te:
+            tail = ""
+            if te.stderr:
+                err = te.stderr if isinstance(te.stderr, str) else te.stderr.decode(errors="replace")
+                tail = f" stderr tail: {err[-500:]}"
+            logger.error(f"[{instance_id}] sweagent timed out after {_SWEAGENT_TIMEOUT}s.{tail}")
             record = {
                 "instance_id": instance_id,
                 "model_patch": "",

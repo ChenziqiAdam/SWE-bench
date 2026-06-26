@@ -378,6 +378,8 @@ def main():
                     github_token=github_token,
                     max_workers=args.max_workers,
                     sweagent_config=args.sweagent_config,
+                    api_base=args.endpoint,
+                    api_key=args.api_key,
                 )
             else:
                 # Builtin: multi-turn Anthropic tool-use loop
