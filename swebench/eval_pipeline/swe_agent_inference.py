@@ -156,6 +156,7 @@ def run_sweagent_inference(
         repo_dir = None
         tmp_cfg = None
         tmp_out = None
+        sweagent_tmp = None
         try:
             repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token)
             tmp_out = Path(tempfile.mkdtemp(prefix="sweagent_out_"))
@@ -164,11 +165,22 @@ def run_sweagent_inference(
             tmp_cfg = Path(tempfile.mktemp(suffix=".yaml"))
             tmp_cfg.write_text(yaml.dump(cfg))
 
+            # SWE-agent's LocalDeployment stages a working copy of the repo under a
+            # temp dir. If TMPDIR is unset it can resolve to a non-writable path at
+            # the filesystem root (/sweagent_xxxx → PermissionError). Pin it to a
+            # writable per-instance temp dir.
+            sweagent_tmp = Path(tempfile.mkdtemp(prefix="sweagent_tmp_"))
+            env = dict(os.environ)
+            env["TMPDIR"] = str(sweagent_tmp)
+            env["TMP"] = str(sweagent_tmp)
+            env["TEMP"] = str(sweagent_tmp)
+
             result = subprocess.run(
                 [_sweagent_bin(), "run", "--config", str(tmp_cfg)],
                 capture_output=True,
                 text=True,
                 timeout=_SWEAGENT_TIMEOUT,
+                env=env,
             )
             if result.returncode != 0:
                 logger.warning(
@@ -208,6 +220,8 @@ def run_sweagent_inference(
                 shutil.rmtree(tmp_out, ignore_errors=True)
             if tmp_cfg and tmp_cfg.exists():
                 tmp_cfg.unlink(missing_ok=True)
+            if sweagent_tmp:
+                shutil.rmtree(sweagent_tmp, ignore_errors=True)
 
         with write_lock:
             with open(out_path, "a") as f:
