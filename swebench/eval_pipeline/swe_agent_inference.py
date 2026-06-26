@@ -66,6 +66,24 @@ def _sweagent_bin() -> str:
     return "sweagent"  # last resort — raises FileNotFoundError at subprocess.run
 
 
+def _default_config_path() -> Optional[Path]:
+    """Locate SWE-agent's bundled config/default.yaml.
+
+    The default config ships the system/instance/next_step templates (which carry
+    the {{problem_statement}} placeholder) and the tool bundle + parser. Without it,
+    SWE-agent runs with empty templates ("system_template/instance_template is not
+    set") and the agent never learns the task → wanders → empty patch.
+    """
+    try:
+        import sweagent
+        cfg = Path(sweagent.CONFIG_DIR) / "default.yaml"
+        if cfg.exists():
+            return cfg
+    except Exception:
+        pass
+    return None
+
+
 def _build_sweagent_config(
     instance: dict,
     repo_dir: Path,
@@ -171,9 +189,23 @@ def run_sweagent_inference(
     api_key: Optional[str] = None,
 ) -> None:
     """Run SWE-agent inference for all instances. Writes same JSONL format as inference.py."""
+    # Base config: an explicit --sweagent_config wins; otherwise fall back to
+    # SWE-agent's bundled config/default.yaml so the agent gets real templates +
+    # tools (an empty/minimal config leaves the agent with no task description).
+    config_path = sweagent_config
+    if not config_path:
+        default_cfg = _default_config_path()
+        if default_cfg:
+            config_path = str(default_cfg)
+            logger.info(f"Using SWE-agent default config: {config_path}")
+        else:
+            logger.warning(
+                "Could not locate SWE-agent's bundled default.yaml; running with a "
+                "minimal config (no templates → agent may not understand the task)."
+            )
     base_config: Optional[dict] = None
-    if sweagent_config:
-        with open(sweagent_config) as f:
+    if config_path:
+        with open(config_path) as f:
             base_config = yaml.safe_load(f)
 
     # Resume: skip already-done instances
