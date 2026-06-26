@@ -266,7 +266,7 @@ SPECS_OPENMM = {
         # pre_install runs at IMAGE BUILD time (before the model patch). Install the
         # compiled OpenMM (native _openmm*.so + libs) here — heavy, patch-independent.
         "pre_install": [
-            "pip install --no-cache-dir openmm numpy",
+            "pip install --no-cache-dir openmm numpy pytest",
         ],
         # build runs in eval.sh, AFTER the model patch is applied to /testbed. Overlay
         # the *patched* pure-Python openmm package onto the pip-installed copy so the
@@ -275,8 +275,11 @@ SPECS_OPENMM = {
             "SITE=$(python -c 'import openmm, os; print(os.path.dirname(openmm.__file__))') && "
             "cp -r /testbed/wrappers/python/openmm/app \"$SITE/\"",
         ],
+        # Run from /testbed (no `cd`) so the emitted pytest nodeid matches the
+        # full-path FAIL_TO_PASS key, and the harness's post-test `git checkout`
+        # (which runs in this same CWD) still finds the repo worktree.
         "test_cmd": [
-            "cd wrappers/python/tests && python -m pytest -xvs TestAmberPrmtopFile.py::TestAmberPrmtopFile::testFlexibleConstraints",
+            "python -m pytest -xvs wrappers/python/tests/TestAmberPrmtopFile.py::TestAmberPrmtopFile::testFlexibleConstraints",
         ],
     },
     # PR #4881: computeCurrentPressure() for MonteCarloBarostat.
