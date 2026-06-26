@@ -93,13 +93,20 @@ def _build_sweagent_config(
         pr_body = (instance.get("pr_body") or "").strip()
         problem = f"{pr_title}\n\n{pr_body}".strip()
 
-    # litellm model name: prefix with openai/ for a custom OpenAI-compatible endpoint
+    # litellm model name: prefix with openai/ for a custom OpenAI-compatible endpoint.
+    # litellm's openai provider POSTs to <api_base>/chat/completions, so api_base must
+    # point at the OpenAI-compatible root (e.g. https://api.deepseek.com/v1, NOT the
+    # bare host — bare host 404s and the agent hangs until timeout).
     litellm_name = model_name
     model_cfg: dict = {"name": litellm_name}
     if api_base:
+        base = api_base.rstrip("/")
+        # api.deepseek.com exposes its OpenAI-compatible API under /v1
+        if base.endswith("api.deepseek.com"):
+            base = base + "/v1"
         if not litellm_name.startswith("openai/"):
             model_cfg["name"] = f"openai/{litellm_name}"
-        model_cfg["api_base"] = api_base
+        model_cfg["api_base"] = base
         if api_key:
             model_cfg["api_key"] = api_key
 
