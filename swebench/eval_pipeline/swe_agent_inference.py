@@ -187,6 +187,9 @@ def run_sweagent_inference(
 
     todo = [i for i in instances if i["instance_id"] not in existing_ids]
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    # Per-instance sweagent stdout/stderr lands here so the trajectory is inspectable.
+    logs_dir = out_path.parent / "sweagent_logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
     write_lock = threading.Lock()
 
     def _process_one(inst: dict) -> None:
@@ -216,6 +219,7 @@ def run_sweagent_inference(
             env["TMP"] = str(sweagent_tmp)
             env["TEMP"] = str(sweagent_tmp)
 
+            instance_log = logs_dir / f"{instance_id}.log"
             result = subprocess.run(
                 [_sweagent_bin(), "run", "--config", str(tmp_cfg)],
                 capture_output=True,
@@ -223,6 +227,14 @@ def run_sweagent_inference(
                 timeout=_SWEAGENT_TIMEOUT,
                 env=env,
             )
+            # Persist the full trajectory (stdout + stderr) for inspection.
+            with open(instance_log, "w") as lf:
+                lf.write(f"=== config (agent.model) ===\n{cfg.get('agent', {}).get('model')}\n")
+                lf.write(f"=== exit code: {result.returncode} ===\n")
+                lf.write("=== STDOUT ===\n")
+                lf.write(result.stdout or "")
+                lf.write("\n=== STDERR ===\n")
+                lf.write(result.stderr or "")
             if result.returncode != 0:
                 logger.warning(
                     f"[{instance_id}] sweagent exited with code {result.returncode}. "
@@ -232,16 +244,28 @@ def run_sweagent_inference(
             patch = _read_patch_from_output(tmp_out, instance_id)
             patch = _clean_patch(patch)
             patch = _repair_patch(patch)
+            logger.info(
+                f"[{instance_id}] sweagent exit={result.returncode}, "
+                f"patch_len={len(patch)}, log={instance_log}"
+            )
             record = {
                 "instance_id": instance_id,
                 "model_patch": patch,
                 "model_name_or_path": model_name,
             }
         except subprocess.TimeoutExpired as te:
-            tail = ""
-            if te.stderr:
-                err = te.stderr if isinstance(te.stderr, str) else te.stderr.decode(errors="replace")
-                tail = f" stderr tail: {err[-500:]}"
+            def _dec(s):
+                if not s:
+                    return ""
+                return s if isinstance(s, str) else s.decode(errors="replace")
+            so, se = _dec(te.stdout), _dec(te.stderr)
+            try:
+                with open(logs_dir / f"{instance_id}.log", "w") as lf:
+                    lf.write(f"=== TIMEOUT after {_SWEAGENT_TIMEOUT}s ===\n")
+                    lf.write("=== STDOUT ===\n" + so + "\n=== STDERR ===\n" + se)
+            except Exception:
+                pass
+            tail = f" stderr tail: {se[-500:]}" if se else ""
             logger.error(f"[{instance_id}] sweagent timed out after {_SWEAGENT_TIMEOUT}s.{tail}")
             record = {
                 "instance_id": instance_id,
