@@ -29,6 +29,10 @@ from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
 logger = logging.getLogger(__name__)
 
 _SWEAGENT_TIMEOUT = 600  # seconds per instance
+# SWE-agent runs each instance in a container (deployment: docker) so its local-repo
+# handler can upload the repo to a writable /<repo_name>. Any image with git + a shell
+# works; SWE-agent installs its own tools at runtime.
+_DEFAULT_DOCKER_IMAGE = "python:3.11"
 
 
 def _sweagent_bin() -> str:
@@ -68,8 +72,14 @@ def _build_sweagent_config(
     model_name: str,
     output_dir: Path,
     base_config: Optional[dict] = None,
+    docker_image: str = _DEFAULT_DOCKER_IMAGE,
 ) -> dict:
-    """Build a SWE-agent RunSingleConfig dict for one instance."""
+    """Build a SWE-agent RunSingleConfig dict for one instance.
+
+    Uses a Docker deployment: SWE-agent's local repo handler uploads the repo to
+    ``/<repo_name>`` inside the container (where ``/`` is writable), avoiding the
+    PermissionError that ``deployment: local`` hits when copying to the host root.
+    """
     problem = (instance.get("problem_statement") or "").strip()
     if not problem:
         pr_title = (instance.get("pr_title") or "").strip()
@@ -83,14 +93,14 @@ def _build_sweagent_config(
             "agent": {"model": {"name": model_name}},
         }
 
-    # Override env to use local repo + local deployment (no Docker)
+    # Override env to use local repo uploaded into a Docker container.
     cfg["env"] = {
         "repo": {
             "type": "local",
             "path": str(repo_dir),
             "base_commit": instance["base_commit"],
         },
-        "deployment": {"type": "local"},
+        "deployment": {"type": "docker", "image": docker_image},
     }
     cfg["problem_statement"] = {"type": "text", "text": problem}
     cfg["output_dir"] = str(output_dir)
@@ -122,6 +132,7 @@ def run_sweagent_inference(
     github_token: Optional[str] = None,
     max_workers: int = 2,
     sweagent_config: Optional[str] = None,
+    docker_image: str = _DEFAULT_DOCKER_IMAGE,
 ) -> None:
     """Run SWE-agent inference for all instances. Writes same JSONL format as inference.py."""
     base_config: Optional[dict] = None
@@ -161,7 +172,9 @@ def run_sweagent_inference(
             repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token)
             tmp_out = Path(tempfile.mkdtemp(prefix="sweagent_out_"))
 
-            cfg = _build_sweagent_config(inst, repo_dir, model_name, tmp_out, base_config)
+            cfg = _build_sweagent_config(
+                inst, repo_dir, model_name, tmp_out, base_config, docker_image
+            )
             tmp_cfg = Path(tempfile.mktemp(suffix=".yaml"))
             tmp_cfg.write_text(yaml.dump(cfg))
 
