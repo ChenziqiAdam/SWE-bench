@@ -53,13 +53,21 @@ def _build_mine_script(instance: dict, apply_gold: bool) -> str:
     base_commit = instance["base_commit"]
     test_patch = instance["test_patch"]
 
-    test_cmd = " ".join([spec["test_cmd"], *get_test_directives(instance)])
+    # spec["test_cmd"] may be a string (legacy: append the test-file directives)
+    # or a list of fully-formed commands (C/C++ path: the command already names
+    # the test, so run it verbatim — matching what eval's get_test_cmds does).
+    raw_test_cmd = spec["test_cmd"]
+    if isinstance(raw_test_cmd, list):
+        test_cmd = " && ".join(raw_test_cmd)
+    else:
+        test_cmd = " ".join([raw_test_cmd, *get_test_directives(instance)])
 
+    # C/C++ images (ubuntu base) have no conda; only activate it when present.
     lines = [
         "#!/bin/bash",
         "set -uxo pipefail",
-        "source /opt/miniconda3/bin/activate",
-        f"conda activate {env_name}",
+        "if [ -f /opt/miniconda3/bin/activate ]; then "
+        f"source /opt/miniconda3/bin/activate && conda activate {env_name}; fi",
         f"cd {repo_dir}",
         f"git config --global --add safe.directory {repo_dir}",
         # Hard reset, then re-apply test_patch (and optionally gold patch).

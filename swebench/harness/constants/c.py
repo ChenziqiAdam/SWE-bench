@@ -256,41 +256,41 @@ SPECS_OPENBABEL = {
 }
 
 SPECS_OPENMM = {
-    # PR #4832: flexibleConstraints option for AmberPrmtopFile (Python-only change)
-    # openmm is installed via conda; the Python tests run directly with pytest.
-    # The harness will use the C eval path (build=[], test_cmd runs pytest).
+    # PR #4832: flexibleConstraints option for AmberPrmtopFile (Python-only change).
+    # The C base image has python3/pip but NO conda, so install OpenMM via pip
+    # to get the compiled `_openmm` extension + native libs. The patch edits the
+    # pure-Python `openmm/app/amberprmtopfile.py` in /testbed; overlay that package
+    # onto the installed copy in site-packages so the patch takes effect without a
+    # full C++ build, then run the pytest FAIL_TO_PASS test against it.
     "4832": {
+        # pre_install runs at IMAGE BUILD time (before the model patch). Install the
+        # compiled OpenMM (native _openmm*.so + libs) here — heavy, patch-independent.
         "pre_install": [
-            "conda install -y -c conda-forge openmm",
+            "pip install --no-cache-dir openmm numpy",
         ],
-        "build": [],
+        # build runs in eval.sh, AFTER the model patch is applied to /testbed. Overlay
+        # the *patched* pure-Python openmm package onto the pip-installed copy so the
+        # test imports the patched code (keeps pip's compiled _openmm*.so untouched).
+        "build": [
+            "SITE=$(python -c 'import openmm, os; print(os.path.dirname(openmm.__file__))') && "
+            "cp -r /testbed/wrappers/python/openmm/app \"$SITE/\"",
+        ],
         "test_cmd": [
             "cd wrappers/python/tests && python -m pytest -xvs TestAmberPrmtopFile.py::TestAmberPrmtopFile::testFlexibleConstraints",
         ],
     },
-    # PR #4881: computeCurrentPressure() for MonteCarloBarostat (C++ change with GPU tests)
-    # The new tests (testLJPressure) require CUDA/OpenCL platform — not runnable without GPU.
-    # Using Reference platform-only C++ tests as best-effort fallback.
+    # PR #4881: computeCurrentPressure() for MonteCarloBarostat.
+    # NOT evaluable in this environment: the instance has an EMPTY FAIL_TO_PASS set
+    # and every test in the test_patch targets CUDA/HIP/OpenCL platforms, which need
+    # a GPU. There is no Reference-platform test to fall back on, so no patch can be
+    # scored here. Spec is a no-op placeholder; expect EMPTY/unresolved in reports.
     "4881": {
         "pre_install": [
-            "apt-get update -q",
-            "apt-get install -y cmake doxygen swig libfftw3-dev",
-            "conda install -y -c conda-forge numpy",
+            "pip install --no-cache-dir numpy",
         ],
-        "build": [
-            "mkdir -p build",
-            (
-                "cmake -B build -S . "
-                "-DCMAKE_BUILD_TYPE=Release "
-                "-DOPENMM_BUILD_CUDA_LIB=OFF "
-                "-DOPENMM_BUILD_OPENCL_LIB=OFF "
-                "-DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF "
-                "-DOPENMM_BUILD_EXAMPLES=OFF"
-            ),
-            "cmake --build build --parallel $(nproc) --target TestReferenceMonteCarloBarostat",
-        ],
+        "build": [],
         "test_cmd": [
-            "cd build && ./TestReferenceMonteCarloBarostat",
+            "echo 'openmm#4881 not evaluable: empty FAIL_TO_PASS, GPU-only tests' && false",
         ],
     },
 }

@@ -170,6 +170,76 @@ def parse_log_googletest(log: str, test_spec: TestSpec) -> dict[str, str]:
     return test_status_map
 
 
+def parse_log_pytest_nodeid(log: str, test_spec: TestSpec) -> dict[str, str]:
+    """Parse `pytest -v` output where each line is `<nodeid> STATUS [pct]`.
+
+    e.g. `path/Test.py::Cls::test_x PASSED` / `... FAILED` / `... SKIPPED`.
+    The nodeid (which contains '::') is the key, matching FAIL_TO_PASS entries.
+    """
+    test_status_map = {}
+    status_words = {
+        "PASSED": TestStatus.PASSED.value,
+        "FAILED": TestStatus.FAILED.value,
+        "ERROR": TestStatus.ERROR.value,
+        "SKIPPED": TestStatus.SKIPPED.value,
+        "XFAIL": TestStatus.PASSED.value,
+        "XPASS": TestStatus.PASSED.value,
+    }
+    for line in log.split("\n"):
+        line = line.strip()
+        if "::" not in line:
+            continue
+        tokens = line.split()
+        nodeid = tokens[0]
+        if "::" not in nodeid:
+            continue
+        # status may be token[1] (`nodeid PASSED`) or appear later (`PASSED nodeid`).
+        for tok in tokens[1:]:
+            tok_clean = tok.strip().upper()
+            if tok_clean in status_words:
+                test_status_map[nodeid] = status_words[tok_clean]
+                break
+    return test_status_map
+
+
+def _reconcile_nodeids(status_map: dict, test_spec: TestSpec) -> dict:
+    """Map parsed (possibly path-stripped) pytest nodeids back to the exact
+    FAIL_TO_PASS/PASS_TO_PASS keys grading compares against.
+
+    pytest prints nodeids relative to its CWD/rootdir, so a test_cmd that does
+    `cd wrappers/python/tests && pytest TestX.py::...` yields a key without the
+    `wrappers/python/tests/` prefix, which would not match the full-path key in
+    FAIL_TO_PASS. Reconcile by suffix-match against the expected keys."""
+    if test_spec is None:
+        return status_map
+    expected = list(getattr(test_spec, "FAIL_TO_PASS", []) or []) + list(
+        getattr(test_spec, "PASS_TO_PASS", []) or []
+    )
+    if not expected:
+        return status_map
+    reconciled = dict(status_map)
+    for parsed_key, status in status_map.items():
+        if parsed_key in expected:
+            continue
+        for exp in expected:
+            # exp is full-path nodeid; parsed_key may be the trailing portion.
+            if exp == parsed_key or exp.endswith("/" + parsed_key) or exp.endswith(
+                "::" + parsed_key
+            ):
+                reconciled[exp] = status
+                break
+    return reconciled
+
+
+def parse_log_openmm(log: str, test_spec: TestSpec) -> dict[str, str]:
+    """OpenMM has both pytest (Python PRs) and GoogleTest (C++ PRs) instances.
+    Dispatch by detecting pytest nodeids; fall back to GoogleTest otherwise."""
+    pytest_map = parse_log_pytest_nodeid(log, test_spec)
+    if pytest_map:
+        return _reconcile_nodeids(pytest_map, test_spec)
+    return parse_log_googletest(log, test_spec)
+
+
 MAP_REPO_TO_PARSER_C = {
     "redis/redis": parse_log_redis,
     "jqlang/jq": parse_log_jq,
@@ -178,7 +248,7 @@ MAP_REPO_TO_PARSER_C = {
     "valkey-io/valkey": parse_log_redis,
     "fmtlib/fmt": parse_log_googletest,
     "openbabel/openbabel": parse_log_googletest,
-    "openmm/openmm": parse_log_googletest,
+    "openmm/openmm": parse_log_openmm,
     "openmc-dev/openmc": parse_log_googletest,
     "qgis/QGIS": parse_log_googletest,
     "rdkit/rdkit": parse_log_catch2,
