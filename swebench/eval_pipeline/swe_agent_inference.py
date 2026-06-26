@@ -110,6 +110,15 @@ def _build_sweagent_config(
         if api_key:
             model_cfg["api_key"] = api_key
 
+    # litellm has no price table for custom/self-hosted models, so SWE-agent's cost
+    # safety check raises ModelConfigurationError ("This model isn't mapped yet") and
+    # aborts after step 1. Disabling the cost limits turns the check off.
+    model_cfg.setdefault("per_instance_cost_limit", 0.0)
+    model_cfg.setdefault("total_cost_limit", 0.0)
+    # litellm also can't infer the context window for unknown models; set a sane cap so
+    # SWE-agent's history truncation works instead of warning every step.
+    model_cfg.setdefault("max_input_tokens", 65536)
+
     if base_config:
         cfg = json.loads(json.dumps(base_config))  # deep copy
         cfg.setdefault("agent", {})["model"] = model_cfg
