@@ -102,6 +102,11 @@ def parse_args():
                    help="Skip inference; only run evaluation and reporting")
     p.add_argument("--skip_eval", action="store_true",
                    help="Skip Docker evaluation; only run reporting")
+    p.add_argument("--force_eval", action="store_true",
+                   help="Re-run evaluation even for instances that already have a cached "
+                        "per-instance report. Deletes logs/run_evaluation/{run_id}/{model}/* "
+                        "for the evaluated instances before Stage 5 so they are not skipped. "
+                        "Use after changing a test_spec (build/test_cmd/pre_install).")
     p.add_argument("--log_dir", default="logs/run_evaluation",
                    help="Log directory for run_evaluation output")
     p.add_argument("--skip_validation", action="store_true",
@@ -438,6 +443,22 @@ def main():
             run_id = f"{args.run_id}_agent" if args.agent else f"{args.run_id}_level{level_key}"
             run_ids[level_key] = run_id
             eval_instance_ids = [i["instance_id"] for i in instances]
+
+            # --force_eval: drop cached per-instance report dirs so run_evaluation
+            # does not skip them as "already run". Reports live at
+            # {log_dir}/{run_id}/{model}/{instance_id}/ — glob across the model
+            # subdir so we don't have to reproduce the harness's name sanitization.
+            if args.force_eval:
+                import shutil
+                removed = 0
+                for iid in eval_instance_ids:
+                    for report_dir in Path(args.log_dir).glob(f"{run_id}/*/{iid}"):
+                        shutil.rmtree(report_dir, ignore_errors=True)
+                        removed += 1
+                logger.info(
+                    f"--force_eval: cleared {removed} cached report dir(s) under "
+                    f"{args.log_dir}/{run_id}/ so they will be re-evaluated."
+                )
             wallclock = args.eval_wallclock_per_instance * max(1, len(eval_instance_ids))
             logger.info(
                 f"--- Evaluating {level_key} (run_id={run_id}, "
