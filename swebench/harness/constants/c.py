@@ -300,6 +300,56 @@ SPECS_OPENMM = {
             "echo 'openmm#4881 not evaluable: empty FAIL_TO_PASS, GPU-only tests' && false",
         ],
     },
+    # ── Not evaluable (no functional test patch) ──────────────────────────────
+    # 4294: comment-only fix. 4138: docs-only. 3260: test patch only DELETES an
+    # assertion (no Reference test added). No FAIL_TO_PASS can be scored — these
+    # are no-op placeholders so the batch run doesn't crash on a missing key.
+    # Expect them to report unresolved/empty; drop from the eval set later.
+    **{
+        pr: {
+            "pre_install": [],
+            "build": [],
+            "test_cmd": [
+                f"echo 'openmm#{pr} not evaluable: no functional test patch' && false",
+            ],
+        }
+        for pr in ["4294", "4138", "3260"]
+    },
+    # ── Full C++ Reference-platform builds ────────────────────────────────────
+    # 1837 (CustomCVForce), 5278 (MonteCarloMembraneBarostat), 4799 (DPDIntegrator)
+    # each add a Reference-platform C++ test (Test<Name>.cpp under
+    # platforms/reference/tests/). Unlike 4832's pip-overlay, these need a real
+    # in-tree OpenMM build. We compile only the single test target (CUDA/OpenCL/
+    # Python wrappers OFF), then run the resulting binary. CMake names the target
+    # = test filename without extension; the binary + libOpenMM land in build/.
+    **{
+        pr: {
+            "pre_install": [
+                "apt-get update -q",
+                "apt-get install -y --no-install-recommends cmake g++ make",
+            ],
+            "build": [
+                "cmake -B build -S . "
+                "-DCMAKE_BUILD_TYPE=Release "
+                "-DOPENMM_BUILD_CUDA_LIB=OFF "
+                "-DOPENMM_BUILD_OPENCL_LIB=OFF "
+                "-DOPENMM_BUILD_HIP_LIB=OFF "
+                "-DOPENMM_BUILD_PYTHON_WRAPPERS=OFF "
+                "-DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF",
+                f"cmake --build build --parallel $(nproc) --target {target}",
+            ],
+            "test_cmd": [
+                f"LD_LIBRARY_PATH=$PWD/build:${{LD_LIBRARY_PATH:-}} "
+                f"OPENMM_PLUGIN_DIR=$PWD/build "
+                f"./build/{target}",
+            ],
+        }
+        for pr, target in {
+            "1837": "TestReferenceCustomCVForce",
+            "5278": "TestReferenceMonteCarloMembraneBarostat",
+            "4799": "TestReferenceDPDIntegrator",
+        }.items()
+    },
 }
 
 SPECS_OPENMC = {
