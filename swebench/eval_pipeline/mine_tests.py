@@ -92,6 +92,14 @@ def _build_mine_script(instance: dict, apply_gold: bool) -> str:
             f"|| patch --batch --fuzz=5 -p1 -i {DOCKER_PATCH}",
         ]
 
+    # Run the spec's `build` step (after patches), mirroring eval's ordering in
+    # harness/test_spec/utils.py: reset → test_patch → build → test. Some specs
+    # (e.g. OpenMM's pip-overlay) only make the patch effective via `build`;
+    # without it both mining passes test the unpatched install → fail→fail → 0
+    # FAIL_TO_PASS mined, which silently makes every instance score vacuously.
+    if "build" in spec:
+        lines += spec["build"]
+
     lines += [
         f": '{START_TEST_OUTPUT}'",
         test_cmd,

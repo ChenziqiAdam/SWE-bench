@@ -1,4 +1,4 @@
-"""Stage 4: Call LLM APIs and output JSONL patches per level.
+"""LLM client + patch-extraction helpers shared by the agent inference backends.
 
 Supports three backends:
   - Anthropic native API  (claude-* models, or --endpoint pointing to Anthropic)
@@ -12,17 +12,11 @@ it is used regardless of model name, so you can point it at any provider.
 """
 from __future__ import annotations
 
-import json
 import logging
 import os
-import threading
-import traceback
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from pathlib import Path
 from typing import Optional
 
 from tenacity import retry, stop_after_attempt, wait_random_exponential
-from tqdm.auto import tqdm
 
 from swebench.inference.make_datasets.utils import extract_diff
 from swebench.eval_pipeline.constants import (
@@ -31,32 +25,6 @@ from swebench.eval_pipeline.constants import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def _load_existing_ids(output_file: str, model_name: str | None = None) -> set[str]:
-    """Return instance_ids already written to the output file (for resuming).
-
-    If model_name is provided, only count rows whose model_name_or_path matches —
-    this prevents re-runs with a different model from silently inheriting another
-    model's predictions.
-    """
-    existing = set()
-    path = Path(output_file)
-    if not path.exists():
-        return existing
-    with open(path) as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                obj = json.loads(line)
-                if model_name is not None and obj.get("model_name_or_path") != model_name:
-                    continue
-                existing.add(obj["instance_id"])
-            except (json.JSONDecodeError, KeyError):
-                pass
-    return existing
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
@@ -307,136 +275,6 @@ def _call_openai_compat(
     output_tokens = getattr(getattr(response, "usage", None), "completion_tokens", 0) or 0
     cost = _calc_cost(model_name, input_tokens, output_tokens)
     return text, cost
-
-
-def _call_model(
-    prompt: str,
-    model_name: str,
-    *,
-    anthropic_client=None,
-    openai_compat_client=None,
-    max_tokens: int = 4096,
-) -> tuple[str, float]:
-    """Dispatch to the right backend."""
-    if anthropic_client is not None:
-        return _call_anthropic_native(prompt, model_name, anthropic_client, max_tokens)
-    if openai_compat_client is not None:
-        return _call_openai_compat(prompt, model_name, openai_compat_client, max_tokens)
-    raise ValueError("No client provided — pass anthropic_client or openai_compat_client")
-
-
-def run_inference_for_level(
-    instances: list[dict],
-    prompts: dict[str, Optional[str]],
-    model_name: str,
-    output_file: str,
-    max_cost: Optional[float] = None,
-    max_tokens: int = 4096,
-    anthropic_client=None,
-    openai_compat_client=None,
-    max_workers: int = 8,
-) -> None:
-    """
-    Run inference for one level across all instances, parallelised across workers.
-
-    API calls are I/O-bound (network round-trips to the LLM provider), so
-    ThreadPoolExecutor gives near-linear speedup up to the provider's rate limit.
-    Default 8 workers is safe for most providers; reduce if you hit 429s.
-
-    Args:
-        instances: list of SWEbenchInstance dicts
-        prompts: {instance_id: prompt_str or None} — None means skip this level
-        model_name: model identifier passed to the API
-        output_file: path to write JSONL predictions
-        max_cost: stop if cumulative cost exceeds this (USD)
-        max_workers: parallel API call threads (default 8)
-        anthropic_client: Anthropic SDK client (for claude-* on api.anthropic.com)
-        openai_compat_client: openai.OpenAI client (for any OpenAI-compatible endpoint)
-    """
-    existing_ids = _load_existing_ids(output_file, model_name=model_name)
-    if existing_ids:
-        logger.info(f"Resuming: {len(existing_ids)} predictions already written for {model_name}")
-
-    Path(output_file).parent.mkdir(parents=True, exist_ok=True)
-
-    # Filter to instances that actually need work.
-    todo = [i for i in instances if i["instance_id"] not in existing_ids]
-
-    total_cost = 0.0
-    cost_lock = threading.Lock()
-    write_lock = threading.Lock()
-    stop_event = threading.Event()
-
-    def _process_one(inst: dict) -> None:
-        nonlocal total_cost
-        if stop_event.is_set():
-            return
-        instance_id = inst["instance_id"]
-        prompt = prompts.get(instance_id)
-
-        if prompt is None:
-            logger.debug(f"Skipping {instance_id}: no prompt for this level")
-            record = {
-                "instance_id": instance_id,
-                "model_patch": "",
-                "model_name_or_path": model_name,
-                "skipped": True,
-            }
-            with write_lock:
-                with open(output_file, "a") as f:
-                    print(json.dumps(record), file=f, flush=True)
-            return
-
-        try:
-            response_text, cost = _call_model(
-                prompt, model_name,
-                anthropic_client=anthropic_client,
-                openai_compat_client=openai_compat_client,
-                max_tokens=max_tokens,
-            )
-            patch = _extract_diff(response_text)
-            patch = _clean_patch(patch)
-            patch = _repair_patch(patch)
-
-            with cost_lock:
-                total_cost += cost
-                current_total = total_cost
-            logger.info(f"{instance_id}: cost=${cost:.4f}, total=${current_total:.2f}")
-
-            record = {
-                "instance_id": instance_id,
-                "model_patch": patch,
-                "model_name_or_path": model_name,
-                "full_output": response_text,
-            }
-        except Exception as e:
-            logger.error(f"Error on {instance_id}: {e}")
-            traceback.print_exc()
-            record = {
-                "instance_id": instance_id,
-                "model_patch": "",
-                "model_name_or_path": model_name,
-                "error": str(e),
-            }
-
-        with write_lock:
-            with open(output_file, "a") as f:
-                print(json.dumps(record), file=f, flush=True)
-
-        if max_cost is not None:
-            with cost_lock:
-                if total_cost >= max_cost:
-                    logger.warning(f"Reached max cost ${max_cost:.2f}, stopping")
-                    stop_event.set()
-
-    with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        futs = {pool.submit(_process_one, inst): inst for inst in todo}
-        with tqdm(total=len(todo), desc=f"Inference ({model_name})") as pbar:
-            for fut in as_completed(futs):
-                fut.result()  # re-raise any unexpected exception
-                pbar.update(1)
-
-    logger.info(f"Total inference cost: ${total_cost:.4f}")
 
 
 def make_clients(
