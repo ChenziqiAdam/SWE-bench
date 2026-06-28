@@ -16,6 +16,7 @@ Speed improvements vs v1:
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 from collections import defaultdict
@@ -27,6 +28,32 @@ from swebench.harness.docker_build import build_env_images, build_instance_image
 from swebench.harness.test_spec.test_spec import MAP_REPO_VERSION_TO_SPECS, make_test_spec
 
 logger = logging.getLogger(__name__)
+
+
+def _spec_hash(inst: dict) -> str:
+    """Hash the build-relevant portions of an instance's resolved test_spec.
+
+    A cached build_validation entry is only valid if it was produced from the
+    same spec. When a spec (pre_install/install/build/test_cmd/env setup) is
+    edited, the hash changes and the cached entry is treated as a miss so the
+    instance is re-validated — preventing a stale non-buildable flag from
+    silently excluding a now-passing instance from the report.
+    """
+    try:
+        spec = make_test_spec(inst)
+    except Exception:
+        # If the spec can't be built (e.g. missing version), fall back to a
+        # stable sentinel so such instances still cache by instance_id alone.
+        return "no-spec"
+    payload = json.dumps(
+        {
+            "env_script": spec.setup_env_script,
+            "install_script": spec.install_repo_script,
+            "eval_script": spec.eval_script,
+        },
+        sort_keys=True,
+    )
+    return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 
 def validate_buildable(
@@ -45,6 +72,23 @@ def validate_buildable(
         cache = json.loads(cache_path.read_text())
         logger.info(f"Loaded {len(cache)} cached build-validation results from {cache_path}")
 
+    # Auto-invalidate cached entries whose spec changed since they were written.
+    spec_hashes = {i["instance_id"]: _spec_hash(i) for i in instances}
+    if not force:
+        stale = [
+            i["instance_id"]
+            for i in instances
+            if i["instance_id"] in cache
+            and cache[i["instance_id"]].get("spec_hash") != spec_hashes[i["instance_id"]]
+        ]
+        if stale:
+            logger.info(
+                f"{len(stale)} cached entr(ies) invalidated (spec changed): "
+                f"{', '.join(stale[:5])}{'...' if len(stale) > 5 else ''}"
+            )
+            for iid in stale:
+                cache.pop(iid, None)
+
     todo = [i for i in instances if i["instance_id"] not in cache] if not force else instances
 
     # Filter out instances whose repo/version has no spec — they can't be built.
@@ -56,7 +100,7 @@ def validate_buildable(
             logger.warning(
                 f"Skipping {inst['instance_id']}: no spec for {repo}@version={version!r}"
             )
-            cache[inst["instance_id"]] = {"buildable": False, "error": f"no spec for version {version!r}"}
+            cache[inst["instance_id"]] = {"buildable": False, "error": f"no spec for version {version!r}", "spec_hash": spec_hashes[inst["instance_id"]]}
         else:
             buildable_todo.append(inst)
 
@@ -100,7 +144,7 @@ def validate_buildable(
         iid = inst["instance_id"]
         env_key = spec_map[iid].env_image_key
         if env_key in failed_env_keys:
-            cache[iid] = {"buildable": False, "error": f"env image failed: {env_key}"}
+            cache[iid] = {"buildable": False, "error": f"env image failed: {env_key}", "spec_hash": spec_hashes[iid]}
         else:
             instance_todo_p2.append(inst)
 
@@ -134,10 +178,10 @@ def validate_buildable(
         for inst in instance_todo_p2:
             iid = inst["instance_id"]
             if iid in ok_ids:
-                cache[iid] = {"buildable": True, "error": ""}
+                cache[iid] = {"buildable": True, "error": "", "spec_hash": spec_hashes[iid]}
             else:
                 reason = _read_build_log(spec_map[iid])
-                cache[iid] = {"buildable": False, "error": reason or "instance image build failed"}
+                cache[iid] = {"buildable": False, "error": reason or "instance image build failed", "spec_hash": spec_hashes[iid]}
 
     _write_cache(cache, cache_path)
     n_ok = sum(1 for v in cache.values() if v["buildable"])
