@@ -145,6 +145,14 @@ def _mine_one(instance: dict, run_id: str, client: docker.DockerClient, timeout:
     inst_logger = setup_logger(instance_id, log_dir / "mine.log")
 
     spec = make_test_spec(instance)
+    # Parse against a spec with EMPTY FAIL_TO_PASS/PASS_TO_PASS. Some parsers
+    # (e.g. OpenMM's `_reconcile_nodeids`) suffix-match parsed nodeids onto the
+    # spec's expected keys and *add* the matched expected key to the result. If
+    # the instance still carries stale regex-mined keys (a different path-prefix
+    # spelling of the same test), that injects a duplicate key we never actually
+    # observed — which later eval can't reproduce, so the test scores as a
+    # FAIL_TO_PASS failure. Mining must report only what the parser truly saw.
+    parse_spec = make_test_spec({**instance, "FAIL_TO_PASS": [], "PASS_TO_PASS": []})
     parser = MAP_REPO_TO_PARSER.get(instance["repo"])
     if parser is None:
         inst_logger.error(f"No log parser registered for repo {instance['repo']}")
@@ -174,12 +182,12 @@ def _mine_one(instance: dict, run_id: str, client: docker.DockerClient, timeout:
         # Pass A — test_patch only
         out_a = _run_one_pass(container, _build_mine_script(instance, apply_gold=False),
                               log_dir, "initial", timeout)
-        initial = parser(out_a, spec)
+        initial = parser(out_a, parse_spec)
 
         # Pass B — test_patch + gold patch
         out_b = _run_one_pass(container, _build_mine_script(instance, apply_gold=True),
                               log_dir, "final", timeout)
-        final = parser(out_b, spec)
+        final = parser(out_b, parse_spec)
 
         f2p, p2p = _classify(initial, final)
         inst_logger.info(
