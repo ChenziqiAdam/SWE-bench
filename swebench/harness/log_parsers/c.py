@@ -170,6 +170,26 @@ def parse_log_googletest(log: str, test_spec: TestSpec) -> dict[str, str]:
     return test_status_map
 
 
+def parse_log_openmm_binary_done(log: str, test_spec: TestSpec) -> dict[str, str]:
+    """Parse OpenMM's legacy C++ test binaries.
+
+    These tests are not GoogleTest. On success they print `Done` and exit 0.
+    The harness log includes shell xtrace lines such as
+    `+ ./build/TestReferenceMonteCarloMembraneBarostat`; use the executable name
+    as the synthetic test key so mining/eval can compare the same key.
+    """
+    if not any(line.strip() == "Done" for line in log.splitlines()):
+        return {}
+
+    test_name = "OpenMMBinary"
+    for line in log.splitlines():
+        match = re.match(r"^\+\s+(?:\S+=\S+\s+)*(\./build/\S+)\s*$", line.strip())
+        if match:
+            test_name = match.group(1).split("/")[-1]
+
+    return {test_name: TestStatus.PASSED.value}
+
+
 def parse_log_pytest_nodeid(log: str, test_spec: TestSpec) -> dict[str, str]:
     """Parse `pytest -v` output where each line is `<nodeid> STATUS [pct]`.
 
@@ -237,7 +257,10 @@ def parse_log_openmm(log: str, test_spec: TestSpec) -> dict[str, str]:
     pytest_map = parse_log_pytest_nodeid(log, test_spec)
     if pytest_map:
         return _reconcile_nodeids(pytest_map, test_spec)
-    return parse_log_googletest(log, test_spec)
+    gtest_map = parse_log_googletest(log, test_spec)
+    if gtest_map:
+        return gtest_map
+    return parse_log_openmm_binary_done(log, test_spec)
 
 
 MAP_REPO_TO_PARSER_C = {

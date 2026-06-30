@@ -319,16 +319,17 @@ SPECS_OPENMM = {
     # 1837 (CustomCVForce), 5278 (MonteCarloMembraneBarostat), 4799 (DPDIntegrator)
     # each add a Reference-platform C++ test (Test<Name>.cpp under
     # platforms/reference/tests/). Unlike 4832's pip-overlay, these need a real
-    # in-tree OpenMM build. We compile only the single test target (CUDA/OpenCL/
-    # Python wrappers OFF), then run the resulting binary. CMake names the target
-    # = test filename without extension; the binary + libOpenMM land in build/.
+    # in-tree OpenMM build. Some tests are new files from test_patch, so the
+    # CMake configure/build must run only after test_patch is applied. Keep
+    # pre_install limited to toolchain deps so base image validation does not try
+    # to build a target that cannot exist yet.
     **{
         pr: {
             "pre_install": [
                 "apt-get update -q",
                 "apt-get install -y --no-install-recommends cmake g++ make",
             ],
-            "build": [
+            "build_after_test_patch": [
                 "cmake -B build -S . "
                 "-DCMAKE_BUILD_TYPE=Release "
                 "-DOPENMM_BUILD_CUDA_LIB=OFF "

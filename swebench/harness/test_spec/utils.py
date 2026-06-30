@@ -73,6 +73,8 @@ def make_eval_script_list_common(
     build_commands = []
     if "build" in specs:
         build_commands.extend(specs["build"])
+    if "build_after_test_patch" in specs:
+        build_commands.extend(specs["build_after_test_patch"])
 
     apply_test_patch_command = f"git apply --verbose --reject - <<'{HEREDOC_DELIMITER}'\n{test_patch}\n{HEREDOC_DELIMITER}"
     test_commands = get_test_cmds(instance)
