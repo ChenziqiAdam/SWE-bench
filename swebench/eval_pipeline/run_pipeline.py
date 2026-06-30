@@ -96,6 +96,12 @@ def parse_args():
                    help="Skip fetch stage; reuse existing outputs/instances.jsonl")
     p.add_argument("--skip_inference", action="store_true",
                    help="Skip inference; only run evaluation and reporting")
+    p.add_argument("--force_inference", action="store_true",
+                   help="Delete existing agent_predictions.jsonl before Stage 4 and rerun "
+                        "inference for all selected instances.")
+    p.add_argument("--retry_empty_predictions", action="store_true",
+                   help="During Stage 4 resume, rerun instances whose existing prediction has "
+                        "an empty model_patch. Useful for SWE-agent format/context failures.")
     p.add_argument("--skip_eval", action="store_true",
                    help="Skip Docker evaluation; only run reporting")
     p.add_argument("--force_eval", action="store_true",
@@ -125,6 +131,10 @@ def parse_args():
                         "Total budget = N_instances * this. Kills the eval if a worker hangs "
                         "outside the per-test timeout (e.g. stuck docker build / container start). "
                         "Default 900s (15 min/instance).")
+    p.add_argument("--sweagent_max_input_tokens", type=int, default=32768,
+                   help="SWE-agent model max_input_tokens override for history truncation. "
+                        "Lower values can reduce context-window exits on large C++ instances. "
+                        "Only used with --agent_backend sweagent.")
     p.add_argument("--clean_images", action="store_true",
                    help="Delete per-instance Docker images after eval (cache_level=instance). "
                         "Saves disk space on large runs at the cost of slower re-runs. "
@@ -362,6 +372,11 @@ def main():
         logger.info("=== Stage 4: Running inference ===")
 
         agent_predictions_file = str(output_dir / "agent_predictions.jsonl")
+        if args.force_inference:
+            pred_path = Path(agent_predictions_file)
+            if pred_path.exists():
+                pred_path.unlink()
+                logger.info(f"--force_inference: removed {pred_path}")
         if args.agent_backend == "sweagent":
             from swebench.eval_pipeline.swe_agent_inference import run_sweagent_inference
             logger.info(f"--- SWE-agent inference → {agent_predictions_file} ---")
@@ -374,6 +389,8 @@ def main():
                 sweagent_config=args.sweagent_config,
                 api_base=args.endpoint,
                 api_key=args.api_key,
+                retry_empty_predictions=args.retry_empty_predictions,
+                max_input_tokens=args.sweagent_max_input_tokens,
             )
         else:
             # Builtin: multi-turn Anthropic tool-use loop
@@ -482,12 +499,15 @@ def main():
         "verified_only": args.verified_only,
         "skip_ingest": args.skip_ingest,
         "skip_inference": args.skip_inference,
+        "force_inference": args.force_inference,
+        "retry_empty_predictions": args.retry_empty_predictions,
         "skip_eval": args.skip_eval,
         "skip_validation": args.skip_validation,
         "skip_mining": args.skip_mining,
         "revalidate": args.revalidate,
         "remine": args.remine,
         "mine_workers": args.mine_workers,
+        "sweagent_max_input_tokens": args.sweagent_max_input_tokens,
     }
     render_comparison_table(
         results=results,

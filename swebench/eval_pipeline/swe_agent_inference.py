@@ -33,6 +33,43 @@ _SWEAGENT_TIMEOUT = 600  # seconds per instance
 # handler can upload the repo to a writable /<repo_name>. Any image with git + a shell
 # works; SWE-agent installs its own tools at runtime.
 _DEFAULT_DOCKER_IMAGE = "python:3.11"
+_DEFAULT_MAX_INPUT_TOKENS = 32768
+
+
+def _sweagent_problem_text(instance: dict) -> str:
+    """Build a compact task text for SWE-agent.
+
+    SWE-agent's default template already instructs tool use, but some
+    OpenAI-compatible models do not reliably honor the function-calling wrapper.
+    Put the most important operational constraints directly in the task text so
+    they remain visible after history truncation.
+    """
+    problem = (instance.get("problem_statement") or "").strip()
+    if not problem:
+        pr_title = (instance.get("pr_title") or "").strip()
+        pr_body = (instance.get("pr_body") or "").strip()
+        problem = f"{pr_title}\n\n{pr_body}".strip()
+
+    file_contents = instance.get("file_contents") or {}
+    target_files = sorted(file_contents)
+    f2p = instance.get("FAIL_TO_PASS") or []
+
+    guidance = [
+        "Operational constraints for this SWE-agent run:",
+        "- Use exactly one tool call per assistant turn. Never emit multiple tool calls in one response.",
+        "- Make the smallest source change that addresses the issue and the listed failing tests.",
+        "- Avoid broad repository scans and avoid copying or rewriting large generated files.",
+        "- For large C++ changes, inspect only the directly relevant files first, then patch incrementally.",
+        "- Submit as soon as the minimal patch is ready; do not keep exploring after producing a plausible fix.",
+    ]
+    if target_files:
+        guidance.append("Relevant base-commit files from instance construction:")
+        guidance.extend(f"- {path}" for path in target_files[:12])
+    if f2p:
+        guidance.append("Mined FAIL_TO_PASS tests for scoring:")
+        guidance.extend(f"- {test}" for test in f2p[:12])
+
+    return "\n".join(guidance) + "\n\nIssue:\n" + problem
 
 
 def _sweagent_bin() -> str:
@@ -93,6 +130,7 @@ def _build_sweagent_config(
     docker_image: str = _DEFAULT_DOCKER_IMAGE,
     api_base: Optional[str] = None,
     api_key: Optional[str] = None,
+    max_input_tokens: int = _DEFAULT_MAX_INPUT_TOKENS,
 ) -> dict:
     """Build a SWE-agent RunSingleConfig dict for one instance.
 
@@ -105,11 +143,7 @@ def _build_sweagent_config(
     ``api_base``/``api_key``. Without this, litellm can't resolve a custom model
     name like ``deepseek-v4-flash`` and the run hangs until timeout.
     """
-    problem = (instance.get("problem_statement") or "").strip()
-    if not problem:
-        pr_title = (instance.get("pr_title") or "").strip()
-        pr_body = (instance.get("pr_body") or "").strip()
-        problem = f"{pr_title}\n\n{pr_body}".strip()
+    problem = _sweagent_problem_text(instance)
 
     # litellm model name: prefix with openai/ for a custom OpenAI-compatible endpoint.
     # litellm's openai provider POSTs to <api_base>/chat/completions, so api_base must
@@ -135,7 +169,7 @@ def _build_sweagent_config(
     model_cfg.setdefault("total_cost_limit", 0.0)
     # litellm also can't infer the context window for unknown models; set a sane cap so
     # SWE-agent's history truncation works instead of warning every step.
-    model_cfg.setdefault("max_input_tokens", 65536)
+    model_cfg.setdefault("max_input_tokens", max_input_tokens)
 
     if base_config:
         cfg = json.loads(json.dumps(base_config))  # deep copy
@@ -187,6 +221,8 @@ def run_sweagent_inference(
     docker_image: str = _DEFAULT_DOCKER_IMAGE,
     api_base: Optional[str] = None,
     api_key: Optional[str] = None,
+    retry_empty_predictions: bool = False,
+    max_input_tokens: int = _DEFAULT_MAX_INPUT_TOKENS,
 ) -> None:
     """Run SWE-agent inference for all instances. Writes same JSONL format as inference.py."""
     # Base config: an explicit --sweagent_config wins; otherwise fall back to
@@ -208,9 +244,11 @@ def run_sweagent_inference(
         with open(config_path) as f:
             base_config = yaml.safe_load(f)
 
-    # Resume: skip already-done instances
+    # Resume: skip already-done instances.  Empty patches are often transient
+    # SWE-agent/model failures, so callers can opt into retrying them.
     existing_ids: set[str] = set()
     out_path = Path(output_file)
+    retained_records: list[dict] = []
     if out_path.exists():
         with open(out_path) as f:
             for line in f:
@@ -220,7 +258,16 @@ def run_sweagent_inference(
                 try:
                     obj = json.loads(line)
                     if obj.get("model_name_or_path") == model_name:
-                        existing_ids.add(obj["instance_id"])
+                        has_patch = bool((obj.get("model_patch") or "").strip())
+                        if has_patch or not retry_empty_predictions:
+                            existing_ids.add(obj["instance_id"])
+                            retained_records.append(obj)
+                        else:
+                            logger.info(
+                                f"[{obj.get('instance_id')}] retrying prior empty SWE-agent prediction"
+                            )
+                    else:
+                        retained_records.append(obj)
                 except (json.JSONDecodeError, KeyError):
                     pass
     if existing_ids:
@@ -228,6 +275,10 @@ def run_sweagent_inference(
 
     todo = [i for i in instances if i["instance_id"] not in existing_ids]
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    if retry_empty_predictions and out_path.exists():
+        with open(out_path, "w") as f:
+            for obj in retained_records:
+                print(json.dumps(obj), file=f)
     # Per-instance sweagent stdout/stderr lands here so the trajectory is inspectable.
     logs_dir = out_path.parent / "sweagent_logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
@@ -245,7 +296,7 @@ def run_sweagent_inference(
 
             cfg = _build_sweagent_config(
                 inst, repo_dir, model_name, tmp_out, base_config,
-                docker_image, api_base, api_key,
+                docker_image, api_base, api_key, max_input_tokens,
             )
             tmp_cfg = Path(tempfile.mktemp(suffix=".yaml"))
             tmp_cfg.write_text(yaml.dump(cfg))
