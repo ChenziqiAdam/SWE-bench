@@ -25,8 +25,10 @@ from tqdm.auto import tqdm
 
 from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
+from swebench.eval_pipeline.prediction_utils import prediction_matches_backend
 
 logger = logging.getLogger(__name__)
+AGENT_BACKEND = "sweagent"
 
 _SWEAGENT_TIMEOUT = 600  # seconds per instance
 # SWE-agent runs each instance in a container (deployment: docker) so its local-repo
@@ -257,7 +259,7 @@ def run_sweagent_inference(
                     continue
                 try:
                     obj = json.loads(line)
-                    if obj.get("model_name_or_path") == model_name:
+                    if prediction_matches_backend(obj, AGENT_BACKEND, model_name):
                         has_patch = bool((obj.get("model_patch") or "").strip())
                         if has_patch or not retry_empty_predictions:
                             existing_ids.add(obj["instance_id"])
@@ -344,6 +346,7 @@ def run_sweagent_inference(
                 "instance_id": instance_id,
                 "model_patch": patch,
                 "model_name_or_path": model_name,
+                "agent_backend": AGENT_BACKEND,
             }
         except subprocess.TimeoutExpired as te:
             def _dec(s):
@@ -363,6 +366,7 @@ def run_sweagent_inference(
                 "instance_id": instance_id,
                 "model_patch": "",
                 "model_name_or_path": model_name,
+                "agent_backend": AGENT_BACKEND,
                 "error": "timeout",
             }
         except Exception as e:
@@ -372,6 +376,7 @@ def run_sweagent_inference(
                 "instance_id": instance_id,
                 "model_patch": "",
                 "model_name_or_path": model_name,
+                "agent_backend": AGENT_BACKEND,
                 "error": str(e),
             }
         finally:

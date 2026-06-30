@@ -50,11 +50,12 @@ def parse_args():
                    help="(Always on.) Agentic inference: multi-turn tool-use loop that explores "
                         "the cloned repo and writes files. The pipeline is agent-only; this flag "
                         "is kept for backward compatibility with existing scripts.")
-    p.add_argument("--agent_backend", default="builtin", choices=["builtin", "sweagent"],
+    p.add_argument("--agent_backend", default="builtin", choices=["builtin", "sweagent", "codex"],
                    help="Which agent backend to use with --agent. "
                         "'builtin' (default): homegrown multi-turn Anthropic tool-use loop. "
                         "'sweagent': invoke SWE-agent CLI as a subprocess (requires `sweagent` "
-                        "to be installed: uv pip install swe-agent).")
+                        "to be installed: uv pip install swe-agent). "
+                        "'codex': invoke local Codex CLI via `codex exec`.")
     p.add_argument("--sweagent_config", default=None,
                    help="Optional path to a custom SWE-agent config YAML. When omitted a "
                         "minimal config is auto-generated per instance. Only used with "
@@ -135,6 +136,20 @@ def parse_args():
                    help="SWE-agent model max_input_tokens override for history truncation. "
                         "Lower values can reduce context-window exits on large C++ instances. "
                         "Only used with --agent_backend sweagent.")
+    p.add_argument("--codex_timeout", type=int, default=900,
+                   help="Wall-clock timeout per instance in seconds for Codex CLI inference. "
+                        "Only used with --agent_backend codex.")
+    p.add_argument("--codex_sandbox", default="workspace-write",
+                   choices=["read-only", "workspace-write", "danger-full-access"],
+                   help="Sandbox mode passed to `codex exec`. Only used with "
+                        "--agent_backend codex.")
+    p.add_argument("--codex_profile", default=None,
+                   help="Optional Codex CLI profile passed as `--profile`. Only used with "
+                        "--agent_backend codex. When --endpoint is also supplied, this "
+                        "profile is generated in a temporary CODEX_HOME.")
+    p.add_argument("--codex_model", default=None,
+                   help="Optional model override for Codex CLI. Defaults to --model. Only used "
+                        "with --agent_backend codex.")
     p.add_argument("--clean_images", action="store_true",
                    help="Delete per-instance Docker images after eval (cache_level=instance). "
                         "Saves disk space on large runs at the cost of slower re-runs. "
@@ -188,6 +203,16 @@ def _run_eval_with_timeout(timeout_seconds: int, **eval_kwargs) -> bool:
 
 def main():
     args = parse_args()
+    inference_model = (
+        args.codex_model
+        if args.agent_backend == "codex" and args.codex_model
+        else args.model
+    )
+    if args.agent_backend == "codex" and args.api_key and not args.endpoint:
+        logger.warning(
+            "--api_key is only translated into Codex config when --endpoint is "
+            "also supplied. Otherwise Codex uses its existing CLI auth/config."
+        )
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -383,7 +408,7 @@ def main():
             run_sweagent_inference(
                 instances=instances,
                 output_file=agent_predictions_file,
-                model_name=args.model,
+                model_name=inference_model,
                 github_token=github_token,
                 max_workers=args.max_workers,
                 sweagent_config=args.sweagent_config,
@@ -391,6 +416,22 @@ def main():
                 api_key=args.api_key,
                 retry_empty_predictions=args.retry_empty_predictions,
                 max_input_tokens=args.sweagent_max_input_tokens,
+            )
+        elif args.agent_backend == "codex":
+            from swebench.eval_pipeline.codex_inference import run_codex_inference
+            logger.info(f"--- Codex inference → {agent_predictions_file} ---")
+            run_codex_inference(
+                instances=instances,
+                output_file=agent_predictions_file,
+                model_name=inference_model,
+                github_token=github_token,
+                max_workers=args.max_workers,
+                timeout=args.codex_timeout,
+                sandbox=args.codex_sandbox,
+                profile=args.codex_profile,
+                api_base=args.endpoint,
+                api_key=args.api_key,
+                retry_empty_predictions=args.retry_empty_predictions,
             )
         else:
             # Builtin: multi-turn Anthropic tool-use loop
@@ -401,7 +442,7 @@ def main():
             run_agent_inference_for_level(
                 instances=instances,
                 output_file=agent_predictions_file,
-                model_name=args.model,
+                model_name=inference_model,
                 anthropic_client=anthropic_client,
                 github_token=github_token,
                 max_turns=args.max_turns,
@@ -410,7 +451,20 @@ def main():
 
     # ── Stage 5: Docker Evaluation (agent-only) ───────────────────────────────
     run_ids: dict[str, str] = {}
-    agent_predictions_path = str(output_dir / "agent_predictions.jsonl")
+    agent_predictions_master_path = str(output_dir / "agent_predictions.jsonl")
+    agent_predictions_path = str(output_dir / "agent_predictions.selected.jsonl")
+    from swebench.eval_pipeline.prediction_utils import write_selected_predictions
+    selected_count = write_selected_predictions(
+        source_path=agent_predictions_master_path,
+        dest_path=agent_predictions_path,
+        backend=args.agent_backend,
+        model_name=inference_model,
+        instance_ids={i["instance_id"] for i in instances},
+    )
+    logger.info(
+        f"Selected {selected_count} {args.agent_backend}/{inference_model} prediction(s) "
+        f"for eval → {agent_predictions_path}"
+    )
     run_id = f"{args.run_id}_agent"
     if not args.skip_eval:
         logger.info("=== Stage 5: Running Docker evaluation ===")
@@ -486,11 +540,13 @@ def main():
     output_csv = str(output_dir / f"{args.run_id}_results.csv")
     run_config = {
         "model": args.model,
+        "inference_model": inference_model,
         "run_id": args.run_id,
         "output_dir": str(output_dir),
         "max_tokens": args.max_tokens,
         "max_workers": args.max_workers,
         "max_cost": args.max_cost,
+        "agent_backend": args.agent_backend,
         "limit": args.limit,
         "instance_ids": args.instance_ids or "(all)",
         "repos": args.repos or "(all)",
@@ -508,6 +564,10 @@ def main():
         "remine": args.remine,
         "mine_workers": args.mine_workers,
         "sweagent_max_input_tokens": args.sweagent_max_input_tokens,
+        "codex_timeout": args.codex_timeout,
+        "codex_sandbox": args.codex_sandbox,
+        "codex_profile": args.codex_profile,
+        "codex_model": args.codex_model,
     }
     render_comparison_table(
         results=results,

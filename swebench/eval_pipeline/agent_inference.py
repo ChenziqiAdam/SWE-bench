@@ -23,8 +23,10 @@ from typing import Optional
 from tqdm.auto import tqdm
 
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
+from swebench.eval_pipeline.prediction_utils import prediction_matches_backend
 
 logger = logging.getLogger(__name__)
+AGENT_BACKEND = "builtin"
 
 SYSTEM_PROMPT = (
     "You are an expert software engineer working on a real codebase. "
@@ -282,7 +284,7 @@ def run_agent_inference_for_level(
                     continue
                 try:
                     obj = json.loads(line)
-                    if obj.get("model_name_or_path") == model_name:
+                    if prediction_matches_backend(obj, AGENT_BACKEND, model_name):
                         existing_ids.add(obj["instance_id"])
                 except (json.JSONDecodeError, KeyError):
                     pass
@@ -305,6 +307,7 @@ def run_agent_inference_for_level(
                 "instance_id": instance_id,
                 "model_patch": patch,
                 "model_name_or_path": model_name,
+                "agent_backend": AGENT_BACKEND,
             }
         except Exception as e:
             logger.error(f"Error on {instance_id}: {e}")
@@ -313,6 +316,7 @@ def run_agent_inference_for_level(
                 "instance_id": instance_id,
                 "model_patch": "",
                 "model_name_or_path": model_name,
+                "agent_backend": AGENT_BACKEND,
                 "error": str(e),
             }
         finally:
