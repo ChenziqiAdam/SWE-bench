@@ -154,6 +154,7 @@ def run_claude_code_inference(
                 "-p",
                 "--output-format",
                 "stream-json",
+                "--verbose",
                 "--permission-mode",
                 permission_mode,
                 "--model",
@@ -174,6 +175,7 @@ def run_claude_code_inference(
                 cwd=repo_dir,
                 capture_output=True,
                 text=True,
+                stdin=subprocess.DEVNULL,
                 timeout=timeout,
                 env=env,
             )
