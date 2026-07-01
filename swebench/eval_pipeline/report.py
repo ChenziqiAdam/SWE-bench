@@ -62,6 +62,7 @@ def collect_results(
                 results[instance_id] = {
                     "f2p_success": len(f2p.get("success") or []),
                     "f2p_failure": len(f2p.get("failure") or []),
+                    "harness_resolved": bool(info.get("resolved")),
                     "has_report": True,
                 }
 
@@ -155,6 +156,12 @@ def render_comparison_table(
     counts = {s: 0 for s in ("resolved", "unresolved", "excluded", "errored", "no-pred")}
     for r in rows:
         counts[r["status"]] += 1
+    excluded_harness_resolved = sum(
+        1
+        for row in rows
+        if row["status"] == "excluded"
+        and (results.get(row["instance_id"]) or {}).get("harness_resolved")
+    )
     scorable = counts["resolved"] + counts["unresolved"]
     rate = counts["resolved"] / scorable if scorable else 0.0
 
@@ -179,5 +186,10 @@ def render_comparison_table(
         f"no-pred={counts['no-pred']}"
     )
     if counts["errored"]:
-        print(f"  ⚠ {counts['errored']} instance(s) errored (prediction submitted but no usable report).")
+        print(f"  WARNING: {counts['errored']} instance(s) errored (prediction submitted but no usable report).")
+    if excluded_harness_resolved:
+        print(
+            f"  NOTE: {excluded_harness_resolved} harness-resolved instance(s) were excluded "
+            "from the scorable denominator because FAIL_TO_PASS was empty/non-evaluable."
+        )
     print("=" * 78 + "\n")

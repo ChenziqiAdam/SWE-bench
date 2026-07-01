@@ -7,6 +7,8 @@ import logging
 import os
 from pathlib import Path
 
+from swebench.eval_pipeline.prediction_utils import unique_instances_by_id, write_selected_predictions
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
@@ -492,7 +494,6 @@ def main():
     run_ids: dict[str, str] = {}
     agent_predictions_master_path = str(output_dir / "agent_predictions.jsonl")
     agent_predictions_path = str(output_dir / "agent_predictions.selected.jsonl")
-    from swebench.eval_pipeline.prediction_utils import write_selected_predictions
     selected_count = write_selected_predictions(
         source_path=agent_predictions_master_path,
         dest_path=agent_predictions_path,
@@ -512,7 +513,11 @@ def main():
             logger.warning(f"Predictions file not found: {agent_predictions_path}")
         else:
             run_ids["agent"] = run_id
-            eval_instance_ids = [i["instance_id"] for i in instances]
+            unique_eval_instances = unique_instances_by_id(instances)
+            skipped_eval_duplicates = len(instances) - len(unique_eval_instances)
+            if skipped_eval_duplicates:
+                logger.info(f"Skipping {skipped_eval_duplicates} duplicate instance row(s) before eval")
+            eval_instance_ids = [i["instance_id"] for i in unique_eval_instances]
 
             # --force_eval: drop cached per-instance report dirs so run_evaluation
             # does not skip them as "already run", AND remove any stale eval

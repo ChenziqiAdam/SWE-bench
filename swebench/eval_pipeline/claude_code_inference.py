@@ -19,6 +19,7 @@ from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
 from swebench.eval_pipeline.prediction_utils import (
     prediction_matches_backend,
     read_prediction_rows,
+    unique_instances_by_id,
     write_prediction_rows,
 )
 
@@ -134,20 +135,27 @@ def run_claude_code_inference(
     if existing_ids:
         logger.info(f"Resuming Claude Code: {len(existing_ids)} predictions already written")
 
-    todo = [i for i in instances if i["instance_id"] not in existing_ids]
+    unique_instances = unique_instances_by_id(instances)
+    skipped_duplicates = len(instances) - len(unique_instances)
+    if skipped_duplicates:
+        logger.info(f"Skipping {skipped_duplicates} duplicate instance row(s) before Claude Code inference")
+
+    todo = [i for i in unique_instances if i["instance_id"] not in existing_ids]
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if retry_empty_predictions and out_path.exists():
         write_prediction_rows(out_path, retained_records)
 
     logs_dir = out_path.parent / "claude_code_logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
+    tmp_root = out_path.parent / "tmp" / AGENT_BACKEND
+    tmp_root.mkdir(parents=True, exist_ok=True)
     write_lock = threading.Lock()
 
     def _process_one(inst: dict) -> None:
         instance_id = inst["instance_id"]
         repo_dir = None
         try:
-            repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token)
+            repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token, tmp_root=tmp_root)
             prompt = _claude_problem_text(inst)
             cmd = [
                 _claude_bin(),

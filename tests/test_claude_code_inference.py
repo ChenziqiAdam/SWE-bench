@@ -50,7 +50,7 @@ def test_claude_code_inference_writes_backend_tagged_prediction(tmp_path, monkey
     repo = _make_git_repo(tmp_path / "repo")
     monkeypatch.setattr(
         "swebench.eval_pipeline.claude_code_inference._clone_repo_at_commit",
-        lambda repo_name, base_commit, github_token: repo,
+        lambda repo_name, base_commit, github_token, tmp_root=None: repo,
     )
 
     out = tmp_path / "predictions.jsonl"
@@ -99,7 +99,7 @@ def test_claude_code_inference_maps_endpoint_and_api_key_to_env(tmp_path, monkey
     repo = _make_git_repo(tmp_path / "repo")
     monkeypatch.setattr(
         "swebench.eval_pipeline.claude_code_inference._clone_repo_at_commit",
-        lambda repo_name, base_commit, github_token: repo,
+        lambda repo_name, base_commit, github_token, tmp_root=None: repo,
     )
 
     out = tmp_path / "predictions.jsonl"
@@ -125,6 +125,52 @@ def test_claude_code_inference_maps_endpoint_and_api_key_to_env(tmp_path, monkey
     assert len(rows) == 1
     assert rows[0]["agent_backend"] == "claude_code"
     assert "value = 3" in rows[0]["model_patch"]
+
+
+def test_claude_code_inference_skips_duplicate_instance_rows(tmp_path, monkeypatch):
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    claude = fake_bin / "claude"
+    claude.write_text(
+        "#!/usr/bin/env python3\n"
+        "import pathlib\n"
+        "repo = pathlib.Path.cwd()\n"
+        "(repo / 'module.py').write_text('value = 4\\n')\n"
+    )
+    claude.chmod(0o755)
+    monkeypatch.setenv("PATH", str(fake_bin) + os.pathsep + os.environ.get("PATH", ""))
+
+    repo = _make_git_repo(tmp_path / "repo")
+    calls = []
+
+    def fake_clone(repo_name, base_commit, github_token, tmp_root=None):
+        calls.append((repo_name, tmp_root))
+        return repo
+
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.claude_code_inference._clone_repo_at_commit",
+        fake_clone,
+    )
+
+    instance = {
+        "instance_id": "demo__repo-dup",
+        "repo": "demo/repo",
+        "base_commit": "HEAD",
+        "problem_statement": "Change value to 4.",
+    }
+    out = tmp_path / "predictions.jsonl"
+    run_claude_code_inference(
+        instances=[instance, dict(instance)],
+        output_file=str(out),
+        model_name="provider-claude",
+        max_workers=2,
+        timeout=30,
+    )
+
+    rows = [json.loads(line) for line in out.read_text().splitlines()]
+    assert len(rows) == 1
+    assert len(calls) == 1
+    assert calls[0][1] == tmp_path / "tmp" / "claude_code"
 
 
 def test_selected_predictions_do_not_treat_legacy_rows_as_claude_code():

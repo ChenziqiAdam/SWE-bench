@@ -50,6 +50,19 @@ def write_prediction_rows(path: str | Path, rows: Iterable[dict]) -> None:
             print(json.dumps(row), file=f)
 
 
+def unique_instances_by_id(instances: Iterable[dict]) -> list[dict]:
+    """Return the first instance for each instance_id, preserving input order."""
+    seen: set[str] = set()
+    unique: list[dict] = []
+    for inst in instances:
+        instance_id = inst.get("instance_id")
+        if not instance_id or instance_id in seen:
+            continue
+        seen.add(instance_id)
+        unique.append(inst)
+    return unique
+
+
 def selected_prediction_rows(
     rows: Iterable[dict],
     backend: str,

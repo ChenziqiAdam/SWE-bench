@@ -23,7 +23,7 @@ from typing import Optional
 from tqdm.auto import tqdm
 
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
-from swebench.eval_pipeline.prediction_utils import prediction_matches_backend
+from swebench.eval_pipeline.prediction_utils import prediction_matches_backend, unique_instances_by_id
 
 logger = logging.getLogger(__name__)
 AGENT_BACKEND = "builtin"
@@ -98,19 +98,47 @@ _MAX_READ_CHARS = 50_000
 _MAX_SEARCH_CHARS = 5_000
 
 
-def _clone_repo_at_commit(repo: str, base_commit: str, github_token: Optional[str]) -> Path:
+def _redact_secret(text: object, secret: Optional[str]) -> str:
+    value = str(text)
+    if secret:
+        value = value.replace(secret, "<redacted>")
+    return value
+
+
+def _clone_repo_at_commit(
+    repo: str,
+    base_commit: str,
+    github_token: Optional[str],
+    tmp_root: str | Path | None = None,
+) -> Path:
     """Clone repo at base_commit into a temp dir, return the dir path."""
-    tmpdir = Path(tempfile.mkdtemp(prefix="sweagent_"))
+    root = Path(tmp_root or os.environ.get("SWE_AGENT_TMPDIR") or tempfile.gettempdir())
+    root.mkdir(parents=True, exist_ok=True)
+    tmpdir = Path(tempfile.mkdtemp(prefix="sweagent_", dir=str(root)))
     token_prefix = f"{github_token}@" if github_token else ""
     url = f"https://{token_prefix}github.com/{repo}.git"
-    subprocess.run(
-        ["git", "clone", "--quiet", url, str(tmpdir)],
-        check=True, capture_output=True,
-    )
-    subprocess.run(
-        ["git", "reset", "--hard", base_commit],
-        cwd=tmpdir, check=True, capture_output=True,
-    )
+    try:
+        subprocess.run(
+            ["git", "clone", "--quiet", url, str(tmpdir)],
+            check=True, capture_output=True,
+        )
+        subprocess.run(
+            ["git", "reset", "--hard", base_commit],
+            cwd=tmpdir, check=True, capture_output=True,
+        )
+    except subprocess.CalledProcessError as e:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+        raw_stderr = e.stderr or ""
+        if isinstance(raw_stderr, bytes):
+            raw_stderr = raw_stderr.decode(errors="replace")
+        stderr = _redact_secret(raw_stderr, github_token)
+        raise RuntimeError(
+            f"git {' '.join(e.cmd[:2])} failed with exit code {e.returncode}"
+            + (f": {stderr[-500:]}" if stderr else "")
+        ) from e
+    except Exception:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+        raise
     return tmpdir
 
 
@@ -291,15 +319,21 @@ def run_agent_inference_for_level(
     if existing_ids:
         logger.info(f"Resuming: {len(existing_ids)} predictions already written")
 
-    todo = [i for i in instances if i["instance_id"] not in existing_ids]
+    unique_instances = unique_instances_by_id(instances)
+    skipped_duplicates = len(instances) - len(unique_instances)
+    if skipped_duplicates:
+        logger.info(f"Skipping {skipped_duplicates} duplicate instance row(s) before inference")
+    todo = [i for i in unique_instances if i["instance_id"] not in existing_ids]
+    tmp_root = out_path.parent / "tmp" / AGENT_BACKEND
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_root.mkdir(parents=True, exist_ok=True)
     write_lock = threading.Lock()
 
     def _process_one(inst: dict) -> None:
         instance_id = inst["instance_id"]
         repo_dir = None
         try:
-            repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token)
+            repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token, tmp_root=tmp_root)
             patch = _run_agentic_loop(inst, anthropic_client, model_name, repo_dir, max_turns)
             patch = _clean_patch(patch)
             patch = _repair_patch(patch)

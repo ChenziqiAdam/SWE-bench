@@ -49,7 +49,7 @@ def test_codex_inference_writes_backend_tagged_prediction(tmp_path, monkeypatch)
     repo = _make_git_repo(tmp_path / "repo")
     monkeypatch.setattr(
         "swebench.eval_pipeline.codex_inference._clone_repo_at_commit",
-        lambda repo_name, base_commit, github_token: repo,
+        lambda repo_name, base_commit, github_token, tmp_root=None: repo,
     )
 
     out = tmp_path / "predictions.jsonl"
@@ -101,7 +101,7 @@ def test_codex_inference_translates_endpoint_to_temp_config(tmp_path, monkeypatc
     repo = _make_git_repo(tmp_path / "repo")
     monkeypatch.setattr(
         "swebench.eval_pipeline.codex_inference._clone_repo_at_commit",
-        lambda repo_name, base_commit, github_token: repo,
+        lambda repo_name, base_commit, github_token, tmp_root=None: repo,
     )
 
     out = tmp_path / "predictions.jsonl"
