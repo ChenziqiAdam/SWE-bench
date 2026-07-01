@@ -31,14 +31,17 @@ def parse_args():
         "LLM backend",
         "By default the model name determines the backend (claude-* → Anthropic, "
         "everything else → OpenAI). Supply --endpoint to use any OpenAI-compatible "
-        "provider (Ollama, Together AI, Mistral, vLLM, LM Studio, Groq, …)."
+        "provider for builtin/SWE-agent, a Responses-compatible provider for Codex, "
+        "or an Anthropic-compatible provider for Claude Code."
     )
     llm.add_argument(
         "--endpoint", default=None,
         help="Base URL of an OpenAI-compatible API, e.g. "
              "http://localhost:11434/v1  (Ollama)  or  "
              "https://api.together.xyz/v1  (Together AI). "
-             "When set, --model is passed as-is to that endpoint."
+             "When set, --model is passed as-is to that endpoint. For Codex this "
+             "must support Codex's Responses-style API; for Claude Code this is "
+             "passed as ANTHROPIC_BASE_URL and must be Anthropic-compatible."
     )
     llm.add_argument(
         "--api_key", default=None,
@@ -50,12 +53,13 @@ def parse_args():
                    help="(Always on.) Agentic inference: multi-turn tool-use loop that explores "
                         "the cloned repo and writes files. The pipeline is agent-only; this flag "
                         "is kept for backward compatibility with existing scripts.")
-    p.add_argument("--agent_backend", default="builtin", choices=["builtin", "sweagent", "codex"],
+    p.add_argument("--agent_backend", default="builtin", choices=["builtin", "sweagent", "codex", "claude_code"],
                    help="Which agent backend to use with --agent. "
                         "'builtin' (default): homegrown multi-turn Anthropic tool-use loop. "
                         "'sweagent': invoke SWE-agent CLI as a subprocess (requires `sweagent` "
                         "to be installed: uv pip install swe-agent). "
-                        "'codex': invoke local Codex CLI via `codex exec`.")
+                        "'codex': invoke local Codex CLI via `codex exec`. "
+                        "'claude_code': invoke local Claude Code CLI via `claude -p`.")
     p.add_argument("--sweagent_config", default=None,
                    help="Optional path to a custom SWE-agent config YAML. When omitted a "
                         "minimal config is auto-generated per instance. Only used with "
@@ -150,6 +154,20 @@ def parse_args():
     p.add_argument("--codex_model", default=None,
                    help="Optional model override for Codex CLI. Defaults to --model. Only used "
                         "with --agent_backend codex.")
+    p.add_argument("--claude_code_timeout", type=int, default=900,
+                   help="Wall-clock timeout per instance in seconds for Claude Code CLI inference. "
+                        "Only used with --agent_backend claude_code.")
+    p.add_argument("--claude_code_permission_mode", default="acceptEdits",
+                   choices=["acceptEdits", "auto", "bypassPermissions", "default", "dontAsk", "plan"],
+                   help="Permission mode passed to `claude -p`. Only used with "
+                        "--agent_backend claude_code.")
+    p.add_argument("--claude_code_max_turns", type=int, default=None,
+                   help="Optional Claude Code max-turns metadata/env value. Current local Claude "
+                        "CLI versions may not expose a --max-turns flag, so the pipeline does "
+                        "not pass it as a CLI argument.")
+    p.add_argument("--claude_code_model", default=None,
+                   help="Optional model override for Claude Code CLI. Defaults to --model. Only "
+                        "used with --agent_backend claude_code.")
     p.add_argument("--clean_images", action="store_true",
                    help="Delete per-instance Docker images after eval (cache_level=instance). "
                         "Saves disk space on large runs at the cost of slower re-runs. "
@@ -203,15 +221,20 @@ def _run_eval_with_timeout(timeout_seconds: int, **eval_kwargs) -> bool:
 
 def main():
     args = parse_args()
-    inference_model = (
-        args.codex_model
-        if args.agent_backend == "codex" and args.codex_model
-        else args.model
-    )
+    inference_model = args.model
+    if args.agent_backend == "codex" and args.codex_model:
+        inference_model = args.codex_model
+    elif args.agent_backend == "claude_code" and args.claude_code_model:
+        inference_model = args.claude_code_model
     if args.agent_backend == "codex" and args.api_key and not args.endpoint:
         logger.warning(
             "--api_key is only translated into Codex config when --endpoint is "
             "also supplied. Otherwise Codex uses its existing CLI auth/config."
+        )
+    if args.agent_backend == "claude_code" and args.endpoint:
+        logger.warning(
+            "--endpoint for Claude Code is passed as ANTHROPIC_BASE_URL and must "
+            "be Anthropic-compatible, not generic OpenAI-compatible."
         )
 
     output_dir = Path(args.output_dir)
@@ -433,6 +456,22 @@ def main():
                 api_key=args.api_key,
                 retry_empty_predictions=args.retry_empty_predictions,
             )
+        elif args.agent_backend == "claude_code":
+            from swebench.eval_pipeline.claude_code_inference import run_claude_code_inference
+            logger.info(f"--- Claude Code inference → {agent_predictions_file} ---")
+            run_claude_code_inference(
+                instances=instances,
+                output_file=agent_predictions_file,
+                model_name=inference_model,
+                github_token=github_token,
+                max_workers=args.max_workers,
+                timeout=args.claude_code_timeout,
+                permission_mode=args.claude_code_permission_mode,
+                api_base=args.endpoint,
+                api_key=args.api_key,
+                retry_empty_predictions=args.retry_empty_predictions,
+                max_turns=args.claude_code_max_turns,
+            )
         else:
             # Builtin: multi-turn Anthropic tool-use loop
             from swebench.eval_pipeline.inference import make_clients
@@ -568,6 +607,10 @@ def main():
         "codex_sandbox": args.codex_sandbox,
         "codex_profile": args.codex_profile,
         "codex_model": args.codex_model,
+        "claude_code_timeout": args.claude_code_timeout,
+        "claude_code_permission_mode": args.claude_code_permission_mode,
+        "claude_code_max_turns": args.claude_code_max_turns,
+        "claude_code_model": args.claude_code_model,
     }
     render_comparison_table(
         results=results,

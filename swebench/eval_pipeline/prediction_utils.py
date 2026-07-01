@@ -14,7 +14,8 @@ def prediction_matches_backend(row: dict, backend: str, model_name: str) -> bool
 
     Older pipeline records did not include ``agent_backend``. Treat those as
     compatible with the historical built-in/SWE-agent runners, but never with
-    Codex, because otherwise a new Codex eval could silently reuse old rows.
+    newer CLI backends, because otherwise a new eval could silently reuse old
+    rows.
     """
     if row.get("model_name_or_path") != model_name:
         return False
