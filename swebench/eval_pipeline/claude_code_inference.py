@@ -16,6 +16,7 @@ from tqdm.auto import tqdm
 
 from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
+from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
 from swebench.eval_pipeline.prediction_utils import (
     prediction_matches_backend,
     read_prediction_rows,
@@ -78,9 +79,12 @@ def _claude_problem_text(instance: dict) -> str:
         guidance.extend(f"- {test}" for test in f2p[:12])
 
     repo = instance["repo"]
+    media_ctx = format_issue_media_for_prompt(instance)
     return (
         f"Repository: {repo}\n\n"
         + "\n".join(guidance)
+        + "\n\n"
+        + media_ctx
         + "\n\nIssue:\n"
         + problem
     )

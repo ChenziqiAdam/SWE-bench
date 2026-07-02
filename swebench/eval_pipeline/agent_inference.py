@@ -23,6 +23,7 @@ from typing import Optional
 from tqdm.auto import tqdm
 
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
+from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
 from swebench.eval_pipeline.prediction_utils import prediction_matches_backend, unique_instances_by_id
 
 logger = logging.getLogger(__name__)
@@ -212,10 +213,12 @@ def _build_issue_prompt(instance: dict) -> str:
         pr_body = (instance.get("pr_body") or "").strip()
         problem = f"{pr_title}\n\n{pr_body}".strip()
 
+    media_ctx = format_issue_media_for_prompt(instance)
     return (
         f"Repository: {repo}\n\n"
         f"Here is the issue that needs to be resolved:\n"
         f"<issue>\n{problem}\n</issue>\n\n"
+        f"{media_ctx}"
         f"Explore the repository using the provided tools, implement the fix, "
         f"and call submit_patch() when your changes are complete."
     )

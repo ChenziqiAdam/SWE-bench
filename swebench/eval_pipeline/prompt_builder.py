@@ -5,6 +5,7 @@ import logging
 from typing import Optional
 
 from swebench.eval_pipeline.constants import PATCH_INSTRUCTION
+from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -55,12 +56,14 @@ def build_agent_prompt(instance: dict) -> Optional[str]:
         return None
 
     file_ctx = _format_file_contents(instance)
+    media_ctx = format_issue_media_for_prompt(instance)
 
     return (
         f"{SYSTEM_MESSAGE}\n"
         f"Repository: {repo}\n\n"
         f"Here is the issue that needs to be resolved:\n"
         f"<issue>\n{problem_statement}\n</issue>\n\n"
+        f"{media_ctx}"
         f"{file_ctx}"
         f"{PATCH_INSTRUCTION}"
     )

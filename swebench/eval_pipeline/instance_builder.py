@@ -11,6 +11,7 @@ from unidiff import PatchSet
 
 from swebench.collect.utils import Repo
 from swebench.eval_pipeline.constants import COL_REPO, COL_PR_NUMBER, COL_PAPER_REFERENCE, COL_HAS_ISSUE
+from swebench.eval_pipeline.media_assets import extract_image_urls
 from swebench.harness.constants.c import MAP_REPO_VERSION_TO_SPECS_C
 
 # Manual version overrides for repos where auto-detection fails (e.g. versioneer).
@@ -171,6 +172,7 @@ def build_instance(row: dict, github_token: Optional[str] = None) -> Optional[di
         body = issue.body if hasattr(issue, "body") else issue.get("body", "")
         problem_statement += f"{title}\n{body}\n"
     problem_statement = problem_statement.strip()
+    issue_image_urls = extract_image_urls(problem_statement)
 
     # FAIL_TO_PASS: heuristic parse from test patch
     fail_to_pass = _parse_fail_to_pass(test_patch)
@@ -186,6 +188,8 @@ def build_instance(row: dict, github_token: Optional[str] = None) -> Optional[di
         "patch": patch,
         "test_patch": test_patch,
         "problem_statement": problem_statement,
+        "issue_image_urls": issue_image_urls,
+        "issue_images": [],
         "hints_text": "",
         "created_at": (
             pull["created_at"]

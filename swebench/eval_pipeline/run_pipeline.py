@@ -406,6 +406,26 @@ def main():
             f"non-empty FAIL_TO_PASS"
         )
 
+    # ── Stage 2.8: Issue media download ──────────────────────────────────────
+    from swebench.eval_pipeline.media_assets import attach_issue_media
+    from swebench.eval_pipeline.instance_builder import write_instances_jsonl
+
+    instances = attach_issue_media(instances, output_dir=output_dir, github_token=github_token)
+    if Path(instances_path).exists():
+        full_on_disk = []
+        with open(instances_path) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    full_on_disk.append(json.loads(line))
+        by_id = {i["instance_id"]: i for i in instances}
+        merged = [by_id.get(i["instance_id"], i) for i in full_on_disk]
+        on_disk_ids = {i["instance_id"] for i in full_on_disk}
+        for i in instances:
+            if i["instance_id"] not in on_disk_ids:
+                merged.append(i)
+        write_instances_jsonl(merged, instances_path)
+
     # ── Stage 3: Prompt Building ──────────────────────────────────────────────
     logger.info("=== Stage 3: Building prompts ===")
     from swebench.eval_pipeline.prompt_builder import build_all_prompts

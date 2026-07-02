@@ -25,6 +25,7 @@ from tqdm.auto import tqdm
 
 from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
+from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
 from swebench.eval_pipeline.prediction_utils import prediction_matches_backend
 
 logger = logging.getLogger(__name__)
@@ -71,7 +72,8 @@ def _sweagent_problem_text(instance: dict) -> str:
         guidance.append("Mined FAIL_TO_PASS tests for scoring:")
         guidance.extend(f"- {test}" for test in f2p[:12])
 
-    return "\n".join(guidance) + "\n\nIssue:\n" + problem
+    media_ctx = format_issue_media_for_prompt(instance)
+    return "\n".join(guidance) + "\n\n" + media_ctx + "Issue:\n" + problem
 
 
 def _sweagent_bin() -> str:
