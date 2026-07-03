@@ -201,11 +201,18 @@ def run_claude_code_inference(
                 f"=== exit code: {result.returncode} ===\n"
                 "=== STDERR ===\n"
                 + (result.stderr or "")
+                + "\n=== STDOUT tail ===\n"
+                + (result.stdout or "")[-4000:]
             )
+            error = ""
             if result.returncode != 0:
+                stderr_tail = (result.stderr or "")[-500:]
+                stdout_tail = (result.stdout or "")[-500:]
+                detail = stderr_tail or stdout_tail or "no stderr/stdout"
+                error = f"claude exited with code {result.returncode}: {detail}"
                 logger.warning(
                     f"[{instance_id}] claude exited with code {result.returncode}. "
-                    f"stderr: {(result.stderr or '')[-500:]}"
+                    f"detail: {detail}"
                 )
 
             patch = _repair_patch(_clean_patch(_capture_patch(repo_dir)))
@@ -219,6 +226,8 @@ def run_claude_code_inference(
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
             }
+            if error:
+                record["error"] = error
         except subprocess.TimeoutExpired as te:
             stdout = te.stdout if isinstance(te.stdout, str) else (te.stdout or b"").decode(errors="replace")
             stderr = te.stderr if isinstance(te.stderr, str) else (te.stderr or b"").decode(errors="replace")

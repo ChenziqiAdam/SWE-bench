@@ -6,6 +6,7 @@ import json
 import logging
 import mimetypes
 import re
+import struct
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from urllib.parse import urlparse
@@ -24,6 +25,7 @@ _IMAGE_HOST_MARKERS = (
     "github.com/user-attachments/assets/",
 )
 _MAX_IMAGE_BYTES = 25 * 1024 * 1024
+_PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 
 def extract_image_urls(text: str) -> list[str]:
@@ -62,6 +64,26 @@ def _extension_for(url: str, content_type: str | None) -> str:
     return ".bin"
 
 
+def _verify_png_without_pillow(data: bytes, sha256: str) -> dict:
+    """Verify basic PNG structure and read dimensions without optional deps."""
+    if len(data) < 33 or not data.startswith(_PNG_SIGNATURE):
+        raise ValueError("invalid PNG signature")
+    chunk_len = struct.unpack(">I", data[8:12])[0]
+    chunk_type = data[12:16]
+    if chunk_type != b"IHDR" or chunk_len != 13:
+        raise ValueError("missing PNG IHDR chunk")
+    width, height = struct.unpack(">II", data[16:24])
+    if width <= 0 or height <= 0:
+        raise ValueError("invalid PNG dimensions")
+    return {
+        "verified": True,
+        "format": "PNG",
+        "width": width,
+        "height": height,
+        "sha256": sha256,
+    }
+
+
 def verify_image_file(path: str | Path) -> dict:
     """Validate a downloaded image and return structured metadata."""
     image_path = Path(path)
@@ -84,6 +106,12 @@ def verify_image_file(path: str | Path) -> dict:
             }
         except Exception as e:
             return {"verified": False, "verify_error": str(e), "sha256": sha256}
+
+    if suffix == ".png":
+        try:
+            return _verify_png_without_pillow(data, sha256)
+        except Exception:
+            pass
 
     try:
         from PIL import Image

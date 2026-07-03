@@ -1,5 +1,6 @@
 import io
 import json
+import builtins
 
 from swebench.eval_pipeline.media_assets import (
     attach_issue_media,
@@ -100,3 +101,24 @@ def test_verify_image_file_rejects_invalid_image(tmp_path):
     assert result["verified"] is False
     assert "verify_error" in result
     assert len(result["sha256"]) == 64
+
+
+def test_verify_png_file_without_pillow(tmp_path, monkeypatch):
+    path = tmp_path / "tiny.png"
+    path.write_bytes(_tiny_png_bytes())
+
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name == "PIL":
+            raise ImportError("No module named 'PIL'")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    result = verify_image_file(path)
+
+    assert result["verified"] is True
+    assert result["format"] == "PNG"
+    assert result["width"] == 1
+    assert result["height"] == 1
