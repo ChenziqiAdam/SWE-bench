@@ -302,8 +302,12 @@ SPECS_OPENMM = {
     },
     # ── Not evaluable (no functional test patch) ──────────────────────────────
     # 4294: comment-only fix. 4138: docs-only. 3260: test patch only DELETES an
-    # assertion (no Reference test added). No FAIL_TO_PASS can be scored — these
-    # are no-op placeholders so the batch run doesn't crash on a missing key.
+    # assertion (no Reference test added). 4618: implementation fix for
+    # rectangular-to-triclinic box changes, but the PR has no test patch.
+    # Additional literal Type=1,2 spreadsheet PRs are included here as explicit
+    # placeholders until curated per-PR scientific tests are added. No
+    # FAIL_TO_PASS can be scored — these are no-op placeholders so the batch run
+    # doesn't crash on a missing key.
     # Expect them to report unresolved/empty; drop from the eval set later.
     **{
         pr: {
@@ -313,7 +317,25 @@ SPECS_OPENMM = {
                 f"echo 'openmm#{pr} not evaluable: no functional test patch' && false",
             ],
         }
-        for pr in ["4294", "4138", "3260"]
+        for pr in [
+            "4294",
+            "4138",
+            "3260",
+            "4618",
+            "1682",
+            "1806",
+            "2257",
+            "3303",
+            "3521",
+            "4119",
+            "4188",
+            "4364",
+            "4907",
+            "5155",
+            "5219",
+            "5251",
+            "1528",
+        ]
     },
     # ── Full C++ Reference-platform builds ────────────────────────────────────
     # 1837 (CustomCVForce), 5278 (MonteCarloMembraneBarostat), 4799 (DPDIntegrator)
