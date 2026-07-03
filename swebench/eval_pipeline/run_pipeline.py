@@ -88,6 +88,10 @@ def parse_args():
     p.add_argument("--repos", default=None,
                    help="Comma-separated repos to filter, e.g. numpy/numpy,scipy/scipy. "
                         "Skips all other repos.")
+    p.add_argument("--issue_types", action="append", default=None,
+                   help="Only run issues whose spreadsheet Type/Category exactly matches this "
+                        "value, e.g. --issue_types 1 or --issue_types 1,2. Repeat the flag for "
+                        "multiple exact values. Defaults to all types.")
     p.add_argument("--has_issue", action="store_true",
                    help="Only run instances that have a linked GitHub issue (non-empty problem_statement). "
                         "Useful to focus on L2-eligible PRs.")
@@ -179,6 +183,16 @@ def parse_args():
     return p.parse_args()
 
 
+def _parse_issue_types(values: list[str] | None) -> set[str] | None:
+    if not values:
+        return None
+    from swebench.eval_pipeline.ingest import normalize_issue_type
+
+    parsed = {normalize_issue_type(v) for v in values}
+    parsed.discard("")
+    return parsed or None
+
+
 def _eval_subprocess_target(kw):
     """Module-level target for spawn-pickling; runs the harness eval."""
     from swebench.harness.run_evaluation import main as run_eval
@@ -246,6 +260,7 @@ def main():
     github_token = args.github_token or os.environ.get("GITHUB_TOKEN")
     filter_ids = set(args.instance_ids.split(",")) if args.instance_ids else None
     filter_repos = set(args.repos.split(",")) if args.repos else None
+    filter_issue_types = _parse_issue_types(args.issue_types)
 
     # ── Stage 1 & 2: Ingest + Instance Building ──────────────────────────────
     ingest_cache_path = output_dir / "ingest_cache.jsonl"
@@ -261,6 +276,7 @@ def main():
             limit=args.limit,
             pr_numbers=pr_filter,
             repos=filter_repos,
+            issue_types=filter_issue_types,
             cache_path=None if args.no_ingest_cache else ingest_cache_path,
             sheet=args.sheet,
         )
@@ -323,6 +339,21 @@ def main():
         if missing:
             logger.warning(f"instance_ids not found in instances.jsonl: {missing}")
         logger.info(f"Filtered to {len(instances)} instance(s): {[i['instance_id'] for i in instances]}")
+
+    # Apply issue/category type filter. Re-run after loading instances so
+    # --skip_ingest and cached JSONL runs behave like fresh spreadsheet ingest.
+    if filter_issue_types:
+        from swebench.eval_pipeline.ingest import normalize_issue_type
+
+        before = len(instances)
+        instances = [
+            i for i in instances
+            if normalize_issue_type(i.get("category")) in filter_issue_types
+        ]
+        logger.info(
+            f"--issue_types: kept {len(instances)}/{before} instance(s) matching "
+            f"{sorted(filter_issue_types)}"
+        )
 
     # Apply --has_issue filter using the Has Issue column from the spreadsheet
     if args.has_issue:
@@ -614,6 +645,7 @@ def main():
         "limit": args.limit,
         "instance_ids": args.instance_ids or "(all)",
         "repos": args.repos or "(all)",
+        "issue_types": args.issue_types or "(all)",
         "has_issue": args.has_issue,
         "has_tests": args.has_tests,
         "verified_only": args.verified_only,

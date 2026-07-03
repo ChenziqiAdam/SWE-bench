@@ -34,6 +34,15 @@ def instance_ids_to_pr_filter(instance_ids: set[str]) -> dict[str, set[int]]:
     return result
 
 
+def normalize_issue_type(value) -> str:
+    """Normalize spreadsheet issue/category type values for exact matching."""
+    if value is None:
+        return ""
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return str(value).strip()
+
+
 def load_spreadsheet(path: str, sheet: Optional[str] = None) -> list[dict]:
     """Read PRs.xlsx and return a list of row dicts."""
     wb = openpyxl.load_workbook(path)
@@ -199,6 +208,7 @@ def fetch_all(
     limit: Optional[int] = None,
     pr_numbers: Optional[dict[str, set[int]]] = None,
     repos: Optional[set[str]] = None,
+    issue_types: Optional[set[str]] = None,
     cache_path: Optional[Path] = None,
     sheet: Optional[str] = None,
 ) -> list[dict]:
@@ -237,6 +247,12 @@ def fetch_all(
     if repos:
         rows = [r for r in rows if r[COL_REPO] in repos]
         logger.info(f"Filtered spreadsheet to {len(rows)} row(s) matching --repos")
+    if issue_types:
+        rows = [r for r in rows if normalize_issue_type(r.get(COL_CATEGORY)) in issue_types]
+        logger.info(
+            f"Filtered spreadsheet to {len(rows)} row(s) matching --issue_types="
+            f"{sorted(issue_types)}"
+        )
     if pr_numbers:
         rows = [
             r for r in rows
