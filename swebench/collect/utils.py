@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 
+import asyncio
+import inspect
 import logging
 import re
 import requests
+import threading
 import time
 
 from bs4 import BeautifulSoup
@@ -29,6 +32,29 @@ PR_KEYWORDS = {
     "resolves",
     "resolved",
 }
+
+
+def _run_awaitable(awaitable):
+    """Resolve awaitable API results for environments with async ghapi ops."""
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(awaitable)
+
+    result = {}
+
+    def runner():
+        try:
+            result["value"] = asyncio.run(awaitable)
+        except BaseException as exc:
+            result["error"] = exc
+
+    thread = threading.Thread(target=runner)
+    thread.start()
+    thread.join()
+    if "error" in result:
+        raise result["error"]
+    return result.get("value")
 
 
 class Repo:
@@ -60,6 +86,8 @@ class Repo:
         while True:
             try:
                 values = func(**kwargs)
+                if inspect.isawaitable(values):
+                    values = _run_awaitable(values)
                 return values
             except HTTP403ForbiddenError:
                 while True:
