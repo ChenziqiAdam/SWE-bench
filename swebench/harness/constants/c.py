@@ -573,6 +573,37 @@ SPECS_QGIS = {
 # PR 8957 touches Code/GraphMol/Chirality.cpp + catch_chirality.cpp
 # → target: chiralityTestsCatch  (from rdkit_catch_test(chiralityTestsCatch ...))
 SPECS_RDKIT = {
+    "8668": {
+        # PR #8668 adds an atropisomer regression in
+        # Code/GraphMol/FileParsers/atropisomers_catch.cpp.
+        # Target name comes from rdkit_catch_test(atropisomersCatch ...).
+        "pre_install": [
+            "apt-get update -q",
+            "apt-get install -y libeigen3-dev pkg-config libfreetype-dev",
+            "echo 'deb https://ppa.launchpadcontent.net/mhier/libboost-latest/ubuntu jammy main' > /etc/apt/sources.list.d/mhier-libboost-latest.list",
+            "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 31F54F3E108EAD31",
+            "apt-get update -q",
+            "apt-get install -y libboost1.83-all-dev",
+        ],
+        "build": [
+            "mkdir -p build",
+            (
+                "cmake -B build -S . "
+                "-DCMAKE_BUILD_TYPE=Release "
+                "-DRDK_INSTALL_INTREE=ON "
+                "-DRDK_BUILD_CPP_TESTS=ON "
+                "-DRDK_BUILD_PYTHON_WRAPPERS=OFF "
+                "-DRDK_BUILD_INCHI_SUPPORT=OFF "
+                "-DRDK_BUILD_CAIRO_SUPPORT=OFF "
+                "-DRDK_BUILD_THREADSAFE_SSS=ON"
+            ),
+            "cmake --build build --parallel $(nproc) --target atropisomersCatch",
+        ],
+        "test_cmd": [
+            "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
+            "ctest --test-dir build -V -R atropisomersCatch"
+        ],
+    },
     "8957": {
         # Ubuntu 22.04 apt ships Boost 1.74; RDKit requires >= 1.81.
         # Refresh apt cache, install software-properties-common, then add Boost PPA.
