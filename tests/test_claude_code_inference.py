@@ -214,6 +214,96 @@ def test_claude_code_inference_records_nonzero_exit_detail(tmp_path, monkeypatch
     assert "STDOUT tail" in (tmp_path / "claude_code_logs" / "demo__repo-exit.log").read_text()
 
 
+def test_claude_code_inference_extracts_stream_json_api_error(tmp_path, monkeypatch):
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    claude = fake_bin / "claude"
+    claude.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json\n"
+        "print(json.dumps({'type': 'system', 'subtype': 'api_retry', 'error': 'unknown'}))\n"
+        "print(json.dumps({'type': 'assistant', 'message': {'content': ["
+        "{'type': 'text', 'text': 'API Error: Unable to connect to API (ConnectionRefused)'}"
+        "]}, 'error': 'server_error'}))\n"
+        "print(json.dumps({'type': 'result', 'is_error': True, "
+        "'result': 'API Error: Unable to connect to API (ConnectionRefused)', "
+        "'usage': {'input_tokens': 0}, 'uuid': 'opaque'}))\n"
+        "raise SystemExit(1)\n"
+    )
+    claude.chmod(0o755)
+    monkeypatch.setenv("PATH", str(fake_bin) + os.pathsep + os.environ.get("PATH", ""))
+
+    repo = _make_git_repo(tmp_path / "repo")
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.claude_code_inference._clone_repo_at_commit",
+        lambda repo_name, base_commit, github_token, tmp_root=None: repo,
+    )
+
+    out = tmp_path / "predictions.jsonl"
+    run_claude_code_inference(
+        instances=[
+            {
+                "instance_id": "demo__repo-api",
+                "repo": "demo/repo",
+                "base_commit": "HEAD",
+                "problem_statement": "Exit with an API error.",
+            }
+        ],
+        output_file=str(out),
+        model_name="provider-claude",
+        max_workers=1,
+        timeout=30,
+    )
+
+    rows = [json.loads(line) for line in out.read_text().splitlines()]
+    assert rows[0]["model_patch"] == ""
+    assert rows[0]["error"] == (
+        "claude exited with code 1: "
+        "API Error: Unable to connect to API (ConnectionRefused)"
+    )
+
+
+def test_claude_code_inference_captures_patch_on_timeout(tmp_path, monkeypatch):
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    claude = fake_bin / "claude"
+    claude.write_text(
+        "#!/usr/bin/env python3\n"
+        "import pathlib, time\n"
+        "repo = pathlib.Path.cwd()\n"
+        "(repo / 'module.py').write_text('value = 5\\n')\n"
+        "time.sleep(10)\n"
+    )
+    claude.chmod(0o755)
+    monkeypatch.setenv("PATH", str(fake_bin) + os.pathsep + os.environ.get("PATH", ""))
+
+    repo = _make_git_repo(tmp_path / "repo")
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.claude_code_inference._clone_repo_at_commit",
+        lambda repo_name, base_commit, github_token, tmp_root=None: repo,
+    )
+
+    out = tmp_path / "predictions.jsonl"
+    run_claude_code_inference(
+        instances=[
+            {
+                "instance_id": "demo__repo-timeout",
+                "repo": "demo/repo",
+                "base_commit": "HEAD",
+                "problem_statement": "Timeout after editing.",
+            }
+        ],
+        output_file=str(out),
+        model_name="provider-claude",
+        max_workers=1,
+        timeout=2,
+    )
+
+    rows = [json.loads(line) for line in out.read_text().splitlines()]
+    assert rows[0]["error"] == "timeout"
+    assert "value = 5" in rows[0]["model_patch"]
+
+
 def test_selected_predictions_do_not_treat_legacy_rows_as_claude_code():
     rows = [
         {"instance_id": "i1", "model_name_or_path": "claude", "model_patch": "legacy"},

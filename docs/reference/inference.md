@@ -114,3 +114,14 @@ All inference scripts produce outputs in a format compatible with the SWE-bench 
 - For local models, ensure you have sufficient GPU memory for the model size
 - Save intermediate outputs frequently to avoid losing progress
 - When running live inference, ensure your retrieval corpus is appropriate for the repository of the issue 
+- For Claude Code runs through LiteLLM, start LiteLLM separately before launching
+  the SWE-bench pipeline. Claude Code expects an Anthropic-compatible endpoint,
+  so point the pipeline `--endpoint` at the LiteLLM proxy, for example
+  `http://localhost:4000`.
+- Keep provider keys in the proxy environment. For a DeepSeek-backed LiteLLM
+  proxy, export `DEEPSEEK_API_KEY` where LiteLLM runs; pass `--api_key` to the
+  SWE-bench pipeline only if the proxy itself requires client authentication.
+- If every Claude Code prediction is empty and the per-instance logs show
+  `ConnectionRefused`, verify the proxy is running on the same host/container as
+  Claude Code with `curl http://localhost:4000/health`, then rerun with
+  `--force_inference --retry_empty_predictions` or a fresh output directory.

@@ -101,6 +101,45 @@ def _capture_patch(repo_dir: Path) -> str:
     return result.stdout or ""
 
 
+def _extract_claude_error(stdout: str, stderr: str) -> str:
+    """Return a concise Claude Code failure reason from stream-json output."""
+    if stderr.strip():
+        return stderr[-500:]
+
+    fallback = stdout[-500:] if stdout else ""
+    for line in reversed((stdout or "").splitlines()):
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            text = line.strip()
+            if text:
+                return text[-500:]
+            continue
+
+        result = obj.get("result")
+        if isinstance(result, str) and result.strip():
+            return result.strip()[-500:]
+
+        message = obj.get("message")
+        if isinstance(message, dict):
+            content = message.get("content")
+            if isinstance(content, list):
+                texts = [
+                    item.get("text", "").strip()
+                    for item in content
+                    if isinstance(item, dict) and isinstance(item.get("text"), str)
+                ]
+                text = "\n".join(t for t in texts if t)
+                if text:
+                    return text[-500:]
+
+        error = obj.get("error")
+        if isinstance(error, str) and error.strip() and error != "unknown":
+            return error.strip()[-500:]
+
+    return fallback or "no stderr/stdout"
+
+
 def run_claude_code_inference(
     instances: list[dict],
     output_file: str,
@@ -206,9 +245,7 @@ def run_claude_code_inference(
             )
             error = ""
             if result.returncode != 0:
-                stderr_tail = (result.stderr or "")[-500:]
-                stdout_tail = (result.stdout or "")[-500:]
-                detail = stderr_tail or stdout_tail or "no stderr/stdout"
+                detail = _extract_claude_error(result.stdout or "", result.stderr or "")
                 error = f"claude exited with code {result.returncode}: {detail}"
                 logger.warning(
                     f"[{instance_id}] claude exited with code {result.returncode}. "
@@ -231,6 +268,12 @@ def run_claude_code_inference(
         except subprocess.TimeoutExpired as te:
             stdout = te.stdout if isinstance(te.stdout, str) else (te.stdout or b"").decode(errors="replace")
             stderr = te.stderr if isinstance(te.stderr, str) else (te.stderr or b"").decode(errors="replace")
+            patch = ""
+            if repo_dir:
+                try:
+                    patch = _repair_patch(_clean_patch(_capture_patch(repo_dir)))
+                except Exception as patch_error:
+                    logger.warning(f"[{instance_id}] failed to capture timeout patch: {patch_error}")
             try:
                 (logs_dir / f"{instance_id}.jsonl").write_text(stdout or "")
                 (logs_dir / f"{instance_id}.log").write_text(
@@ -243,7 +286,7 @@ def run_claude_code_inference(
             logger.error(f"[{instance_id}] claude_code timed out after {timeout}s")
             record = {
                 "instance_id": instance_id,
-                "model_patch": "",
+                "model_patch": patch,
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "error": "timeout",
