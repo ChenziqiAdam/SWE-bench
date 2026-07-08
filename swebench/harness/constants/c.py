@@ -300,7 +300,44 @@ def _openmm_cpp_targets_spec(*targets: str) -> dict:
     }
 
 
-SPECS_OPENMM = {
+def _openmm_python_unit_spec(test_filter: str) -> dict:
+    """Run OpenMM Python unit tests against patched simtk.unit modules."""
+    return {
+        "pre_install": [
+            "pip install --no-cache-dir openmm numpy scipy pytest",
+        ],
+        "build": [
+            "SIMTK_SITE=$(python -c 'import simtk, os; print(os.path.dirname(simtk.__file__))') && "
+            "if [ -d /testbed/wrappers/python/simtk/unit ]; then cp -r /testbed/wrappers/python/simtk/unit \"$SIMTK_SITE/\"; fi",
+        ],
+        "test_cmd": [
+            f"cd wrappers/python/tests && python -m pytest -xvs TestAPIUnits.py -k '{test_filter}'",
+        ],
+    }
+
+
+class _OpenMMSpecs(dict):
+    """Return a non-evaluable placeholder for uncurated numeric OpenMM PR specs."""
+
+    def __contains__(self, key):
+        return super().__contains__(key) or str(key).isdigit()
+
+    def __missing__(self, key):
+        pr = str(key)
+        if not pr.isdigit():
+            raise KeyError(key)
+        spec = {
+            "pre_install": [],
+            "build": [],
+            "test_cmd": [
+                f"echo 'openmm#{pr} not evaluable: no curated spec' && false",
+            ],
+        }
+        self[pr] = spec
+        return spec
+
+
+SPECS_OPENMM = _OpenMMSpecs({
     # PR #4832: flexibleConstraints option for AmberPrmtopFile (Python-only change).
     # The C base image has python3/pip but NO conda, so install OpenMM via pip
     # to get the compiled `_openmm` extension + native libs. The patch edits the
@@ -489,6 +526,9 @@ SPECS_OPENMM = {
             ("5236", "TestForceField.py", "test_TemplateConstraintsMultipleMols"),
         ]
     },
+    "2802": _openmm_python_unit_spec(
+        "testCustomGBForce or testCustomNonbondedForce"
+    ),
     # ── Exact C++ CPU/Reference/serialization tests ─────────────────────────
     # These avoid CUDA/OpenCL/HIP and run the C++ test executables touched by
     # the PR's test patch. Plugin-heavy/GPU-only cases stay as placeholders.
@@ -547,7 +587,7 @@ SPECS_OPENMM = {
             "4799": "TestReferenceDPDIntegrator",
         }.items()
     },
-}
+})
 
 SPECS_OPENMC = {
     # Add entries here: "<PR_NUMBER>": {"build": [...], "test_cmd": [...]}
