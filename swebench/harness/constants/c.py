@@ -499,6 +499,7 @@ SPECS_OPENMM = {
             "1858": ("TestReferenceVirtualSites", "TestSerializeSystem"),
             "2057": ("TestReferenceCustomIntegrator", "TestVectorExpression"),
             "2105": ("TestReferenceNonbondedForce",),
+            "2187": ("TestReferenceNonbondedForce",),
             "2561": (
                 "TestReferenceLangevinMiddleIntegrator",
                 "TestSerializeIntegrator",
