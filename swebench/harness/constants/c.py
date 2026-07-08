@@ -569,10 +569,31 @@ SPECS_QGIS = {
     #   "ctest --test-dir build -V -R <test_regex>"
 }
 
+class _RDKitSpecs(dict):
+    """Return a non-evaluable placeholder for uncurated numeric RDKit PR specs."""
+
+    def __contains__(self, key):
+        return super().__contains__(key) or str(key).isdigit()
+
+    def __missing__(self, key):
+        pr = str(key)
+        if not pr.isdigit():
+            raise KeyError(key)
+        spec = {
+            "pre_install": [],
+            "build": [],
+            "test_cmd": [
+                f"echo 'rdkit#{pr} not evaluable: no curated spec' && false",
+            ],
+        }
+        self[pr] = spec
+        return spec
+
+
 # rdkit uses Catch2; binary name = first arg to rdkit_catch_test() in CMakeLists.txt
 # PR 8957 touches Code/GraphMol/Chirality.cpp + catch_chirality.cpp
 # → target: chiralityTestsCatch  (from rdkit_catch_test(chiralityTestsCatch ...))
-SPECS_RDKIT = {
+SPECS_RDKIT = _RDKitSpecs({
     "8668": {
         # PR #8668 adds an atropisomer regression in
         # Code/GraphMol/FileParsers/atropisomers_catch.cpp.
@@ -602,6 +623,38 @@ SPECS_RDKIT = {
         "test_cmd": [
             "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
             "ctest --test-dir build -V -R atropisomersCatch"
+        ],
+    },
+    "8968": {
+        # PR #8968 fixes stereo bond canonicalization and adds/updates Catch2
+        # regressions in catch_chirality.cpp and catch_canon.cpp.
+        "pre_install": [
+            "apt-get update -q",
+            "apt-get install -y libeigen3-dev pkg-config libfreetype-dev",
+            "echo 'deb https://ppa.launchpadcontent.net/mhier/libboost-latest/ubuntu jammy main' > /etc/apt/sources.list.d/mhier-libboost-latest.list",
+            "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 31F54F3E108EAD31",
+            "apt-get update -q",
+            "apt-get install -y libboost1.83-all-dev",
+        ],
+        "build": [
+            "mkdir -p build",
+            (
+                "cmake -B build -S . "
+                "-DCMAKE_BUILD_TYPE=Release "
+                "-DRDK_INSTALL_INTREE=ON "
+                "-DRDK_BUILD_CPP_TESTS=ON "
+                "-DRDK_BUILD_PYTHON_WRAPPERS=OFF "
+                "-DRDK_BUILD_INCHI_SUPPORT=OFF "
+                "-DRDK_BUILD_CAIRO_SUPPORT=OFF "
+                "-DRDK_BUILD_THREADSAFE_SSS=ON"
+            ),
+            "cmake --build build --parallel $(nproc) --target chiralityTestsCatch canonTestsCatch",
+        ],
+        "test_cmd": [
+            "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
+            "ctest --test-dir build -V -R chiralityTestsCatch",
+            "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
+            "ctest --test-dir build -V -R canonTestsCatch",
         ],
     },
     "8957": {
@@ -666,7 +719,7 @@ SPECS_RDKIT = {
             "ctest --test-dir build -V -R chemdrawCatchTest"
         ],
     },
-}
+})
 
 MAP_REPO_VERSION_TO_SPECS_C = {
     "redis/redis": SPECS_REDIS,  # c
