@@ -255,6 +255,51 @@ SPECS_OPENBABEL = {
     #   "ctest --test-dir build -V -R <test_regex>"
 }
 
+
+def _openmm_python_app_spec(test_file: str, test_filter: str) -> dict:
+    """Run OpenMM Python app tests against the patched pure-Python app package."""
+    return {
+        "pre_install": [
+            "pip install --no-cache-dir openmm numpy scipy pytest",
+        ],
+        "build": [
+            "OPENMM_SITE=$(python -c 'import openmm, os; print(os.path.dirname(openmm.__file__))') && "
+            "if [ -d /testbed/wrappers/python/openmm/app ]; then cp -r /testbed/wrappers/python/openmm/app \"$OPENMM_SITE/\"; fi && "
+            "SIMTK_SITE=$(python -c 'import simtk.openmm, os; print(os.path.dirname(simtk.openmm.__file__))' 2>/dev/null || true) && "
+            "if [ -n \"$SIMTK_SITE\" ] && [ -d /testbed/wrappers/python/simtk/openmm/app ]; then cp -r /testbed/wrappers/python/simtk/openmm/app \"$SIMTK_SITE/\"; fi",
+        ],
+        "test_cmd": [
+            f"cd wrappers/python/tests && python -m pytest -xvs {test_file} -k '{test_filter}'",
+        ],
+    }
+
+
+def _openmm_cpp_targets_spec(*targets: str) -> dict:
+    """Build OpenMM without GPU backends and run selected C++ test executables."""
+    return {
+        "pre_install": [
+            "apt-get update -q",
+            "apt-get install -y --no-install-recommends cmake g++ make",
+        ],
+        "build_after_test_patch": [
+            "cmake -B build -S . "
+            "-DCMAKE_BUILD_TYPE=Release "
+            "-DOPENMM_BUILD_CUDA_LIB=OFF "
+            "-DOPENMM_BUILD_OPENCL_LIB=OFF "
+            "-DOPENMM_BUILD_HIP_LIB=OFF "
+            "-DOPENMM_BUILD_PYTHON_WRAPPERS=OFF "
+            "-DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF",
+            "cmake --build build --parallel $(nproc) --target " + " ".join(targets),
+        ],
+        "test_cmd": [
+            f"LD_LIBRARY_PATH=$PWD/build:${{LD_LIBRARY_PATH:-}} "
+            f"OPENMM_PLUGIN_DIR=$PWD/build "
+            f"./build/{target}"
+            for target in targets
+        ],
+    }
+
+
 SPECS_OPENMM = {
     # PR #4832: flexibleConstraints option for AmberPrmtopFile (Python-only change).
     # The C base image has python3/pip but NO conda, so install OpenMM via pip
@@ -322,20 +367,148 @@ SPECS_OPENMM = {
             "4138",
             "3260",
             "4618",
+            "920",
+            "1100",
+            "1235",
+            "1425",
+            "1495",
+            "1540",
+            "1628",
+            "1640",
+            "1652",
+            "1679",
             "1682",
+            "1711",
+            "1752",
             "1806",
+            "1802",
+            "1924",
+            "1932",
+            "2016",
+            "2053",
+            "2152",
+            "2241",
             "2257",
-            "3303",
+            "2255",
+            "2318",
+            "2322",
+            "2355",
+            "2429",
+            "2544",
+            "2596",
+            "2781",
+            "2829",
+            "3057",
+            "3151",
+            "3210",
+            "3240",
+            "3280",
+            "3286",
+            "3311",
+            "3326",
+            "3428",
+            "3460",
+            "3493",
+            "3506",
             "3521",
+            "3630",
+            "3696",
+            "3771",
+            "3834",
+            "3851",
+            "3872",
+            "3923",
+            "4025",
+            "4079",
+            "4086",
+            "4090",
             "4119",
+            "4161",
             "4188",
+            "4246",
+            "4249",
             "4364",
-            "4907",
-            "5155",
+            "4440",
+            "4523",
+            "4748",
+            "4760",
+            "4777",
+            "4870",
+            "5069",
+            "5117",
+            "5137",
+            "5179",
+            "5198",
             "5219",
+            "5242",
             "5251",
+            "5302",
             "1528",
         ]
+    },
+    # ── Exact Python wrapper tests ───────────────────────────────────────────
+    # These PRs add or modify focused Python app tests. Use pip's compiled
+    # OpenMM package for native libraries, then overlay the patched pure-Python
+    # app package from /testbed before running the exact pytest selector.
+    **{
+        pr: _openmm_python_app_spec(test_file, test_filter)
+        for pr, test_file, test_filter in [
+            ("826", "TestForceField.py", "test_RigidWater"),
+            ("1302", "TestPdbFile.py", "test_ExtraParticles"),
+            (
+                "1668",
+                "TestTopology.py",
+                "test_bondtype_singleton or test_residue_bonds",
+            ),
+            ("2040", "TestForceField.py", "test_Disulfides"),
+            (
+                "2362",
+                "TestAmberPrmtopFile.py",
+                "test_ImplicitSolventZeroSA or test_HydrogenMass",
+            ),
+            ("2381", "TestCharmmFiles.py", "test_NBXMod"),
+            ("2511", "TestForceField.py", "test_ImpropersOrdering_smirnoff"),
+            ("2738", "TestForceField.py", "test_CharmmPolar"),
+            ("3214", "TestForceField.py", "test_ImplicitSolventForces"),
+            (
+                "3303",
+                "TestForceField.py TestModeller.py",
+                "test_Glycam or test_addHydrogensGlycam",
+            ),
+            ("3313", "TestForceField.py", "test_Amoeba18Nucleic"),
+            ("3324", "TestCharmmFiles.py", "test_NBFIX14"),
+            ("4028", "TestGromacsTopFile.py", "test_GROMOS"),
+            (
+                "4536",
+                "TestGromacsTopFile.py",
+                "test_Vsite3Func1 or test_Vsite3Func4",
+            ),
+            ("4794", "TestXtcFile.py", "test_xtc_small"),
+            ("4852", "TestForceField.py", "test_CMAPTorsionGeneratorMapAssignment"),
+            ("5155", "TestGromacsTopFile.py", "test_Vsite3Func3"),
+            ("5236", "TestForceField.py", "test_TemplateConstraintsMultipleMols"),
+        ]
+    },
+    # ── Exact C++ CPU/Reference/serialization tests ─────────────────────────
+    # These avoid CUDA/OpenCL/HIP and run the C++ test executables touched by
+    # the PR's test patch. Plugin-heavy/GPU-only cases stay as placeholders.
+    **{
+        pr: _openmm_cpp_targets_spec(*targets)
+        for pr, targets in {
+            "1487": ("TestReferenceEwald",),
+            "1858": ("TestReferenceVirtualSites", "TestSerializeSystem"),
+            "2057": ("TestReferenceCustomIntegrator", "TestVectorExpression"),
+            "2105": ("TestReferenceNonbondedForce",),
+            "2561": (
+                "TestReferenceLangevinMiddleIntegrator",
+                "TestSerializeIntegrator",
+            ),
+            "2570": ("TestReferenceNonbondedForce", "TestSerializeNonbondedForce"),
+            "2806": ("TestCpuNonbondedForce",),
+            "2818": ("TestReferenceVerletIntegrator",),
+            "4740": ("TestReferenceCheckpoints",),
+            "4907": ("TestReferenceEwald",),
+        }.items()
     },
     # ── Full C++ Reference-platform builds ────────────────────────────────────
     # 1837 (CustomCVForce), 5278 (MonteCarloMembraneBarostat), 4799 (DPDIntegrator)
