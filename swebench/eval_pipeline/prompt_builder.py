@@ -14,6 +14,12 @@ SYSTEM_MESSAGE = (
     "You will be given a task and must produce a git patch to solve it."
 )
 
+TEST_GENERATION_SYSTEM_MESSAGE = (
+    "You are an expert software engineer. "
+    "You will be given a bug report and must produce a git patch that adds or "
+    "modifies tests only."
+)
+
 # Max chars per file to include in the prompt (~200k chars fits in DeepSeek 1M context)
 _MAX_FILE_CHARS = 200_000
 
@@ -43,12 +49,32 @@ def _format_file_contents(instance: dict) -> str:
     return "\n".join(parts) + "\n\n"
 
 
-def build_agent_prompt(instance: dict) -> Optional[str]:
+def _problem_text(instance: dict) -> str:
+    problem_statement = (instance.get("problem_statement") or "").strip()
+    if problem_statement:
+        return problem_statement
+    pr_title = (instance.get("pr_title") or "").strip()
+    pr_body = (instance.get("pr_body") or "").strip()
+    return f"{pr_title}\n\n{pr_body}".strip()
+
+
+def _test_generation_instruction() -> str:
+    return (
+        "Write a minimal regression test patch for the issue above.\n"
+        "Do not fix the bug or modify implementation/source files.\n"
+        "Only add or modify tests and any small test data files required by those tests.\n"
+        "The generated tests should fail on the original pre-fix codebase and pass "
+        "after the golden fix patch is applied.\n"
+        "Return only a valid unified git diff."
+    )
+
+
+def build_agent_prompt(instance: dict, eval_mode: str = "fix") -> Optional[str]:
     """
     The agent task: the GitHub issue / problem statement, with no solution hints.
     Returns None if the instance has no problem statement.
     """
-    problem_statement = (instance.get("problem_statement") or "").strip()
+    problem_statement = _problem_text(instance)
     repo = instance["repo"]
 
     if not problem_statement:
@@ -57,6 +83,17 @@ def build_agent_prompt(instance: dict) -> Optional[str]:
 
     file_ctx = _format_file_contents(instance)
     media_ctx = format_issue_media_for_prompt(instance)
+
+    if eval_mode == "test_generation":
+        return (
+            f"{TEST_GENERATION_SYSTEM_MESSAGE}\n"
+            f"Repository: {repo}\n\n"
+            f"Here is the issue that needs a regression test:\n"
+            f"<issue>\n{problem_statement}\n</issue>\n\n"
+            f"{media_ctx}"
+            f"{file_ctx}"
+            f"{_test_generation_instruction()}"
+        )
 
     return (
         f"{SYSTEM_MESSAGE}\n"
@@ -69,12 +106,18 @@ def build_agent_prompt(instance: dict) -> Optional[str]:
     )
 
 
-def build_all_prompts(instances: list[dict]) -> dict[str, Optional[str]]:
+def build_all_prompts(
+    instances: list[dict],
+    eval_mode: str = "fix",
+) -> dict[str, Optional[str]]:
     """
     Build the agent prompt for all instances.
     Returns: {instance_id: prompt_str or None}
     """
-    result = {inst["instance_id"]: build_agent_prompt(inst) for inst in instances}
+    result = {
+        inst["instance_id"]: build_agent_prompt(inst, eval_mode=eval_mode)
+        for inst in instances
+    }
     count = sum(1 for p in result.values() if p is not None)
     logger.info(f"Agent prompts: {count}/{len(instances)} instances have a problem statement")
     return result

@@ -27,6 +27,7 @@ from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
 from swebench.eval_pipeline.prediction_utils import prediction_matches_backend
+from swebench.eval_pipeline.prompt_builder import _problem_text, _test_generation_instruction
 
 logger = logging.getLogger(__name__)
 AGENT_BACKEND = "sweagent"
@@ -39,7 +40,7 @@ _DEFAULT_DOCKER_IMAGE = "python:3.11"
 _DEFAULT_MAX_INPUT_TOKENS = 32768
 
 
-def _sweagent_problem_text(instance: dict) -> str:
+def _sweagent_problem_text(instance: dict, eval_mode: str = "fix") -> str:
     """Build a compact task text for SWE-agent.
 
     SWE-agent's default template already instructs tool use, but some
@@ -47,24 +48,32 @@ def _sweagent_problem_text(instance: dict) -> str:
     Put the most important operational constraints directly in the task text so
     they remain visible after history truncation.
     """
-    problem = (instance.get("problem_statement") or "").strip()
-    if not problem:
-        pr_title = (instance.get("pr_title") or "").strip()
-        pr_body = (instance.get("pr_body") or "").strip()
-        problem = f"{pr_title}\n\n{pr_body}".strip()
+    problem = _problem_text(instance)
 
     file_contents = instance.get("file_contents") or {}
     target_files = sorted(file_contents)
     f2p = instance.get("FAIL_TO_PASS") or []
 
-    guidance = [
-        "Operational constraints for this SWE-agent run:",
-        "- Use exactly one tool call per assistant turn. Never emit multiple tool calls in one response.",
-        "- Make the smallest source change that addresses the issue and the listed failing tests.",
-        "- Avoid broad repository scans and avoid copying or rewriting large generated files.",
-        "- For large C++ changes, inspect only the directly relevant files first, then patch incrementally.",
-        "- Submit as soon as the minimal patch is ready; do not keep exploring after producing a plausible fix.",
-    ]
+    if eval_mode == "test_generation":
+        guidance = [
+            "Operational constraints for this SWE-agent run:",
+            "- Use exactly one tool call per assistant turn. Never emit multiple tool calls in one response.",
+            "- Write a minimal regression test patch for the issue.",
+            "- Do not fix the bug or modify implementation/source files.",
+            "- Only add or modify tests and small test data files required by those tests.",
+            "- Avoid broad repository scans and avoid copying or rewriting large generated files.",
+            "- Submit as soon as the minimal test patch is ready.",
+            f"- {_test_generation_instruction()}",
+        ]
+    else:
+        guidance = [
+            "Operational constraints for this SWE-agent run:",
+            "- Use exactly one tool call per assistant turn. Never emit multiple tool calls in one response.",
+            "- Make the smallest source change that addresses the issue and the listed failing tests.",
+            "- Avoid broad repository scans and avoid copying or rewriting large generated files.",
+            "- For large C++ changes, inspect only the directly relevant files first, then patch incrementally.",
+            "- Submit as soon as the minimal patch is ready; do not keep exploring after producing a plausible fix.",
+        ]
     if target_files:
         guidance.append("Relevant base-commit files from instance construction:")
         guidance.extend(f"- {path}" for path in target_files[:12])
@@ -135,6 +144,7 @@ def _build_sweagent_config(
     api_base: Optional[str] = None,
     api_key: Optional[str] = None,
     max_input_tokens: int = _DEFAULT_MAX_INPUT_TOKENS,
+    eval_mode: str = "fix",
 ) -> dict:
     """Build a SWE-agent RunSingleConfig dict for one instance.
 
@@ -147,7 +157,7 @@ def _build_sweagent_config(
     ``api_base``/``api_key``. Without this, litellm can't resolve a custom model
     name like ``deepseek-v4-flash`` and the run hangs until timeout.
     """
-    problem = _sweagent_problem_text(instance)
+    problem = _sweagent_problem_text(instance, eval_mode=eval_mode)
 
     # litellm model name: prefix with openai/ for a custom OpenAI-compatible endpoint.
     # litellm's openai provider POSTs to <api_base>/chat/completions, so api_base must
@@ -227,6 +237,7 @@ def run_sweagent_inference(
     api_key: Optional[str] = None,
     retry_empty_predictions: bool = False,
     max_input_tokens: int = _DEFAULT_MAX_INPUT_TOKENS,
+    eval_mode: str = "fix",
 ) -> None:
     """Run SWE-agent inference for all instances. Writes same JSONL format as inference.py."""
     # Base config: an explicit --sweagent_config wins; otherwise fall back to
@@ -261,7 +272,9 @@ def run_sweagent_inference(
                     continue
                 try:
                     obj = json.loads(line)
-                    if prediction_matches_backend(obj, AGENT_BACKEND, model_name):
+                    if prediction_matches_backend(
+                        obj, AGENT_BACKEND, model_name, eval_mode=eval_mode
+                    ):
                         has_patch = bool((obj.get("model_patch") or "").strip())
                         if has_patch or not retry_empty_predictions:
                             existing_ids.add(obj["instance_id"])
@@ -301,6 +314,7 @@ def run_sweagent_inference(
             cfg = _build_sweagent_config(
                 inst, repo_dir, model_name, tmp_out, base_config,
                 docker_image, api_base, api_key, max_input_tokens,
+                eval_mode=eval_mode,
             )
             tmp_cfg = Path(tempfile.mktemp(suffix=".yaml"))
             tmp_cfg.write_text(yaml.dump(cfg))
@@ -349,6 +363,7 @@ def run_sweagent_inference(
                 "model_patch": patch,
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
+                "eval_mode": eval_mode,
             }
         except subprocess.TimeoutExpired as te:
             def _dec(s):
@@ -369,6 +384,7 @@ def run_sweagent_inference(
                 "model_patch": "",
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
+                "eval_mode": eval_mode,
                 "error": "timeout",
             }
         except Exception as e:
@@ -379,6 +395,7 @@ def run_sweagent_inference(
                 "model_patch": "",
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
+                "eval_mode": eval_mode,
                 "error": str(e),
             }
         finally:

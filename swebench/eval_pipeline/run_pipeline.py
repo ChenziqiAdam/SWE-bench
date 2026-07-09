@@ -70,6 +70,14 @@ def parse_args():
                    help="Max agent turns per instance (only used with --agent --agent_backend builtin, default 30).")
     p.add_argument("--output_dir", default="outputs", help="Directory for output files")
     p.add_argument("--run_id", default="eval_run_001", help="Unique run identifier")
+    p.add_argument(
+        "--eval_mode",
+        default="fix",
+        choices=["fix", "test_generation"],
+        help="Evaluation mode. 'fix' preserves normal SWE-bench patch evaluation; "
+             "'test_generation' asks agents to write regression tests and scores "
+             "fail-on-base/pass-after-golden-patch.",
+    )
     p.add_argument("--github_token", default=None,
                    help="GitHub token (or set GITHUB_TOKEN env var)")
     p.add_argument("--max_workers", type=int, default=4,
@@ -418,7 +426,7 @@ def main():
                         f"they will still run but be marked in the report.")
 
     # ── Stage 2.6: FAIL_TO_PASS / PASS_TO_PASS Mining ────────────────────────
-    if not args.skip_mining:
+    if not args.skip_mining and args.eval_mode == "fix":
         logger.info("=== Stage 2.6: Mining FAIL_TO_PASS / PASS_TO_PASS ===")
         from swebench.eval_pipeline.mine_tests import mine_fail_to_pass, apply_mined_to_instances
         mining = mine_fail_to_pass(
@@ -458,6 +466,11 @@ def main():
 
     # ── Stage 2.7: Verified-solvable filter ──────────────────────────────────
     if args.verified_only:
+        if args.eval_mode == "test_generation":
+            logger.warning(
+                "--verified_only in test_generation mode still filters by existing "
+                "FAIL_TO_PASS metadata; generated-test scoring does not use mining."
+            )
         if args.skip_mining:
             logger.warning(
                 "--verified_only with --skip_mining: FAIL_TO_PASS values are regex-parsed "
@@ -493,7 +506,7 @@ def main():
     # ── Stage 3: Prompt Building ──────────────────────────────────────────────
     logger.info("=== Stage 3: Building prompts ===")
     from swebench.eval_pipeline.prompt_builder import build_all_prompts
-    all_prompts = build_all_prompts(instances)
+    all_prompts = build_all_prompts(instances, eval_mode=args.eval_mode)
 
     prompts_path = output_dir / "agent_prompts.jsonl"
     with open(prompts_path, "w") as pf:
@@ -525,6 +538,7 @@ def main():
                 api_key=args.api_key,
                 retry_empty_predictions=args.retry_empty_predictions,
                 max_input_tokens=args.sweagent_max_input_tokens,
+                eval_mode=args.eval_mode,
             )
         elif args.agent_backend == "codex":
             from swebench.eval_pipeline.codex_inference import run_codex_inference
@@ -541,6 +555,7 @@ def main():
                 api_base=args.endpoint,
                 api_key=args.api_key,
                 retry_empty_predictions=args.retry_empty_predictions,
+                eval_mode=args.eval_mode,
             )
         elif args.agent_backend == "claude_code":
             from swebench.eval_pipeline.claude_code_inference import run_claude_code_inference
@@ -557,6 +572,7 @@ def main():
                 api_key=args.api_key,
                 retry_empty_predictions=args.retry_empty_predictions,
                 max_turns=args.claude_code_max_turns,
+                eval_mode=args.eval_mode,
             )
         else:
             # Builtin: multi-turn Anthropic tool-use loop
@@ -572,6 +588,7 @@ def main():
                 github_token=github_token,
                 max_turns=args.max_turns,
                 max_workers=args.max_workers,
+                eval_mode=args.eval_mode,
             )
 
     # ── Stage 5: Docker Evaluation (agent-only) ───────────────────────────────
@@ -583,13 +600,18 @@ def main():
         dest_path=agent_predictions_path,
         backend=args.agent_backend,
         model_name=inference_model,
+        eval_mode=args.eval_mode,
         instance_ids={i["instance_id"] for i in instances},
     )
     logger.info(
         f"Selected {selected_count} {args.agent_backend}/{inference_model} prediction(s) "
         f"for eval → {agent_predictions_path}"
     )
-    run_id = f"{args.run_id}_agent"
+    run_id = (
+        f"{args.run_id}_testgen"
+        if args.eval_mode == "test_generation"
+        else f"{args.run_id}_agent"
+    )
     if not args.skip_eval:
         logger.info("=== Stage 5: Running Docker evaluation ===")
 
@@ -625,50 +647,69 @@ def main():
                     f"--force_eval: cleared {removed} cached report dir(s) and removed "
                     f"any stale eval containers under {args.log_dir}/{run_id}/."
                 )
-            wallclock = args.eval_wallclock_per_instance * max(1, len(eval_instance_ids))
-            logger.info(
-                f"--- Evaluating agent (run_id={run_id}, "
-                f"wallclock_budget={wallclock}s for {len(eval_instance_ids)} instances) ---"
-            )
-
-            finished = _run_eval_with_timeout(
-                timeout_seconds=wallclock,
-                dataset_name=instances_path,
-                split="test",
-                instance_ids=eval_instance_ids,
-                predictions_path=agent_predictions_path,
-                max_workers=args.max_workers,
-                force_rebuild=False,
-                cache_level="instance" if args.clean_images else "env",
-                clean=args.clean_images,
-                open_file_limit=8192,
-                run_id=run_id,
-                timeout=1800,
-                namespace=None,
-                rewrite_reports=False,
-                modal=False,
-            )
-            if not finished:
-                logger.warning(
-                    f"agent eval hit wall-clock cap. "
-                    f"Partial reports under {args.log_dir}/{run_id}/ are preserved."
+            if args.eval_mode == "test_generation":
+                from swebench.eval_pipeline.test_generation_eval import (
+                    run_test_generation_evaluation,
                 )
+
+                logger.info(
+                    f"--- Evaluating generated tests (run_id={run_id}, "
+                    f"{len(eval_instance_ids)} instances) ---"
+                )
+                run_test_generation_evaluation(
+                    instances=unique_eval_instances,
+                    predictions_path=agent_predictions_path,
+                    run_id=run_id,
+                    log_dir=args.log_dir,
+                    max_workers=args.max_workers,
+                    timeout=1800,
+                )
+            else:
+                wallclock = args.eval_wallclock_per_instance * max(1, len(eval_instance_ids))
+                logger.info(
+                    f"--- Evaluating agent (run_id={run_id}, "
+                    f"wallclock_budget={wallclock}s for {len(eval_instance_ids)} instances) ---"
+                )
+
+                finished = _run_eval_with_timeout(
+                    timeout_seconds=wallclock,
+                    dataset_name=instances_path,
+                    split="test",
+                    instance_ids=eval_instance_ids,
+                    predictions_path=agent_predictions_path,
+                    max_workers=args.max_workers,
+                    force_rebuild=False,
+                    cache_level="instance" if args.clean_images else "env",
+                    clean=args.clean_images,
+                    open_file_limit=8192,
+                    run_id=run_id,
+                    timeout=1800,
+                    namespace=None,
+                    rewrite_reports=False,
+                    modal=False,
+                )
+                if not finished:
+                    logger.warning(
+                        f"agent eval hit wall-clock cap. "
+                        f"Partial reports under {args.log_dir}/{run_id}/ are preserved."
+                    )
     else:
         run_ids["agent"] = run_id
 
     # ── Stage 6: Reporting ────────────────────────────────────────────────────
     logger.info("=== Stage 6: Generating report ===")
-    from swebench.eval_pipeline.report import collect_results, render_comparison_table
-
-    results = collect_results(
-        run_ids=run_ids,
-        log_dir=args.log_dir,
-        instance_ids={i["instance_id"] for i in instances},
+    from swebench.eval_pipeline.report import (
+        collect_results,
+        collect_test_generation_results,
+        render_comparison_table,
+        render_test_generation_table,
     )
+
     output_csv = str(output_dir / f"{args.run_id}_results.csv")
     run_config = {
         "model": args.model,
         "inference_model": inference_model,
+        "eval_mode": args.eval_mode,
         "run_id": args.run_id,
         "output_dir": str(output_dir),
         "max_tokens": args.max_tokens,
@@ -702,14 +743,33 @@ def main():
         "claude_code_max_turns": args.claude_code_max_turns,
         "claude_code_model": args.claude_code_model,
     }
-    render_comparison_table(
-        results=results,
-        instances=instances,
-        output_csv=output_csv,
-        build_validation=build_validation,
-        predictions_path=agent_predictions_path,
-        run_config=run_config,
-    )
+    if args.eval_mode == "test_generation":
+        results = collect_test_generation_results(
+            run_id=run_id,
+            log_dir=args.log_dir,
+            instance_ids={i["instance_id"] for i in instances},
+        )
+        render_test_generation_table(
+            results=results,
+            instances=instances,
+            output_csv=output_csv,
+            predictions_path=agent_predictions_path,
+            run_config=run_config,
+        )
+    else:
+        results = collect_results(
+            run_ids=run_ids,
+            log_dir=args.log_dir,
+            instance_ids={i["instance_id"] for i in instances},
+        )
+        render_comparison_table(
+            results=results,
+            instances=instances,
+            output_csv=output_csv,
+            build_validation=build_validation,
+            predictions_path=agent_predictions_path,
+            run_config=run_config,
+        )
     logger.info(f"Done. Results saved to {output_csv}")
 
 

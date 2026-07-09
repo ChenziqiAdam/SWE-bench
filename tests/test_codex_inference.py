@@ -156,3 +156,29 @@ def test_selected_predictions_are_backend_specific(tmp_path):
 
     assert count == 2
     assert {row["instance_id"] for row in selected} == {"i1", "i2"}
+
+
+def test_selected_predictions_are_eval_mode_specific(tmp_path):
+    rows = [
+        {
+            "instance_id": "i1",
+            "model_name_or_path": "gpt",
+            "model_patch": "fix",
+            "agent_backend": "codex",
+        },
+        {
+            "instance_id": "i1",
+            "model_name_or_path": "gpt",
+            "model_patch": "test",
+            "agent_backend": "codex",
+            "eval_mode": "test_generation",
+        },
+    ]
+
+    assert selected_prediction_rows(rows, "codex", "gpt") == [rows[0]]
+    assert selected_prediction_rows(
+        rows,
+        "codex",
+        "gpt",
+        eval_mode="test_generation",
+    ) == [rows[1]]

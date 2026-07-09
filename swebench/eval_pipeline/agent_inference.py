@@ -25,6 +25,7 @@ from tqdm.auto import tqdm
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
 from swebench.eval_pipeline.prediction_utils import prediction_matches_backend, unique_instances_by_id
+from swebench.eval_pipeline.prompt_builder import _problem_text, _test_generation_instruction
 
 logger = logging.getLogger(__name__)
 AGENT_BACKEND = "builtin"
@@ -34,6 +35,13 @@ SYSTEM_PROMPT = (
     "You have been given a GitHub issue to resolve. "
     "Use the provided tools to explore the repository, understand the code, "
     "and implement a fix. When your changes are complete, call submit_patch()."
+)
+
+TEST_GENERATION_SYSTEM_PROMPT = (
+    "You are an expert software engineer working on a real codebase. "
+    "You have been given a GitHub issue and must add or modify tests only. "
+    "Do not fix implementation code. When your test changes are complete, "
+    "call submit_patch()."
 )
 
 TOOLS = [
@@ -203,17 +211,23 @@ def _execute_tool(tool_name: str, tool_input: dict, repo_dir: Path) -> str:
     return f"Error: unknown tool {tool_name}"
 
 
-def _build_issue_prompt(instance: dict) -> str:
+def _build_issue_prompt(instance: dict, eval_mode: str = "fix") -> str:
     """Build the initial user message from instance (issue description only)."""
     repo = instance["repo"]
-    problem = (instance.get("problem_statement") or "").strip()
-    if not problem:
-        # Fallback: use PR title/body if no issue
-        pr_title = (instance.get("pr_title") or "").strip()
-        pr_body = (instance.get("pr_body") or "").strip()
-        problem = f"{pr_title}\n\n{pr_body}".strip()
+    problem = _problem_text(instance)
 
     media_ctx = format_issue_media_for_prompt(instance)
+    if eval_mode == "test_generation":
+        return (
+            f"Repository: {repo}\n\n"
+            f"Here is the issue that needs a regression test:\n"
+            f"<issue>\n{problem}\n</issue>\n\n"
+            f"{media_ctx}"
+            f"{_test_generation_instruction()}\n"
+            f"Explore the repository using the provided tools and call submit_patch() "
+            f"when the test patch is complete."
+        )
+
     return (
         f"Repository: {repo}\n\n"
         f"Here is the issue that needs to be resolved:\n"
@@ -230,15 +244,21 @@ def _run_agentic_loop(
     model: str,
     repo_dir: Path,
     max_turns: int,
+    eval_mode: str = "fix",
 ) -> str:
     """Run multi-turn tool-use loop. Returns unified diff patch string."""
-    messages = [{"role": "user", "content": _build_issue_prompt(instance)}]
+    messages = [{"role": "user", "content": _build_issue_prompt(instance, eval_mode=eval_mode)}]
+    system_prompt = (
+        TEST_GENERATION_SYSTEM_PROMPT
+        if eval_mode == "test_generation"
+        else SYSTEM_PROMPT
+    )
 
     for turn in range(max_turns):
         response = anthropic_client.messages.create(
             model=model,
             max_tokens=8192,
-            system=SYSTEM_PROMPT,
+            system=system_prompt,
             tools=TOOLS,
             messages=messages,
         )
@@ -302,6 +322,7 @@ def run_agent_inference_for_level(
     github_token: Optional[str] = None,
     max_turns: int = 30,
     max_workers: int = 2,
+    eval_mode: str = "fix",
 ) -> None:
     """Run agentic inference for all instances. Writes same JSONL format as inference.py."""
     # Resume: skip already-done instances
@@ -315,7 +336,9 @@ def run_agent_inference_for_level(
                     continue
                 try:
                     obj = json.loads(line)
-                    if prediction_matches_backend(obj, AGENT_BACKEND, model_name):
+                    if prediction_matches_backend(
+                        obj, AGENT_BACKEND, model_name, eval_mode=eval_mode
+                    ):
                         existing_ids.add(obj["instance_id"])
                 except (json.JSONDecodeError, KeyError):
                     pass
@@ -337,7 +360,14 @@ def run_agent_inference_for_level(
         repo_dir = None
         try:
             repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token, tmp_root=tmp_root)
-            patch = _run_agentic_loop(inst, anthropic_client, model_name, repo_dir, max_turns)
+            patch = _run_agentic_loop(
+                inst,
+                anthropic_client,
+                model_name,
+                repo_dir,
+                max_turns,
+                eval_mode=eval_mode,
+            )
             patch = _clean_patch(patch)
             patch = _repair_patch(patch)
             record = {
@@ -345,6 +375,7 @@ def run_agent_inference_for_level(
                 "model_patch": patch,
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
+                "eval_mode": eval_mode,
             }
         except Exception as e:
             logger.error(f"Error on {instance_id}: {e}")
@@ -354,6 +385,7 @@ def run_agent_inference_for_level(
                 "model_patch": "",
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
+                "eval_mode": eval_mode,
                 "error": str(e),
             }
         finally:

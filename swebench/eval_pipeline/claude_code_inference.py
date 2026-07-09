@@ -23,6 +23,7 @@ from swebench.eval_pipeline.prediction_utils import (
     unique_instances_by_id,
     write_prediction_rows,
 )
+from swebench.eval_pipeline.prompt_builder import _problem_text, _test_generation_instruction
 
 logger = logging.getLogger(__name__)
 
@@ -53,24 +54,30 @@ def _claude_bin() -> str:
     return "claude"
 
 
-def _claude_problem_text(instance: dict) -> str:
-    problem = (instance.get("problem_statement") or "").strip()
-    if not problem:
-        pr_title = (instance.get("pr_title") or "").strip()
-        pr_body = (instance.get("pr_body") or "").strip()
-        problem = f"{pr_title}\n\n{pr_body}".strip()
+def _claude_problem_text(instance: dict, eval_mode: str = "fix") -> str:
+    problem = _problem_text(instance)
 
     file_contents = instance.get("file_contents") or {}
     target_files = sorted(file_contents)
     f2p = instance.get("FAIL_TO_PASS") or []
 
-    guidance = [
-        "Resolve this SWE-bench scientific software issue in the local repository.",
-        "Make the smallest source change needed to address the issue.",
-        "Do not refactor unrelated code or rewrite generated files.",
-        "Prefer targeted inspection of relevant files over broad repository scans.",
-        "When finished, leave the edits in the working tree; the evaluator will capture git diff.",
-    ]
+    if eval_mode == "test_generation":
+        guidance = [
+            "Write a minimal regression test patch for this SWE-bench issue.",
+            "Do not fix the bug or modify implementation/source files.",
+            "Only add or modify tests and small test data files required by those tests.",
+            "Prefer targeted inspection of relevant tests over broad repository scans.",
+            "When finished, leave the test edits in the working tree; the evaluator will capture git diff.",
+            _test_generation_instruction(),
+        ]
+    else:
+        guidance = [
+            "Resolve this SWE-bench scientific software issue in the local repository.",
+            "Make the smallest source change needed to address the issue.",
+            "Do not refactor unrelated code or rewrite generated files.",
+            "Prefer targeted inspection of relevant files over broad repository scans.",
+            "When finished, leave the edits in the working tree; the evaluator will capture git diff.",
+        ]
     if target_files:
         guidance.append("Relevant base-commit files from instance construction:")
         guidance.extend(f"- {path}" for path in target_files[:12])
@@ -229,6 +236,7 @@ def run_claude_code_inference(
     api_key: Optional[str] = None,
     retry_empty_predictions: bool = False,
     max_turns: Optional[int] = None,
+    eval_mode: str = "fix",
 ) -> None:
     """Run Claude Code inference for all instances. Writes standard prediction JSONL."""
     if api_base:
@@ -242,7 +250,7 @@ def run_claude_code_inference(
     existing_ids: set[str] = set()
     retained_records: list[dict] = []
     for obj in read_prediction_rows(out_path):
-        if prediction_matches_backend(obj, AGENT_BACKEND, model_name):
+        if prediction_matches_backend(obj, AGENT_BACKEND, model_name, eval_mode=eval_mode):
             has_patch = bool((obj.get("model_patch") or "").strip())
             if has_patch or not retry_empty_predictions:
                 existing_ids.add(obj["instance_id"])
@@ -276,7 +284,7 @@ def run_claude_code_inference(
         repo_dir = None
         try:
             repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token, tmp_root=tmp_root)
-            prompt = _claude_problem_text(inst)
+            prompt = _claude_problem_text(inst, eval_mode=eval_mode)
             cmd = [
                 _claude_bin(),
                 "-p",
@@ -339,6 +347,7 @@ def run_claude_code_inference(
                 "model_patch": patch,
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
+                "eval_mode": eval_mode,
             }
             if error:
                 record["error"] = error
@@ -377,6 +386,7 @@ def run_claude_code_inference(
                 "model_patch": patch,
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
+                "eval_mode": eval_mode,
                 "error": "timeout",
             }
         except Exception as e:
@@ -387,6 +397,7 @@ def run_claude_code_inference(
                 "model_patch": "",
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
+                "eval_mode": eval_mode,
                 "error": str(e),
             }
         finally:

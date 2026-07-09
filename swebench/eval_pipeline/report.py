@@ -69,6 +69,29 @@ def collect_results(
     return results
 
 
+def collect_test_generation_results(
+    run_id: str,
+    log_dir: str = "logs/run_evaluation",
+    instance_ids: set[str] | None = None,
+) -> dict[str, dict]:
+    """Read per-instance generated-test report.json files."""
+    results: dict[str, dict] = {}
+    run_path = Path(log_dir) / run_id
+    report_files = list(run_path.glob("*/*/report.json")) if run_path.exists() else []
+    logger.info(f"Test-generation run ({run_id}): found {len(report_files)} report files")
+    for report_file in report_files:
+        try:
+            data = json.loads(report_file.read_text())
+        except Exception as e:
+            logger.error(f"Error reading {report_file}: {e}")
+            continue
+        for instance_id, info in data.items():
+            if instance_ids is not None and instance_id not in instance_ids:
+                continue
+            results[instance_id] = info
+    return results
+
+
 def _classify(
     instance_id: str,
     report: dict | None,
@@ -192,4 +215,85 @@ def render_comparison_table(
             f"  NOTE: {excluded_harness_resolved} harness-resolved instance(s) were excluded "
             "from the scorable denominator because FAIL_TO_PASS was empty/non-evaluable."
         )
+    print("=" * 78 + "\n")
+
+
+def render_test_generation_table(
+    results: dict[str, dict],
+    instances: list[dict],
+    output_csv: str,
+    predictions_path: str | None = None,
+    run_config: dict | None = None,
+) -> None:
+    """Write a CSV and print test-generation success results."""
+    meta = {inst["instance_id"]: inst for inst in instances}
+    nonempty = _load_nonempty_prediction_ids(predictions_path)
+    statuses = ("resolved", "unresolved", "errored", "no-pred")
+
+    rows = []
+    for instance_id in sorted(meta.keys()):
+        inst = meta[instance_id]
+        info = results.get(instance_id) or {}
+        status = info.get("status")
+        if not status:
+            status = "errored" if instance_id in nonempty else "no-pred"
+        rows.append({
+            "instance_id": instance_id,
+            "repo": inst.get("repo", ""),
+            "pr_number": inst.get("pull_number", ""),
+            "category": inst.get("category", ""),
+            "status": status,
+            "has_pred": "yes" if instance_id in nonempty else "no",
+            "test_patch_applied": "yes" if info.get("test_patch_applied") else "no",
+            "gold_patch_applied": "yes" if info.get("gold_patch_applied") else "no",
+            "base_failed_tests": len(info.get("base_failed_tests") or []),
+            "gold_passed_tests": len(info.get("gold_passed_tests") or []),
+        })
+
+    Path(output_csv).parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = [
+        "instance_id",
+        "repo",
+        "pr_number",
+        "category",
+        "status",
+        "has_pred",
+        "test_patch_applied",
+        "gold_patch_applied",
+        "base_failed_tests",
+        "gold_passed_tests",
+    ]
+    with open(output_csv, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+    logger.info(f"Test-generation results written to {output_csv}")
+
+    counts = {s: 0 for s in statuses}
+    for row in rows:
+        counts[row["status"]] = counts.get(row["status"], 0) + 1
+    total = len(rows)
+    rate = counts["resolved"] / total if total else 0.0
+
+    print("\n" + "=" * 78)
+    print(f"{'TEST-GENERATION RESULTS':^78}")
+    print("=" * 78)
+    if run_config:
+        print("RUN CONFIGURATION")
+        for k, v in run_config.items():
+            print(f"  {k:<28} {v}")
+        print("-" * 78)
+    print(f"{'Instance':<40} {'Status':^12} {'Base F':^8} {'Gold P':^8}")
+    print("-" * 78)
+    for row in rows:
+        print(
+            f"{row['instance_id']:<40} {row['status']:^12} "
+            f"{row['base_failed_tests']:^8} {row['gold_passed_tests']:^8}"
+        )
+    print("=" * 78)
+    print(f"TEST-GENERATION SUCCESS RATE {rate:6.1%}  ({counts['resolved']}/{total})")
+    print(
+        f"  resolved={counts['resolved']}  unresolved={counts['unresolved']}  "
+        f"errored={counts['errored']}  no-pred={counts['no-pred']}"
+    )
     print("=" * 78 + "\n")

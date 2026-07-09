@@ -9,7 +9,12 @@ from typing import Iterable
 LEGACY_BACKENDS = {"builtin", "sweagent"}
 
 
-def prediction_matches_backend(row: dict, backend: str, model_name: str) -> bool:
+def prediction_matches_backend(
+    row: dict,
+    backend: str,
+    model_name: str,
+    eval_mode: str = "fix",
+) -> bool:
     """Return whether a prediction row belongs to a backend/model pair.
 
     Older pipeline records did not include ``agent_backend``. Treat those as
@@ -18,6 +23,9 @@ def prediction_matches_backend(row: dict, backend: str, model_name: str) -> bool
     rows.
     """
     if row.get("model_name_or_path") != model_name:
+        return False
+    row_eval_mode = row.get("eval_mode") or "fix"
+    if row_eval_mode != eval_mode:
         return False
     row_backend = row.get("agent_backend")
     if row_backend:
@@ -67,6 +75,7 @@ def selected_prediction_rows(
     rows: Iterable[dict],
     backend: str,
     model_name: str,
+    eval_mode: str = "fix",
     instance_ids: set[str] | None = None,
 ) -> list[dict]:
     """Return one latest matching prediction row per instance."""
@@ -77,7 +86,7 @@ def selected_prediction_rows(
             continue
         if instance_ids is not None and instance_id not in instance_ids:
             continue
-        if prediction_matches_backend(row, backend, model_name):
+        if prediction_matches_backend(row, backend, model_name, eval_mode=eval_mode):
             by_id[instance_id] = row
     return list(by_id.values())
 
@@ -88,11 +97,13 @@ def write_selected_predictions(
     backend: str,
     model_name: str,
     instance_ids: set[str] | None = None,
+    eval_mode: str = "fix",
 ) -> int:
     rows = selected_prediction_rows(
         read_prediction_rows(source_path),
         backend=backend,
         model_name=model_name,
+        eval_mode=eval_mode,
         instance_ids=instance_ids,
     )
     write_prediction_rows(dest_path, rows)
