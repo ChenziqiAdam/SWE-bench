@@ -247,17 +247,20 @@ def mine_fail_to_pass(
     # Share one Docker client across all threads — avoids opening a new Unix socket
     # per worker, which is wasteful and can hit connection limits on large runs.
     shared_client = docker.from_env()
-    with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        futs = {pool.submit(_mine_one, inst, run_id, shared_client): inst for inst in todo}
-        for fut in as_completed(futs):
-            inst = futs[fut]
-            iid = inst["instance_id"]
-            try:
-                cache[iid] = fut.result()
-            except Exception as e:
-                cache[iid] = {"ok": False, "error": f"{type(e).__name__}: {e}"}
-            # Persist incrementally so a crash mid-run doesn't lose progress.
-            cache_path.write_text(json.dumps(cache, indent=2))
+    try:
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            futs = {pool.submit(_mine_one, inst, run_id, shared_client): inst for inst in todo}
+            for fut in as_completed(futs):
+                inst = futs[fut]
+                iid = inst["instance_id"]
+                try:
+                    cache[iid] = fut.result()
+                except Exception as e:
+                    cache[iid] = {"ok": False, "error": f"{type(e).__name__}: {e}"}
+                # Persist incrementally so a crash mid-run doesn't lose progress.
+                cache_path.write_text(json.dumps(cache, indent=2))
+    finally:
+        shared_client.close()
 
     n_ok = sum(1 for v in cache.values() if v.get("ok"))
     n_f2p = sum(len(v.get("FAIL_TO_PASS", [])) for v in cache.values() if v.get("ok"))

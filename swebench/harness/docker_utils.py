@@ -190,6 +190,7 @@ def exec_run_with_timeout(container, cmd, timeout: int | None = 60):
     # Wrapper function to run the command
     def run_command():
         nonlocal exec_result, exec_id, exception
+        exec_stream = None
         try:
             exec_id = container.client.api.exec_create(container.id, cmd)["Id"]
             exec_stream = container.client.api.exec_start(exec_id, stream=True)
@@ -197,6 +198,13 @@ def exec_run_with_timeout(container, cmd, timeout: int | None = 60):
                 exec_result += chunk
         except Exception as e:
             exception = e
+        finally:
+            close = getattr(exec_stream, "close", None)
+            if close:
+                try:
+                    close()
+                except ValueError:
+                    pass
 
     # Start the command in a separate thread
     thread = threading.Thread(target=run_command)

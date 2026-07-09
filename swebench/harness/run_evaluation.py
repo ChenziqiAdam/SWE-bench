@@ -304,74 +304,80 @@ def run_instances(
         timeout (int): Timeout for running tests
     """
     client = docker.from_env()
-    test_specs = list(
-        map(
-            lambda instance: make_test_spec(
-                instance,
-                namespace=namespace,
-                instance_image_tag=instance_image_tag,
-                env_image_tag=env_image_tag,
-            ),
-            instances,
-        )
-    )
-
-    # print number of existing instance images
-    instance_image_ids = {x.instance_image_key for x in test_specs}
-    existing_images = {
-        tag
-        for i in client.images.list(all=True)
-        for tag in i.tags
-        if tag in instance_image_ids
-    }
-    if not force_rebuild and len(existing_images):
-        print(
-            f"Found {len(existing_images)} existing instance images. Will reuse them."
-        )
-
-    # run instances in parallel
-    payloads = []
-    for test_spec in test_specs:
-        payloads.append(
-            (
-                test_spec,
-                predictions[test_spec.instance_id],
-                should_remove(
-                    test_spec.instance_image_key,
-                    cache_level,
-                    clean,
-                    existing_images,
+    try:
+        test_specs = list(
+            map(
+                lambda instance: make_test_spec(
+                    instance,
+                    namespace=namespace,
+                    instance_image_tag=instance_image_tag,
+                    env_image_tag=env_image_tag,
                 ),
-                force_rebuild,
-                client,
-                run_id,
-                timeout,
-                rewrite_reports,
+                instances,
             )
         )
 
-    # run instances in parallel
-    print(f"Running {len(instances)} instances...")
-    stats = {"✓": 0, "✖": 0, "error": 0}
-    pbar = tqdm(total=len(payloads), desc="Evaluation", postfix=stats)
-    lock = threading.Lock()
+        # print number of existing instance images
+        instance_image_ids = {x.instance_image_key for x in test_specs}
+        existing_images = {
+            tag
+            for i in client.images.list(all=True)
+            for tag in i.tags
+            if tag in instance_image_ids
+        }
+        if not force_rebuild and len(existing_images):
+            print(
+                f"Found {len(existing_images)} existing instance images. Will reuse them."
+            )
 
-    def run_evaluation_with_progress(*args):
-        result = run_instance(*args)
-        with lock:
-            if result["completed"]:
-                if result["resolved"]:
-                    stats["✓"] += 1
+        # run instances in parallel
+        payloads = []
+        for test_spec in test_specs:
+            payloads.append(
+                (
+                    test_spec,
+                    predictions[test_spec.instance_id],
+                    should_remove(
+                        test_spec.instance_image_key,
+                        cache_level,
+                        clean,
+                        existing_images,
+                    ),
+                    force_rebuild,
+                    client,
+                    run_id,
+                    timeout,
+                    rewrite_reports,
+                )
+            )
+
+        # run instances in parallel
+        print(f"Running {len(instances)} instances...")
+        stats = {"✓": 0, "✖": 0, "error": 0}
+        pbar = tqdm(total=len(payloads), desc="Evaluation", postfix=stats)
+        lock = threading.Lock()
+
+        def run_evaluation_with_progress(*args):
+            result = run_instance(*args)
+            with lock:
+                if result["completed"]:
+                    if result["resolved"]:
+                        stats["✓"] += 1
+                    else:
+                        stats["✖"] += 1
                 else:
-                    stats["✖"] += 1
-            else:
-                stats["error"] += 1
-            pbar.set_postfix(stats)
-            pbar.update()
-        return result
+                    stats["error"] += 1
+                pbar.set_postfix(stats)
+                pbar.update()
+            return result
 
-    run_threadpool(run_evaluation_with_progress, payloads, max_workers)
-    print("All instances run.")
+        try:
+            run_threadpool(run_evaluation_with_progress, payloads, max_workers)
+        finally:
+            pbar.close()
+        print("All instances run.")
+    finally:
+        client.close()
 
 
 def get_dataset_from_preds(
@@ -536,48 +542,50 @@ def main(
     if platform.system() == "Linux":
         resource.setrlimit(resource.RLIMIT_NOFILE, (open_file_limit, open_file_limit))
     client = docker.from_env()
-
-    existing_images = list_images(client)
-    if not dataset:
-        print("No instances to run.")
-    else:
-        # build environment images + run instances
-        if namespace is None and not rewrite_reports:
-            build_env_images(
-                client,
+    try:
+        existing_images = list_images(client)
+        if not dataset:
+            print("No instances to run.")
+        else:
+            # build environment images + run instances
+            if namespace is None and not rewrite_reports:
+                build_env_images(
+                    client,
+                    dataset,
+                    force_rebuild,
+                    max_workers,
+                    namespace,
+                    instance_image_tag,
+                    env_image_tag,
+                )
+            run_instances(
+                predictions,
                 dataset,
+                cache_level,
+                clean,
                 force_rebuild,
                 max_workers,
-                namespace,
-                instance_image_tag,
-                env_image_tag,
+                run_id,
+                timeout,
+                namespace=namespace,
+                instance_image_tag=instance_image_tag,
+                env_image_tag=env_image_tag,
+                rewrite_reports=rewrite_reports,
             )
-        run_instances(
-            predictions,
-            dataset,
-            cache_level,
-            clean,
-            force_rebuild,
-            max_workers,
-            run_id,
-            timeout,
-            namespace=namespace,
-            instance_image_tag=instance_image_tag,
-            env_image_tag=env_image_tag,
-            rewrite_reports=rewrite_reports,
-        )
 
-    # clean images + make final report
-    clean_images(client, existing_images, cache_level, clean)
-    return make_run_report(
-        predictions,
-        full_dataset,
-        run_id,
-        client,
-        namespace,
-        instance_image_tag,
-        env_image_tag,
-    )
+        # clean images + make final report
+        clean_images(client, existing_images, cache_level, clean)
+        return make_run_report(
+            predictions,
+            full_dataset,
+            run_id,
+            client,
+            namespace,
+            instance_image_tag,
+            env_image_tag,
+        )
+    finally:
+        client.close()
 
 
 if __name__ == "__main__":

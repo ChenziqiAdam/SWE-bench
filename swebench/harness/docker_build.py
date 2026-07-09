@@ -104,6 +104,7 @@ def build_image(
 
     for setup_script_name, setup_script in setup_scripts.items():
         logger.info(f"[SETUP SCRIPT] {setup_script_name}:\n{setup_script}")
+    response = None
     try:
         # Write the setup scripts to the build directory
         for setup_script_name, setup_script in setup_scripts.items():
@@ -156,6 +157,12 @@ def build_image(
         logger.error(f"Error building image {image_name}: {e}")
         raise BuildImageError(image_name, str(e), logger) from e
     finally:
+        close = getattr(response, "close", None)
+        if close:
+            try:
+                close()
+            except ValueError:
+                pass
         close_logger(logger)  # functions that create loggers should close them
 
 

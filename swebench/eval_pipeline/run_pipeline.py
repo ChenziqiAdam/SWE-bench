@@ -193,10 +193,20 @@ def _parse_issue_types(values: list[str] | None) -> set[str] | None:
     return parsed or None
 
 
-def _eval_subprocess_target(kw):
+def _eval_subprocess_target(kw, result_queue=None):
     """Module-level target for spawn-pickling; runs the harness eval."""
+    import traceback
+
     from swebench.harness.run_evaluation import main as run_eval
-    run_eval(**kw)
+    try:
+        report_path = run_eval(**kw)
+    except Exception:
+        if result_queue is not None:
+            result_queue.put({"ok": False, "traceback": traceback.format_exc()})
+        raise
+    else:
+        if result_queue is not None:
+            result_queue.put({"ok": True, "report_path": str(report_path) if report_path else ""})
 
 
 def _run_eval_with_timeout(timeout_seconds: int, **eval_kwargs) -> bool:
@@ -208,7 +218,12 @@ def _run_eval_with_timeout(timeout_seconds: int, **eval_kwargs) -> bool:
     import multiprocessing as mp
 
     ctx = mp.get_context("spawn")
-    proc = ctx.Process(target=_eval_subprocess_target, args=(eval_kwargs,), daemon=False)
+    result_queue = ctx.Queue()
+    proc = ctx.Process(
+        target=_eval_subprocess_target,
+        args=(eval_kwargs, result_queue),
+        daemon=False,
+    )
     proc.start()
     proc.join(timeout=timeout_seconds)
     if proc.is_alive():
@@ -231,7 +246,25 @@ def _run_eval_with_timeout(timeout_seconds: int, **eval_kwargs) -> bool:
                 subprocess.run(["docker", "rm", "-f", *ids], timeout=60)
         except Exception as e:
             logger.warning(f"Container cleanup failed: {e}")
+        result_queue.close()
+        result_queue.join_thread()
         return False
+    child_result = None
+    try:
+        child_result = result_queue.get(timeout=1)
+    except Exception:
+        pass
+    finally:
+        result_queue.close()
+        result_queue.join_thread()
+    if proc.exitcode:
+        if child_result and child_result.get("traceback"):
+            logger.error("Eval subprocess failed:\n%s", child_result["traceback"])
+        else:
+            logger.error("Eval subprocess exited with code %s", proc.exitcode)
+        return False
+    if child_result and child_result.get("report_path"):
+        logger.info("Harness run report written to %s", child_result["report_path"])
     return True
 
 

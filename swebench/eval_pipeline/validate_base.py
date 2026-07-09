@@ -111,82 +111,85 @@ def validate_buildable(
 
     logger.info(f"Building images at base_commit for {len(buildable_todo)} instance(s)...")
     client = docker.from_env()
+    try:
 
-    # ── Phase 1: build env images (one per repo/version group) ────────────────
-    # Make test specs so we can group by env_image_key.
-    spec_map: dict[str, object] = {}  # instance_id → TestSpec
-    for inst in buildable_todo:
-        spec_map[inst["instance_id"]] = make_test_spec(inst)
+        # ── Phase 1: build env images (one per repo/version group) ────────────────
+        # Make test specs so we can group by env_image_key.
+        spec_map: dict[str, object] = {}  # instance_id → TestSpec
+        for inst in buildable_todo:
+            spec_map[inst["instance_id"]] = make_test_spec(inst)
 
-    # Group instances by env_image_key to identify version buckets.
-    env_key_to_ids: dict[str, list[str]] = defaultdict(list)
-    for iid, spec in spec_map.items():
-        env_key_to_ids[spec.env_image_key].append(iid)
+        # Group instances by env_image_key to identify version buckets.
+        env_key_to_ids: dict[str, list[str]] = defaultdict(list)
+        for iid, spec in spec_map.items():
+            env_key_to_ids[spec.env_image_key].append(iid)
 
-    logger.info(
-        f"Phase 1: building {len(env_key_to_ids)} distinct env image(s) "
-        f"for {len(buildable_todo)} instance(s) using {max_workers} workers..."
-    )
-    _, env_failed = build_env_images(
-        client=client,
-        dataset=buildable_todo,
-        force_rebuild=force,
-        max_workers=max_workers,
-        instance_image_tag="latest",
-        env_image_tag="latest",
-    )
-    # build_env_images returns payload tuples; element 0 is the env image_name (key).
-    failed_env_keys = {f[0] if isinstance(f, tuple) else f for f in env_failed}
-
-    # Mark instances in failed-env groups immediately and remove from phase 2.
-    instance_todo_p2: list[dict] = []
-    for inst in buildable_todo:
-        iid = inst["instance_id"]
-        env_key = spec_map[iid].env_image_key
-        if env_key in failed_env_keys:
-            cache[iid] = {"buildable": False, "error": f"env image failed: {env_key}", "spec_hash": spec_hashes[iid]}
-        else:
-            instance_todo_p2.append(inst)
-
-    # Flush after phase 1 — crash-safe.
-    _write_cache(cache, cache_path)
-
-    skipped = len(buildable_todo) - len(instance_todo_p2)
-    if skipped:
         logger.info(
-            f"Phase 1 done: {skipped} instance(s) skipped (env image failed); "
-            f"{len(instance_todo_p2)} proceeding to instance-image build."
+            f"Phase 1: building {len(env_key_to_ids)} distinct env image(s) "
+            f"for {len(buildable_todo)} instance(s) using {max_workers} workers..."
         )
-
-    # ── Phase 2: build per-instance images ────────────────────────────────────
-    if instance_todo_p2:
-        logger.info(
-            f"Phase 2: building {len(instance_todo_p2)} instance image(s) "
-            f"using {max_workers} workers..."
-        )
-        # Env images are already built; build_instance_images will skip them.
-        successful, _ = build_instance_images(
+        _, env_failed = build_env_images(
             client=client,
-            dataset=instance_todo_p2,
+            dataset=buildable_todo,
             force_rebuild=force,
             max_workers=max_workers,
-            tag="latest",
+            instance_image_tag="latest",
             env_image_tag="latest",
         )
-        ok_ids = {s[0].instance_id for s in successful}
+        # build_env_images returns payload tuples; element 0 is the env image_name (key).
+        failed_env_keys = {f[0] if isinstance(f, tuple) else f for f in env_failed}
 
-        for inst in instance_todo_p2:
+        # Mark instances in failed-env groups immediately and remove from phase 2.
+        instance_todo_p2: list[dict] = []
+        for inst in buildable_todo:
             iid = inst["instance_id"]
-            if iid in ok_ids:
-                cache[iid] = {"buildable": True, "error": "", "spec_hash": spec_hashes[iid]}
+            env_key = spec_map[iid].env_image_key
+            if env_key in failed_env_keys:
+                cache[iid] = {"buildable": False, "error": f"env image failed: {env_key}", "spec_hash": spec_hashes[iid]}
             else:
-                reason = _read_build_log(spec_map[iid])
-                cache[iid] = {"buildable": False, "error": reason or "instance image build failed", "spec_hash": spec_hashes[iid]}
+                instance_todo_p2.append(inst)
 
-    _write_cache(cache, cache_path)
-    n_ok = sum(1 for v in cache.values() if v["buildable"])
-    logger.info(f"Build validation: {n_ok}/{len(cache)} buildable. Cache → {cache_path}")
-    return cache
+        # Flush after phase 1 — crash-safe.
+        _write_cache(cache, cache_path)
+
+        skipped = len(buildable_todo) - len(instance_todo_p2)
+        if skipped:
+            logger.info(
+                f"Phase 1 done: {skipped} instance(s) skipped (env image failed); "
+                f"{len(instance_todo_p2)} proceeding to instance-image build."
+            )
+
+        # ── Phase 2: build per-instance images ────────────────────────────────────
+        if instance_todo_p2:
+            logger.info(
+                f"Phase 2: building {len(instance_todo_p2)} instance image(s) "
+                f"using {max_workers} workers..."
+            )
+            # Env images are already built; build_instance_images will skip them.
+            successful, _ = build_instance_images(
+                client=client,
+                dataset=instance_todo_p2,
+                force_rebuild=force,
+                max_workers=max_workers,
+                tag="latest",
+                env_image_tag="latest",
+            )
+            ok_ids = {s[0].instance_id for s in successful}
+
+            for inst in instance_todo_p2:
+                iid = inst["instance_id"]
+                if iid in ok_ids:
+                    cache[iid] = {"buildable": True, "error": "", "spec_hash": spec_hashes[iid]}
+                else:
+                    reason = _read_build_log(spec_map[iid])
+                    cache[iid] = {"buildable": False, "error": reason or "instance image build failed", "spec_hash": spec_hashes[iid]}
+
+        _write_cache(cache, cache_path)
+        n_ok = sum(1 for v in cache.values() if v["buildable"])
+        logger.info(f"Build validation: {n_ok}/{len(cache)} buildable. Cache → {cache_path}")
+        return cache
+    finally:
+        client.close()
 
 
 def _write_cache(cache: dict, path: Path) -> None:

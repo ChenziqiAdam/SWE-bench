@@ -260,7 +260,8 @@ def _openmm_python_app_spec(test_file: str, test_filter: str) -> dict:
     """Run OpenMM Python app tests against the patched pure-Python app package."""
     return {
         "pre_install": [
-            "pip install --no-cache-dir openmm numpy scipy pytest",
+            "python -m pip install --no-cache-dir --upgrade pip setuptools wheel",
+            "python -m pip install --no-cache-dir openmm numpy scipy pytest",
         ],
         "build": [
             "OPENMM_SITE=$(python -c 'import openmm, os; print(os.path.dirname(openmm.__file__))') && "
@@ -304,7 +305,8 @@ def _openmm_python_unit_spec(test_filter: str) -> dict:
     """Run OpenMM Python unit tests against patched simtk.unit modules."""
     return {
         "pre_install": [
-            "pip install --no-cache-dir openmm numpy scipy pytest",
+            "python -m pip install --no-cache-dir --upgrade pip setuptools wheel",
+            "python -m pip install --no-cache-dir openmm numpy scipy pytest",
         ],
         "build": [
             "SIMTK_SITE=$(python -c 'import simtk, os; print(os.path.dirname(simtk.__file__))') && "
@@ -316,30 +318,35 @@ def _openmm_python_unit_spec(test_filter: str) -> dict:
     }
 
 
+_RDKIT_PRE_INSTALL = [
+    "apt-get update -q",
+    "apt-get install -y --no-install-recommends "
+    "cmake g++ make libboost-all-dev libeigen3-dev pkg-config libfreetype-dev",
+]
+
+_RDKIT_BASE_CMAKE_FLAGS = (
+    "-DCMAKE_BUILD_TYPE=Release "
+    "-DRDK_INSTALL_INTREE=ON "
+    "-DRDK_BUILD_CPP_TESTS=ON "
+    "-DRDK_BUILD_PYTHON_WRAPPERS=OFF "
+    "-DRDK_BUILD_INCHI_SUPPORT=OFF "
+    "-DRDK_BUILD_CAIRO_SUPPORT=OFF "
+    "-DRDK_BUILD_FREETYPE_SUPPORT=OFF "
+    "-DRDK_BUILD_COORDGEN_SUPPORT=OFF "
+    "-DRDK_BUILD_MAEPARSER_SUPPORT=OFF "
+    "-DRDK_BUILD_AVALON_SUPPORT=OFF "
+    "-DRDK_BUILD_YAEHMOP_SUPPORT=OFF "
+    "-DRDK_BUILD_THREADSAFE_SSS=ON "
+)
+
+
 def _rdkit_cpp_targets_spec(*targets: str, extra_cmake: str = "") -> dict:
     """Build RDKit C++ tests and run selected CTest targets."""
     return {
-        "pre_install": [
-            "apt-get update -q",
-            "apt-get install -y libeigen3-dev pkg-config libfreetype-dev",
-            "echo 'deb https://ppa.launchpadcontent.net/mhier/libboost-latest/ubuntu jammy main' > /etc/apt/sources.list.d/mhier-libboost-latest.list",
-            "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 31F54F3E108EAD31",
-            "apt-get update -q",
-            "apt-get install -y libboost1.83-all-dev",
-        ],
+        "pre_install": list(_RDKIT_PRE_INSTALL),
         "build": [
             "mkdir -p build",
-            (
-                "cmake -B build -S . "
-                "-DCMAKE_BUILD_TYPE=Release "
-                "-DRDK_INSTALL_INTREE=ON "
-                "-DRDK_BUILD_CPP_TESTS=ON "
-                "-DRDK_BUILD_PYTHON_WRAPPERS=OFF "
-                "-DRDK_BUILD_INCHI_SUPPORT=OFF "
-                "-DRDK_BUILD_CAIRO_SUPPORT=OFF "
-                "-DRDK_BUILD_THREADSAFE_SSS=ON "
-                f"{extra_cmake}"
-            ),
+            "cmake -B build -S . " + _RDKIT_BASE_CMAKE_FLAGS + extra_cmake,
             "cmake --build build --parallel $(nproc) --target " + " ".join(targets),
         ],
         "test_cmd": [
@@ -363,8 +370,12 @@ def _rdkit_cpp_ctest_regex_spec(test_regex: str) -> dict:
 
 def _rdkit_python_wrapper_spec(test_path: str) -> dict:
     """Build RDKit in-tree with Python wrappers and run a focused Python test."""
-    spec = _rdkit_cpp_targets_spec(extra_cmake="-DRDK_BUILD_PYTHON_WRAPPERS=ON ")
-    spec["pre_install"].append("apt-get install -y python3-dev python3-numpy")
+    spec = _rdkit_cpp_targets_spec()
+    spec["build"][1] = spec["build"][1].replace(
+        "-DRDK_BUILD_PYTHON_WRAPPERS=OFF ",
+        "-DRDK_BUILD_PYTHON_WRAPPERS=ON ",
+    )
+    spec["pre_install"].append("apt-get install -y --no-install-recommends python3-dev python3-numpy")
     spec["build"][-1] = "cmake --build build --parallel $(nproc)"
     spec["test_cmd"] = [
         f"RDBASE=$PWD PYTHONPATH=$PWD LD_LIBRARY_PATH=$PWD/lib:${{LD_LIBRARY_PATH:-}} "
@@ -406,7 +417,8 @@ SPECS_OPENMM = _OpenMMSpecs({
         # compiled OpenMM (native _openmm*.so + libs) here — heavy, patch-independent.
         "pre_install": [
             # scipy: the test loads an Amber NetCDF restart via scipy.io.netcdf_file.
-            "pip install --no-cache-dir openmm numpy scipy pytest",
+            "python -m pip install --no-cache-dir --upgrade pip setuptools wheel",
+            "python -m pip install --no-cache-dir openmm numpy scipy pytest",
         ],
         # build runs in eval.sh, AFTER the model patch is applied to /testbed. Overlay
         # the *patched* pure-Python openmm package onto the pip-installed copy so the
@@ -698,41 +710,11 @@ class _RDKitSpecs(dict):
 # → target: chiralityTestsCatch  (from rdkit_catch_test(chiralityTestsCatch ...))
 SPECS_RDKIT = _RDKitSpecs({
     "2059": _rdkit_cpp_targets_spec("testSmiles"),
-    "6646": _rdkit_cpp_targets_spec("testFMCS", "testFMCS_Unit"),
+    "6646": _rdkit_python_wrapper_spec("Code/GraphMol/FMCS/Wrap/testFMCS.py"),
     "8376": _rdkit_python_wrapper_spec(
         "Code/GraphMol/RascalMCES/Wrap/testRascalMCES.py"
     ),
-    "8668": {
-        # PR #8668 adds an atropisomer regression in
-        # Code/GraphMol/FileParsers/atropisomers_catch.cpp.
-        # Target name comes from rdkit_catch_test(atropisomersCatch ...).
-        "pre_install": [
-            "apt-get update -q",
-            "apt-get install -y libeigen3-dev pkg-config libfreetype-dev",
-            "echo 'deb https://ppa.launchpadcontent.net/mhier/libboost-latest/ubuntu jammy main' > /etc/apt/sources.list.d/mhier-libboost-latest.list",
-            "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 31F54F3E108EAD31",
-            "apt-get update -q",
-            "apt-get install -y libboost1.83-all-dev",
-        ],
-        "build": [
-            "mkdir -p build",
-            (
-                "cmake -B build -S . "
-                "-DCMAKE_BUILD_TYPE=Release "
-                "-DRDK_INSTALL_INTREE=ON "
-                "-DRDK_BUILD_CPP_TESTS=ON "
-                "-DRDK_BUILD_PYTHON_WRAPPERS=OFF "
-                "-DRDK_BUILD_INCHI_SUPPORT=OFF "
-                "-DRDK_BUILD_CAIRO_SUPPORT=OFF "
-                "-DRDK_BUILD_THREADSAFE_SSS=ON"
-            ),
-            "cmake --build build --parallel $(nproc) --target atropisomersCatch",
-        ],
-        "test_cmd": [
-            "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
-            "ctest --test-dir build -V -R atropisomersCatch"
-        ],
-    },
+    "8668": _rdkit_cpp_targets_spec("atropisomersCatch"),
     "8968": _rdkit_cpp_ctest_regex_spec(
         "testSmiles|smitest|Smi|MolOps|molops"
     ),
@@ -767,37 +749,9 @@ SPECS_RDKIT = _RDKitSpecs({
             "ctest --test-dir build -V -R chiralityTestsCatch"
         ],
     },
-    "9331": {
-        # PR #9331 adds a ChemDraw Catch2 regression in External/ChemDraw/test.cpp.
-        # Target name comes from rdkit_catch_test(chemdrawCatchTest ...).
-        "pre_install": [
-            "apt-get update -q",
-            "apt-get install -y libeigen3-dev pkg-config libfreetype-dev",
-            "echo 'deb https://ppa.launchpadcontent.net/mhier/libboost-latest/ubuntu jammy main' > /etc/apt/sources.list.d/mhier-libboost-latest.list",
-            "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 31F54F3E108EAD31",
-            "apt-get update -q",
-            "apt-get install -y libboost1.83-all-dev",
-        ],
-        "build": [
-            "mkdir -p build",
-            (
-                "cmake -B build -S . "
-                "-DCMAKE_BUILD_TYPE=Release "
-                "-DRDK_INSTALL_INTREE=ON "
-                "-DRDK_BUILD_CPP_TESTS=ON "
-                "-DRDK_BUILD_PYTHON_WRAPPERS=OFF "
-                "-DRDK_BUILD_INCHI_SUPPORT=OFF "
-                "-DRDK_BUILD_CAIRO_SUPPORT=OFF "
-                "-DRDK_BUILD_THREADSAFE_SSS=ON "
-                "-DRDK_BUILD_CHEMDRAW_SUPPORT=ON"
-            ),
-            "cmake --build build --parallel $(nproc) --target chemdrawCatchTest",
-        ],
-        "test_cmd": [
-            "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
-            "ctest --test-dir build -V -R chemdrawCatchTest"
-        ],
-    },
+    "9331": _rdkit_cpp_targets_spec(
+        "chemdrawCatchTest", extra_cmake="-DRDK_BUILD_CHEMDRAW_SUPPORT=ON "
+    ),
 })
 
 MAP_REPO_VERSION_TO_SPECS_C = {
