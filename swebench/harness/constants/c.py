@@ -316,6 +316,63 @@ def _openmm_python_unit_spec(test_filter: str) -> dict:
     }
 
 
+def _rdkit_cpp_targets_spec(*targets: str, extra_cmake: str = "") -> dict:
+    """Build RDKit C++ tests and run selected CTest targets."""
+    return {
+        "pre_install": [
+            "apt-get update -q",
+            "apt-get install -y libeigen3-dev pkg-config libfreetype-dev",
+            "echo 'deb https://ppa.launchpadcontent.net/mhier/libboost-latest/ubuntu jammy main' > /etc/apt/sources.list.d/mhier-libboost-latest.list",
+            "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 31F54F3E108EAD31",
+            "apt-get update -q",
+            "apt-get install -y libboost1.83-all-dev",
+        ],
+        "build": [
+            "mkdir -p build",
+            (
+                "cmake -B build -S . "
+                "-DCMAKE_BUILD_TYPE=Release "
+                "-DRDK_INSTALL_INTREE=ON "
+                "-DRDK_BUILD_CPP_TESTS=ON "
+                "-DRDK_BUILD_PYTHON_WRAPPERS=OFF "
+                "-DRDK_BUILD_INCHI_SUPPORT=OFF "
+                "-DRDK_BUILD_CAIRO_SUPPORT=OFF "
+                "-DRDK_BUILD_THREADSAFE_SSS=ON "
+                f"{extra_cmake}"
+            ),
+            "cmake --build build --parallel $(nproc) --target " + " ".join(targets),
+        ],
+        "test_cmd": [
+            f"RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${{LD_LIBRARY_PATH:-}} "
+            f"ctest --test-dir build -V -R {target}"
+            for target in targets
+        ],
+    }
+
+
+def _rdkit_cpp_ctest_regex_spec(test_regex: str) -> dict:
+    """Build RDKit C++ tests broadly, then run a focused CTest regex."""
+    spec = _rdkit_cpp_targets_spec(extra_cmake="")
+    spec["build"][-1] = "cmake --build build --parallel $(nproc)"
+    spec["test_cmd"] = [
+        f"RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${{LD_LIBRARY_PATH:-}} "
+        f"ctest --test-dir build -V -R '{test_regex}'"
+    ]
+    return spec
+
+
+def _rdkit_python_wrapper_spec(test_path: str) -> dict:
+    """Build RDKit in-tree with Python wrappers and run a focused Python test."""
+    spec = _rdkit_cpp_targets_spec(extra_cmake="-DRDK_BUILD_PYTHON_WRAPPERS=ON ")
+    spec["pre_install"].append("apt-get install -y python3-dev python3-numpy")
+    spec["build"][-1] = "cmake --build build --parallel $(nproc)"
+    spec["test_cmd"] = [
+        f"RDBASE=$PWD PYTHONPATH=$PWD LD_LIBRARY_PATH=$PWD/lib:${{LD_LIBRARY_PATH:-}} "
+        f"python3 {test_path}"
+    ]
+    return spec
+
+
 class _OpenMMSpecs(dict):
     """Return a non-evaluable placeholder for uncurated numeric OpenMM PR specs."""
 
@@ -461,12 +518,10 @@ SPECS_OPENMM = _OpenMMSpecs({
             "4090",
             "4119",
             "4161",
-            "4188",
             "4246",
             "4249",
             "4364",
             "4440",
-            "4523",
             "4748",
             "4760",
             "4777",
@@ -478,7 +533,6 @@ SPECS_OPENMM = _OpenMMSpecs({
             "5198",
             "5219",
             "5242",
-            "5251",
             "5302",
             "1528",
         ]
@@ -507,6 +561,7 @@ SPECS_OPENMM = _OpenMMSpecs({
             ("2511", "TestForceField.py", "test_ImpropersOrdering_smirnoff"),
             ("2738", "TestForceField.py", "test_CharmmPolar"),
             ("3214", "TestForceField.py", "test_ImplicitSolventForces"),
+            ("4188", "TestGromacsTopFile.py", "test_Vsite3Func4"),
             (
                 "3303",
                 "TestForceField.py TestModeller.py",
@@ -526,9 +581,6 @@ SPECS_OPENMM = _OpenMMSpecs({
             ("5236", "TestForceField.py", "test_TemplateConstraintsMultipleMols"),
         ]
     },
-    "2802": _openmm_python_unit_spec(
-        "testCustomGBForce or testCustomNonbondedForce"
-    ),
     # ── Exact C++ CPU/Reference/serialization tests ─────────────────────────
     # These avoid CUDA/OpenCL/HIP and run the C++ test executables touched by
     # the PR's test patch. Plugin-heavy/GPU-only cases stay as placeholders.
@@ -545,10 +597,21 @@ SPECS_OPENMM = _OpenMMSpecs({
                 "TestSerializeIntegrator",
             ),
             "2570": ("TestReferenceNonbondedForce", "TestSerializeNonbondedForce"),
+            "2802": (
+                "TestReferenceAmoebaAngleForce",
+                "TestReferenceAmoebaInPlaneAngleForce",
+                "TestReferenceAmoebaOutOfPlaneBendForce",
+                "TestReferenceAmoebaPiTorsionForce",
+                "TestReferenceAmoebaStretchBendForce",
+                "TestSerializeAmoebaMultipoleForce",
+                "TestReferenceEwald",
+            ),
             "2806": ("TestCpuNonbondedForce",),
             "2818": ("TestReferenceVerletIntegrator",),
+            "4523": ("TestReferenceDrudeForce",),
             "4740": ("TestReferenceCheckpoints",),
             "4907": ("TestReferenceEwald",),
+            "5251": ("TestReferenceMonteCarloFlexibleBarostat",),
         }.items()
     },
     # ── Full C++ Reference-platform builds ────────────────────────────────────
@@ -634,6 +697,11 @@ class _RDKitSpecs(dict):
 # PR 8957 touches Code/GraphMol/Chirality.cpp + catch_chirality.cpp
 # → target: chiralityTestsCatch  (from rdkit_catch_test(chiralityTestsCatch ...))
 SPECS_RDKIT = _RDKitSpecs({
+    "2059": _rdkit_cpp_targets_spec("testSmiles"),
+    "6646": _rdkit_cpp_targets_spec("testFMCS", "testFMCS_Unit"),
+    "8376": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/RascalMCES/Wrap/testRascalMCES.py"
+    ),
     "8668": {
         # PR #8668 adds an atropisomer regression in
         # Code/GraphMol/FileParsers/atropisomers_catch.cpp.
@@ -665,38 +733,9 @@ SPECS_RDKIT = _RDKitSpecs({
             "ctest --test-dir build -V -R atropisomersCatch"
         ],
     },
-    "8968": {
-        # PR #8968 fixes stereo bond canonicalization and adds/updates Catch2
-        # regressions in catch_chirality.cpp and catch_canon.cpp.
-        "pre_install": [
-            "apt-get update -q",
-            "apt-get install -y libeigen3-dev pkg-config libfreetype-dev",
-            "echo 'deb https://ppa.launchpadcontent.net/mhier/libboost-latest/ubuntu jammy main' > /etc/apt/sources.list.d/mhier-libboost-latest.list",
-            "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 31F54F3E108EAD31",
-            "apt-get update -q",
-            "apt-get install -y libboost1.83-all-dev",
-        ],
-        "build": [
-            "mkdir -p build",
-            (
-                "cmake -B build -S . "
-                "-DCMAKE_BUILD_TYPE=Release "
-                "-DRDK_INSTALL_INTREE=ON "
-                "-DRDK_BUILD_CPP_TESTS=ON "
-                "-DRDK_BUILD_PYTHON_WRAPPERS=OFF "
-                "-DRDK_BUILD_INCHI_SUPPORT=OFF "
-                "-DRDK_BUILD_CAIRO_SUPPORT=OFF "
-                "-DRDK_BUILD_THREADSAFE_SSS=ON"
-            ),
-            "cmake --build build --parallel $(nproc) --target chiralityTestsCatch canonTestsCatch",
-        ],
-        "test_cmd": [
-            "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
-            "ctest --test-dir build -V -R chiralityTestsCatch",
-            "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
-            "ctest --test-dir build -V -R canonTestsCatch",
-        ],
-    },
+    "8968": _rdkit_cpp_ctest_regex_spec(
+        "testSmiles|smitest|Smi|MolOps|molops"
+    ),
     "8957": {
         # Ubuntu 22.04 apt ships Boost 1.74; RDKit requires >= 1.81.
         # Refresh apt cache, install software-properties-common, then add Boost PPA.

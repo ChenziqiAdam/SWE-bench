@@ -130,6 +130,9 @@ def parse_log_catch2(log: str, test_spec: TestSpec) -> dict[str, str]:
     per_test_re = re.compile(r"^\s*(PASSED|FAILED)\s*-\s*(.+)$")
     # v3 style: "PASSED  <TestName>" or "FAILED  <TestName>"
     simple_re = re.compile(r"^(PASSED|FAILED)\s{2,}(.+)$")
+    ctest_re = re.compile(
+        r"^\s*\d+/\d+\s+Test\s+#\d+:\s+(.+?)\s+\.+\s*(?:\*+)?(Passed|Failed)\b"
+    )
 
     for line in log.split("\n"):
         line = line.rstrip()
@@ -150,6 +153,27 @@ def parse_log_catch2(log: str, test_spec: TestSpec) -> dict[str, str]:
                 test_status_map[name] = (
                     TestStatus.PASSED.value if status_str == "PASSED" else TestStatus.FAILED.value
                 )
+                continue
+            m = ctest_re.match(line)
+            if m:
+                name, status_str = m.group(1).strip(), m.group(2)
+                test_status_map[name] = (
+                    TestStatus.PASSED.value if status_str == "Passed" else TestStatus.FAILED.value
+                )
+    if test_status_map:
+        return test_status_map
+
+    # Some RDKit wrapper tests are Python unittest scripts. They print only
+    # "OK" or "FAILED (...)" summaries, so use the xtrace command as the key.
+    unittest_name = None
+    for line in log.splitlines():
+        match = re.match(r"^\+\s+(?:\S+=\S+\s+)*python3?\s+(\S+\.py)\s*$", line.strip())
+        if match:
+            unittest_name = match.group(1)
+        elif unittest_name and line.strip() == "OK":
+            test_status_map[unittest_name] = TestStatus.PASSED.value
+        elif unittest_name and line.strip().startswith("FAILED"):
+            test_status_map[unittest_name] = TestStatus.FAILED.value
     return test_status_map
 
 
@@ -178,16 +202,16 @@ def parse_log_openmm_binary_done(log: str, test_spec: TestSpec) -> dict[str, str
     `+ ./build/TestReferenceMonteCarloMembraneBarostat`; use the executable name
     as the synthetic test key so mining/eval can compare the same key.
     """
-    if not any(line.strip() == "Done" for line in log.splitlines()):
-        return {}
-
-    test_name = "OpenMMBinary"
+    test_status_map = {}
+    test_name = None
     for line in log.splitlines():
         match = re.match(r"^\+\s+(?:\S+=\S+\s+)*(\./build/\S+)\s*$", line.strip())
         if match:
             test_name = match.group(1).split("/")[-1]
+        elif line.strip() == "Done":
+            test_status_map[test_name or "OpenMMBinary"] = TestStatus.PASSED.value
 
-    return {test_name: TestStatus.PASSED.value}
+    return test_status_map
 
 
 def parse_log_pytest_nodeid(log: str, test_spec: TestSpec) -> dict[str, str]:

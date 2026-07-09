@@ -101,6 +101,64 @@ def _capture_patch(repo_dir: Path) -> str:
     return result.stdout or ""
 
 
+def _format_hunk_range(start: int, count: int) -> str:
+    return str(start) if count == 1 else f"{start},{count}"
+
+
+def _capture_structured_patch_from_stream(stdout: str, repo_dir: Path) -> str:
+    """Recover Claude Code Edit-tool patches from stream-json output."""
+    hunks_by_path: dict[str, list[str]] = {}
+    repo_dir = repo_dir.resolve()
+
+    for line in (stdout or "").splitlines():
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+
+        result = obj.get("tool_use_result")
+        if not isinstance(result, dict):
+            continue
+        file_path = result.get("filePath")
+        structured = result.get("structuredPatch")
+        if not isinstance(file_path, str) or not isinstance(structured, list):
+            continue
+
+        try:
+            rel_path = Path(file_path).resolve().relative_to(repo_dir).as_posix()
+        except (OSError, ValueError):
+            continue
+
+        new_hunks = []
+        for hunk in structured:
+            if not isinstance(hunk, dict):
+                continue
+            lines = hunk.get("lines")
+            if not isinstance(lines, list):
+                continue
+            old_start = int(hunk.get("oldStart", 0))
+            old_lines = int(hunk.get("oldLines", 0))
+            new_start = int(hunk.get("newStart", 0))
+            new_lines = int(hunk.get("newLines", 0))
+            new_hunks.append(
+                f"@@ -{_format_hunk_range(old_start, old_lines)} "
+                f"+{_format_hunk_range(new_start, new_lines)} @@\n"
+            )
+            new_hunks.extend(line if line.endswith("\n") else line + "\n" for line in lines)
+        if new_hunks:
+            hunks_by_path.setdefault(rel_path, []).extend(new_hunks)
+
+    patch_parts = []
+    for rel_path, hunks in hunks_by_path.items():
+        patch_parts.append(
+            f"diff --git a/{rel_path} b/{rel_path}\n"
+            f"--- a/{rel_path}\n"
+            f"+++ b/{rel_path}\n"
+            + "".join(hunks)
+        )
+    return "\n".join(patch_parts)
+
+
 def _extract_claude_error(stdout: str, stderr: str) -> str:
     """Return a concise Claude Code failure reason from stream-json output."""
     if stderr.strip():
@@ -291,14 +349,25 @@ def run_claude_code_inference(
             if repo_dir:
                 try:
                     patch = _repair_patch(_clean_patch(_capture_patch(repo_dir)))
+                    if not patch:
+                        patch = _repair_patch(
+                            _clean_patch(_capture_structured_patch_from_stream(stdout, repo_dir))
+                        )
+                        if patch:
+                            logger.info(
+                                f"[{instance_id}] recovered timeout patch from Claude Code stream-json"
+                            )
                 except Exception as patch_error:
                     logger.warning(f"[{instance_id}] failed to capture timeout patch: {patch_error}")
             try:
                 (logs_dir / f"{instance_id}.jsonl").write_text(stdout or "")
                 (logs_dir / f"{instance_id}.log").write_text(
                     f"=== TIMEOUT after {timeout}s ===\n"
+                    f"=== recovered patch bytes: {len(patch)} ===\n"
                     "=== STDERR ===\n"
                     + (stderr or "")
+                    + "\n=== STDOUT tail ===\n"
+                    + (stdout or "")[-4000:]
                 )
             except Exception:
                 pass

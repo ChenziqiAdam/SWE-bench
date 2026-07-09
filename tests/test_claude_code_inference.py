@@ -355,6 +355,64 @@ def test_claude_code_inference_captures_patch_on_timeout(tmp_path, monkeypatch):
     assert "value = 5" in rows[0]["model_patch"]
 
 
+def test_claude_code_inference_recovers_structured_patch_on_timeout(tmp_path, monkeypatch):
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    claude = fake_bin / "claude"
+    repo = _make_git_repo(tmp_path / "repo")
+    file_path = repo / "module.py"
+    claude.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json, time\n"
+        f"file_path = {str(file_path)!r}\n"
+        "print(json.dumps({\n"
+        "  'type': 'user',\n"
+        "  'tool_use_result': {\n"
+        "    'filePath': file_path,\n"
+        "    'structuredPatch': [{\n"
+        "      'oldStart': 1,\n"
+        "      'oldLines': 1,\n"
+        "      'newStart': 1,\n"
+        "      'newLines': 1,\n"
+        "      'lines': ['-value = 1', '+value = 6'],\n"
+        "    }],\n"
+        "  },\n"
+        "}), flush=True)\n"
+        "time.sleep(10)\n"
+    )
+    claude.chmod(0o755)
+    monkeypatch.setenv("PATH", str(fake_bin) + os.pathsep + os.environ.get("PATH", ""))
+
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.claude_code_inference._clone_repo_at_commit",
+        lambda repo_name, base_commit, github_token, tmp_root=None: repo,
+    )
+
+    out = tmp_path / "predictions.jsonl"
+    run_claude_code_inference(
+        instances=[
+            {
+                "instance_id": "demo__repo-timeout-stream",
+                "repo": "demo/repo",
+                "base_commit": "HEAD",
+                "problem_statement": "Timeout after structured patch.",
+            }
+        ],
+        output_file=str(out),
+        model_name="provider-claude",
+        max_workers=1,
+        timeout=2,
+    )
+
+    rows = [json.loads(line) for line in out.read_text().splitlines()]
+    assert rows[0]["error"] == "timeout"
+    assert rows[0]["model_patch"].startswith("diff --git a/module.py b/module.py")
+    assert "+value = 6" in rows[0]["model_patch"]
+    assert "recovered patch bytes" in (
+        tmp_path / "claude_code_logs" / "demo__repo-timeout-stream.log"
+    ).read_text()
+
+
 def test_selected_predictions_do_not_treat_legacy_rows_as_claude_code():
     rows = [
         {"instance_id": "i1", "model_name_or_path": "claude", "model_patch": "legacy"},
