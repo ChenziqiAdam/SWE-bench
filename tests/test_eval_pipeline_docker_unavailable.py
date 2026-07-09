@@ -1,0 +1,45 @@
+import json
+
+import docker
+
+from swebench.eval_pipeline import mine_tests, validate_base
+
+
+def test_validate_buildable_caches_docker_unavailable(monkeypatch, tmp_path):
+    inst = {"instance_id": "repo__pkg-1", "repo": "repo/pkg", "version": "v1"}
+
+    monkeypatch.setattr(validate_base, "_spec_hash", lambda _: "hash1")
+    monkeypatch.setattr(validate_base, "MAP_REPO_VERSION_TO_SPECS", {"repo/pkg": {"v1": {}}})
+    monkeypatch.setattr(
+        validate_base.docker,
+        "from_env",
+        lambda: (_ for _ in ()).throw(docker.errors.DockerException("connection refused")),
+    )
+
+    cache_path = tmp_path / "build_validation.json"
+    result = validate_base.validate_buildable([inst], cache_path=cache_path)
+
+    assert result["repo__pkg-1"]["buildable"] is False
+    assert "Docker daemon unavailable" in result["repo__pkg-1"]["error"]
+    assert json.loads(cache_path.read_text()) == result
+
+
+def test_mine_fail_to_pass_caches_docker_unavailable(monkeypatch, tmp_path):
+    inst = {
+        "instance_id": "repo__pkg-1",
+        "repo": "repo/pkg",
+        "version": "v1",
+        "test_patch": "diff --git a/test.py b/test.py\n",
+    }
+    monkeypatch.setattr(
+        mine_tests.docker,
+        "from_env",
+        lambda: (_ for _ in ()).throw(docker.errors.DockerException("connection refused")),
+    )
+
+    cache_path = tmp_path / "test_mining.json"
+    result = mine_tests.mine_fail_to_pass([inst], cache_path=cache_path)
+
+    assert result["repo__pkg-1"]["ok"] is False
+    assert "Docker daemon unavailable" in result["repo__pkg-1"]["error"]
+    assert json.loads(cache_path.read_text()) == result

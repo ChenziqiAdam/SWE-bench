@@ -263,6 +263,57 @@ def test_claude_code_inference_extracts_stream_json_api_error(tmp_path, monkeypa
     )
 
 
+def test_claude_code_inference_ignores_low_signal_stream_json_on_exit(tmp_path, monkeypatch):
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    claude = fake_bin / "claude"
+    claude.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json\n"
+        "print(json.dumps({'type': 'assistant', 'message': {'content': ["
+        "{'type': 'tool_use', 'name': 'Read', 'input': {'file_path': 'module.py'}}"
+        "]}}))\n"
+        "print(json.dumps({'type': 'user', 'message': {'content': ["
+        "{'type': 'tool_result', 'content': 'value = 1\\\\n' * 100}"
+        "]}}))\n"
+        "print(json.dumps({'type': 'system', 'subtype': 'thinking_tokens', "
+        "'estimated_tokens': 328, 'uuid': 'opaque'}))\n"
+        "raise SystemExit(129)\n"
+    )
+    claude.chmod(0o755)
+    monkeypatch.setenv("PATH", str(fake_bin) + os.pathsep + os.environ.get("PATH", ""))
+
+    repo = _make_git_repo(tmp_path / "repo")
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.claude_code_inference._clone_repo_at_commit",
+        lambda repo_name, base_commit, github_token, tmp_root=None: repo,
+    )
+
+    out = tmp_path / "predictions.jsonl"
+    run_claude_code_inference(
+        instances=[
+            {
+                "instance_id": "demo__repo-interrupted",
+                "repo": "demo/repo",
+                "base_commit": "HEAD",
+                "problem_statement": "Exit after tool use.",
+            }
+        ],
+        output_file=str(out),
+        model_name="provider-claude",
+        max_workers=1,
+        timeout=30,
+    )
+
+    rows = [json.loads(line) for line in out.read_text().splitlines()]
+    assert rows[0]["model_patch"] == ""
+    assert rows[0]["error"] == (
+        "claude exited with code 129: "
+        "no actionable Claude Code error detail in stream-json output; "
+        "last event: type=system, subtype=thinking_tokens"
+    )
+
+
 def test_claude_code_inference_captures_patch_on_timeout(tmp_path, monkeypatch):
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()

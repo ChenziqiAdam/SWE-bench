@@ -107,14 +107,25 @@ def _extract_claude_error(stdout: str, stderr: str) -> str:
         return stderr[-500:]
 
     fallback = stdout[-500:] if stdout else ""
+    saw_json = False
+    last_event = ""
     for line in reversed((stdout or "").splitlines()):
         try:
             obj = json.loads(line)
         except json.JSONDecodeError:
             text = line.strip()
-            if text:
+            if text and not saw_json:
                 return text[-500:]
             continue
+
+        saw_json = True
+        event_type = obj.get("type")
+        event_subtype = obj.get("subtype")
+        if not last_event:
+            last_event = (
+                f"type={event_type or 'unknown'}"
+                + (f", subtype={event_subtype}" if event_subtype else "")
+            )
 
         result = obj.get("result")
         if isinstance(result, str) and result.strip():
@@ -127,7 +138,11 @@ def _extract_claude_error(stdout: str, stderr: str) -> str:
                 texts = [
                     item.get("text", "").strip()
                     for item in content
-                    if isinstance(item, dict) and isinstance(item.get("text"), str)
+                    if (
+                        isinstance(item, dict)
+                        and item.get("type") == "text"
+                        and isinstance(item.get("text"), str)
+                    )
                 ]
                 text = "\n".join(t for t in texts if t)
                 if text:
@@ -136,6 +151,10 @@ def _extract_claude_error(stdout: str, stderr: str) -> str:
         error = obj.get("error")
         if isinstance(error, str) and error.strip() and error != "unknown":
             return error.strip()[-500:]
+
+    if saw_json:
+        suffix = f"; last event: {last_event}" if last_event else ""
+        return f"no actionable Claude Code error detail in stream-json output{suffix}"
 
     return fallback or "no stderr/stdout"
 
