@@ -334,6 +334,20 @@ _RDKIT_BOOST_183_PRE_INSTALL = [
     "cmake g++ make libboost1.83-all-dev libeigen3-dev pkg-config libfreetype-dev",
 ]
 
+_RDKIT_LEGACY_BOOST_ENDIAN_SHIM = (
+    "mkdir -p /usr/include/boost/detail && "
+    "printf '#pragma once\\n#include <boost/predef/other/endian.h>\\n"
+    "#if BOOST_ENDIAN_BIG_BYTE\\n#define BOOST_BIG_ENDIAN\\n"
+    "#elif BOOST_ENDIAN_LITTLE_BYTE\\n#define BOOST_LITTLE_ENDIAN\\n#endif\\n' "
+    "> /usr/include/boost/detail/endian.hpp"
+)
+
+_RDKIT_CHEMDRAW_INCLUDE_COMPAT = (
+    "if [ -d External/ChemDraw/chemdraw/chemdraw ] "
+    "&& [ ! -e External/ChemDraw/chemdraw/ChemDraw ]; then "
+    "ln -s chemdraw External/ChemDraw/chemdraw/ChemDraw; fi"
+)
+
 _RDKIT_BASE_CMAKE_FLAGS = (
     "-DCMAKE_BUILD_TYPE=Release "
     "-DRDK_INSTALL_INTREE=ON "
@@ -342,6 +356,7 @@ _RDKIT_BASE_CMAKE_FLAGS = (
     "-DRDK_BUILD_INCHI_SUPPORT=OFF "
     "-DRDK_BUILD_CAIRO_SUPPORT=OFF "
     "-DRDK_BUILD_FREETYPE_SUPPORT=OFF "
+    "-DRDK_BUILD_CHEMDRAW_SUPPORT=OFF "
     "-DRDK_BUILD_COORDGEN_SUPPORT=OFF "
     "-DRDK_BUILD_MAEPARSER_SUPPORT=OFF "
     "-DRDK_BUILD_AVALON_SUPPORT=OFF "
@@ -351,16 +366,26 @@ _RDKIT_BASE_CMAKE_FLAGS = (
 
 
 def _rdkit_cpp_targets_spec(
-    *targets: str, extra_cmake: str = "", new_boost: bool = False
+    *targets: str,
+    extra_cmake: str = "",
+    new_boost: bool = False,
+    legacy_boost_endian: bool = False,
+    chemdraw_include_compat: bool = False,
 ) -> dict:
     """Build RDKit C++ tests and run selected CTest targets."""
+    pre_install = list(_RDKIT_BOOST_183_PRE_INSTALL if new_boost else _RDKIT_PRE_INSTALL)
+    if legacy_boost_endian:
+        pre_install.append(_RDKIT_LEGACY_BOOST_ENDIAN_SHIM)
+    build = [
+        "mkdir -p build",
+        "cmake -B build -S . " + _RDKIT_BASE_CMAKE_FLAGS + extra_cmake,
+    ]
+    if chemdraw_include_compat:
+        build.append(_RDKIT_CHEMDRAW_INCLUDE_COMPAT)
+    build.append("cmake --build build --parallel $(nproc) --target " + " ".join(targets))
     return {
-        "pre_install": list(_RDKIT_BOOST_183_PRE_INSTALL if new_boost else _RDKIT_PRE_INSTALL),
-        "build": [
-            "mkdir -p build",
-            "cmake -B build -S . " + _RDKIT_BASE_CMAKE_FLAGS + extra_cmake,
-            "cmake --build build --parallel $(nproc) --target " + " ".join(targets),
-        ],
+        "pre_install": pre_install,
+        "build": build,
         "test_cmd": [
             f"RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${{LD_LIBRARY_PATH:-}} "
             f"ctest --test-dir build -V -R {target}"
@@ -721,7 +746,7 @@ class _RDKitSpecs(dict):
 # PR 8957 touches Code/GraphMol/Chirality.cpp + catch_chirality.cpp
 # → target: chiralityTestsCatch  (from rdkit_catch_test(chiralityTestsCatch ...))
 SPECS_RDKIT = _RDKitSpecs({
-    "2059": _rdkit_cpp_targets_spec("smiTest1"),
+    "2059": _rdkit_cpp_targets_spec("smiTest1", legacy_boost_endian=True),
     "6646": _rdkit_python_wrapper_spec("Code/GraphMol/FMCS/Wrap/testFMCS.py"),
     "8376": _rdkit_python_wrapper_spec(
         "Code/GraphMol/RascalMCES/Wrap/testRascalMCES.py"
@@ -765,6 +790,7 @@ SPECS_RDKIT = _RDKitSpecs({
         "chemdrawCatchTest",
         extra_cmake="-DRDK_BUILD_CHEMDRAW_SUPPORT=ON ",
         new_boost=True,
+        chemdraw_include_compat=True,
     ),
 })
 

@@ -22,6 +22,7 @@ def test_rdkit_specs_use_apt_boost_and_disable_fragile_downloads():
         assert "apt-key" not in pre_install
         assert "-DRDK_BUILD_COORDGEN_SUPPORT=OFF" in cmake
         assert "-DRDK_BUILD_MAEPARSER_SUPPORT=OFF" in cmake
+        assert "-DRDK_BUILD_CHEMDRAW_SUPPORT=OFF" in cmake
 
 
 def test_newer_rdkit_specs_install_required_new_boost():
@@ -36,14 +37,36 @@ def test_newer_rdkit_specs_install_required_new_boost():
         assert "-DRDK_BUILD_MAEPARSER_SUPPORT=OFF" in cmake
 
 
+def test_rdkit_8968_disables_unneeded_chemdraw_support():
+    spec = SPECS_RDKIT["8968"]
+
+    assert "-DRDK_BUILD_CHEMDRAW_SUPPORT=OFF" in spec["build"][1]
+    assert "ChemDraw" not in "\n".join(spec["build"][2:])
+
+
 def test_rdkit_2059_uses_existing_smilesparse_target():
     spec = SPECS_RDKIT["2059"]
+    pre_install = "\n".join(spec["pre_install"])
 
+    assert "boost/detail/endian.hpp" in pre_install
     assert spec["build"][-1].endswith("--target smiTest1")
     assert spec["test_cmd"] == [
         "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
         "ctest --test-dir build -V -R smiTest1"
     ]
+
+
+def test_rdkit_9331_enables_chemdraw_with_include_compatibility():
+    spec = SPECS_RDKIT["9331"]
+
+    assert spec["build"][1].endswith(
+        "-DRDK_BUILD_CHEMDRAW_SUPPORT=OFF -DRDK_BUILD_COORDGEN_SUPPORT=OFF "
+        "-DRDK_BUILD_MAEPARSER_SUPPORT=OFF -DRDK_BUILD_AVALON_SUPPORT=OFF "
+        "-DRDK_BUILD_YAEHMOP_SUPPORT=OFF -DRDK_BUILD_THREADSAFE_SSS=ON "
+        "-DRDK_BUILD_CHEMDRAW_SUPPORT=ON "
+    )
+    assert "External/ChemDraw/chemdraw/ChemDraw" in spec["build"][2]
+    assert spec["build"][-1].endswith("--target chemdrawCatchTest")
 
 
 def test_rdkit_python_wrapper_specs_build_wrappers_once():
