@@ -12,7 +12,7 @@ def test_openmm_python_specs_install_with_test_interpreter():
 
 
 def test_rdkit_specs_use_apt_boost_and_disable_fragile_downloads():
-    for pr in ("2059", "6646", "8376", "8668", "8968", "9331"):
+    for pr in ("2059", "6646", "8376"):
         spec = SPECS_RDKIT[pr]
         pre_install = "\n".join(spec["pre_install"])
         cmake = spec["build"][1]
@@ -22,6 +22,28 @@ def test_rdkit_specs_use_apt_boost_and_disable_fragile_downloads():
         assert "apt-key" not in pre_install
         assert "-DRDK_BUILD_COORDGEN_SUPPORT=OFF" in cmake
         assert "-DRDK_BUILD_MAEPARSER_SUPPORT=OFF" in cmake
+
+
+def test_newer_rdkit_specs_install_required_new_boost():
+    for pr in ("8668", "8968", "9331"):
+        spec = SPECS_RDKIT[pr]
+        pre_install = "\n".join(spec["pre_install"])
+        cmake = spec["build"][1]
+
+        assert "libboost1.83-all-dev" in pre_install
+        assert "launchpadcontent.net/mhier/libboost-latest" in pre_install
+        assert "-DRDK_BUILD_COORDGEN_SUPPORT=OFF" in cmake
+        assert "-DRDK_BUILD_MAEPARSER_SUPPORT=OFF" in cmake
+
+
+def test_rdkit_2059_uses_existing_smilesparse_target():
+    spec = SPECS_RDKIT["2059"]
+
+    assert spec["build"][-1].endswith("--target smiTest1")
+    assert spec["test_cmd"] == [
+        "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
+        "ctest --test-dir build -V -R smiTest1"
+    ]
 
 
 def test_rdkit_python_wrapper_specs_build_wrappers_once():

@@ -324,6 +324,16 @@ _RDKIT_PRE_INSTALL = [
     "cmake g++ make libboost-all-dev libeigen3-dev pkg-config libfreetype-dev",
 ]
 
+_RDKIT_BOOST_183_PRE_INSTALL = [
+    "apt-get update -q",
+    "apt-get install -y --no-install-recommends ca-certificates gnupg",
+    "echo 'deb https://ppa.launchpadcontent.net/mhier/libboost-latest/ubuntu jammy main' > /etc/apt/sources.list.d/mhier-libboost-latest.list",
+    "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 31F54F3E108EAD31",
+    "apt-get update -q",
+    "apt-get install -y --no-install-recommends "
+    "cmake g++ make libboost1.83-all-dev libeigen3-dev pkg-config libfreetype-dev",
+]
+
 _RDKIT_BASE_CMAKE_FLAGS = (
     "-DCMAKE_BUILD_TYPE=Release "
     "-DRDK_INSTALL_INTREE=ON "
@@ -340,10 +350,12 @@ _RDKIT_BASE_CMAKE_FLAGS = (
 )
 
 
-def _rdkit_cpp_targets_spec(*targets: str, extra_cmake: str = "") -> dict:
+def _rdkit_cpp_targets_spec(
+    *targets: str, extra_cmake: str = "", new_boost: bool = False
+) -> dict:
     """Build RDKit C++ tests and run selected CTest targets."""
     return {
-        "pre_install": list(_RDKIT_PRE_INSTALL),
+        "pre_install": list(_RDKIT_BOOST_183_PRE_INSTALL if new_boost else _RDKIT_PRE_INSTALL),
         "build": [
             "mkdir -p build",
             "cmake -B build -S . " + _RDKIT_BASE_CMAKE_FLAGS + extra_cmake,
@@ -357,9 +369,9 @@ def _rdkit_cpp_targets_spec(*targets: str, extra_cmake: str = "") -> dict:
     }
 
 
-def _rdkit_cpp_ctest_regex_spec(test_regex: str) -> dict:
+def _rdkit_cpp_ctest_regex_spec(test_regex: str, new_boost: bool = False) -> dict:
     """Build RDKit C++ tests broadly, then run a focused CTest regex."""
-    spec = _rdkit_cpp_targets_spec(extra_cmake="")
+    spec = _rdkit_cpp_targets_spec(extra_cmake="", new_boost=new_boost)
     spec["build"][-1] = "cmake --build build --parallel $(nproc)"
     spec["test_cmd"] = [
         f"RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${{LD_LIBRARY_PATH:-}} "
@@ -709,14 +721,14 @@ class _RDKitSpecs(dict):
 # PR 8957 touches Code/GraphMol/Chirality.cpp + catch_chirality.cpp
 # → target: chiralityTestsCatch  (from rdkit_catch_test(chiralityTestsCatch ...))
 SPECS_RDKIT = _RDKitSpecs({
-    "2059": _rdkit_cpp_targets_spec("testSmiles"),
+    "2059": _rdkit_cpp_targets_spec("smiTest1"),
     "6646": _rdkit_python_wrapper_spec("Code/GraphMol/FMCS/Wrap/testFMCS.py"),
     "8376": _rdkit_python_wrapper_spec(
         "Code/GraphMol/RascalMCES/Wrap/testRascalMCES.py"
     ),
-    "8668": _rdkit_cpp_targets_spec("atropisomersCatch"),
+    "8668": _rdkit_cpp_targets_spec("atropisomersCatch", new_boost=True),
     "8968": _rdkit_cpp_ctest_regex_spec(
-        "testSmiles|smitest|Smi|MolOps|molops"
+        "smiTest|Smi|MolOps|molops", new_boost=True
     ),
     "8957": {
         # Ubuntu 22.04 apt ships Boost 1.74; RDKit requires >= 1.81.
@@ -750,7 +762,9 @@ SPECS_RDKIT = _RDKitSpecs({
         ],
     },
     "9331": _rdkit_cpp_targets_spec(
-        "chemdrawCatchTest", extra_cmake="-DRDK_BUILD_CHEMDRAW_SUPPORT=ON "
+        "chemdrawCatchTest",
+        extra_cmake="-DRDK_BUILD_CHEMDRAW_SUPPORT=ON ",
+        new_boost=True,
     ),
 })
 
