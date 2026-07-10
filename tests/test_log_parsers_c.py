@@ -61,3 +61,16 @@ Done
         "TestReferenceAmoebaAngleForce": TestStatus.PASSED.value,
         "TestReferenceEwald": TestStatus.PASSED.value,
     }
+
+
+def test_parse_log_openmm_binary_done_reads_assertion_failure():
+    log = """
++ ./build/TestReferenceNonbondedForce
+ ./build/TestReferenceNonbondedForce
+ exception: Assertion failure at TestNonbondedForce.h:856.  Expected 1, found 2
+ : '>>>>> End Test Output'
+"""
+
+    assert parse_log_openmm_binary_done(log, None) == {
+        "TestReferenceNonbondedForce": TestStatus.FAILED.value,
+    }

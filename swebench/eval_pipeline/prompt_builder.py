@@ -106,6 +106,39 @@ def build_agent_prompt(instance: dict, eval_mode: str = "fix") -> Optional[str]:
     )
 
 
+def build_level1_prompt(instance: dict) -> str:
+    """Compatibility prompt for the legacy frontend level-1 view."""
+    title = (instance.get("pr_title") or "").strip()
+    body = (instance.get("pr_body") or "").strip()
+    repo = instance.get("repo", "")
+    return (
+        f"{SYSTEM_MESSAGE}\n"
+        f"Repository: {repo}\n\n"
+        f"Pull request title:\n{title}\n\n"
+        f"Pull request body:\n{body}\n\n"
+        f"{PATCH_INSTRUCTION}"
+    )
+
+
+def build_level2_prompt(instance: dict) -> Optional[str]:
+    """Compatibility prompt for the legacy frontend level-2 view."""
+    return build_agent_prompt(instance, eval_mode="fix")
+
+
+def build_level3_prompt(instance: dict) -> Optional[str]:
+    """Compatibility prompt for the legacy frontend level-3 view."""
+    paper_reference = (instance.get("paper_reference") or "").strip()
+    if not paper_reference:
+        return None
+    base_prompt = build_agent_prompt(instance, eval_mode="fix")
+    if base_prompt is None:
+        return None
+    return (
+        f"{base_prompt}\n\n"
+        f"Relevant scientific reference:\n{paper_reference}"
+    )
+
+
 def build_all_prompts(
     instances: list[dict],
     eval_mode: str = "fix",

@@ -210,6 +210,8 @@ def parse_log_openmm_binary_done(log: str, test_spec: TestSpec) -> dict[str, str
             test_name = match.group(1).split("/")[-1]
         elif line.strip() == "Done":
             test_status_map[test_name or "OpenMMBinary"] = TestStatus.PASSED.value
+        elif re.match(r"^\+?\s*exception: Assertion failure", line.strip()):
+            test_status_map[test_name or "OpenMMBinary"] = TestStatus.FAILED.value
 
     return test_status_map
 

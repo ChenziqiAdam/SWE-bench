@@ -55,14 +55,26 @@ def classify_test_generation_result(
     test_patch_applied: bool,
     gold_patch_applied: bool,
     had_runtime_error: bool = False,
+    no_tests_selected: bool = False,
+    non_evaluable: bool = False,
 ) -> dict:
     """Classify strict SWT-Bench-style test-generation results."""
-    if not test_patch_applied or had_runtime_error:
+    failure_reason = ""
+    if non_evaluable:
+        status = "excluded"
+        failure_reason = "non_evaluable_spec"
+    elif no_tests_selected:
+        status = "not_exercised"
+        failure_reason = "no_tests_selected"
+    elif not test_patch_applied or had_runtime_error:
         status = "errored"
+        failure_reason = "test_patch_failed_or_timeout"
     elif not gold_patch_applied:
         status = "errored"
+        failure_reason = "gold_patch_failed"
     elif not base_status_map or not gold_status_map:
         status = "errored"
+        failure_reason = "no_parseable_test_status"
     else:
         base_failed = sorted(t for t, s in base_status_map.items() if _failed(s))
         gold_passed = sorted(t for t in base_failed if _passed(gold_status_map.get(t)))
@@ -71,16 +83,29 @@ def classify_test_generation_result(
             if base_failed and len(gold_passed) == len(base_failed)
             else "unresolved"
         )
+        failure_reason = "" if status == "resolved" else (
+            "base_did_not_fail" if not base_failed else "gold_did_not_pass"
+        )
         return {
             "status": status,
+            "failure_reason": failure_reason,
             "base_failed_tests": base_failed,
             "gold_passed_tests": gold_passed,
         }
     return {
         "status": status,
+        "failure_reason": failure_reason,
         "base_failed_tests": [],
         "gold_passed_tests": [],
     }
+
+
+def _non_evaluable_output(output: str) -> bool:
+    return "not evaluable:" in output
+
+
+def _no_tests_selected(output: str) -> bool:
+    return " 0 selected" in output or "collected 0 items" in output
 
 
 def _test_command(instance: dict, generated_patch: str) -> str:
@@ -265,6 +290,8 @@ def _evaluate_one(
             test_patch_applied=test_patch_applied,
             gold_patch_applied=gold_patch_applied,
             had_runtime_error=base_timed_out or gold_timed_out,
+            no_tests_selected=_no_tests_selected(base_output) or _no_tests_selected(gold_output),
+            non_evaluable=_non_evaluable_output(base_output) or _non_evaluable_output(gold_output),
         )
         report = {
             instance_id: {

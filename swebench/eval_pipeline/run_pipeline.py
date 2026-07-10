@@ -634,6 +634,15 @@ def main():
                 import shutil
                 import subprocess
                 removed = 0
+                if args.eval_mode == "test_generation":
+                    model_report_dir = (
+                        Path(args.log_dir)
+                        / run_id
+                        / inference_model.replace("/", "__")
+                    )
+                    if model_report_dir.exists():
+                        shutil.rmtree(model_report_dir, ignore_errors=True)
+                        removed += 1
                 for iid in eval_instance_ids:
                     for report_dir in Path(args.log_dir).glob(f"{run_id}/*/{iid}"):
                         shutil.rmtree(report_dir, ignore_errors=True)
@@ -748,6 +757,7 @@ def main():
             run_id=run_id,
             log_dir=args.log_dir,
             instance_ids={i["instance_id"] for i in instances},
+            model_name=inference_model,
         )
         render_test_generation_table(
             results=results,

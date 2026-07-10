@@ -73,11 +73,18 @@ def collect_test_generation_results(
     run_id: str,
     log_dir: str = "logs/run_evaluation",
     instance_ids: set[str] | None = None,
+    model_name: str | None = None,
 ) -> dict[str, dict]:
     """Read per-instance generated-test report.json files."""
     results: dict[str, dict] = {}
     run_path = Path(log_dir) / run_id
-    report_files = list(run_path.glob("*/*/report.json")) if run_path.exists() else []
+    if not run_path.exists():
+        report_files = []
+    elif model_name:
+        model_dir = model_name.replace("/", "__")
+        report_files = list((run_path / model_dir).glob("*/report.json"))
+    else:
+        report_files = list(run_path.glob("*/*/report.json"))
     logger.info(f"Test-generation run ({run_id}): found {len(report_files)} report files")
     for report_file in report_files:
         try:
@@ -228,7 +235,7 @@ def render_test_generation_table(
     """Write a CSV and print test-generation success results."""
     meta = {inst["instance_id"]: inst for inst in instances}
     nonempty = _load_nonempty_prediction_ids(predictions_path)
-    statuses = ("resolved", "unresolved", "errored", "no-pred")
+    statuses = ("resolved", "unresolved", "excluded", "not_exercised", "errored", "no-pred")
 
     rows = []
     for instance_id in sorted(meta.keys()):
@@ -248,6 +255,7 @@ def render_test_generation_table(
             "gold_patch_applied": "yes" if info.get("gold_patch_applied") else "no",
             "base_failed_tests": len(info.get("base_failed_tests") or []),
             "gold_passed_tests": len(info.get("gold_passed_tests") or []),
+            "failure_reason": info.get("failure_reason", ""),
         })
 
     Path(output_csv).parent.mkdir(parents=True, exist_ok=True)
@@ -262,6 +270,7 @@ def render_test_generation_table(
         "gold_patch_applied",
         "base_failed_tests",
         "gold_passed_tests",
+        "failure_reason",
     ]
     with open(output_csv, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -294,6 +303,7 @@ def render_test_generation_table(
     print(f"TEST-GENERATION SUCCESS RATE {rate:6.1%}  ({counts['resolved']}/{total})")
     print(
         f"  resolved={counts['resolved']}  unresolved={counts['unresolved']}  "
+        f"excluded={counts['excluded']}  not_exercised={counts['not_exercised']}  "
         f"errored={counts['errored']}  no-pred={counts['no-pred']}"
     )
     print("=" * 78 + "\n")

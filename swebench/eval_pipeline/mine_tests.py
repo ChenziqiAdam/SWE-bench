@@ -246,7 +246,15 @@ def mine_fail_to_pass(
     logger.info(f"Mining FAIL_TO_PASS for {len(todo)} instance(s) with {max_workers} workers...")
     # Share one Docker client across all threads — avoids opening a new Unix socket
     # per worker, which is wasteful and can hit connection limits on large runs.
-    shared_client = docker.from_env()
+    try:
+        shared_client = docker.from_env()
+    except docker.errors.DockerException as e:
+        error = f"Docker daemon unavailable: {e}"
+        logger.error(error)
+        for inst in todo:
+            cache[inst["instance_id"]] = {"ok": False, "error": error}
+        cache_path.write_text(json.dumps(cache, indent=2))
+        return cache
     try:
         with ThreadPoolExecutor(max_workers=max_workers) as pool:
             futs = {pool.submit(_mine_one, inst, run_id, shared_client): inst for inst in todo}

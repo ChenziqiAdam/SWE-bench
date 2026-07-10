@@ -65,6 +65,7 @@ def test_rdkit_9331_enables_chemdraw_with_include_compatibility():
         "-DRDK_BUILD_YAEHMOP_SUPPORT=OFF -DRDK_BUILD_THREADSAFE_SSS=ON "
         "-DRDK_BUILD_CHEMDRAW_SUPPORT=ON "
     )
+    assert "External/ChemDraw/ChemDraw" in spec["build"][2]
     assert "External/ChemDraw/chemdraw/ChemDraw" in spec["build"][2]
     assert spec["build"][-1].endswith("--target chemdrawCatchTest")
 

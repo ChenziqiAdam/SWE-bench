@@ -343,9 +343,12 @@ _RDKIT_LEGACY_BOOST_ENDIAN_SHIM = (
 )
 
 _RDKIT_CHEMDRAW_INCLUDE_COMPAT = (
-    "if [ -d External/ChemDraw/chemdraw/chemdraw ] "
-    "&& [ ! -e External/ChemDraw/chemdraw/ChemDraw ]; then "
-    "ln -s chemdraw External/ChemDraw/chemdraw/ChemDraw; fi"
+    "if [ -d External/ChemDraw/chemdraw/chemdraw ]; then "
+    "if [ ! -e External/ChemDraw/ChemDraw ]; then "
+    "ln -s chemdraw/chemdraw External/ChemDraw/ChemDraw; fi; "
+    "if [ ! -e External/ChemDraw/chemdraw/ChemDraw ]; then "
+    "ln -s chemdraw External/ChemDraw/chemdraw/ChemDraw; fi; "
+    "fi"
 )
 
 _RDKIT_BASE_CMAKE_FLAGS = (
@@ -489,13 +492,9 @@ SPECS_OPENMM = _OpenMMSpecs({
         ],
     },
     # ── Not evaluable (no functional test patch) ──────────────────────────────
-    # 4294: comment-only fix. 4138: docs-only. 3260: test patch only DELETES an
-    # assertion (no Reference test added). 4618: implementation fix for
-    # rectangular-to-triclinic box changes, but the PR has no test patch.
-    # Additional literal Type=1,2 spreadsheet PRs are included here as explicit
-    # placeholders until curated per-PR scientific tests are added. No
-    # FAIL_TO_PASS can be scored — these are no-op placeholders so the batch run
-    # doesn't crash on a missing key.
+    # Issues.xlsx rows without curated per-PR scientific test specs are included
+    # here as explicit placeholders. No FAIL_TO_PASS can be scored — these are
+    # no-op placeholders so the batch run doesn't crash on a missing key.
     # Expect them to report unresolved/empty; drop from the eval set later.
     **{
         pr: {
@@ -506,84 +505,26 @@ SPECS_OPENMM = _OpenMMSpecs({
             ],
         }
         for pr in [
-            "4294",
-            "4138",
-            "3260",
-            "4618",
-            "920",
-            "1100",
             "1235",
-            "1425",
             "1495",
-            "1540",
-            "1628",
-            "1640",
-            "1652",
-            "1679",
-            "1682",
-            "1711",
-            "1752",
-            "1806",
             "1802",
-            "1924",
-            "1932",
-            "2016",
-            "2053",
-            "2152",
             "2241",
-            "2257",
-            "2255",
-            "2318",
-            "2322",
-            "2355",
-            "2429",
-            "2544",
-            "2596",
-            "2781",
-            "2829",
-            "3057",
-            "3151",
-            "3210",
-            "3240",
-            "3280",
+            "2452",
+            "2695",
             "3286",
-            "3311",
-            "3326",
-            "3428",
-            "3460",
+            "3299",
+            "3480",
             "3493",
             "3506",
-            "3521",
-            "3630",
-            "3696",
-            "3771",
-            "3834",
-            "3851",
-            "3872",
-            "3923",
-            "4025",
-            "4079",
-            "4086",
-            "4090",
-            "4119",
-            "4161",
-            "4246",
-            "4249",
-            "4364",
-            "4440",
-            "4748",
-            "4760",
-            "4777",
+            "4168",
+            "4219",
             "4870",
-            "5069",
-            "5117",
+            "4899",
+            "5031",
             "5137",
-            "5179",
             "5198",
-            "5219",
-            "5242",
-            "5302",
-            "1528",
+            "5322",
+            "5342",
         ]
     },
     # ── Exact Python wrapper tests ───────────────────────────────────────────
@@ -746,6 +687,96 @@ class _RDKitSpecs(dict):
 # PR 8957 touches Code/GraphMol/Chirality.cpp + catch_chirality.cpp
 # → target: chiralityTestsCatch  (from rdkit_catch_test(chiralityTestsCatch ...))
 SPECS_RDKIT = _RDKitSpecs({
+    # Explicit placeholders for Issues.xlsx rows without curated runnable
+    # harness specs. These keep the pipeline from silently relying on the
+    # numeric fallback while preserving non-scorable behavior.
+    **{
+        pr: {
+            "pre_install": [],
+            "build": [],
+            "test_cmd": [
+                f"echo 'rdkit#{pr} not evaluable: no curated spec' && false",
+            ],
+        }
+        for pr in [
+            "2083",
+            "2377",
+            "2548",
+            "3015",
+            "3050",
+            "3098",
+            "3196",
+            "3354",
+            "3412",
+            "3615",
+            "3729",
+            "3749",
+            "3930",
+            "4303",
+            "4414",
+            "5063",
+            "5232",
+            "5468",
+            "5570",
+            "6021",
+            "6193",
+            "6199",
+            "6231",
+            "6250",
+            "6506",
+            "6686",
+            "6948",
+            "7116",
+            "7137",
+            "7152",
+            "7384",
+            "7426",
+            "7571",
+            "7975",
+            "8179",
+            "8192",
+            "8210",
+            "8211",
+            "8217",
+            "8264",
+            "8266",
+            "8269",
+            "8289",
+            "8294",
+            "8367",
+            "8385",
+            "8493",
+            "8515",
+            "8542",
+            "8550",
+            "8587",
+            "8588",
+            "8652",
+            "8680",
+            "8734",
+            "8767",
+            "8795",
+            "8808",
+            "8824",
+            "8874",
+            "8907",
+            "8974",
+            "8999",
+            "9002",
+            "9012",
+            "9022",
+            "9119",
+            "9120",
+            "9125",
+            "9228",
+            "9300",
+            "9302",
+            "9325",
+            "9332",
+            "9348",
+            "9355",
+        ]
+    },
     "2059": _rdkit_cpp_targets_spec("smiTest1", legacy_boost_endian=True),
     "6646": _rdkit_python_wrapper_spec("Code/GraphMol/FMCS/Wrap/testFMCS.py"),
     "8376": _rdkit_python_wrapper_spec(

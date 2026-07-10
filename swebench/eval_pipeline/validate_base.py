@@ -110,7 +110,19 @@ def validate_buildable(
         return cache
 
     logger.info(f"Building images at base_commit for {len(buildable_todo)} instance(s)...")
-    client = docker.from_env()
+    try:
+        client = docker.from_env()
+    except docker.errors.DockerException as e:
+        error = f"Docker daemon unavailable: {e}"
+        logger.error(error)
+        for inst in buildable_todo:
+            cache[inst["instance_id"]] = {
+                "buildable": False,
+                "error": error,
+                "spec_hash": spec_hashes[inst["instance_id"]],
+            }
+        _write_cache(cache, cache_path)
+        return cache
     try:
 
         # ── Phase 1: build env images (one per repo/version group) ────────────────

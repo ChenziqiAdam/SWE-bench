@@ -50,3 +50,29 @@ def test_test_generation_marks_apply_failure_errored():
     )
 
     assert result["status"] == "errored"
+
+
+def test_test_generation_marks_placeholder_specs_excluded():
+    result = classify_test_generation_result(
+        {},
+        {},
+        test_patch_applied=True,
+        gold_patch_applied=True,
+        non_evaluable=True,
+    )
+
+    assert result["status"] == "excluded"
+    assert result["failure_reason"] == "non_evaluable_spec"
+
+
+def test_test_generation_marks_zero_selected_not_exercised():
+    result = classify_test_generation_result(
+        {},
+        {},
+        test_patch_applied=True,
+        gold_patch_applied=True,
+        no_tests_selected=True,
+    )
+
+    assert result["status"] == "not_exercised"
+    assert result["failure_reason"] == "no_tests_selected"
