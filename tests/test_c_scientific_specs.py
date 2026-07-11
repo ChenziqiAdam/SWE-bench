@@ -85,8 +85,8 @@ def test_rdkit_9331_enables_chemdraw_with_include_compatibility():
         "-DRDK_BUILD_YAEHMOP_SUPPORT=OFF -DRDK_BUILD_THREADSAFE_SSS=ON "
         "-DRDK_BUILD_CHEMDRAW_SUPPORT=ON "
     )
+    assert "find External/ChemDraw -name chemdraw.h" in spec["build"][2]
     assert "External/ChemDraw/ChemDraw" in spec["build"][2]
-    assert "External/ChemDraw/chemdraw/ChemDraw" in spec["build"][2]
     assert spec["build_after_test_patch"] == [
         "cmake --build build --parallel $(nproc) --target chemdrawCatchTest"
     ]
@@ -107,3 +107,43 @@ def test_rdkit_python_wrapper_specs_build_wrappers_once():
             "RDBASE=$PWD PYTHONPATH=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
             f"python3 {test_path}"
         ]
+
+
+def test_current_testgen_openmm_placeholders_have_concrete_specs():
+    expected_targets = {
+        "1495": "TestReferenceCustomExternalForce",
+        "1802": "TestReferenceEwald",
+        "2241": "TestReferenceCustomIntegrator",
+        "3286": "TestReferenceGBSAOBCForce",
+        "4732": "TestReferenceNonbondedForce",
+        "4881": "TestReferenceMonteCarloBarostat",
+        "5137": "TestOpenCLFFT",
+        "5198": "TestCpuLocalEnergyMinimizer",
+    }
+    for pr, target in expected_targets.items():
+        spec_text = "\n".join(
+            SPECS_OPENMM[pr].get("build", [])
+            + SPECS_OPENMM[pr].get("build_after_test_patch", [])
+            + SPECS_OPENMM[pr].get("test_cmd", [])
+        )
+        assert "not evaluable" not in spec_text
+        assert target in spec_text
+
+
+def test_current_testgen_rdkit_placeholders_have_concrete_specs():
+    expected = {
+        "6506": "rdkit/Chem/UnitTestRegistrationHash.py",
+        "6948": "Code/GraphMol/Wrap/rough_test.py",
+        "7426": "rdkit/Chem/UnitTestRegistrationHash.py",
+        "8791": "ForceField|forceField",
+        "8795": "GraphMol|graphmol",
+        "8999": "External/pubchem_shape/Wrap/test_rdshapealign.py",
+    }
+    for pr, marker in expected.items():
+        spec_text = "\n".join(
+            SPECS_RDKIT[pr].get("build", [])
+            + SPECS_RDKIT[pr].get("build_after_test_patch", [])
+            + SPECS_RDKIT[pr].get("test_cmd", [])
+        )
+        assert "not evaluable" not in spec_text
+        assert marker in spec_text

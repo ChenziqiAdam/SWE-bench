@@ -114,6 +114,29 @@ def _no_tests_selected(output: str) -> bool:
     return " 0 selected" in output or "collected 0 items" in output
 
 
+def _openmm_generated_pytest_command(pytest_files: list[str]) -> str:
+    setup = (
+        "python -m pip install --no-cache-dir openmm numpy scipy pytest && "
+        "OPENMM_SITE=$(python -c 'import openmm, os; print(os.path.dirname(openmm.__file__))') && "
+        "SIMTK_SITE=$(python -c 'import simtk.openmm, os; print(os.path.dirname(simtk.openmm.__file__))' 2>/dev/null || true) && "
+        "if [ -d /testbed/wrappers/python/openmm/app ]; then cp -r /testbed/wrappers/python/openmm/app \"$OPENMM_SITE/\"; fi && "
+        "if [ -n \"$SIMTK_SITE\" ] && [ -d /testbed/wrappers/python/simtk/openmm/app ]; then "
+        "cp -r /testbed/wrappers/python/simtk/openmm/app \"$SIMTK_SITE/\"; fi && "
+        "if [ -n \"$SIMTK_SITE\" ]; then "
+        "for name in vec3 unit; do "
+        "if [ -e \"$OPENMM_SITE/$name.py\" ]; then cp \"$OPENMM_SITE/$name.py\" \"$SIMTK_SITE/\"; fi; "
+        "if [ -d \"$OPENMM_SITE/$name\" ]; then cp -r \"$OPENMM_SITE/$name\" \"$SIMTK_SITE/\"; fi; "
+        "done; "
+        "export PYTHONPATH=\"$SIMTK_SITE/app:${PYTHONPATH:-}\"; "
+        "fi"
+    )
+    return (
+        setup
+        + " && cd wrappers/python/tests && python -m pytest -xvs "
+        + " ".join(pytest_files)
+    )
+
+
 def _test_command(instance: dict, generated_patch: str) -> str:
     """Choose the command that runs the generated test patch."""
     if isinstance(get_test_cmds(instance), list):
@@ -138,7 +161,7 @@ def _test_command(instance: dict, generated_patch: str) -> str:
             and re.match(r"(?:Test|test).*\.py$", PurePosixPath(path).name)
         })
         if pytest_files:
-            return "cd wrappers/python/tests && python -m pytest -xvs " + " ".join(pytest_files)
+            return _openmm_generated_pytest_command(pytest_files)
 
     raw = commands[0] if len(commands) == 1 else None
     if raw and isinstance(raw, str) and instance["repo"] not in {

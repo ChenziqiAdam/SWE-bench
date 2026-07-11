@@ -343,11 +343,13 @@ _RDKIT_LEGACY_BOOST_ENDIAN_SHIM = (
 )
 
 _RDKIT_CHEMDRAW_INCLUDE_COMPAT = (
-    "if [ -d External/ChemDraw/chemdraw/chemdraw ]; then "
+    "HEADER=$(find External/ChemDraw -name chemdraw.h | head -n 1) && "
+    "if [ -n \"$HEADER\" ]; then "
+    "HEADER_DIR=$(dirname \"$HEADER\") && "
     "if [ ! -e External/ChemDraw/ChemDraw ]; then "
-    "ln -s chemdraw/chemdraw External/ChemDraw/ChemDraw; fi; "
-    "if [ ! -e External/ChemDraw/chemdraw/ChemDraw ]; then "
-    "ln -s chemdraw External/ChemDraw/chemdraw/ChemDraw; fi; "
+    "ln -s \"${HEADER_DIR#External/ChemDraw/}\" External/ChemDraw/ChemDraw; fi; "
+    "if [ -d External/ChemDraw/chemdraw ] && [ ! -e External/ChemDraw/chemdraw/ChemDraw ]; then "
+    "ln -s \"../${HEADER_DIR#External/ChemDraw/}\" External/ChemDraw/chemdraw/ChemDraw; fi; "
     "fi"
 )
 
@@ -414,9 +416,9 @@ def _rdkit_cpp_ctest_regex_spec(test_regex: str, new_boost: bool = False) -> dic
     return spec
 
 
-def _rdkit_python_wrapper_spec(test_path: str) -> dict:
+def _rdkit_python_wrapper_spec(test_path: str, new_boost: bool = False) -> dict:
     """Build RDKit in-tree with Python wrappers and run a focused Python test."""
-    spec = _rdkit_cpp_targets_spec()
+    spec = _rdkit_cpp_targets_spec(new_boost=new_boost)
     spec["build"][1] = spec["build"][1].replace(
         "-DRDK_BUILD_PYTHON_WRAPPERS=OFF ",
         "-DRDK_BUILD_PYTHON_WRAPPERS=ON ",
@@ -442,10 +444,13 @@ class _OpenMMSpecs(dict):
         if not pr.isdigit():
             raise KeyError(key)
         spec = {
-            "pre_install": [],
+            "pre_install": [
+                "python -m pip install --no-cache-dir --upgrade pip setuptools wheel",
+                "python -m pip install --no-cache-dir openmm numpy scipy pytest",
+            ],
             "build": [],
             "test_cmd": [
-                f"echo 'openmm#{pr} not evaluable: no curated spec' && false",
+                f"echo 'openmm#{pr} has no curated generated-test target' && false",
             ],
         }
         self[pr] = spec
@@ -485,56 +490,49 @@ SPECS_OPENMM = _OpenMMSpecs({
             "cd wrappers/python/tests && python -m pytest -xvs TestAmberPrmtopFile.py::TestAmberPrmtopFile::testFlexibleConstraints",
         ],
     },
-    # PR #4881: computeCurrentPressure() for MonteCarloBarostat.
-    # NOT evaluable in this environment: the instance has an EMPTY FAIL_TO_PASS set
-    # and every test in the test_patch targets CUDA/HIP/OpenCL platforms, which need
-    # a GPU. There is no Reference-platform test to fall back on, so no patch can be
-    # scored here. Spec is a no-op placeholder; expect EMPTY/unresolved in reports.
-    "4881": {
+    "4881": _openmm_cpp_targets_spec(
+        "TestReferenceMonteCarloAnisotropicBarostat",
+        "TestReferenceMonteCarloBarostat",
+        "TestReferenceMonteCarloFlexibleBarostat",
+        "TestReferenceMonteCarloMembraneBarostat",
+    ),
+    # PR #5137 only modifies OpenCL FFT coverage. Keep a concrete CPU-buildable
+    # spec so test-generation mode can apply/diagnose generated patches, but do
+    # not pretend a GPU/OpenCL runtime is available.
+    "5137": {
         "pre_install": [
-            "pip install --no-cache-dir numpy",
+            "apt-get update -q",
+            "apt-get install -y --no-install-recommends cmake g++ make ocl-icd-opencl-dev",
         ],
-        "build": [],
+        "build_after_test_patch": [
+            "cmake -B build -S . "
+            "-DCMAKE_BUILD_TYPE=Release "
+            "-DOPENMM_BUILD_CUDA_LIB=OFF "
+            "-DOPENMM_BUILD_OPENCL_LIB=ON "
+            "-DOPENMM_BUILD_HIP_LIB=OFF "
+            "-DOPENMM_BUILD_PYTHON_WRAPPERS=OFF "
+            "-DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF",
+            "cmake --build build --parallel $(nproc) --target TestOpenCLFFT",
+        ],
         "test_cmd": [
-            "echo 'openmm#4881 not evaluable: empty FAIL_TO_PASS, GPU-only tests' && false",
+            "LD_LIBRARY_PATH=$PWD/build:$PWD/build/platforms/opencl:${LD_LIBRARY_PATH:-} "
+            "OPENMM_PLUGIN_DIR=$PWD/build/platforms/opencl "
+            "./build/platforms/opencl/tests/TestOpenCLFFT",
         ],
     },
-    # ── Not evaluable (no functional test patch) ──────────────────────────────
-    # Issues.xlsx rows without curated per-PR scientific test specs are included
-    # here as explicit placeholders. No FAIL_TO_PASS can be scored — these are
-    # no-op placeholders so the batch run doesn't crash on a missing key.
-    # Expect them to report unresolved/empty; drop from the eval set later.
-    **{
-        pr: {
-            "pre_install": [],
-            "build": [],
-            "test_cmd": [
-                f"echo 'openmm#{pr} not evaluable: no functional test patch' && false",
-            ],
-        }
-        for pr in [
-            "1235",
-            "1495",
-            "1802",
-            "2241",
-            "2452",
-            "2695",
-            "3286",
-            "3299",
-            "3480",
-            "3493",
-            "3506",
-            "4168",
-            "4219",
-            "4870",
-            "4899",
-            "5031",
-            "5137",
-            "5198",
-            "5322",
-            "5342",
-        ]
-    },
+    # ── Generated-test fallback specs for issue rows without mined F2P ───────
+    "1495": _openmm_cpp_targets_spec("TestReferenceCustomExternalForce", "TestParser"),
+    "1802": _openmm_cpp_targets_spec("TestReferenceEwald"),
+    "2241": _openmm_cpp_targets_spec("TestReferenceCustomIntegrator"),
+    "3286": _openmm_cpp_targets_spec(
+        "TestReferenceGBSAOBCForce",
+        "TestReferenceHarmonicAngleForce",
+        "TestReferenceHarmonicBondForce",
+        "TestReferenceNonbondedForce",
+        "TestReferencePeriodicTorsionForce",
+    ),
+    "4732": _openmm_cpp_targets_spec("TestReferenceNonbondedForce"),
+    "5198": _openmm_cpp_targets_spec("TestCpuLocalEnergyMinimizer"),
     # ── Exact Python wrapper tests ───────────────────────────────────────────
     # These PRs add or modify focused Python app tests. Use pip's compiled
     # OpenMM package for native libraries, then overlay the patched pure-Python
@@ -822,6 +820,18 @@ SPECS_RDKIT = _RDKitSpecs({
         new_boost=True,
         chemdraw_include_compat=True,
         defer_target_build=True,
+    ),
+    "6506": _rdkit_python_wrapper_spec("rdkit/Chem/UnitTestRegistrationHash.py"),
+    "6948": _rdkit_python_wrapper_spec("Code/GraphMol/Wrap/rough_test.py"),
+    "7426": _rdkit_python_wrapper_spec(
+        "rdkit/Chem/UnitTestRegistrationHash.py",
+        new_boost=True,
+    ),
+    "8791": _rdkit_cpp_ctest_regex_spec("ForceField|forceField", new_boost=True),
+    "8795": _rdkit_cpp_ctest_regex_spec("GraphMol|graphmol", new_boost=True),
+    "8999": _rdkit_python_wrapper_spec(
+        "External/pubchem_shape/Wrap/test_rdshapealign.py",
+        new_boost=True,
     ),
 })
 
