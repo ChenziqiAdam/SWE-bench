@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path, PurePosixPath
 
@@ -39,6 +40,7 @@ GEN_APPLY_PASS = "GENERATED_TEST_PATCH_APPLIED"
 GEN_APPLY_FAIL = "GENERATED_TEST_PATCH_FAILED"
 GOLD_APPLY_PASS = "GOLD_PATCH_APPLIED"
 GOLD_APPLY_FAIL = "GOLD_PATCH_FAILED"
+BUILD_FAIL = "GENERATED_TEST_BUILD_FAILED"
 
 
 def _passed(status: str | None) -> bool:
@@ -57,6 +59,7 @@ def classify_test_generation_result(
     had_runtime_error: bool = False,
     no_tests_selected: bool = False,
     non_evaluable: bool = False,
+    build_failed: bool = False,
 ) -> dict:
     """Classify strict SWT-Bench-style test-generation results."""
     failure_reason = ""
@@ -66,6 +69,9 @@ def classify_test_generation_result(
     elif no_tests_selected:
         status = "not_exercised"
         failure_reason = "no_tests_selected"
+    elif build_failed:
+        status = "errored"
+        failure_reason = "generated_test_build_failed"
     elif not test_patch_applied or had_runtime_error:
         status = "errored"
         failure_reason = "test_patch_failed_or_timeout"
@@ -115,13 +121,30 @@ def _test_command(instance: dict, generated_patch: str) -> str:
     else:
         commands = [get_test_cmds(instance)]
 
+    generated_instance = {**instance, "test_patch": generated_patch}
+    directives = get_test_directives(generated_instance)
+
+    # Scientific OpenMM specs normally contain a fixed selector for the
+    # original PR test.  In test-generation mode that selector can silently
+    # collect zero tests when the model chose a different regression-test name.
+    # Run the generated patch's touched OpenMM pytest files instead.
+    if instance["repo"] == "openmm/openmm":
+        prefix = "wrappers/python/tests/"
+        pytest_files = sorted({
+            path[len(prefix):]
+            for path in directives
+            if path.startswith(prefix)
+            and path.endswith(".py")
+            and re.match(r"(?:Test|test).*\.py$", PurePosixPath(path).name)
+        })
+        if pytest_files:
+            return "cd wrappers/python/tests && python -m pytest -xvs " + " ".join(pytest_files)
+
     raw = commands[0] if len(commands) == 1 else None
     if raw and isinstance(raw, str) and instance["repo"] not in {
         "openmm/openmm",
         "rdkit/rdkit",
     }:
-        generated_instance = {**instance, "test_patch": generated_patch}
-        directives = get_test_directives(generated_instance)
         if directives:
             return " ".join([raw, *directives])
     return " && ".join(commands)
@@ -146,7 +169,7 @@ def _build_script(instance: dict, generated_patch: str, apply_gold: bool) -> str
         lines += specs["eval_commands"]
     if "install" in specs:
         lines.append(specs["install"])
-    lines += [
+    generated_apply = [
         f"git apply -v {GENERATED_TEST_PATCH} "
         f"|| git apply -v --3way {GENERATED_TEST_PATCH} "
         f"|| patch --batch --fuzz=5 -p1 -i {GENERATED_TEST_PATCH} "
@@ -161,10 +184,14 @@ def _build_script(instance: dict, generated_patch: str, apply_gold: bool) -> str
             f"|| {{ echo {GOLD_APPLY_FAIL}; exit 12; }}",
             f"echo {GOLD_APPLY_PASS}",
         ]
+    lines += generated_apply
     if "build" in specs:
-        lines += specs["build"]
+        lines += [f"{cmd} || {{ echo {BUILD_FAIL}; exit 13; }}" for cmd in specs["build"]]
     if "build_after_test_patch" in specs:
-        lines += specs["build_after_test_patch"]
+        lines += [
+            f"{cmd} || {{ echo {BUILD_FAIL}; exit 13; }}"
+            for cmd in specs["build_after_test_patch"]
+        ]
     lines += [
         f": '{START_TEST_OUTPUT}'",
         test_cmd,
@@ -292,6 +319,7 @@ def _evaluate_one(
             had_runtime_error=base_timed_out or gold_timed_out,
             no_tests_selected=_no_tests_selected(base_output) or _no_tests_selected(gold_output),
             non_evaluable=_non_evaluable_output(base_output) or _non_evaluable_output(gold_output),
+            build_failed=BUILD_FAIL in base_output or BUILD_FAIL in gold_output,
         )
         report = {
             instance_id: {
@@ -309,6 +337,7 @@ def _evaluate_one(
         report = {
             instance_id: {
                 "status": "errored",
+                "failure_reason": "evaluation_exception",
                 "error": f"{type(e).__name__}: {e}",
                 "test_patch_applied": False,
                 "gold_patch_applied": False,

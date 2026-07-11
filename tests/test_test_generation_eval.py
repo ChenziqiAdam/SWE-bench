@@ -1,5 +1,15 @@
+import json
+
 from swebench.eval_pipeline.prompt_builder import build_agent_prompt
-from swebench.eval_pipeline.test_generation_eval import classify_test_generation_result
+from swebench.eval_pipeline.test_generation_eval import (
+    BUILD_FAIL,
+    GOLD_APPLY_PASS,
+    GEN_APPLY_PASS,
+    _build_script,
+    _evaluate_one,
+    _test_command,
+    classify_test_generation_result,
+)
 
 
 def test_test_generation_prompt_requests_tests_only():
@@ -76,3 +86,88 @@ def test_test_generation_marks_zero_selected_not_exercised():
 
     assert result["status"] == "not_exercised"
     assert result["failure_reason"] == "no_tests_selected"
+
+
+def test_test_generation_marks_build_failure_errored():
+    result = classify_test_generation_result(
+        {}, {}, True, True, build_failed=True
+    )
+
+    assert result["status"] == "errored"
+    assert result["failure_reason"] == "generated_test_build_failed"
+
+
+def test_gold_script_applies_gold_before_generated_test(monkeypatch):
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.MAP_REPO_VERSION_TO_SPECS",
+        {"demo/repo": {"1": {"build": ["make tests"], "test_cmd": "run"}}},
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.get_test_cmds",
+        lambda _instance: "run",
+    )
+    script = _build_script(
+        {"repo": "demo/repo", "version": "1", "base_commit": "abc"},
+        "patch",
+        apply_gold=True,
+    )
+
+    assert script.index(GOLD_APPLY_PASS) < script.index(GEN_APPLY_PASS)
+    assert f"make tests || {{ echo {BUILD_FAIL}; exit 13; }}" in script
+
+
+def test_openmm_test_generation_runs_touched_pytest_file_not_fixed_selector(monkeypatch):
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.get_test_cmds",
+        lambda _instance: [
+            "cd wrappers/python/tests && python -m pytest -xvs "
+            "TestForceField.py -k 'original_test'"
+        ],
+    )
+    patch = """diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py
+--- a/wrappers/python/tests/TestForceField.py
++++ b/wrappers/python/tests/TestForceField.py
+@@ -1 +1,2 @@
+ pass
++def test_generated_regression(): pass
+"""
+
+    command = _test_command(
+        {"repo": "openmm/openmm", "test_patch": ""},
+        patch,
+    )
+
+    assert command == (
+        "cd wrappers/python/tests && python -m pytest -xvs TestForceField.py"
+    )
+
+
+def test_evaluation_exception_records_failure_reason(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.make_test_spec",
+        lambda _instance: (_ for _ in ()).throw(RuntimeError("image build failed")),
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.cleanup_container",
+        lambda *_args: None,
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.close_logger",
+        lambda *_args: None,
+    )
+
+    result = _evaluate_one(
+        {"instance_id": "demo__repo-1"},
+        {"model_patch": "diff --git a/a b/a", "model_name_or_path": "model"},
+        "run",
+        object(),
+        str(tmp_path),
+        1,
+    )
+
+    assert result["status"] == "errored"
+    assert result["failure_reason"] == "evaluation_exception"
+    report = json.loads(
+        (tmp_path / "run/model/demo__repo-1/report.json").read_text()
+    )
+    assert "image build failed" in report["demo__repo-1"]["error"]

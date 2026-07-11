@@ -374,6 +374,7 @@ def _rdkit_cpp_targets_spec(
     new_boost: bool = False,
     legacy_boost_endian: bool = False,
     chemdraw_include_compat: bool = False,
+    defer_target_build: bool = False,
 ) -> dict:
     """Build RDKit C++ tests and run selected CTest targets."""
     pre_install = list(_RDKIT_BOOST_183_PRE_INSTALL if new_boost else _RDKIT_PRE_INSTALL)
@@ -385,8 +386,10 @@ def _rdkit_cpp_targets_spec(
     ]
     if chemdraw_include_compat:
         build.append(_RDKIT_CHEMDRAW_INCLUDE_COMPAT)
-    build.append("cmake --build build --parallel $(nproc) --target " + " ".join(targets))
-    return {
+    target_build = "cmake --build build --parallel $(nproc) --target " + " ".join(targets)
+    if not defer_target_build:
+        build.append(target_build)
+    spec = {
         "pre_install": pre_install,
         "build": build,
         "test_cmd": [
@@ -395,6 +398,9 @@ def _rdkit_cpp_targets_spec(
             for target in targets
         ],
     }
+    if defer_target_build:
+        spec["build_after_test_patch"] = [target_build]
+    return spec
 
 
 def _rdkit_cpp_ctest_regex_spec(test_regex: str, new_boost: bool = False) -> dict:
@@ -418,6 +424,7 @@ def _rdkit_python_wrapper_spec(test_path: str) -> dict:
     spec["pre_install"].append("apt-get install -y --no-install-recommends python3-dev python3-numpy")
     spec["build"][-1] = "cmake --build build --parallel $(nproc)"
     spec["test_cmd"] = [
+        "cp -a build/rdkit/. rdkit/ && "
         f"RDBASE=$PWD PYTHONPATH=$PWD LD_LIBRARY_PATH=$PWD/lib:${{LD_LIBRARY_PATH:-}} "
         f"python3 {test_path}"
     ]
@@ -446,6 +453,7 @@ class _OpenMMSpecs(dict):
 
 
 SPECS_OPENMM = _OpenMMSpecs({
+    "2802": _openmm_python_unit_spec("PhysicalConstants"),
     # PR #4832: flexibleConstraints option for AmberPrmtopFile (Python-only change).
     # The C base image has python3/pip but NO conda, so install OpenMM via pip
     # to get the compiled `_openmm` extension + native libs. The patch edits the
@@ -577,31 +585,23 @@ SPECS_OPENMM = _OpenMMSpecs({
     **{
         pr: _openmm_cpp_targets_spec(*targets)
         for pr, targets in {
-            "1487": ("TestReferenceEwald",),
+            "1487": ("TestReferenceAndersenThermostat",),
             "1858": ("TestReferenceVirtualSites", "TestSerializeSystem"),
-            "2057": ("TestReferenceCustomIntegrator", "TestVectorExpression"),
+            "2057": ("TestReferenceCustomIntegrator",),
             "2105": ("TestReferenceNonbondedForce",),
-            "2187": ("TestReferenceNonbondedForce",),
+            "2187": ("TestReferenceCustomNonbondedForce",),
             "2561": (
-                "TestReferenceLangevinMiddleIntegrator",
+                "TestReferenceBAOABLangevinIntegrator",
                 "TestSerializeIntegrator",
             ),
             "2570": ("TestReferenceNonbondedForce", "TestSerializeNonbondedForce"),
-            "2802": (
-                "TestReferenceAmoebaAngleForce",
-                "TestReferenceAmoebaInPlaneAngleForce",
-                "TestReferenceAmoebaOutOfPlaneBendForce",
-                "TestReferenceAmoebaPiTorsionForce",
-                "TestReferenceAmoebaStretchBendForce",
-                "TestSerializeAmoebaMultipoleForce",
-                "TestReferenceEwald",
-            ),
             "2806": ("TestCpuNonbondedForce",),
             "2818": ("TestReferenceVerletIntegrator",),
             "4523": ("TestReferenceDrudeForce",),
-            "4740": ("TestReferenceCheckpoints",),
+            "4740": ("TestReferenceLangevinMiddleIntegrator",),
             "4907": ("TestReferenceEwald",),
             "5251": ("TestReferenceMonteCarloFlexibleBarostat",),
+            "5278": ("TestReferenceMonteCarloAnisotropicBarostat",),
         }.items()
     },
     # ── Full C++ Reference-platform builds ────────────────────────────────────
@@ -635,8 +635,7 @@ SPECS_OPENMM = _OpenMMSpecs({
             ],
         }
         for pr, target in {
-            "1837": "TestReferenceCustomCVForce",
-            "5278": "TestReferenceMonteCarloMembraneBarostat",
+            "1837": "TestReferenceCustomIntegrator",
             "4799": "TestReferenceDPDIntegrator",
         }.items()
     },
@@ -822,6 +821,7 @@ SPECS_RDKIT = _RDKitSpecs({
         extra_cmake="-DRDK_BUILD_CHEMDRAW_SUPPORT=ON ",
         new_boost=True,
         chemdraw_include_compat=True,
+        defer_target_build=True,
     ),
 })
 

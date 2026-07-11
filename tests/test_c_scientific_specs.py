@@ -11,6 +11,26 @@ def test_openmm_python_specs_install_with_test_interpreter():
         assert "python -m pytest" in spec["test_cmd"][0]
 
 
+def test_openmm_legacy_specs_use_targets_available_at_base_commit():
+    assert "TestReferenceCustomIntegrator" in SPECS_OPENMM["1837"]["build_after_test_patch"][-1]
+    assert "TestReferenceBAOABLangevinIntegrator" in SPECS_OPENMM["2561"]["build_after_test_patch"][-1]
+
+
+def test_openmm_specs_execute_the_touched_regression_family():
+    expected = {
+        "1487": "TestReferenceAndersenThermostat",
+        "2057": "TestReferenceCustomIntegrator",
+        "2187": "TestReferenceCustomNonbondedForce",
+        "4740": "TestReferenceLangevinMiddleIntegrator",
+        "5278": "TestReferenceMonteCarloAnisotropicBarostat",
+    }
+    for pr, target in expected.items():
+        assert SPECS_OPENMM[pr]["build_after_test_patch"][-1].endswith(target)
+        assert target in SPECS_OPENMM[pr]["test_cmd"][0]
+
+    assert "python -m pytest" in SPECS_OPENMM["2802"]["test_cmd"][0]
+
+
 def test_rdkit_specs_use_apt_boost_and_disable_fragile_downloads():
     for pr in ("2059", "6646", "8376"):
         spec = SPECS_RDKIT[pr]
@@ -67,7 +87,9 @@ def test_rdkit_9331_enables_chemdraw_with_include_compatibility():
     )
     assert "External/ChemDraw/ChemDraw" in spec["build"][2]
     assert "External/ChemDraw/chemdraw/ChemDraw" in spec["build"][2]
-    assert spec["build"][-1].endswith("--target chemdrawCatchTest")
+    assert spec["build_after_test_patch"] == [
+        "cmake --build build --parallel $(nproc) --target chemdrawCatchTest"
+    ]
 
 
 def test_rdkit_python_wrapper_specs_build_wrappers_once():
@@ -81,6 +103,7 @@ def test_rdkit_python_wrapper_specs_build_wrappers_once():
         assert "-DRDK_BUILD_PYTHON_WRAPPERS=ON" in cmake
         assert "-DRDK_BUILD_PYTHON_WRAPPERS=OFF" not in cmake
         assert spec["test_cmd"] == [
+            "cp -a build/rdkit/. rdkit/ && "
             "RDBASE=$PWD PYTHONPATH=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
             f"python3 {test_path}"
         ]
