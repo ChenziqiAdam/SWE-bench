@@ -8,6 +8,9 @@ def test_openmm_python_specs_install_with_test_interpreter():
 
         assert "python -m pip install" in pre_install
         assert "openmm numpy scipy pytest" in pre_install
+        assert "mkdir -p \"$SIMTK_SITE\"" in spec["build"][0]
+        assert "compiled*" in spec["build"][0]
+        assert "from openmm.vec3 import *" in spec["build"][0]
         assert "python -m pytest" in spec["test_cmd"][0]
 
 
@@ -87,6 +90,8 @@ def test_rdkit_9331_enables_chemdraw_with_include_compatibility():
     )
     assert "find External/ChemDraw -name chemdraw.h" in spec["build"][2]
     assert "External/ChemDraw/ChemDraw" in spec["build"][2]
+    assert 'if [ "$REL" = "$HEADER_DIR" ]; then REL=.; fi' in spec["build"][2]
+    assert "ln -s \"$REL\" External/ChemDraw/ChemDraw" in spec["build"][2]
     assert spec["build_after_test_patch"] == [
         "cmake --build build --parallel $(nproc) --target chemdrawCatchTest"
     ]

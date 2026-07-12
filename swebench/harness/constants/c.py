@@ -265,9 +265,23 @@ def _openmm_python_app_spec(test_file: str, test_filter: str) -> dict:
         ],
         "build": [
             "OPENMM_SITE=$(python -c 'import openmm, os; print(os.path.dirname(openmm.__file__))') && "
+            "SIMTK_SITE=$(python -c 'import simtk.openmm, os; print(os.path.dirname(simtk.openmm.__file__))' 2>/dev/null || "
+            "python -c 'import site; print(site.getsitepackages()[0] + \"/simtk/openmm\")') && "
+            "mkdir -p \"$SIMTK_SITE\" && "
+            "if [ ! -f \"$(dirname \"$SIMTK_SITE\")/__init__.py\" ]; then echo '' > \"$(dirname \"$SIMTK_SITE\")/__init__.py\"; fi && "
+            "if [ ! -f \"$SIMTK_SITE/__init__.py\" ]; then echo 'from openmm import *' > \"$SIMTK_SITE/__init__.py\"; fi && "
             "if [ -d /testbed/wrappers/python/openmm/app ]; then cp -r /testbed/wrappers/python/openmm/app \"$OPENMM_SITE/\"; fi && "
-            "SIMTK_SITE=$(python -c 'import simtk.openmm, os; print(os.path.dirname(simtk.openmm.__file__))' 2>/dev/null || true) && "
-            "if [ -n \"$SIMTK_SITE\" ] && [ -d /testbed/wrappers/python/simtk/openmm/app ]; then cp -r /testbed/wrappers/python/simtk/openmm/app \"$SIMTK_SITE/\"; fi",
+            "if [ -d /testbed/wrappers/python/simtk/openmm/app ]; then "
+            "cp -r /testbed/wrappers/python/simtk/openmm/app \"$SIMTK_SITE/\"; "
+            "elif [ -d /testbed/wrappers/python/openmm/app ]; then "
+            "cp -r /testbed/wrappers/python/openmm/app \"$SIMTK_SITE/\"; fi && "
+            "if [ -d \"$OPENMM_SITE/app/internal\" ] && [ -d \"$SIMTK_SITE/app/internal\" ]; then "
+            "cp -n \"$OPENMM_SITE\"/app/internal/compiled* \"$SIMTK_SITE/app/internal/\" 2>/dev/null || true; fi && "
+            "for name in vec3 unit; do "
+            "if [ -e \"$OPENMM_SITE/$name.py\" ]; then cp \"$OPENMM_SITE/$name.py\" \"$SIMTK_SITE/\"; fi; "
+            "if [ -d \"$OPENMM_SITE/$name\" ]; then cp -r \"$OPENMM_SITE/$name\" \"$SIMTK_SITE/\"; fi; done && "
+            "if [ ! -e \"$SIMTK_SITE/vec3.py\" ]; then echo 'from openmm.vec3 import *' > \"$SIMTK_SITE/vec3.py\"; fi && "
+            "if [ ! -e \"$SIMTK_SITE/unit.py\" ] && [ ! -d \"$SIMTK_SITE/unit\" ]; then echo 'from openmm.unit import *' > \"$SIMTK_SITE/unit.py\"; fi",
         ],
         "test_cmd": [
             f"cd wrappers/python/tests && python -m pytest -xvs {test_file} -k '{test_filter}'",
@@ -346,10 +360,13 @@ _RDKIT_CHEMDRAW_INCLUDE_COMPAT = (
     "HEADER=$(find External/ChemDraw -name chemdraw.h | head -n 1) && "
     "if [ -n \"$HEADER\" ]; then "
     "HEADER_DIR=$(dirname \"$HEADER\") && "
+    "REL=${HEADER_DIR#External/ChemDraw/} && "
+    "if [ \"$REL\" = \"$HEADER_DIR\" ]; then REL=.; fi && "
     "if [ ! -e External/ChemDraw/ChemDraw ]; then "
-    "ln -s \"${HEADER_DIR#External/ChemDraw/}\" External/ChemDraw/ChemDraw; fi; "
+    "ln -s \"$REL\" External/ChemDraw/ChemDraw; fi; "
     "if [ -d External/ChemDraw/chemdraw ] && [ ! -e External/ChemDraw/chemdraw/ChemDraw ]; then "
-    "ln -s \"../${HEADER_DIR#External/ChemDraw/}\" External/ChemDraw/chemdraw/ChemDraw; fi; "
+    "if [ \"$REL\" = . ]; then ln -s .. External/ChemDraw/chemdraw/ChemDraw; "
+    "else ln -s \"../$REL\" External/ChemDraw/chemdraw/ChemDraw; fi; fi; "
     "fi"
 )
 

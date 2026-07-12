@@ -137,21 +137,15 @@ def test_openmm_test_generation_runs_touched_pytest_file_not_fixed_selector(monk
         patch,
     )
 
-    assert command == (
-        "python -m pip install --no-cache-dir openmm numpy scipy pytest && "
-        "OPENMM_SITE=$(python -c 'import openmm, os; print(os.path.dirname(openmm.__file__))') && "
-        "SIMTK_SITE=$(python -c 'import simtk.openmm, os; print(os.path.dirname(simtk.openmm.__file__))' 2>/dev/null || true) && "
-        "if [ -d /testbed/wrappers/python/openmm/app ]; then cp -r /testbed/wrappers/python/openmm/app \"$OPENMM_SITE/\"; fi && "
-        "if [ -n \"$SIMTK_SITE\" ] && [ -d /testbed/wrappers/python/simtk/openmm/app ]; then "
-        "cp -r /testbed/wrappers/python/simtk/openmm/app \"$SIMTK_SITE/\"; fi && "
-        "if [ -n \"$SIMTK_SITE\" ]; then "
-        "for name in vec3 unit; do "
-        "if [ -e \"$OPENMM_SITE/$name.py\" ]; then cp \"$OPENMM_SITE/$name.py\" \"$SIMTK_SITE/\"; fi; "
-        "if [ -d \"$OPENMM_SITE/$name\" ]; then cp -r \"$OPENMM_SITE/$name\" \"$SIMTK_SITE/\"; fi; "
-        "done; "
-        "export PYTHONPATH=\"$SIMTK_SITE/app:${PYTHONPATH:-}\"; "
-        "fi && cd wrappers/python/tests && python -m pytest -xvs TestForceField.py"
+    assert "python -m pip install --no-cache-dir openmm numpy scipy pytest" in command
+    assert "mkdir -p \"$SIMTK_SITE\"" in command
+    assert "compiled*" in command
+    assert "from openmm.vec3 import *" in command
+    assert "from openmm.unit import *" in command
+    assert command.endswith(
+        "cd wrappers/python/tests && python -m pytest -xvs TestForceField.py"
     )
+    assert "-k 'original_test'" not in command
 
 
 def test_evaluation_exception_records_failure_reason(monkeypatch, tmp_path):

@@ -170,7 +170,7 @@ def parse_log_catch2(log: str, test_spec: TestSpec) -> dict[str, str]:
         match = re.match(r"^\+\s+(?:\S+=\S+\s+)*python3?\s+(\S+\.py)\s*$", line.strip())
         if match:
             unittest_name = match.group(1)
-        elif unittest_name and line.strip() == "OK":
+        elif unittest_name and re.match(r"^OK(?:\s+\(.+\))?$", line.strip()):
             test_status_map[unittest_name] = TestStatus.PASSED.value
         elif unittest_name and line.strip().startswith("FAILED"):
             test_status_map[unittest_name] = TestStatus.FAILED.value
@@ -210,7 +210,10 @@ def parse_log_openmm_binary_done(log: str, test_spec: TestSpec) -> dict[str, str
             test_name = match.group(1).split("/")[-1]
         elif line.strip() == "Done":
             test_status_map[test_name or "OpenMMBinary"] = TestStatus.PASSED.value
-        elif re.match(r"^\+?\s*exception: Assertion failure", line.strip()):
+        elif (
+            re.match(r"^\+?\s*exception:", line.strip())
+            or "No such file or directory" in line
+        ):
             test_status_map[test_name or "OpenMMBinary"] = TestStatus.FAILED.value
 
     return test_status_map
