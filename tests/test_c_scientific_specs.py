@@ -9,6 +9,7 @@ def test_openmm_python_specs_install_with_test_interpreter():
         assert "python -m pip install" in pre_install
         assert "openmm numpy scipy pytest" in pre_install
         assert "mkdir -p \"$SIMTK_SITE\"" in spec["build"][0]
+        assert "rm -rf \"$SIMTK_SITE/app\"" in spec["build"][0]
         assert "compiled*" in spec["build"][0]
         assert "from openmm.vec3 import *" in spec["build"][0]
         assert spec["build"][0].index("/testbed/wrappers/python/openmm/app") < spec[

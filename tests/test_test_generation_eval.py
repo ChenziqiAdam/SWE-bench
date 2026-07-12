@@ -140,6 +140,7 @@ def test_openmm_test_generation_runs_touched_pytest_file_not_fixed_selector(monk
 
     assert "python -m pip install --no-cache-dir openmm numpy scipy pytest" in command
     assert "mkdir -p \"$SIMTK_SITE\"" in command
+    assert "rm -rf \"$SIMTK_SITE/app\"" in command
     assert "compiled*" in command
     assert "from openmm.vec3 import *" in command
     assert "from openmm.unit import *" in command
