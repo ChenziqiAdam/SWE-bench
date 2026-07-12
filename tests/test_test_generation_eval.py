@@ -144,6 +144,7 @@ def test_openmm_test_generation_runs_touched_pytest_file_not_fixed_selector(monk
     assert "compiled*" in command
     assert "from openmm.vec3 import *" in command
     assert "from openmm.unit import *" in command
+    assert "python -m lib2to3 -w -n \"$SIMTK_SITE/app\"" in command
     assert command.index("/testbed/wrappers/python/openmm/app") < command.index(
         "/testbed/wrappers/python/simtk/openmm/app"
     )

@@ -275,7 +275,8 @@ def _openmm_python_app_spec(test_file: str, test_filter: str) -> dict:
             "if [ -d /testbed/wrappers/python/openmm/app ]; then "
             "cp -r /testbed/wrappers/python/openmm/app \"$SIMTK_SITE/\"; "
             "elif [ -d /testbed/wrappers/python/simtk/openmm/app ]; then "
-            "cp -r /testbed/wrappers/python/simtk/openmm/app \"$SIMTK_SITE/\"; fi && "
+            "cp -r /testbed/wrappers/python/simtk/openmm/app \"$SIMTK_SITE/\"; "
+            "python -m lib2to3 -w -n \"$SIMTK_SITE/app\" >/dev/null 2>&1 || true; fi && "
             "if [ -d \"$OPENMM_SITE/app/internal\" ] && [ -d \"$SIMTK_SITE/app/internal\" ]; then "
             "cp -n \"$OPENMM_SITE\"/app/internal/compiled* \"$SIMTK_SITE/app/internal/\" 2>/dev/null || true; fi && "
             "for name in vec3 unit; do "
@@ -437,6 +438,10 @@ def _rdkit_cpp_ctest_regex_spec(test_regex: str, new_boost: bool = False) -> dic
 def _rdkit_python_wrapper_spec(test_path: str, new_boost: bool = False) -> dict:
     """Build RDKit in-tree with Python wrappers and run a focused Python test."""
     spec = _rdkit_cpp_targets_spec(new_boost=new_boost)
+    spec["build"][1] = spec["build"][1].replace(
+        "-DRDK_BUILD_CPP_TESTS=ON ",
+        "-DRDK_BUILD_CPP_TESTS=OFF ",
+    )
     spec["build"][1] = spec["build"][1].replace(
         "-DRDK_BUILD_PYTHON_WRAPPERS=OFF ",
         "-DRDK_BUILD_PYTHON_WRAPPERS=ON ",

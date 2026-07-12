@@ -132,6 +132,7 @@ def _openmm_generated_pytest_command(
         "cp -r /testbed/wrappers/python/openmm/app \"$SIMTK_SITE/\"; "
         "elif [ -d /testbed/wrappers/python/simtk/openmm/app ]; then "
         "cp -r /testbed/wrappers/python/simtk/openmm/app \"$SIMTK_SITE/\"; "
+        "python -m lib2to3 -w -n \"$SIMTK_SITE/app\" >/dev/null 2>&1 || true; "
         "fi && "
         "if [ -d \"$OPENMM_SITE/app/internal\" ] && [ -d \"$SIMTK_SITE/app/internal\" ]; then "
         "cp -n \"$OPENMM_SITE\"/app/internal/compiled* \"$SIMTK_SITE/app/internal/\" 2>/dev/null || true; "

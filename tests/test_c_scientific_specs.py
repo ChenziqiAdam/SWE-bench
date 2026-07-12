@@ -12,6 +12,7 @@ def test_openmm_python_specs_install_with_test_interpreter():
         assert "rm -rf \"$SIMTK_SITE/app\"" in spec["build"][0]
         assert "compiled*" in spec["build"][0]
         assert "from openmm.vec3 import *" in spec["build"][0]
+        assert "python -m lib2to3 -w -n \"$SIMTK_SITE/app\"" in spec["build"][0]
         assert spec["build"][0].index("/testbed/wrappers/python/openmm/app") < spec[
             "build"
         ][0].index("/testbed/wrappers/python/simtk/openmm/app")
@@ -158,3 +159,10 @@ def test_current_testgen_rdkit_placeholders_have_concrete_specs():
         )
         assert "not evaluable" not in spec_text
         assert marker in spec_text
+
+
+def test_rdkit_python_wrapper_specs_do_not_build_cpp_tests():
+    for pr in ("6506", "6646", "6948", "7426", "8376", "8999"):
+        cmake = SPECS_RDKIT[pr]["build"][1]
+        assert "-DRDK_BUILD_PYTHON_WRAPPERS=ON" in cmake
+        assert "-DRDK_BUILD_CPP_TESTS=OFF" in cmake
