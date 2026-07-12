@@ -7,6 +7,7 @@ from swebench.eval_pipeline.test_generation_eval import (
     GEN_APPLY_PASS,
     _build_script,
     _evaluate_one,
+    _openmm_generated_pytest_targets,
     _test_command,
     classify_test_generation_result,
 )
@@ -142,10 +143,56 @@ def test_openmm_test_generation_runs_touched_pytest_file_not_fixed_selector(monk
     assert "compiled*" in command
     assert "from openmm.vec3 import *" in command
     assert "from openmm.unit import *" in command
+    assert command.index("/testbed/wrappers/python/openmm/app") < command.index(
+        "/testbed/wrappers/python/simtk/openmm/app"
+    )
     assert command.endswith(
-        "cd wrappers/python/tests && python -m pytest -xvs TestForceField.py"
+        "cd wrappers/python/tests && python -m pytest -xvs "
+        "TestForceField.py::test_generated_regression"
     )
     assert "-k 'original_test'" not in command
+
+
+def test_openmm_test_generation_runs_added_unittest_method_nodeids():
+    patch = """diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py
+--- a/wrappers/python/tests/TestForceField.py
++++ b/wrappers/python/tests/TestForceField.py
+@@ -845,5 +845,13 @@ class TestForceField(unittest.TestCase):
++    def test_Disulfides(self):
++        pass
+ class AmoebaTestForceField(unittest.TestCase):
+"""
+
+    assert _openmm_generated_pytest_targets(patch) == (
+        ["TestForceField.py::TestForceField::test_Disulfides"],
+        None,
+    )
+
+
+def test_openmm_test_generation_falls_back_to_touched_pytest_file():
+    patch = """diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py
+--- a/wrappers/python/tests/TestForceField.py
++++ b/wrappers/python/tests/TestForceField.py
+@@ -654,6 +654,9 @@ class TestForceField(unittest.TestCase):
++        assert True
+"""
+
+    assert _openmm_generated_pytest_targets(patch) == (["TestForceField.py"], None)
+
+
+def test_openmm_test_generation_falls_back_when_method_class_unknown():
+    patch = '''diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py
+--- a/wrappers/python/tests/TestForceField.py
++++ b/wrappers/python/tests/TestForceField.py
+@@ -1019,6 +1019,10 @@ END"""))
++    def test_CharmmPolar(self):
++        pass
+'''
+
+    assert _openmm_generated_pytest_targets(patch) == (
+        ["TestForceField.py"],
+        "test_CharmmPolar",
+    )
 
 
 def test_evaluation_exception_records_failure_reason(monkeypatch, tmp_path):

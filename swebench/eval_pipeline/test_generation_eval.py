@@ -114,7 +114,10 @@ def _no_tests_selected(output: str) -> bool:
     return " 0 selected" in output or "collected 0 items" in output
 
 
-def _openmm_generated_pytest_command(pytest_files: list[str]) -> str:
+def _openmm_generated_pytest_command(
+    pytest_targets: list[str],
+    pytest_filter: str | None = None,
+) -> str:
     setup = (
         "python -m pip install --no-cache-dir openmm numpy scipy pytest && "
         "OPENMM_SITE=$(python -c 'import openmm, os; print(os.path.dirname(openmm.__file__))') && "
@@ -124,10 +127,10 @@ def _openmm_generated_pytest_command(pytest_files: list[str]) -> str:
         "if [ ! -f \"$(dirname \"$SIMTK_SITE\")/__init__.py\" ]; then echo '' > \"$(dirname \"$SIMTK_SITE\")/__init__.py\"; fi && "
         "if [ ! -f \"$SIMTK_SITE/__init__.py\" ]; then echo 'from openmm import *' > \"$SIMTK_SITE/__init__.py\"; fi && "
         "if [ -d /testbed/wrappers/python/openmm/app ]; then cp -r /testbed/wrappers/python/openmm/app \"$OPENMM_SITE/\"; fi && "
-        "if [ -d /testbed/wrappers/python/simtk/openmm/app ]; then "
-        "cp -r /testbed/wrappers/python/simtk/openmm/app \"$SIMTK_SITE/\"; "
-        "elif [ -d /testbed/wrappers/python/openmm/app ]; then "
+        "if [ -d /testbed/wrappers/python/openmm/app ]; then "
         "cp -r /testbed/wrappers/python/openmm/app \"$SIMTK_SITE/\"; "
+        "elif [ -d /testbed/wrappers/python/simtk/openmm/app ]; then "
+        "cp -r /testbed/wrappers/python/simtk/openmm/app \"$SIMTK_SITE/\"; "
         "fi && "
         "if [ -d \"$OPENMM_SITE/app/internal\" ] && [ -d \"$SIMTK_SITE/app/internal\" ]; then "
         "cp -n \"$OPENMM_SITE\"/app/internal/compiled* \"$SIMTK_SITE/app/internal/\" 2>/dev/null || true; "
@@ -140,11 +143,74 @@ def _openmm_generated_pytest_command(pytest_files: list[str]) -> str:
         "if [ ! -e \"$SIMTK_SITE/unit.py\" ] && [ ! -d \"$SIMTK_SITE/unit\" ]; then echo 'from openmm.unit import *' > \"$SIMTK_SITE/unit.py\"; fi && "
         "export PYTHONPATH=\"$SIMTK_SITE/app:${PYTHONPATH:-}\""
     )
-    return (
+    command = (
         setup
         + " && cd wrappers/python/tests && python -m pytest -xvs "
-        + " ".join(pytest_files)
+        + " ".join(pytest_targets)
     )
+    if pytest_filter:
+        command += f" -k '{pytest_filter}'"
+    return command
+
+
+def _openmm_generated_pytest_targets(
+    generated_patch: str,
+) -> tuple[list[str], str | None]:
+    """Return generated OpenMM pytest nodeids, falling back to touched files.
+
+    Running an entire touched OpenMM test file can include unrelated legacy
+    tests that fail on gold and make the report noisy.  When the generated patch
+    adds pytest/unittest test methods, run those nodeids directly.
+    """
+    prefix = "wrappers/python/tests/"
+    files: set[str] = set()
+    nodeids: set[str] = set()
+    test_names: set[str] = set()
+    unknown_class_files: set[str] = set()
+    current_file = None
+    current_class = None
+    for raw in generated_patch.splitlines():
+        diff_match = re.match(r"^diff --git a/(\S+) b/\S+", raw)
+        if diff_match:
+            current_file = diff_match.group(1)
+            current_class = None
+            if (
+                current_file.startswith(prefix)
+                and current_file.endswith(".py")
+                and re.match(r"(?:Test|test).*\.py$", PurePosixPath(current_file).name)
+            ):
+                files.add(current_file[len(prefix):])
+            continue
+        if not current_file or current_file not in {prefix + f for f in files}:
+            continue
+        hunk_match = re.match(r"^@@.*@@\s*(?:class\s+([A-Za-z_]\w*)\b.*)?$", raw)
+        if hunk_match:
+            current_class = hunk_match.group(1) or current_class
+            continue
+        content = raw[1:] if raw.startswith(("+", " ")) else raw
+        class_match = re.match(r"^\s*class\s+([A-Za-z_]\w*)\b", content)
+        if class_match:
+            current_class = class_match.group(1)
+            continue
+        if not raw.startswith("+") or raw.startswith("+++"):
+            continue
+        test_match = re.match(r"^(\s*)def\s+(test_[A-Za-z_]\w*)\s*\(", content)
+        if not test_match:
+            continue
+        file_name = current_file[len(prefix):]
+        test_name = test_match.group(2)
+        if not test_match.group(1):
+            nodeids.add(f"{file_name}::{test_name}")
+        elif current_class:
+            nodeids.add(f"{file_name}::{current_class}::{test_name}")
+        else:
+            unknown_class_files.add(file_name)
+            test_names.add(test_name)
+    if nodeids and not unknown_class_files:
+        return sorted(nodeids), None
+    if test_names:
+        return sorted(unknown_class_files or files), " or ".join(sorted(test_names))
+    return sorted(files), None
 
 
 def _test_command(instance: dict, generated_patch: str) -> str:
@@ -160,18 +226,12 @@ def _test_command(instance: dict, generated_patch: str) -> str:
     # Scientific OpenMM specs normally contain a fixed selector for the
     # original PR test.  In test-generation mode that selector can silently
     # collect zero tests when the model chose a different regression-test name.
-    # Run the generated patch's touched OpenMM pytest files instead.
+    # Run generated test nodeids when discoverable, otherwise touched pytest
+    # files, instead of stale fixed selectors.
     if instance["repo"] == "openmm/openmm":
-        prefix = "wrappers/python/tests/"
-        pytest_files = sorted({
-            path[len(prefix):]
-            for path in directives
-            if path.startswith(prefix)
-            and path.endswith(".py")
-            and re.match(r"(?:Test|test).*\.py$", PurePosixPath(path).name)
-        })
-        if pytest_files:
-            return _openmm_generated_pytest_command(pytest_files)
+        pytest_targets, pytest_filter = _openmm_generated_pytest_targets(generated_patch)
+        if pytest_targets:
+            return _openmm_generated_pytest_command(pytest_targets, pytest_filter)
 
     raw = commands[0] if len(commands) == 1 else None
     if raw and isinstance(raw, str) and instance["repo"] not in {

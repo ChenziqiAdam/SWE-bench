@@ -271,10 +271,10 @@ def _openmm_python_app_spec(test_file: str, test_filter: str) -> dict:
             "if [ ! -f \"$(dirname \"$SIMTK_SITE\")/__init__.py\" ]; then echo '' > \"$(dirname \"$SIMTK_SITE\")/__init__.py\"; fi && "
             "if [ ! -f \"$SIMTK_SITE/__init__.py\" ]; then echo 'from openmm import *' > \"$SIMTK_SITE/__init__.py\"; fi && "
             "if [ -d /testbed/wrappers/python/openmm/app ]; then cp -r /testbed/wrappers/python/openmm/app \"$OPENMM_SITE/\"; fi && "
-            "if [ -d /testbed/wrappers/python/simtk/openmm/app ]; then "
-            "cp -r /testbed/wrappers/python/simtk/openmm/app \"$SIMTK_SITE/\"; "
-            "elif [ -d /testbed/wrappers/python/openmm/app ]; then "
-            "cp -r /testbed/wrappers/python/openmm/app \"$SIMTK_SITE/\"; fi && "
+            "if [ -d /testbed/wrappers/python/openmm/app ]; then "
+            "cp -r /testbed/wrappers/python/openmm/app \"$SIMTK_SITE/\"; "
+            "elif [ -d /testbed/wrappers/python/simtk/openmm/app ]; then "
+            "cp -r /testbed/wrappers/python/simtk/openmm/app \"$SIMTK_SITE/\"; fi && "
             "if [ -d \"$OPENMM_SITE/app/internal\" ] && [ -d \"$SIMTK_SITE/app/internal\" ]; then "
             "cp -n \"$OPENMM_SITE\"/app/internal/compiled* \"$SIMTK_SITE/app/internal/\" 2>/dev/null || true; fi && "
             "for name in vec3 unit; do "
@@ -833,7 +833,10 @@ SPECS_RDKIT = _RDKitSpecs({
     },
     "9331": _rdkit_cpp_targets_spec(
         "chemdrawCatchTest",
-        extra_cmake="-DRDK_BUILD_CHEMDRAW_SUPPORT=ON ",
+        extra_cmake=(
+            "-DRDK_BUILD_CHEMDRAW_SUPPORT=ON "
+            "-DCMAKE_CXX_FLAGS=-I/testbed/External/ChemDraw "
+        ),
         new_boost=True,
         chemdraw_include_compat=True,
         defer_target_build=True,
