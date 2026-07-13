@@ -15,6 +15,40 @@ from docker.models.containers import Container
 HEREDOC_DELIMITER = "EOF_1399519320"  # different from dataset HEREDOC_DELIMITERs!
 
 
+def patch_urllib3_closed_file_close_error() -> None:
+    """Suppress a Python 3.13 urllib3 close-time noise path.
+
+    Docker's streaming API can leave urllib3 HTTPResponse objects whose
+    finalizer calls close() after the backing file has already been closed.
+    urllib3 currently lets that specific ValueError escape from __del__, which
+    prints "Exception ignored in..." despite the Docker operation succeeding.
+    """
+    try:
+        import urllib3.response
+    except Exception:
+        return
+
+    response_cls = urllib3.response.HTTPResponse
+    if getattr(response_cls, "_swebench_closed_file_patch", False):
+        return
+
+    original_close = response_cls.close
+
+    def close(self, *args, **kwargs):
+        try:
+            return original_close(self, *args, **kwargs)
+        except ValueError as exc:
+            if "I/O operation on closed file" in str(exc):
+                return None
+            raise
+
+    response_cls.close = close
+    response_cls._swebench_closed_file_patch = True
+
+
+patch_urllib3_closed_file_close_error()
+
+
 def copy_to_container(container: Container, src: Path, dst: Path):
     """
     Copy a file from local to a docker container
