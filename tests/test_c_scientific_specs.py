@@ -166,3 +166,51 @@ def test_rdkit_python_wrapper_specs_do_not_build_cpp_tests():
         cmake = SPECS_RDKIT[pr]["build"][1]
         assert "-DRDK_BUILD_PYTHON_WRAPPERS=ON" in cmake
         assert "-DRDK_BUILD_CPP_TESTS=OFF" in cmake
+
+
+def test_sci_cc_001_excluded_specs_have_concrete_fallbacks():
+    openmm_prs = ("2187", "2802", "4188", "5155")
+    rdkit_prs = (
+        "3196",
+        "3412",
+        "3615",
+        "3930",
+        "4303",
+        "4414",
+        "5063",
+        "5232",
+        "5468",
+        "6231",
+        "6250",
+        "7137",
+        "7571",
+        "8179",
+        "8217",
+        "8515",
+        "8588",
+        "8734",
+        "8874",
+        "9012",
+        "9022",
+        "9125",
+        "9300",
+        "9348",
+        "9355",
+    )
+
+    for pr in openmm_prs:
+        spec = SPECS_OPENMM[pr]
+        spec_text = "\n".join(spec.get("test_cmd", []))
+        assert "not evaluable" not in spec_text
+        assert spec.get("fail_to_pass")
+
+    for pr in rdkit_prs:
+        spec = SPECS_RDKIT[pr]
+        spec_text = "\n".join(
+            spec.get("build", [])
+            + spec.get("build_after_test_patch", [])
+            + spec.get("test_cmd", [])
+        )
+        assert "not evaluable" not in spec_text
+        assert "no curated spec" not in spec_text
+        assert spec.get("fail_to_pass")

@@ -1,3 +1,6 @@
+import re
+from pathlib import Path
+
 # Constants - Task Instance Installation Environment
 SPECS_REDIS = {
     "13115": {
@@ -258,6 +261,10 @@ SPECS_OPENBABEL = {
 
 def _openmm_python_app_spec(test_file: str, test_filter: str) -> dict:
     """Run OpenMM Python app tests against the patched pure-Python app package."""
+    fallback_tests = [
+        f"wrappers/python/tests/{test_file}::{Path(test_file).stem}::{name}"
+        for name in re.findall(r"test_[A-Za-z0-9_]+", test_filter)
+    ]
     return {
         "pre_install": [
             "python -m pip install --no-cache-dir --upgrade pip setuptools wheel",
@@ -288,6 +295,7 @@ def _openmm_python_app_spec(test_file: str, test_filter: str) -> dict:
         "test_cmd": [
             f"cd wrappers/python/tests && python -m pytest -xvs {test_file} -k '{test_filter}'",
         ],
+        "fail_to_pass": fallback_tests,
     }
 
 
@@ -314,11 +322,20 @@ def _openmm_cpp_targets_spec(*targets: str) -> dict:
             f"./build/{target}"
             for target in targets
         ],
+        "fail_to_pass": list(targets),
     }
 
 
 def _openmm_python_unit_spec(test_filter: str) -> dict:
     """Run OpenMM Python unit tests against patched simtk.unit modules."""
+    fallback_tests = [
+        f"wrappers/python/tests/TestAPIUnits.py::TestAPIUnits::{name}"
+        for name in re.findall(r"test[A-Za-z0-9_]+|test_[A-Za-z0-9_]+", test_filter)
+    ]
+    if not fallback_tests and test_filter == "PhysicalConstants":
+        fallback_tests = [
+            "wrappers/python/tests/TestAPIUnits.py::TestAPIUnits::testPhysicalConstants"
+        ]
     return {
         "pre_install": [
             "python -m pip install --no-cache-dir --upgrade pip setuptools wheel",
@@ -331,6 +348,7 @@ def _openmm_python_unit_spec(test_filter: str) -> dict:
         "test_cmd": [
             f"cd wrappers/python/tests && python -m pytest -xvs TestAPIUnits.py -k '{test_filter}'",
         ],
+        "fail_to_pass": fallback_tests,
     }
 
 
@@ -418,6 +436,7 @@ def _rdkit_cpp_targets_spec(
             f"ctest --test-dir build -V -R {target}"
             for target in targets
         ],
+        "fail_to_pass": list(targets),
     }
     if defer_target_build:
         spec["build_after_test_patch"] = [target_build]
@@ -432,6 +451,7 @@ def _rdkit_cpp_ctest_regex_spec(test_regex: str, new_boost: bool = False) -> dic
         f"RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${{LD_LIBRARY_PATH:-}} "
         f"ctest --test-dir build -V -R '{test_regex}'"
     ]
+    spec["fail_to_pass"] = [test_regex]
     return spec
 
 
@@ -453,6 +473,7 @@ def _rdkit_python_wrapper_spec(test_path: str, new_boost: bool = False) -> dict:
         f"RDBASE=$PWD PYTHONPATH=$PWD LD_LIBRARY_PATH=$PWD/lib:${{LD_LIBRARY_PATH:-}} "
         f"python3 {test_path}"
     ]
+    spec["fail_to_pass"] = [test_path]
     return spec
 
 
@@ -858,6 +879,63 @@ SPECS_RDKIT = _RDKitSpecs({
     "8999": _rdkit_python_wrapper_spec(
         "External/pubchem_shape/Wrap/test_rdshapealign.py",
         new_boost=True,
+    ),
+    # ── sci_cc_001 concrete fallback specs ──────────────────────────────────
+    # These rows previously inherited explicit non-evaluable placeholders.
+    # Use the touched test family as the scorable key so fix-mode evaluation
+    # does not silently exclude them when dynamic mining observes zero F2P.
+    "3196": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/ChemReactions/Wrap/testReactionWrapper.py"
+    ),
+    "3412": _rdkit_cpp_ctest_regex_spec("Reaction|reaction|ChemReactions"),
+    "3615": _rdkit_cpp_ctest_regex_spec("MolDraw2D|moldraw"),
+    "3930": _rdkit_cpp_ctest_regex_spec("MolDraw2D|moldraw"),
+    "4303": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/MolTransforms/Wrap/testMolTransforms.py"
+    ),
+    "4414": _rdkit_cpp_ctest_regex_spec("Reaction|reaction|ChemReactions"),
+    "5063": _rdkit_cpp_ctest_regex_spec("MolDraw2D|moldraw"),
+    "5232": _rdkit_cpp_ctest_regex_spec("RGroup|rgroup"),
+    "5468": _rdkit_cpp_targets_spec("smiTest1"),
+    "6231": _rdkit_cpp_ctest_regex_spec("Depictor|depict|MolDraw2D|moldraw"),
+    "6250": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/ChemReactions/Wrap/testReactionWrapper.py"
+    ),
+    "7137": _rdkit_cpp_ctest_regex_spec("Tautomer|tautomer|MolStandardize"),
+    "7571": _rdkit_cpp_ctest_regex_spec("MolDraw2D|moldraw"),
+    "8179": _rdkit_cpp_ctest_regex_spec("MolDraw2D|moldraw", new_boost=True),
+    "8217": _rdkit_cpp_ctest_regex_spec("MolDraw2D|moldraw", new_boost=True),
+    "8515": _rdkit_python_wrapper_spec("Code/GraphMol/Wrap/rough_test.py"),
+    "8588": _rdkit_cpp_ctest_regex_spec("GraphMol|graphmol", new_boost=True),
+    "8734": _rdkit_cpp_ctest_regex_spec("MolTransforms|moltransforms", new_boost=True),
+    "8874": _rdkit_python_wrapper_spec("Code/GraphMol/Wrap/rough_test.py", new_boost=True),
+    "9012": _rdkit_cpp_ctest_regex_spec(
+        "ChemTransforms|chemtransforms|Synthon", new_boost=True
+    ),
+    "9022": _rdkit_cpp_ctest_regex_spec("Synthon", new_boost=True),
+    "9125": _rdkit_cpp_ctest_regex_spec(
+        "Depictor|depict|MolDraw2D|moldraw|atropisomersCatch", new_boost=True
+    ),
+    "9300": _rdkit_cpp_ctest_regex_spec("MolDraw2D|moldraw", new_boost=True),
+    "9348": _rdkit_cpp_targets_spec(
+        "chemdrawCatchTest",
+        extra_cmake=(
+            "-DRDK_BUILD_CHEMDRAW_SUPPORT=ON "
+            "-DCMAKE_CXX_FLAGS=-I/testbed/External/ChemDraw "
+        ),
+        new_boost=True,
+        chemdraw_include_compat=True,
+        defer_target_build=True,
+    ),
+    "9355": _rdkit_cpp_targets_spec(
+        "chemdrawCatchTest",
+        extra_cmake=(
+            "-DRDK_BUILD_CHEMDRAW_SUPPORT=ON "
+            "-DCMAKE_CXX_FLAGS=-I/testbed/External/ChemDraw "
+        ),
+        new_boost=True,
+        chemdraw_include_compat=True,
+        defer_target_build=True,
     ),
 })
 

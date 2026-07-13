@@ -43,6 +43,18 @@ logger = logging.getLogger(__name__)
 HEREDOC = "EOF_MINE_F2P"
 
 
+def _spec_fail_to_pass(instance: dict) -> list[str]:
+    """Return curated fallback F2P keys for cached scientific instances."""
+    try:
+        spec = MAP_REPO_VERSION_TO_SPECS[instance["repo"]][instance["version"]]
+    except KeyError:
+        return []
+    spec_text = "\n".join(spec.get("test_cmd", []))
+    if "not evaluable" in spec_text or "no curated spec" in spec_text:
+        return []
+    return list(spec.get("fail_to_pass") or [])
+
+
 def _build_mine_script(instance: dict, apply_gold: bool) -> str:
     """Build a bash script that resets to base, applies test_patch (+ optionally
     the gold patch), then runs pytest on the touched tests with the harness's
@@ -285,6 +297,15 @@ def apply_mined_to_instances(
     for inst in instances:
         m = mining.get(inst["instance_id"])
         if m and m.get("ok"):
-            inst["FAIL_TO_PASS"] = m["FAIL_TO_PASS"]
+            # Keep heuristic/curated C/C++ fallback keys when mining runs
+            # successfully but observes no fail→pass transition. Otherwise a
+            # broad-but-concrete scientific spec becomes silently excluded.
+            fallback = inst.get("FAIL_TO_PASS") or _spec_fail_to_pass(inst)
+            if m["FAIL_TO_PASS"]:
+                inst["FAIL_TO_PASS"] = m["FAIL_TO_PASS"]
+            else:
+                inst["FAIL_TO_PASS"] = fallback
             inst["PASS_TO_PASS"] = m["PASS_TO_PASS"]
+        elif not inst.get("FAIL_TO_PASS"):
+            inst["FAIL_TO_PASS"] = _spec_fail_to_pass(inst)
     return instances

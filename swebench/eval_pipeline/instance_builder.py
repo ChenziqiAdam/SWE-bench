@@ -126,6 +126,18 @@ def _parse_fail_to_pass(test_patch: str) -> list[str]:
     return results
 
 
+def _spec_fail_to_pass(repo_full: str, version: str) -> list[str]:
+    """Return curated parser-compatible fallback FAIL_TO_PASS keys from a spec."""
+    try:
+        spec = MAP_REPO_VERSION_TO_SPECS_C[repo_full][version]
+    except KeyError:
+        return []
+    spec_text = "\n".join(spec.get("test_cmd", []))
+    if "not evaluable" in spec_text or "no curated spec" in spec_text:
+        return []
+    return list(spec.get("fail_to_pass") or [])
+
+
 def _make_instance_id(repo_full: str, pr_number: int) -> str:
     return (repo_full + "-" + str(pr_number)).replace("/", "__")
 
@@ -174,11 +186,13 @@ def build_instance(row: dict, github_token: Optional[str] = None) -> Optional[di
     problem_statement = problem_statement.strip()
     issue_image_urls = extract_image_urls(problem_statement)
 
-    # FAIL_TO_PASS: heuristic parse from test patch
-    fail_to_pass = _parse_fail_to_pass(test_patch)
-
     # version: attempt to get from the base commit tag, fall back to "0"
     version = _get_version(repo_full, base_commit, github_token, pr_number=pr_number)
+
+    # FAIL_TO_PASS: heuristic parse from test patch, with curated C/C++ fallback.
+    fail_to_pass = _parse_fail_to_pass(test_patch) or _spec_fail_to_pass(
+        repo_full, version
+    )
 
     return {
         "repo": repo_full,
