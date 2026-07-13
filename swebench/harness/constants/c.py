@@ -336,6 +336,9 @@ def _openmm_python_unit_spec(test_filter: str) -> dict:
         fallback_tests = [
             "wrappers/python/tests/TestAPIUnits.py::TestAPIUnits::testPhysicalConstants"
         ]
+    test_selector = "TestAPIUnits.py"
+    if test_filter == "PhysicalConstants":
+        test_selector = "TestAPIUnits.py::TestAPIUnits::testPhysicalConstants"
     return {
         "pre_install": [
             "python -m pip install --no-cache-dir --upgrade pip setuptools wheel",
@@ -346,7 +349,7 @@ def _openmm_python_unit_spec(test_filter: str) -> dict:
             "if [ -d /testbed/wrappers/python/simtk/unit ]; then cp -r /testbed/wrappers/python/simtk/unit \"$SIMTK_SITE/\"; fi",
         ],
         "test_cmd": [
-            f"cd wrappers/python/tests && python -m pytest -xvs TestAPIUnits.py -k '{test_filter}'",
+            f"cd wrappers/python/tests && python -m pytest -xvs {test_selector}",
         ],
         "fail_to_pass": fallback_tests,
     }
@@ -393,6 +396,7 @@ _RDKIT_CHEMDRAW_INCLUDE_COMPAT = (
 _RDKIT_BASE_CMAKE_FLAGS = (
     "-DCMAKE_BUILD_TYPE=Release "
     "-DRDK_INSTALL_INTREE=ON "
+    "-DBoost_NO_BOOST_CMAKE=ON "
     "-DRDK_BUILD_CPP_TESTS=ON "
     "-DRDK_BUILD_PYTHON_WRAPPERS=OFF "
     "-DRDK_BUILD_INCHI_SUPPORT=OFF "
@@ -601,7 +605,7 @@ SPECS_OPENMM = _OpenMMSpecs({
             ("2511", "TestForceField.py", "test_ImpropersOrdering_smirnoff"),
             ("2738", "TestForceField.py", "test_CharmmPolar"),
             ("3214", "TestForceField.py", "test_ImplicitSolventForces"),
-            ("4188", "TestGromacsTopFile.py", "test_Vsite3Func4"),
+            ("4188", "TestGromacsTopFile.py", "test_Vsite3"),
             (
                 "3303",
                 "TestForceField.py TestModeller.py",
@@ -887,36 +891,54 @@ SPECS_RDKIT = _RDKitSpecs({
     "3196": _rdkit_python_wrapper_spec(
         "Code/GraphMol/ChemReactions/Wrap/testReactionWrapper.py"
     ),
-    "3412": _rdkit_cpp_ctest_regex_spec("Reaction|reaction|ChemReactions"),
-    "3615": _rdkit_cpp_ctest_regex_spec("MolDraw2D|moldraw"),
-    "3930": _rdkit_cpp_ctest_regex_spec("MolDraw2D|moldraw"),
+    "3412": _rdkit_cpp_targets_spec("chiralityTestsCatch"),
+    "3615": _rdkit_cpp_targets_spec("fileParsersCatchTest", "moldraw2DTestCatch"),
+    "3930": _rdkit_cpp_targets_spec("moldraw2DTestCatch"),
     "4303": _rdkit_python_wrapper_spec(
         "Code/GraphMol/MolTransforms/Wrap/testMolTransforms.py"
     ),
-    "4414": _rdkit_cpp_ctest_regex_spec("Reaction|reaction|ChemReactions"),
-    "5063": _rdkit_cpp_ctest_regex_spec("MolDraw2D|moldraw"),
-    "5232": _rdkit_cpp_ctest_regex_spec("RGroup|rgroup"),
+    "4414": _rdkit_cpp_targets_spec("rxnTestCatch"),
+    "5063": _rdkit_cpp_targets_spec("moldraw2DTestCatch"),
+    "5232": _rdkit_cpp_targets_spec("rgroupCatchTests"),
     "5468": _rdkit_cpp_targets_spec("smiTest1"),
-    "6231": _rdkit_cpp_ctest_regex_spec("Depictor|depict|MolDraw2D|moldraw"),
+    "6231": _rdkit_cpp_targets_spec(
+        "graphmolOrganometallicsCatch",
+        "graphmolMolOpsTest",
+        "moldraw2DTestCatch",
+    ),
     "6250": _rdkit_python_wrapper_spec(
         "Code/GraphMol/ChemReactions/Wrap/testReactionWrapper.py"
     ),
-    "7137": _rdkit_cpp_ctest_regex_spec("Tautomer|tautomer|MolStandardize"),
-    "7571": _rdkit_cpp_ctest_regex_spec("MolDraw2D|moldraw"),
-    "8179": _rdkit_cpp_ctest_regex_spec("MolDraw2D|moldraw", new_boost=True),
-    "8217": _rdkit_cpp_ctest_regex_spec("MolDraw2D|moldraw", new_boost=True),
+    "7137": _rdkit_cpp_targets_spec("canonTestsCatch"),
+    "7571": _rdkit_cpp_targets_spec("moldraw2DTestCatch"),
+    "8179": _rdkit_cpp_targets_spec(
+        "molfileStereoCatchTest",
+        "moldraw2DTestCatch",
+        new_boost=True,
+    ),
+    "8217": _rdkit_cpp_targets_spec("moldraw2DTestCatch", new_boost=True),
     "8515": _rdkit_python_wrapper_spec("Code/GraphMol/Wrap/rough_test.py"),
-    "8588": _rdkit_cpp_ctest_regex_spec("GraphMol|graphmol", new_boost=True),
-    "8734": _rdkit_cpp_ctest_regex_spec("MolTransforms|moltransforms", new_boost=True),
+    "8588": _rdkit_cpp_targets_spec("testMMPA", new_boost=True),
+    "8734": _rdkit_cpp_targets_spec("molTransformsTestCatch", new_boost=True),
     "8874": _rdkit_python_wrapper_spec("Code/GraphMol/Wrap/rough_test.py", new_boost=True),
-    "9012": _rdkit_cpp_ctest_regex_spec(
-        "ChemTransforms|chemtransforms|Synthon", new_boost=True
+    "9012": _rdkit_cpp_targets_spec(
+        "testSynthonSpaceSubstructureSearch",
+        "testSynthonSpaceFingerprintSearch",
+        "testSynthonSpaceRascalSearch",
+        new_boost=True,
     ),
-    "9022": _rdkit_cpp_ctest_regex_spec("Synthon", new_boost=True),
-    "9125": _rdkit_cpp_ctest_regex_spec(
-        "Depictor|depict|MolDraw2D|moldraw|atropisomersCatch", new_boost=True
+    "9022": _rdkit_cpp_targets_spec(
+        "testSynthonSpaceSubstructureSearch",
+        "testSynthonSpaceFingerprintSearch",
+        "testSynthonSpaceRascalSearch",
+        new_boost=True,
     ),
-    "9300": _rdkit_cpp_ctest_regex_spec("MolDraw2D|moldraw", new_boost=True),
+    "9125": _rdkit_cpp_targets_spec(
+        "graphmolMolOpsTest",
+        "molopsTestsCatch",
+        new_boost=True,
+    ),
+    "9300": _rdkit_cpp_targets_spec("moldraw2DTestCatch", new_boost=True),
     "9348": _rdkit_cpp_targets_spec(
         "chemdrawCatchTest",
         extra_cmake=(

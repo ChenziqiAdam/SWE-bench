@@ -55,6 +55,23 @@ def _spec_fail_to_pass(instance: dict) -> list[str]:
     return list(spec.get("fail_to_pass") or [])
 
 
+_STALE_F2P_MARKERS = (
+    "not evaluable",
+    "no curated spec",
+    "MolDraw2D|moldraw",
+    "Reaction|reaction|ChemReactions",
+    "RGroup|rgroup",
+    "GraphMol|graphmol",
+    "ChemTransforms|chemtransforms|Synthon",
+    "test_Vsite3Func4",
+)
+
+
+def _has_stale_fail_to_pass(fail_to_pass: list[str] | None) -> bool:
+    text = json.dumps(fail_to_pass or [])
+    return any(marker in text for marker in _STALE_F2P_MARKERS)
+
+
 def _build_mine_script(instance: dict, apply_gold: bool) -> str:
     """Build a bash script that resets to base, applies test_patch (+ optionally
     the gold patch), then runs pytest on the touched tests with the harness's
@@ -300,12 +317,14 @@ def apply_mined_to_instances(
             # Keep heuristic/curated C/C++ fallback keys when mining runs
             # successfully but observes no fail→pass transition. Otherwise a
             # broad-but-concrete scientific spec becomes silently excluded.
-            fallback = inst.get("FAIL_TO_PASS") or _spec_fail_to_pass(inst)
-            if m["FAIL_TO_PASS"]:
+            fallback = _spec_fail_to_pass(inst) or inst.get("FAIL_TO_PASS")
+            if m["FAIL_TO_PASS"] and not _has_stale_fail_to_pass(m["FAIL_TO_PASS"]):
                 inst["FAIL_TO_PASS"] = m["FAIL_TO_PASS"]
             else:
                 inst["FAIL_TO_PASS"] = fallback
             inst["PASS_TO_PASS"] = m["PASS_TO_PASS"]
-        elif not inst.get("FAIL_TO_PASS"):
+        elif not inst.get("FAIL_TO_PASS") or _has_stale_fail_to_pass(
+            inst.get("FAIL_TO_PASS")
+        ):
             inst["FAIL_TO_PASS"] = _spec_fail_to_pass(inst)
     return instances

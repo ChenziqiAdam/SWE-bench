@@ -65,3 +65,42 @@ def test_apply_mined_uses_spec_fallback_for_empty_cached_instance():
     result = apply_mined_to_instances(instances, mining)
 
     assert result[0]["FAIL_TO_PASS"] == ["TestReferenceCustomNonbondedForce"]
+
+
+def test_apply_mined_refreshes_stale_instance_f2p_from_spec_fallback():
+    instances = [
+        {
+            "instance_id": "rdkit__rdkit-3412",
+            "repo": "rdkit/rdkit",
+            "version": "3412",
+            "FAIL_TO_PASS": ["Reaction|reaction|ChemReactions"],
+            "PASS_TO_PASS": [],
+        }
+    ]
+    mining = {
+        "rdkit__rdkit-3412": {
+            "ok": True,
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": [],
+        }
+    }
+
+    result = apply_mined_to_instances(instances, mining)
+
+    assert result[0]["FAIL_TO_PASS"] == ["chiralityTestsCatch"]
+
+
+def test_apply_mined_refreshes_stale_instance_f2p_without_cached_mining():
+    instances = [
+        {
+            "instance_id": "rdkit__rdkit-8588",
+            "repo": "rdkit/rdkit",
+            "version": "8588",
+            "FAIL_TO_PASS": ["GraphMol|graphmol"],
+            "PASS_TO_PASS": [],
+        }
+    ]
+
+    result = apply_mined_to_instances(instances, {})
+
+    assert result[0]["FAIL_TO_PASS"] == ["testMMPA"]

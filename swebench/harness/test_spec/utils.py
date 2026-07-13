@@ -66,7 +66,10 @@ def make_eval_script_list_common(
     test_files = get_modified_files(test_patch)
     # Reset test files to the state they should be in before the patch.
     if test_files:
-        reset_tests_command = f"git checkout {base_commit} {' '.join(test_files)}"
+        reset_tests_command = (
+            f"cd {repo_directory} && "
+            f"git checkout {base_commit} {' '.join(test_files)}"
+        )
     else:
         reset_tests_command = 'echo "No test files to reset"'
 

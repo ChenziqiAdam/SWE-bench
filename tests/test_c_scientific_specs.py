@@ -24,6 +24,22 @@ def test_openmm_legacy_specs_use_targets_available_at_base_commit():
     assert "TestReferenceBAOABLangevinIntegrator" in SPECS_OPENMM["2561"]["build_after_test_patch"][-1]
 
 
+def test_openmm_2802_uses_exact_physical_constants_nodeid():
+    test_cmd = SPECS_OPENMM["2802"]["test_cmd"][0]
+
+    assert "-k 'PhysicalConstants'" not in test_cmd
+    assert "TestAPIUnits.py::TestAPIUnits::testPhysicalConstants" in test_cmd
+
+
+def test_openmm_4188_selects_touched_vsite3_test():
+    spec = SPECS_OPENMM["4188"]
+
+    assert "-k 'test_Vsite3'" in spec["test_cmd"][0]
+    assert spec["fail_to_pass"] == [
+        "wrappers/python/tests/TestGromacsTopFile.py::TestGromacsTopFile::test_Vsite3"
+    ]
+
+
 def test_openmm_specs_execute_the_touched_regression_family():
     expected = {
         "1487": "TestReferenceAndersenThermostat",
@@ -48,6 +64,7 @@ def test_rdkit_specs_use_apt_boost_and_disable_fragile_downloads():
         assert "libboost-all-dev" in pre_install
         assert "launchpadcontent" not in pre_install
         assert "apt-key" not in pre_install
+        assert "-DBoost_NO_BOOST_CMAKE=ON" in cmake
         assert "-DRDK_BUILD_COORDGEN_SUPPORT=OFF" in cmake
         assert "-DRDK_BUILD_MAEPARSER_SUPPORT=OFF" in cmake
         assert "-DRDK_BUILD_CHEMDRAW_SUPPORT=OFF" in cmake
@@ -61,6 +78,7 @@ def test_newer_rdkit_specs_install_required_new_boost():
 
         assert "libboost1.83-all-dev" in pre_install
         assert "launchpadcontent.net/mhier/libboost-latest" in pre_install
+        assert "-DBoost_NO_BOOST_CMAKE=ON" in cmake
         assert "-DRDK_BUILD_COORDGEN_SUPPORT=OFF" in cmake
         assert "-DRDK_BUILD_MAEPARSER_SUPPORT=OFF" in cmake
 
@@ -214,3 +232,55 @@ def test_sci_cc_001_excluded_specs_have_concrete_fallbacks():
         assert "not evaluable" not in spec_text
         assert "no curated spec" not in spec_text
         assert spec.get("fail_to_pass")
+
+
+def test_sci_cc_001_rdkit_specs_use_registered_ctest_targets():
+    expected_targets = {
+        "3412": ("chiralityTestsCatch",),
+        "3615": ("fileParsersCatchTest", "moldraw2DTestCatch"),
+        "3930": ("moldraw2DTestCatch",),
+        "4414": ("rxnTestCatch",),
+        "5063": ("moldraw2DTestCatch",),
+        "5232": ("rgroupCatchTests",),
+        "6231": (
+            "graphmolOrganometallicsCatch",
+            "graphmolMolOpsTest",
+            "moldraw2DTestCatch",
+        ),
+        "7137": ("canonTestsCatch",),
+        "7571": ("moldraw2DTestCatch",),
+        "8179": ("molfileStereoCatchTest", "moldraw2DTestCatch"),
+        "8217": ("moldraw2DTestCatch",),
+        "8588": ("testMMPA",),
+        "8734": ("molTransformsTestCatch",),
+        "9012": (
+            "testSynthonSpaceSubstructureSearch",
+            "testSynthonSpaceFingerprintSearch",
+            "testSynthonSpaceRascalSearch",
+        ),
+        "9022": (
+            "testSynthonSpaceSubstructureSearch",
+            "testSynthonSpaceFingerprintSearch",
+            "testSynthonSpaceRascalSearch",
+        ),
+        "9125": ("graphmolMolOpsTest", "molopsTestsCatch"),
+        "9300": ("moldraw2DTestCatch",),
+    }
+    known_bad_regexes = (
+        "MolDraw2D|moldraw",
+        "Reaction|reaction|ChemReactions",
+        "RGroup|rgroup",
+        "ChemTransforms|chemtransforms|Synthon",
+        "GraphMol|graphmol",
+    )
+
+    for pr, targets in expected_targets.items():
+        spec_text = "\n".join(
+            SPECS_RDKIT[pr].get("build", [])
+            + SPECS_RDKIT[pr].get("build_after_test_patch", [])
+            + SPECS_RDKIT[pr].get("test_cmd", [])
+        )
+        for target in targets:
+            assert f"-R {target}" in spec_text
+            assert f"--target {' '.join(targets)}" in spec_text
+        assert not any(regex in spec_text for regex in known_bad_regexes)
