@@ -265,11 +265,18 @@ def _openmm_python_app_spec(test_file: str, test_filter: str) -> dict:
         f"wrappers/python/tests/{test_file}::{Path(test_file).stem}::{name}"
         for name in re.findall(r"test_[A-Za-z0-9_]+", test_filter)
     ]
+    pre_install = [
+        "python -m pip install --no-cache-dir --upgrade pip setuptools wheel",
+        "python -m pip install --no-cache-dir openmm numpy scipy pytest",
+    ]
+    if test_file == "TestGromacsTopFile.py":
+        pre_install = [
+            "apt-get update -q",
+            "apt-get install -y --no-install-recommends gromacs",
+            *pre_install,
+        ]
     return {
-        "pre_install": [
-            "python -m pip install --no-cache-dir --upgrade pip setuptools wheel",
-            "python -m pip install --no-cache-dir openmm numpy scipy pytest",
-        ],
+        "pre_install": pre_install,
         "build": [
             "OPENMM_SITE=$(python -c 'import openmm, os; print(os.path.dirname(openmm.__file__))') && "
             "SIMTK_SITE=$(python -c 'import simtk.openmm, os; print(os.path.dirname(simtk.openmm.__file__))' 2>/dev/null || "
@@ -326,19 +333,19 @@ def _openmm_cpp_targets_spec(*targets: str) -> dict:
     }
 
 
-def _openmm_python_unit_spec(test_filter: str) -> dict:
+def _openmm_python_unit_spec(test_filter: str | list[str]) -> dict:
     """Run OpenMM Python unit tests against patched simtk.unit modules."""
+    if isinstance(test_filter, list):
+        test_names = test_filter
+    else:
+        test_names = re.findall(r"test[A-Za-z0-9_]+|test_[A-Za-z0-9_]+", test_filter)
     fallback_tests = [
         f"wrappers/python/tests/TestAPIUnits.py::TestAPIUnits::{name}"
-        for name in re.findall(r"test[A-Za-z0-9_]+|test_[A-Za-z0-9_]+", test_filter)
+        for name in test_names
     ]
-    if not fallback_tests and test_filter == "PhysicalConstants":
-        fallback_tests = [
-            "wrappers/python/tests/TestAPIUnits.py::TestAPIUnits::testPhysicalConstants"
-        ]
-    test_selector = "TestAPIUnits.py"
-    if test_filter == "PhysicalConstants":
-        test_selector = "TestAPIUnits.py::TestAPIUnits::testPhysicalConstants"
+    test_selector = " ".join(
+        f"TestAPIUnits.py::TestAPIUnits::{name}" for name in test_names
+    ) or "TestAPIUnits.py"
     return {
         "pre_install": [
             "python -m pip install --no-cache-dir --upgrade pip setuptools wheel",
@@ -506,7 +513,9 @@ class _OpenMMSpecs(dict):
 
 
 SPECS_OPENMM = _OpenMMSpecs({
-    "2802": _openmm_python_unit_spec("PhysicalConstants"),
+    "2802": _openmm_python_unit_spec(
+        ["testCustomGBForce", "testCustomNonbondedForce"]
+    ),
     # PR #4832: flexibleConstraints option for AmberPrmtopFile (Python-only change).
     # The C base image has python3/pip but NO conda, so install OpenMM via pip
     # to get the compiled `_openmm` extension + native libs. The patch edits the

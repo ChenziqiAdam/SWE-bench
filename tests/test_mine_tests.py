@@ -104,3 +104,24 @@ def test_apply_mined_refreshes_stale_instance_f2p_without_cached_mining():
     result = apply_mined_to_instances(instances, {})
 
     assert result[0]["FAIL_TO_PASS"] == ["testMMPA"]
+
+
+def test_apply_mined_refreshes_stale_openmm_2802_f2p():
+    instances = [
+        {
+            "instance_id": "openmm__openmm-2802",
+            "repo": "openmm/openmm",
+            "version": "2802",
+            "FAIL_TO_PASS": [
+                "wrappers/python/tests/TestAPIUnits.py::TestAPIUnits::testPhysicalConstants"
+            ],
+            "PASS_TO_PASS": [],
+        }
+    ]
+
+    result = apply_mined_to_instances(instances, {})
+
+    assert result[0]["FAIL_TO_PASS"] == [
+        "wrappers/python/tests/TestAPIUnits.py::TestAPIUnits::testCustomGBForce",
+        "wrappers/python/tests/TestAPIUnits.py::TestAPIUnits::testCustomNonbondedForce",
+    ]

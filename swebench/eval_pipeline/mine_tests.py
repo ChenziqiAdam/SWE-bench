@@ -64,6 +64,7 @@ _STALE_F2P_MARKERS = (
     "GraphMol|graphmol",
     "ChemTransforms|chemtransforms|Synthon",
     "test_Vsite3Func4",
+    "testPhysicalConstants",
 )
 
 

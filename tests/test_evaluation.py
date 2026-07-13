@@ -7,7 +7,9 @@ from swebench.harness.constants import (
     PASS_TO_PASS,
     KEY_INSTANCE_ID,
     KEY_MODEL,
+    TestStatus,
 )
+from swebench.harness.grading import get_eval_tests_report, get_resolution_status
 from swebench.harness.run_evaluation import make_run_report
 
 TEST_INSTANCE = collections.defaultdict(lambda: "test")
@@ -29,3 +31,17 @@ def test_make_run_report(tmpdir) -> None:
         assert output_path.is_file()
         report = json.loads(output_path.read_text())
         assert report["schema_version"] == 2
+
+
+def test_skipped_fail_to_pass_counts_as_unresolved() -> None:
+    report = get_eval_tests_report(
+        {"test_module.py::test_regression": TestStatus.SKIPPED.value},
+        {
+            FAIL_TO_PASS: ["test_module.py::test_regression"],
+            PASS_TO_PASS: [],
+        },
+    )
+
+    assert report[FAIL_TO_PASS]["success"] == []
+    assert report[FAIL_TO_PASS]["failure"] == ["test_module.py::test_regression"]
+    assert get_resolution_status(report) == "RESOLVED_NO"

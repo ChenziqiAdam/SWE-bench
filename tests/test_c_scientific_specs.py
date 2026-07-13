@@ -19,16 +19,30 @@ def test_openmm_python_specs_install_with_test_interpreter():
         assert "python -m pytest" in spec["test_cmd"][0]
 
 
+def test_openmm_gromacs_topfile_specs_install_gromacs_data():
+    for pr in ("4188", "5155"):
+        pre_install = "\n".join(SPECS_OPENMM[pr]["pre_install"])
+
+        assert "apt-get install -y --no-install-recommends gromacs" in pre_install
+
+
 def test_openmm_legacy_specs_use_targets_available_at_base_commit():
     assert "TestReferenceCustomIntegrator" in SPECS_OPENMM["1837"]["build_after_test_patch"][-1]
     assert "TestReferenceBAOABLangevinIntegrator" in SPECS_OPENMM["2561"]["build_after_test_patch"][-1]
 
 
-def test_openmm_2802_uses_exact_physical_constants_nodeid():
+def test_openmm_2802_uses_touched_api_unit_tests():
+    spec = SPECS_OPENMM["2802"]
     test_cmd = SPECS_OPENMM["2802"]["test_cmd"][0]
 
     assert "-k 'PhysicalConstants'" not in test_cmd
-    assert "TestAPIUnits.py::TestAPIUnits::testPhysicalConstants" in test_cmd
+    assert "testPhysicalConstants" not in test_cmd
+    assert "TestAPIUnits.py::TestAPIUnits::testCustomGBForce" in test_cmd
+    assert "TestAPIUnits.py::TestAPIUnits::testCustomNonbondedForce" in test_cmd
+    assert spec["fail_to_pass"] == [
+        "wrappers/python/tests/TestAPIUnits.py::TestAPIUnits::testCustomGBForce",
+        "wrappers/python/tests/TestAPIUnits.py::TestAPIUnits::testCustomNonbondedForce",
+    ]
 
 
 def test_openmm_4188_selects_touched_vsite3_test():
