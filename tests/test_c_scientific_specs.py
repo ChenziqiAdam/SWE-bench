@@ -85,7 +85,7 @@ def test_rdkit_specs_use_apt_boost_and_disable_fragile_downloads():
 
 
 def test_newer_rdkit_specs_install_required_new_boost():
-    for pr in ("8668", "8968", "9331"):
+    for pr in ("8515", "8668", "8968", "9331"):
         spec = SPECS_RDKIT[pr]
         pre_install = "\n".join(spec["pre_install"])
         cmake = spec["build"][1]
@@ -95,6 +95,13 @@ def test_newer_rdkit_specs_install_required_new_boost():
         assert "-DBoost_NO_BOOST_CMAKE=ON" in cmake
         assert "-DRDK_BUILD_COORDGEN_SUPPORT=OFF" in cmake
         assert "-DRDK_BUILD_MAEPARSER_SUPPORT=OFF" in cmake
+
+
+def test_legacy_rdkit_catch_specs_disable_posix_signals():
+    for pr in ("3412", "3615", "3930", "4414", "5063"):
+        cmake = SPECS_RDKIT[pr]["build"][1]
+
+        assert "-DCMAKE_CXX_FLAGS=-DCATCH_CONFIG_NO_POSIX_SIGNALS" in cmake
 
 
 def test_rdkit_8968_disables_unneeded_chemdraw_support():

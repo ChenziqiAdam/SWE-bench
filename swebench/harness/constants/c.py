@@ -417,6 +417,8 @@ _RDKIT_BASE_CMAKE_FLAGS = (
     "-DRDK_BUILD_THREADSAFE_SSS=ON "
 )
 
+_RDKIT_LEGACY_CATCH_CMAKE = "-DCMAKE_CXX_FLAGS=-DCATCH_CONFIG_NO_POSIX_SIGNALS "
+
 
 def _rdkit_cpp_targets_spec(
     *targets: str,
@@ -900,14 +902,26 @@ SPECS_RDKIT = _RDKitSpecs({
     "3196": _rdkit_python_wrapper_spec(
         "Code/GraphMol/ChemReactions/Wrap/testReactionWrapper.py"
     ),
-    "3412": _rdkit_cpp_targets_spec("chiralityTestsCatch"),
-    "3615": _rdkit_cpp_targets_spec("fileParsersCatchTest", "moldraw2DTestCatch"),
-    "3930": _rdkit_cpp_targets_spec("moldraw2DTestCatch"),
+    "3412": _rdkit_cpp_targets_spec(
+        "chiralityTestsCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
+    ),
+    "3615": _rdkit_cpp_targets_spec(
+        "fileParsersCatchTest",
+        "moldraw2DTestCatch",
+        extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE,
+    ),
+    "3930": _rdkit_cpp_targets_spec(
+        "moldraw2DTestCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
+    ),
     "4303": _rdkit_python_wrapper_spec(
         "Code/GraphMol/MolTransforms/Wrap/testMolTransforms.py"
     ),
-    "4414": _rdkit_cpp_targets_spec("rxnTestCatch"),
-    "5063": _rdkit_cpp_targets_spec("moldraw2DTestCatch"),
+    "4414": _rdkit_cpp_targets_spec(
+        "rxnTestCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
+    ),
+    "5063": _rdkit_cpp_targets_spec(
+        "moldraw2DTestCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
+    ),
     "5232": _rdkit_cpp_targets_spec("rgroupCatchTests"),
     "5468": _rdkit_cpp_targets_spec("smiTest1"),
     "6231": _rdkit_cpp_targets_spec(
@@ -926,7 +940,9 @@ SPECS_RDKIT = _RDKitSpecs({
         new_boost=True,
     ),
     "8217": _rdkit_cpp_targets_spec("moldraw2DTestCatch", new_boost=True),
-    "8515": _rdkit_python_wrapper_spec("Code/GraphMol/Wrap/rough_test.py"),
+    "8515": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/Wrap/rough_test.py", new_boost=True
+    ),
     "8588": _rdkit_cpp_targets_spec("testMMPA", new_boost=True),
     "8734": _rdkit_cpp_targets_spec("molTransformsTestCatch", new_boost=True),
     "8874": _rdkit_python_wrapper_spec("Code/GraphMol/Wrap/rough_test.py", new_boost=True),
