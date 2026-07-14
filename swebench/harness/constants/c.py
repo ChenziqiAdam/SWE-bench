@@ -333,6 +333,34 @@ def _openmm_cpp_targets_spec(*targets: str) -> dict:
     }
 
 
+def _openmm_native_python_spec(test_file: str, test_filter: str) -> dict:
+    """Build native OpenMM Python wrappers for generated API tests."""
+    return {
+        "pre_install": [
+            "apt-get update -q",
+            "apt-get install -y --no-install-recommends cmake g++ make swig doxygen python3-dev",
+            "python -m pip install --no-cache-dir numpy cython pytest setuptools wheel",
+        ],
+        "build_after_test_patch": [
+            "cmake -B build -S . "
+            "-DCMAKE_BUILD_TYPE=Release "
+            "-DOPENMM_BUILD_CUDA_LIB=OFF "
+            "-DOPENMM_BUILD_OPENCL_LIB=OFF "
+            "-DOPENMM_BUILD_HIP_LIB=OFF "
+            "-DOPENMM_BUILD_PYTHON_WRAPPERS=ON "
+            "-DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF "
+            "-DOPENMM_BUILD_EXAMPLES=OFF",
+            "cmake --build build --parallel $(nproc) --target PythonInstall",
+        ],
+        "test_cmd": [
+            "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
+            f"python -m pytest -xvs wrappers/python/tests/{test_file} -k '{test_filter}'"
+        ],
+        "fail_to_pass": [f"wrappers/python/tests/{test_file}"],
+        "test_generation_use_spec_cmd": True,
+    }
+
+
 def _openmm_python_unit_spec(test_filter: str | list[str]) -> dict:
     """Run OpenMM Python unit tests against patched simtk.unit modules."""
     if isinstance(test_filter, list):
@@ -468,9 +496,14 @@ def _rdkit_cpp_ctest_regex_spec(test_regex: str, new_boost: bool = False) -> dic
     return spec
 
 
-def _rdkit_python_wrapper_spec(test_path: str, new_boost: bool = False) -> dict:
+def _rdkit_python_wrapper_spec(
+    test_path: str | tuple[str, ...],
+    new_boost: bool = False,
+    extra_cmake: str = "",
+) -> dict:
     """Build RDKit in-tree with Python wrappers and run a focused Python test."""
-    spec = _rdkit_cpp_targets_spec(new_boost=new_boost)
+    test_paths = (test_path,) if isinstance(test_path, str) else test_path
+    spec = _rdkit_cpp_targets_spec(extra_cmake=extra_cmake, new_boost=new_boost)
     spec["build"][1] = spec["build"][1].replace(
         "-DRDK_BUILD_CPP_TESTS=ON ",
         "-DRDK_BUILD_CPP_TESTS=OFF ",
@@ -481,12 +514,46 @@ def _rdkit_python_wrapper_spec(test_path: str, new_boost: bool = False) -> dict:
     )
     spec["pre_install"].append("apt-get install -y --no-install-recommends python3-dev python3-numpy")
     spec["build"][-1] = "cmake --build build --parallel $(nproc)"
+    runtime = "RDBASE=$PWD PYTHONPATH=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
     spec["test_cmd"] = [
-        "cp -a build/rdkit/. rdkit/ && "
-        f"RDBASE=$PWD PYTHONPATH=$PWD LD_LIBRARY_PATH=$PWD/lib:${{LD_LIBRARY_PATH:-}} "
-        f"python3 {test_path}"
+        ("cp -a build/rdkit/. rdkit/ && " if index == 0 else "")
+        + runtime
+        + f"python3 {path}"
+        for index, path in enumerate(test_paths)
     ]
-    spec["fail_to_pass"] = [test_path]
+    spec["fail_to_pass"] = list(test_paths)
+    return spec
+
+
+def _rdkit_mixed_tests_spec(
+    cpp_targets: tuple[str, ...],
+    python_tests: tuple[str, ...],
+    new_boost: bool = False,
+    extra_cmake: str = "",
+) -> dict:
+    """Build and run generated RDKit tests spanning C++ and Python wrappers."""
+    spec = _rdkit_cpp_targets_spec(
+        *cpp_targets, extra_cmake=extra_cmake, new_boost=new_boost
+    )
+    spec["build"][1] = spec["build"][1].replace(
+        "-DRDK_BUILD_PYTHON_WRAPPERS=OFF ",
+        "-DRDK_BUILD_PYTHON_WRAPPERS=ON ",
+    )
+    spec["pre_install"].append(
+        "apt-get install -y --no-install-recommends python3-dev python3-numpy"
+    )
+    # A full build is required to create both wrapper modules and C++ targets.
+    spec["build"][-1] = "cmake --build build --parallel $(nproc)"
+    runtime = "RDBASE=$PWD PYTHONPATH=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
+    spec["test_cmd"].extend(
+        [
+            ("cp -a build/rdkit/. rdkit/ && " if index == 0 else "")
+            + runtime
+            + f"python3 {path}"
+            for index, path in enumerate(python_tests)
+        ]
+    )
+    spec["fail_to_pass"] = [*cpp_targets, *python_tests]
     return spec
 
 
@@ -554,6 +621,9 @@ SPECS_OPENMM = _OpenMMSpecs({
         "TestReferenceMonteCarloBarostat",
         "TestReferenceMonteCarloFlexibleBarostat",
         "TestReferenceMonteCarloMembraneBarostat",
+    ),
+    "4870": _openmm_native_python_spec(
+        "TestAPIUnits.py", "testConstantPotentialForce"
     ),
     # PR #5137 only modifies OpenCL FFT coverage. Keep a concrete CPU-buildable
     # spec so test-generation mode can apply/diagnose generated patches, but do
@@ -697,6 +767,11 @@ SPECS_OPENMM = _OpenMMSpecs({
         }.items()
     },
 })
+
+# Generated patch 1837 touches both Python and native tests.  The gold patch
+# changes native kernels, so force the concrete in-tree C++ command instead of
+# the pip-backed dynamic pytest path.
+SPECS_OPENMM["1837"]["test_generation_use_spec_cmd"] = True
 
 SPECS_OPENMC = {
     # Add entries here: "<PR_NUMBER>": {"build": [...], "test_cmd": [...]}
@@ -890,10 +965,129 @@ SPECS_RDKIT = _RDKitSpecs({
         new_boost=True,
     ),
     "8791": _rdkit_cpp_ctest_regex_spec("ForceField|forceField", new_boost=True),
-    "8795": _rdkit_cpp_ctest_regex_spec("GraphMol|graphmol", new_boost=True),
+    "8795": _rdkit_cpp_targets_spec("graphmolTestsCatch", new_boost=True),
     "8999": _rdkit_python_wrapper_spec(
         "External/pubchem_shape/Wrap/test_rdshapealign.py",
         new_boost=True,
+    ),
+    # ── issues_testgen_001 generated-test specs ────────────────────────────
+    # These targets correspond to the test files touched by the generated
+    # patches.  Keeping them concrete avoids excluding valid generated tests
+    # through the numeric non-evaluable fallback above.
+    "2083": _rdkit_cpp_targets_spec("fileParsersTest1"),
+    "2377": _rdkit_cpp_targets_spec("testReaction"),
+    "2548": _rdkit_mixed_tests_spec(
+        ("testReaction",),
+        ("Code/GraphMol/ChemReactions/Wrap/testSanitize.py",),
+        extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE,
+    ),
+    "3015": _rdkit_python_wrapper_spec("rdkit/Chem/UnitTestMol3D.py"),
+    "3050": _rdkit_cpp_targets_spec("testReaction"),
+    "3098": _rdkit_cpp_targets_spec(
+        "rxnTestCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
+    ),
+    "3354": _rdkit_cpp_targets_spec("resMolSupplierTest"),
+    "3729": _rdkit_cpp_targets_spec("testReaction"),
+    "3749": _rdkit_python_wrapper_spec("Code/GraphMol/FMCS/Wrap/testFMCS.py"),
+    "5570": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/RGroupDecomposition/Wrap/test_rgroups.py"
+    ),
+    "6021": _rdkit_cpp_targets_spec(
+        "rxnTestCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
+    ),
+    "6193": _rdkit_cpp_targets_spec("testReaction"),
+    "6199": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/ChemReactions/Wrap/testReactionWrapper.py"
+    ),
+    "6686": _rdkit_cpp_targets_spec(
+        "moldraw2DTestCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
+    ),
+    "7116": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/ChemReactions/Wrap/testSanitize.py"
+    ),
+    "7152": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/ChemReactions/Wrap/testReactionWrapper.py"
+    ),
+    "7384": _rdkit_mixed_tests_spec(
+        ("rxnTestCatch", "smiTestCatch", "cxsmilesTest"),
+        (
+            "Code/GraphMol/ChemReactions/Wrap/testReactionWrapper.py",
+            "Code/GraphMol/Wrap/rough_test.py",
+        ),
+        extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE,
+    ),
+    "7975": _rdkit_cpp_targets_spec("molopsTestsCatch", new_boost=True),
+    "8192": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/ChemReactions/Wrap/testReactionWrapper.py",
+        new_boost=True,
+    ),
+    "8210": _rdkit_cpp_targets_spec("moldraw2DTestCatch", new_boost=True),
+    "8211": _rdkit_cpp_targets_spec("moldraw2DTestCatch", new_boost=True),
+    "8264": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/ForceFieldHelpers/Wrap/testHelpers.py", new_boost=True
+    ),
+    "8266": _rdkit_python_wrapper_spec(
+        "rdkit/Chem/UnitTestInchi.py",
+        new_boost=True,
+        extra_cmake="-DRDK_BUILD_INCHI_SUPPORT=ON ",
+    ),
+    "8269": _rdkit_cpp_targets_spec("fileParsersCatchTest", new_boost=True),
+    "8289": _rdkit_mixed_tests_spec(
+        ("chemTransformsTestCatch",),
+        ("Code/GraphMol/Wrap/rough_test.py",),
+        new_boost=True,
+    ),
+    "8294": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/MolDraw2D/Wrap/testMolDraw2D.py", new_boost=True
+    ),
+    "8367": _rdkit_cpp_targets_spec("cxsmilesTest", new_boost=True),
+    "8385": _rdkit_cpp_targets_spec("testReducedGraphs", new_boost=True),
+    "8493": _rdkit_mixed_tests_spec(
+        ("tautomerQueryTestCatch",),
+        ("Code/GraphMol/TautomerQuery/Wrap/rough_test.py",),
+        new_boost=True,
+    ),
+    "8542": _rdkit_cpp_targets_spec("graphmolTestsCatch", new_boost=True),
+    "8550": _rdkit_cpp_targets_spec(
+        "testSynthonSpaceSubstructureSearch", new_boost=True
+    ),
+    "8587": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/Wrap/rough_test.py", new_boost=True
+    ),
+    "8652": _rdkit_cpp_targets_spec(
+        "testSynthonSpaceSubstructureSearch", new_boost=True
+    ),
+    "8680": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/MolDraw2D/Wrap/testMolDraw2D.py", new_boost=True
+    ),
+    "8767": _rdkit_mixed_tests_spec(
+        ("chiralityTestsCatch",),
+        ("Code/GraphMol/Wrap/test_cdxml.py",),
+        new_boost=True,
+    ),
+    "8808": _rdkit_cpp_targets_spec(
+        "cffi_test",
+        extra_cmake="-DRDK_BUILD_CFFI_LIB=ON ",
+        new_boost=True,
+    ),
+    "8824": _rdkit_cpp_targets_spec("fileParsersCatchTest", new_boost=True),
+    "8907": _rdkit_cpp_targets_spec("cxsmilesTest", new_boost=True),
+    "8974": _rdkit_cpp_targets_spec("testAtropisomers", new_boost=True),
+    "9002": _rdkit_cpp_targets_spec("cxsmilesTest", new_boost=True),
+    "9119": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/MolStandardize/Wrap/testMolStandardize.py",
+        new_boost=True,
+    ),
+    "9120": _rdkit_cpp_targets_spec(
+        "determineBondsCatchTest",
+        extra_cmake="-DRDK_BUILD_XYZ2MOL_SUPPORT=ON ",
+        new_boost=True,
+    ),
+    "9228": _rdkit_cpp_targets_spec("testUFFForceField", new_boost=True),
+    "9302": _rdkit_cpp_targets_spec("moldraw2DTestCatch", new_boost=True),
+    "9325": _rdkit_cpp_targets_spec("moldraw2DTestCatch", new_boost=True),
+    "9332": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/MolDraw2D/Wrap/testMolDraw2D.py", new_boost=True
     ),
     # ── sci_cc_001 concrete fallback specs ──────────────────────────────────
     # These rows previously inherited explicit non-evaluable placeholders.
@@ -923,7 +1117,7 @@ SPECS_RDKIT = _RDKitSpecs({
         "moldraw2DTestCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
     ),
     "5232": _rdkit_cpp_targets_spec("rgroupCatchTests"),
-    "5468": _rdkit_cpp_targets_spec("smiTest1"),
+    "5468": _rdkit_cpp_targets_spec("smiTestCatch"),
     "6231": _rdkit_cpp_targets_spec(
         "graphmolOrganometallicsCatch",
         "graphmolMolOpsTest",

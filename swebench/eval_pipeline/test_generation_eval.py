@@ -60,6 +60,8 @@ def classify_test_generation_result(
     no_tests_selected: bool = False,
     non_evaluable: bool = False,
     build_failed: bool = False,
+    base_build_failed: bool = False,
+    gold_build_failed: bool = False,
 ) -> dict:
     """Classify strict SWT-Bench-style test-generation results."""
     failure_reason = ""
@@ -69,15 +71,30 @@ def classify_test_generation_result(
     elif no_tests_selected:
         status = "not_exercised"
         failure_reason = "no_tests_selected"
-    elif build_failed:
-        status = "errored"
-        failure_reason = "generated_test_build_failed"
     elif not test_patch_applied or had_runtime_error:
         status = "errored"
         failure_reason = "test_patch_failed_or_timeout"
     elif not gold_patch_applied:
         status = "errored"
         failure_reason = "gold_patch_failed"
+    elif build_failed or gold_build_failed:
+        status = "errored"
+        failure_reason = "generated_test_build_failed"
+    elif base_build_failed:
+        # A generated regression test may intentionally use an API introduced
+        # by the fix.  Failing to compile on base is therefore a valid failing
+        # test when the same patch builds and all selected tests pass on gold.
+        gold_failed = sorted(t for t, s in gold_status_map.items() if _failed(s))
+        gold_passed = sorted(t for t, s in gold_status_map.items() if _passed(s))
+        resolved = bool(gold_passed) and not gold_failed
+        return {
+            "status": "resolved" if resolved else "unresolved",
+            "failure_reason": "" if resolved else "gold_did_not_pass",
+            "base_failed_tests": ["generated_test_build"],
+            "gold_passed_tests": (
+                ["generated_test_build"] if resolved else []
+            ),
+        }
     elif not base_status_map or not gold_status_map:
         status = "errored"
         failure_reason = "no_parseable_test_status"
@@ -111,7 +128,14 @@ def _non_evaluable_output(output: str) -> bool:
 
 
 def _no_tests_selected(output: str) -> bool:
-    return " 0 selected" in output or "collected 0 items" in output
+    return any(
+        marker in output
+        for marker in (
+            " 0 selected",
+            "collected 0 items",
+            "has no curated generated-test target",
+        )
+    )
 
 
 def _openmm_generated_pytest_command(
@@ -126,6 +150,10 @@ def _openmm_generated_pytest_command(
         "mkdir -p \"$SIMTK_SITE\" && "
         "if [ ! -f \"$(dirname \"$SIMTK_SITE\")/__init__.py\" ]; then echo '' > \"$(dirname \"$SIMTK_SITE\")/__init__.py\"; fi && "
         "if [ ! -f \"$SIMTK_SITE/__init__.py\" ]; then echo 'from openmm import *' > \"$SIMTK_SITE/__init__.py\"; fi && "
+        "cp -f /testbed/wrappers/python/openmm/*.py \"$OPENMM_SITE/\" 2>/dev/null || true; "
+        "cp -f /testbed/wrappers/python/simtk/openmm/*.py \"$SIMTK_SITE/\" 2>/dev/null || true; "
+        "SIMTK_ROOT=$(dirname \"$SIMTK_SITE\") && "
+        "if [ -d /testbed/wrappers/python/simtk/unit ]; then rm -rf \"$SIMTK_ROOT/unit\" && cp -r /testbed/wrappers/python/simtk/unit \"$SIMTK_ROOT/\"; fi && "
         "if [ -d /testbed/wrappers/python/openmm/app ]; then cp -r /testbed/wrappers/python/openmm/app \"$OPENMM_SITE/\"; fi && "
         "rm -rf \"$SIMTK_SITE/app\" && "
         "if [ -d /testbed/wrappers/python/openmm/app ]; then "
@@ -230,7 +258,13 @@ def _test_command(instance: dict, generated_patch: str) -> str:
     # collect zero tests when the model chose a different regression-test name.
     # Run generated test nodeids when discoverable, otherwise touched pytest
     # files, instead of stale fixed selectors.
-    if instance["repo"] == "openmm/openmm":
+    specs = MAP_REPO_VERSION_TO_SPECS.get(instance["repo"], {}).get(
+        str(instance.get("version", "")), {}
+    )
+    if (
+        instance["repo"] == "openmm/openmm"
+        and not specs.get("test_generation_use_spec_cmd")
+    ):
         pytest_targets, pytest_filter = _openmm_generated_pytest_targets(generated_patch)
         if pytest_targets:
             return _openmm_generated_pytest_command(pytest_targets, pytest_filter)
@@ -414,7 +448,8 @@ def _evaluate_one(
             had_runtime_error=base_timed_out or gold_timed_out,
             no_tests_selected=_no_tests_selected(base_output) or _no_tests_selected(gold_output),
             non_evaluable=_non_evaluable_output(base_output) or _non_evaluable_output(gold_output),
-            build_failed=BUILD_FAIL in base_output or BUILD_FAIL in gold_output,
+            base_build_failed=BUILD_FAIL in base_output,
+            gold_build_failed=BUILD_FAIL in gold_output,
         )
         report = {
             instance_id: {

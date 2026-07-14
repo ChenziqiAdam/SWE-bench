@@ -7,6 +7,7 @@ from swebench.eval_pipeline.test_generation_eval import (
     GEN_APPLY_PASS,
     _build_script,
     _evaluate_one,
+    _no_tests_selected,
     _openmm_generated_pytest_targets,
     _test_command,
     classify_test_generation_result,
@@ -98,6 +99,48 @@ def test_test_generation_marks_build_failure_errored():
     assert result["failure_reason"] == "generated_test_build_failed"
 
 
+def test_base_build_failure_resolves_when_gold_tests_pass():
+    result = classify_test_generation_result(
+        {},
+        {"TestNewAPI": "PASSED"},
+        True,
+        True,
+        base_build_failed=True,
+    )
+
+    assert result == {
+        "status": "resolved",
+        "failure_reason": "",
+        "base_failed_tests": ["generated_test_build"],
+        "gold_passed_tests": ["generated_test_build"],
+    }
+
+
+def test_gold_build_failure_remains_errored():
+    result = classify_test_generation_result(
+        {"TestNewAPI": "FAILED"},
+        {},
+        True,
+        True,
+        gold_build_failed=True,
+    )
+
+    assert result["status"] == "errored"
+    assert result["failure_reason"] == "generated_test_build_failed"
+
+
+def test_test_generation_reports_patch_failure_before_secondary_build_failure():
+    result = classify_test_generation_result(
+        {}, {}, False, True, build_failed=True
+    )
+
+    assert result["failure_reason"] == "test_patch_failed_or_timeout"
+
+
+def test_no_curated_target_is_not_exercised():
+    assert _no_tests_selected("openmm#5031 has no curated generated-test target")
+
+
 def test_gold_script_applies_gold_before_generated_test(monkeypatch):
     monkeypatch.setattr(
         "swebench.eval_pipeline.test_generation_eval.MAP_REPO_VERSION_TO_SPECS",
@@ -144,6 +187,8 @@ def test_openmm_test_generation_runs_touched_pytest_file_not_fixed_selector(monk
     assert "compiled*" in command
     assert "from openmm.vec3 import *" in command
     assert "from openmm.unit import *" in command
+    assert "wrappers/python/openmm/*.py" in command
+    assert "wrappers/python/simtk/unit" in command
     assert "python -m lib2to3 -w -n \"$SIMTK_SITE/app\"" in command
     assert command.index("/testbed/wrappers/python/openmm/app") < command.index(
         "/testbed/wrappers/python/simtk/openmm/app"
@@ -153,6 +198,36 @@ def test_openmm_test_generation_runs_touched_pytest_file_not_fixed_selector(monk
         "TestForceField.py::test_generated_regression"
     )
     assert "-k 'original_test'" not in command
+
+
+def test_openmm_test_generation_can_force_native_spec_command(monkeypatch):
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.MAP_REPO_VERSION_TO_SPECS",
+        {
+            "openmm/openmm": {
+                "1": {
+                    "test_cmd": ["./build/TestReferenceCustomIntegrator"],
+                    "test_generation_use_spec_cmd": True,
+                }
+            }
+        },
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.get_test_cmds",
+        lambda _instance: ["./build/TestReferenceCustomIntegrator"],
+    )
+    patch = """diff --git a/wrappers/python/tests/TestIntegrators.py b/wrappers/python/tests/TestIntegrators.py
+--- a/wrappers/python/tests/TestIntegrators.py
++++ b/wrappers/python/tests/TestIntegrators.py
+@@ -1 +1,2 @@
++def test_generated(): pass
+"""
+
+    command = _test_command(
+        {"repo": "openmm/openmm", "version": "1", "test_patch": ""}, patch
+    )
+
+    assert command == "./build/TestReferenceCustomIntegrator"
 
 
 def test_openmm_test_generation_runs_added_unittest_method_nodeids():

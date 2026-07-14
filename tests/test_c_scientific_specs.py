@@ -187,7 +187,7 @@ def test_current_testgen_rdkit_placeholders_have_concrete_specs():
         "6948": "Code/GraphMol/Wrap/rough_test.py",
         "7426": "rdkit/Chem/UnitTestRegistrationHash.py",
         "8791": "ForceField|forceField",
-        "8795": "GraphMol|graphmol",
+        "8795": "graphmolTestsCatch",
         "8999": "External/pubchem_shape/Wrap/test_rdshapealign.py",
     }
     for pr, marker in expected.items():
@@ -198,6 +198,42 @@ def test_current_testgen_rdkit_placeholders_have_concrete_specs():
         )
         assert "not evaluable" not in spec_text
         assert marker in spec_text
+
+
+def test_testgen_specs_avoid_stale_or_broad_targets():
+    assert "smiTestCatch" in " ".join(SPECS_RDKIT["5468"]["test_cmd"])
+    assert "graphmolTestsCatch" in " ".join(SPECS_RDKIT["8795"]["test_cmd"])
+    assert "GraphMol|graphmol" not in " ".join(SPECS_RDKIT["8795"]["test_cmd"])
+
+
+def test_openmm_native_python_api_spec_builds_wrappers():
+    spec = SPECS_OPENMM["4870"]
+    assert spec["test_generation_use_spec_cmd"] is True
+    assert "-DOPENMM_BUILD_PYTHON_WRAPPERS=ON" in spec["build_after_test_patch"][0]
+    assert "PythonInstall" in spec["build_after_test_patch"][1]
+    assert SPECS_OPENMM["1837"]["test_generation_use_spec_cmd"] is True
+
+
+def test_issues_testgen_rdkit_rows_have_concrete_specs():
+    prs = {
+        "2083", "2377", "2548", "3015", "3050", "3098", "3354",
+        "3729", "3749", "5570", "6021", "6193", "6199", "6686",
+        "7116", "7152", "7384", "7975", "8192", "8210", "8211",
+        "8264", "8266", "8269", "8289", "8294", "8367", "8385",
+        "8493", "8542", "8550", "8587", "8652", "8680", "8767",
+        "8808", "8824", "8907", "8974", "9002", "9119", "9120",
+        "9228", "9302", "9325", "9332",
+    }
+
+    for pr in prs:
+        spec = SPECS_RDKIT[pr]
+        spec_text = "\n".join(
+            spec.get("build", [])
+            + spec.get("build_after_test_patch", [])
+            + spec.get("test_cmd", [])
+        )
+        assert spec.get("fail_to_pass")
+        assert "not evaluable" not in spec_text
 
 
 def test_rdkit_python_wrapper_specs_do_not_build_cpp_tests():

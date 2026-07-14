@@ -133,6 +133,10 @@ def parse_log_catch2(log: str, test_spec: TestSpec) -> dict[str, str]:
     ctest_re = re.compile(
         r"^\s*\d+/\d+\s+Test\s+#\d+:\s+(.+?)\s+\.+\s*(?:\*+)?(Passed|Failed)\b"
     )
+    ctest_error_re = re.compile(
+        r"^\s*\d+/\d+\s+Test\s+#\d+:\s+(.+?)\s+\.+.*"
+        r"(?:Subprocess aborted|Exception|Timeout)\b"
+    )
 
     for line in log.split("\n"):
         line = line.rstrip()
@@ -160,11 +164,14 @@ def parse_log_catch2(log: str, test_spec: TestSpec) -> dict[str, str]:
                 test_status_map[name] = (
                     TestStatus.PASSED.value if status_str == "Passed" else TestStatus.FAILED.value
                 )
-    if test_status_map:
-        return test_status_map
-
+                continue
+            m = ctest_error_re.match(line)
+            if m:
+                test_status_map[m.group(1).strip()] = TestStatus.FAILED.value
     # Some RDKit wrapper tests are Python unittest scripts. They print only
     # "OK" or "FAILED (...)" summaries, so use the xtrace command as the key.
+    # Keep parsing after CTest rows because a generated patch can add both C++
+    # and Python tests, and test-generation evaluation must retain both.
     unittest_name = None
     for line in log.splitlines():
         match = re.match(r"^\+\s+(?:\S+=\S+\s+)*python3?\s+(\S+\.py)\s*$", line.strip())
@@ -239,6 +246,12 @@ def parse_log_pytest_nodeid(log: str, test_spec: TestSpec) -> dict[str, str]:
         if "::" not in line:
             continue
         tokens = line.split()
+        if tokens[0].upper() in status_words and len(tokens) > 1:
+            status = status_words[tokens[0].upper()]
+            nodeid = tokens[1]
+            if "::" in nodeid:
+                test_status_map[nodeid] = status
+            continue
         nodeid = tokens[0]
         if "::" not in nodeid:
             continue

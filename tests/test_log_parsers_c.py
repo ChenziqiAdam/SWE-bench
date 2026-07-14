@@ -2,6 +2,7 @@ from swebench.harness.constants import TestStatus
 from swebench.harness.log_parsers.c import (
     parse_log_catch2,
     parse_log_openmm_binary_done,
+    parse_log_pytest_nodeid,
 )
 
 
@@ -26,6 +27,26 @@ Test project /testbed/build
 
     assert parse_log_catch2(log, None) == {
         "canonTestsCatch": TestStatus.FAILED.value
+    }
+
+
+def test_parse_log_catch2_reads_ctest_aborted_rows():
+    log = """
+1/1 Test #139: testMMPA ...............Subprocess aborted***Exception: 0.24 sec
+"""
+
+    assert parse_log_catch2(log, None) == {
+        "testMMPA": TestStatus.FAILED.value
+    }
+
+
+def test_parse_log_pytest_reads_status_before_nodeid():
+    log = """
+FAILED TestCharmmFiles.py::TestCharmmFiles::test_NBFIX14 - ValueError
+"""
+
+    assert parse_log_pytest_nodeid(log, None) == {
+        "TestCharmmFiles.py::TestCharmmFiles::test_NBFIX14": TestStatus.FAILED.value
     }
 
 
@@ -76,6 +97,23 @@ FAILED (failures=1, skipped=10)
 
     assert parse_log_catch2(log, None) == {
         "Code/GraphMol/Wrap/rough_test.py": TestStatus.FAILED.value
+    }
+
+
+def test_parse_log_catch2_merges_ctest_and_python_results():
+    log = """
+1/1 Test #3: rxnTestCatch ......................   Passed    0.10 sec
++ python3 Code/GraphMol/ChemReactions/Wrap/testSanitize.py
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (failures=1)
+"""
+
+    assert parse_log_catch2(log, None) == {
+        "rxnTestCatch": TestStatus.PASSED.value,
+        "Code/GraphMol/ChemReactions/Wrap/testSanitize.py": TestStatus.FAILED.value,
     }
 
 
