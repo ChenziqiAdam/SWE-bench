@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import tempfile
 import threading
+import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -17,6 +18,7 @@ from tqdm.auto import tqdm
 
 from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
+from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json, with_wall_time
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
 from swebench.eval_pipeline.prediction_utils import (
     prediction_matches_backend,
@@ -208,6 +210,8 @@ def run_codex_inference(
     def _process_one(inst: dict) -> None:
         instance_id = inst["instance_id"]
         repo_dir = None
+        started = time.perf_counter()
+        stream_output = ""
         try:
             repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token, tmp_root=tmp_root)
             prompt = _codex_problem_text(inst, eval_mode=eval_mode)
@@ -239,6 +243,7 @@ def run_codex_inference(
                 timeout=timeout,
                 env=env,
             )
+            stream_output = result.stdout or ""
 
             stdout_path = logs_dir / f"{instance_id}.jsonl"
             stderr_path = logs_dir / f"{instance_id}.log"
@@ -266,6 +271,9 @@ def run_codex_inference(
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
+                "metrics": with_wall_time(
+                    metrics_from_stream_json(stream_output), time.perf_counter() - started
+                ),
             }
         except subprocess.TimeoutExpired as te:
             stdout = te.stdout if isinstance(te.stdout, str) else (te.stdout or b"").decode(errors="replace")
@@ -287,6 +295,9 @@ def run_codex_inference(
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
                 "error": "timeout",
+                "metrics": with_wall_time(
+                    metrics_from_stream_json(stdout), time.perf_counter() - started
+                ),
             }
         except Exception as e:
             logger.error(f"Error on {instance_id}: {e}")
@@ -298,6 +309,7 @@ def run_codex_inference(
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
                 "error": str(e),
+                "metrics": with_wall_time({}, time.perf_counter() - started),
             }
         finally:
             if repo_dir:

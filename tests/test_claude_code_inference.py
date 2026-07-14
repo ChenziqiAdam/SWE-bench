@@ -42,7 +42,9 @@ def test_claude_code_inference_writes_backend_tagged_prediction(tmp_path, monkey
         "assert sys.argv[sys.argv.index('--permission-mode') + 1] == 'acceptEdits'\n"
         "repo = pathlib.Path.cwd()\n"
         "(repo / 'module.py').write_text('value = 2\\n')\n"
-        "print(json.dumps({'type': 'result'}))\n"
+        "print(json.dumps({'type': 'result', 'duration_ms': 1500, "
+        "'num_turns': 2, 'total_cost_usd': 0.25, "
+        "'usage': {'input_tokens': 20, 'output_tokens': 5}}))\n"
     )
     claude.chmod(0o755)
     monkeypatch.setenv("PATH", str(fake_bin) + os.pathsep + os.environ.get("PATH", ""))
@@ -75,6 +77,9 @@ def test_claude_code_inference_writes_backend_tagged_prediction(tmp_path, monkey
     assert rows[0]["agent_backend"] == "claude_code"
     assert rows[0]["model_name_or_path"] == "claude-test"
     assert "value = 2" in rows[0]["model_patch"]
+    assert rows[0]["metrics"]["input_tokens"] == 20
+    assert rows[0]["metrics"]["provider_duration_seconds"] == 1.5
+    assert rows[0]["metrics"]["cost_usd"] == 0.25
     assert (tmp_path / "claude_code_logs" / "demo__repo-1.jsonl").exists()
 
 

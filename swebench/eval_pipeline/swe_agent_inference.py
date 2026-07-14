@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import tempfile
 import threading
+import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -25,6 +26,7 @@ from tqdm.auto import tqdm
 
 from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
+from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json, with_wall_time
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
 from swebench.eval_pipeline.prediction_utils import prediction_matches_backend
 from swebench.eval_pipeline.prompt_builder import _problem_text, _test_generation_instruction
@@ -304,6 +306,8 @@ def run_sweagent_inference(
     def _process_one(inst: dict) -> None:
         instance_id = inst["instance_id"]
         repo_dir = None
+        started = time.perf_counter()
+        stream_output = ""
         tmp_cfg = None
         tmp_out = None
         sweagent_tmp = None
@@ -337,6 +341,7 @@ def run_sweagent_inference(
                 timeout=_SWEAGENT_TIMEOUT,
                 env=env,
             )
+            stream_output = (result.stdout or "") + "\n" + (result.stderr or "")
             # Persist the full trajectory (stdout + stderr) for inspection.
             with open(instance_log, "w") as lf:
                 lf.write(f"=== config (agent.model) ===\n{cfg.get('agent', {}).get('model')}\n")
@@ -364,6 +369,9 @@ def run_sweagent_inference(
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
+                "metrics": with_wall_time(
+                    metrics_from_stream_json(stream_output), time.perf_counter() - started
+                ),
             }
         except subprocess.TimeoutExpired as te:
             def _dec(s):
@@ -386,6 +394,10 @@ def run_sweagent_inference(
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
                 "error": "timeout",
+                "metrics": with_wall_time(
+                    metrics_from_stream_json(so + "\n" + se),
+                    time.perf_counter() - started,
+                ),
             }
         except Exception as e:
             logger.error(f"Error on {instance_id}: {e}")
@@ -397,6 +409,7 @@ def run_sweagent_inference(
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
                 "error": str(e),
+                "metrics": with_wall_time({}, time.perf_counter() - started),
             }
         finally:
             if repo_dir:

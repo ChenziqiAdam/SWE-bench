@@ -297,6 +297,7 @@ def test_evaluation_exception_records_failure_reason(monkeypatch, tmp_path):
 
     assert result["status"] == "errored"
     assert result["failure_reason"] == "evaluation_exception"
+    assert result["evaluation_wall_time_seconds"] >= 0
     report = json.loads(
         (tmp_path / "run/model/demo__repo-1/report.json").read_text()
     )

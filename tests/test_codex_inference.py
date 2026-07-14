@@ -41,7 +41,8 @@ def test_codex_inference_writes_backend_tagged_prediction(tmp_path, monkeypatch)
         "import json, pathlib, sys\n"
         "repo = pathlib.Path(sys.argv[sys.argv.index('--cd') + 1])\n"
         "(repo / 'module.py').write_text('value = 2\\n')\n"
-        "print(json.dumps({'type': 'turn.completed'}))\n"
+        "print(json.dumps({'type': 'turn.completed', 'usage': "
+        "{'input_tokens': 10, 'cached_input_tokens': 4, 'output_tokens': 3}}))\n"
     )
     codex.chmod(0o755)
     monkeypatch.setenv("PATH", str(fake_bin) + os.pathsep + os.environ.get("PATH", ""))
@@ -74,6 +75,9 @@ def test_codex_inference_writes_backend_tagged_prediction(tmp_path, monkeypatch)
     assert rows[0]["agent_backend"] == "codex"
     assert rows[0]["model_name_or_path"] == "gpt-test"
     assert "value = 2" in rows[0]["model_patch"]
+    assert rows[0]["metrics"]["input_tokens"] == 10
+    assert rows[0]["metrics"]["cache_read_input_tokens"] == 4
+    assert rows[0]["metrics"]["wall_time_seconds"] >= 0
     assert (tmp_path / "codex_logs" / "demo__repo-1.jsonl").exists()
 
 

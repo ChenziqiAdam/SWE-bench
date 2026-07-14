@@ -135,6 +135,22 @@ def _load_nonempty_prediction_ids(predictions_path: str | None) -> set[str]:
     return out
 
 
+def _load_predictions(predictions_path: str | None) -> dict[str, dict]:
+    """Load the latest prediction row per instance for report metadata."""
+    out: dict[str, dict] = {}
+    if not predictions_path or not Path(predictions_path).exists():
+        return out
+    with open(predictions_path) as f:
+        for line in f:
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if row.get("instance_id"):
+                out[row["instance_id"]] = row
+    return out
+
+
 def render_comparison_table(
     results: dict[str, dict],
     instances: list[dict],
@@ -235,6 +251,7 @@ def render_test_generation_table(
     """Write a CSV and print test-generation success results."""
     meta = {inst["instance_id"]: inst for inst in instances}
     nonempty = _load_nonempty_prediction_ids(predictions_path)
+    predictions = _load_predictions(predictions_path)
     statuses = ("resolved", "unresolved", "excluded", "not_exercised", "errored", "no-pred")
 
     rows = []
@@ -244,6 +261,9 @@ def render_test_generation_table(
         status = info.get("status")
         if not status:
             status = "errored" if instance_id in nonempty else "no-pred"
+        metrics = (predictions.get(instance_id) or {}).get("metrics") or info.get(
+            "inference_metrics"
+        ) or {}
         rows.append({
             "instance_id": instance_id,
             "repo": inst.get("repo", ""),
@@ -256,6 +276,18 @@ def render_test_generation_table(
             "base_failed_tests": len(info.get("base_failed_tests") or []),
             "gold_passed_tests": len(info.get("gold_passed_tests") or []),
             "failure_reason": info.get("failure_reason", ""),
+            "inference_wall_time_seconds": metrics.get("wall_time_seconds", ""),
+            "provider_duration_seconds": metrics.get("provider_duration_seconds", ""),
+            "input_tokens": metrics.get("input_tokens", ""),
+            "output_tokens": metrics.get("output_tokens", ""),
+            "cache_read_input_tokens": metrics.get("cache_read_input_tokens", ""),
+            "cache_creation_input_tokens": metrics.get("cache_creation_input_tokens", ""),
+            "total_tokens": metrics.get("total_tokens", ""),
+            "cost_usd": metrics.get("cost_usd", ""),
+            "turns": metrics.get("turns", ""),
+            "evaluation_wall_time_seconds": info.get("evaluation_wall_time_seconds", ""),
+            "base_test_wall_time_seconds": info.get("base_test_wall_time_seconds", ""),
+            "gold_test_wall_time_seconds": info.get("gold_test_wall_time_seconds", ""),
         })
 
     Path(output_csv).parent.mkdir(parents=True, exist_ok=True)
@@ -271,6 +303,18 @@ def render_test_generation_table(
         "base_failed_tests",
         "gold_passed_tests",
         "failure_reason",
+        "inference_wall_time_seconds",
+        "provider_duration_seconds",
+        "input_tokens",
+        "output_tokens",
+        "cache_read_input_tokens",
+        "cache_creation_input_tokens",
+        "total_tokens",
+        "cost_usd",
+        "turns",
+        "evaluation_wall_time_seconds",
+        "base_test_wall_time_seconds",
+        "gold_test_wall_time_seconds",
     ]
     with open(output_csv, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -305,5 +349,19 @@ def render_test_generation_table(
         f"  resolved={counts['resolved']}  unresolved={counts['unresolved']}  "
         f"excluded={counts['excluded']}  not_exercised={counts['not_exercised']}  "
         f"errored={counts['errored']}  no-pred={counts['no-pred']}"
+    )
+    def _sum(field: str) -> float:
+        return sum(
+            row[field] for row in rows if isinstance(row[field], (int, float))
+        )
+
+    print(
+        "  tracked totals: "
+        f"input={int(_sum('input_tokens'))} tokens, "
+        f"output={int(_sum('output_tokens'))} tokens, "
+        f"cache-read={int(_sum('cache_read_input_tokens'))} tokens, "
+        f"cost=${_sum('cost_usd'):.6f}, "
+        f"inference={_sum('inference_wall_time_seconds'):.1f}s, "
+        f"evaluation={_sum('evaluation_wall_time_seconds'):.1f}s"
     )
     print("=" * 78 + "\n")

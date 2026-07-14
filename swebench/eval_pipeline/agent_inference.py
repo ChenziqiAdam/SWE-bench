@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import tempfile
 import threading
+import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -22,7 +23,9 @@ from typing import Optional
 
 from tqdm.auto import tqdm
 
-from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
+from swebench.eval_pipeline.constants import MODEL_COST_PER_INPUT, MODEL_COST_PER_OUTPUT
+from swebench.eval_pipeline.inference import _calc_cost, _clean_patch, _repair_patch
+from swebench.eval_pipeline.inference_metrics import with_wall_time
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
 from swebench.eval_pipeline.prediction_utils import prediction_matches_backend, unique_instances_by_id
 from swebench.eval_pipeline.prompt_builder import _problem_text, _test_generation_instruction
@@ -245,8 +248,8 @@ def _run_agentic_loop(
     repo_dir: Path,
     max_turns: int,
     eval_mode: str = "fix",
-) -> str:
-    """Run multi-turn tool-use loop. Returns unified diff patch string."""
+) -> tuple[str, dict]:
+    """Run multi-turn tool-use loop. Return the patch and API usage metrics."""
     messages = [{"role": "user", "content": _build_issue_prompt(instance, eval_mode=eval_mode)}]
     system_prompt = (
         TEST_GENERATION_SYSTEM_PROMPT
@@ -254,6 +257,16 @@ def _run_agentic_loop(
         else SYSTEM_PROMPT
     )
 
+    metrics = {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "turns": 0,
+    }
+    has_cost_rate = model in MODEL_COST_PER_INPUT or model in MODEL_COST_PER_OUTPUT
+    if has_cost_rate:
+        metrics["cost_usd"] = 0.0
     for turn in range(max_turns):
         response = anthropic_client.messages.create(
             model=model,
@@ -262,6 +275,20 @@ def _run_agentic_loop(
             tools=TOOLS,
             messages=messages,
         )
+        usage = getattr(response, "usage", None)
+        input_tokens = int(getattr(usage, "input_tokens", 0) or 0)
+        output_tokens = int(getattr(usage, "output_tokens", 0) or 0)
+        metrics["input_tokens"] += input_tokens
+        metrics["output_tokens"] += output_tokens
+        metrics["cache_read_input_tokens"] += int(
+            getattr(usage, "cache_read_input_tokens", 0) or 0
+        )
+        metrics["cache_creation_input_tokens"] += int(
+            getattr(usage, "cache_creation_input_tokens", 0) or 0
+        )
+        if has_cost_rate:
+            metrics["cost_usd"] += _calc_cost(model, input_tokens, output_tokens)
+        metrics["turns"] = turn + 1
 
         # Accumulate assistant message content
         assistant_content = response.content
@@ -311,7 +338,8 @@ def _run_agentic_loop(
         ["git", "diff", "--cached", "HEAD"],
         cwd=repo_dir, capture_output=True, text=True,
     )
-    return diff_result.stdout or ""
+    metrics["total_tokens"] = metrics["input_tokens"] + metrics["output_tokens"]
+    return diff_result.stdout or "", metrics
 
 
 def run_agent_inference_for_level(
@@ -358,9 +386,10 @@ def run_agent_inference_for_level(
     def _process_one(inst: dict) -> None:
         instance_id = inst["instance_id"]
         repo_dir = None
+        started = time.perf_counter()
         try:
             repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token, tmp_root=tmp_root)
-            patch = _run_agentic_loop(
+            patch, metrics = _run_agentic_loop(
                 inst,
                 anthropic_client,
                 model_name,
@@ -376,6 +405,7 @@ def run_agent_inference_for_level(
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
+                "metrics": with_wall_time(metrics, time.perf_counter() - started),
             }
         except Exception as e:
             logger.error(f"Error on {instance_id}: {e}")
@@ -387,6 +417,7 @@ def run_agent_inference_for_level(
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
                 "error": str(e),
+                "metrics": with_wall_time({}, time.perf_counter() - started),
             }
         finally:
             if repo_dir:

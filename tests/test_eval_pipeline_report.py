@@ -1,9 +1,11 @@
 import json
+import csv
 
 from swebench.eval_pipeline.report import (
     collect_results,
     collect_test_generation_results,
     render_comparison_table,
+    render_test_generation_table,
 )
 
 
@@ -69,3 +71,43 @@ def test_collect_test_generation_results_filters_model_dir(tmp_path):
     )
 
     assert results["demo__repo-1"]["status"] == "resolved"
+
+
+def test_test_generation_report_exports_resource_metrics(tmp_path, capsys):
+    predictions = tmp_path / "predictions.jsonl"
+    predictions.write_text(
+        json.dumps(
+            {
+                "instance_id": "demo__repo-1",
+                "model_patch": "diff --git a/x b/x\n",
+                "metrics": {
+                    "wall_time_seconds": 12.5,
+                    "input_tokens": 100,
+                    "output_tokens": 20,
+                    "total_tokens": 120,
+                    "cost_usd": 0.3,
+                },
+            }
+        )
+        + "\n"
+    )
+    output_csv = tmp_path / "results.csv"
+    render_test_generation_table(
+        results={
+            "demo__repo-1": {
+                "status": "resolved",
+                "evaluation_wall_time_seconds": 7.25,
+            }
+        },
+        instances=[{"instance_id": "demo__repo-1", "repo": "demo/repo"}],
+        output_csv=str(output_csv),
+        predictions_path=str(predictions),
+    )
+
+    with open(output_csv, newline="") as f:
+        row = next(csv.DictReader(f))
+    assert row["input_tokens"] == "100"
+    assert row["cost_usd"] == "0.3"
+    assert row["inference_wall_time_seconds"] == "12.5"
+    assert row["evaluation_wall_time_seconds"] == "7.25"
+    assert "tracked totals" in capsys.readouterr().out

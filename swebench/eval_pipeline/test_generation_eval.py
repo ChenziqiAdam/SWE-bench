@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path, PurePosixPath
 
@@ -372,6 +373,7 @@ def _evaluate_one(
     log_dir: str,
     timeout: int,
 ) -> dict:
+    evaluation_started = time.perf_counter()
     instance_id = instance["instance_id"]
     model_dir = _safe_model_dir(prediction or {})
     out_dir = Path(log_dir) / run_id / model_dir / instance_id
@@ -387,6 +389,10 @@ def _evaluate_one(
                 "gold_patch_applied": False,
                 "base_failed_tests": [],
                 "gold_passed_tests": [],
+                "inference_metrics": (prediction or {}).get("metrics", {}),
+                "evaluation_wall_time_seconds": round(
+                    time.perf_counter() - evaluation_started, 6
+                ),
             }
         }
         report_path.write_text(json.dumps(report, indent=2))
@@ -395,6 +401,8 @@ def _evaluate_one(
 
     generated_patch = prediction["model_patch"]
     container = None
+    base_duration = None
+    gold_duration = None
     try:
         spec = make_test_spec(instance)
         stale_name = spec.get_instance_container_name(run_id)
@@ -421,6 +429,7 @@ def _evaluate_one(
         copy_to_container(container, gen_patch_path, PurePosixPath(GENERATED_TEST_PATCH))
         copy_to_container(container, gold_patch_path, PurePosixPath(GOLD_PATCH))
 
+        phase_started = time.perf_counter()
         base_output, base_timed_out = _run_script(
             container,
             _build_script(instance, generated_patch, apply_gold=False),
@@ -428,6 +437,8 @@ def _evaluate_one(
             "base_generated_tests",
             timeout,
         )
+        base_duration = time.perf_counter() - phase_started
+        phase_started = time.perf_counter()
         gold_output, gold_timed_out = _run_script(
             container,
             _build_script(instance, generated_patch, apply_gold=True),
@@ -435,6 +446,7 @@ def _evaluate_one(
             "gold_generated_tests",
             timeout,
         )
+        gold_duration = time.perf_counter() - phase_started
 
         base_status = _parse_status(base_output, instance)
         gold_status = _parse_status(gold_output, instance)
@@ -460,6 +472,9 @@ def _evaluate_one(
                 "gold_status_count": len(gold_status),
                 "base_timed_out": base_timed_out,
                 "gold_timed_out": gold_timed_out,
+                "base_test_wall_time_seconds": round(base_duration, 6),
+                "gold_test_wall_time_seconds": round(gold_duration, 6),
+                "inference_metrics": prediction.get("metrics", {}),
             }
         }
     except Exception as e:
@@ -473,12 +488,22 @@ def _evaluate_one(
                 "gold_patch_applied": False,
                 "base_failed_tests": [],
                 "gold_passed_tests": [],
+                "base_test_wall_time_seconds": (
+                    round(base_duration, 6) if base_duration is not None else None
+                ),
+                "gold_test_wall_time_seconds": (
+                    round(gold_duration, 6) if gold_duration is not None else None
+                ),
+                "inference_metrics": prediction.get("metrics", {}),
             }
         }
     finally:
         cleanup_container(client, container, inst_logger)
         close_logger(inst_logger)
 
+    report[instance_id]["evaluation_wall_time_seconds"] = round(
+        time.perf_counter() - evaluation_started, 6
+    )
     report_path.write_text(json.dumps(report, indent=2))
     return report[instance_id]
 
