@@ -59,7 +59,10 @@ agent tokens on an invalid experiment. Generated patches are referenced by
 absolute paths so evaluation is independent of the caller's `--log_dir` form.
 For Claude Code coverage generation, the pipeline explicitly allows the `Bash`
 tool in its disposable clone so the agent can run setup, tests, and coverage;
-the configured permission mode still controls other tools.
+the configured permission mode still controls other tools. The prompt is sent
+through stdin so variadic tool-list flags cannot consume it as a CLI argument.
+If inference returns no patch, the CSV preserves the backend error and valid
+baseline coverage rather than mislabeling the run as targeted coverage.
 
 A custom mutation command may use `{targets}` where the pipeline should insert
 the comma-separated selected module paths. Mutation is skipped and explicitly

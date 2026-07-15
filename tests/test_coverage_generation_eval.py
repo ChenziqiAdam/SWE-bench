@@ -391,6 +391,43 @@ def test_valid_standalone_baseline_can_reach_inference():
     }) == ""
 
 
+def test_standalone_empty_prediction_preserves_error_and_baseline(tmp_path):
+    instance = {
+        "instance_id": "standalone__demo-empty",
+        "repo": "demo/repo",
+        "repo_url": "https://github.com/demo/repo.git",
+        "base_commit": "a" * 40,
+        "coverage_targets": [],
+    }
+    baseline_coverage = {"line_coverage": 78.0, "branch_coverage": 68.0}
+    result = run_standalone_coverage_evaluation(
+        instance,
+        {
+            "model_name_or_path": "demo-model",
+            "model_patch": "",
+            "error": "claude exited with code 1: missing prompt",
+            "metrics": {"wall_time_seconds": 2.0},
+        },
+        run_id="standalone-test",
+        log_dir=str(tmp_path / "logs"),
+        baseline={
+            "coverage": baseline_coverage,
+            "runtime": 12.5,
+            "setup_exit": 0,
+            "tools_exit": 0,
+            "test_exit": 0,
+            "coverage_test_exit": 0,
+            "repeat_exits": [0, 0],
+        },
+    )
+    assert result["status"] == "no-pred"
+    assert result["failure_reason"] == "claude exited with code 1: missing prompt"
+    assert result["coverage_scope"] == "repository"
+    assert result["coverage_before"] == baseline_coverage
+    assert result["base_tests_passed"] is True
+    assert result["before_wall_time_seconds"] == 12.5
+
+
 def test_standalone_evaluation_runs_repo_before_and_after_without_issue(tmp_path):
     repo = tmp_path / "source"
     repo.mkdir()

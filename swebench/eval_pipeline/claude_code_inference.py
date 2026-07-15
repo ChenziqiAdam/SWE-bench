@@ -314,7 +314,6 @@ def run_claude_code_inference(
                 # disposable clone. In noninteractive print mode acceptEdits
                 # alone otherwise denies every Bash invocation.
                 cmd += ["--allowedTools", "Bash"]
-            cmd.append(prompt)
 
             env = dict(os.environ)
             if api_base:
@@ -329,7 +328,7 @@ def run_claude_code_inference(
                 cwd=repo_dir,
                 capture_output=True,
                 text=True,
-                stdin=subprocess.DEVNULL,
+                input=prompt,
                 timeout=timeout,
                 env=env,
             )
@@ -338,7 +337,8 @@ def run_claude_code_inference(
             stderr_path = logs_dir / f"{instance_id}.log"
             stdout_path.write_text(result.stdout or "")
             stderr_path.write_text(
-                f"=== command ===\n{json.dumps(cmd[:-1] + ['<prompt>'])}\n"
+                f"=== command ===\n{json.dumps(cmd)}\n"
+                f"=== prompt transport === stdin ({len(prompt)} chars)\n"
                 f"=== cwd ===\n{repo_dir}\n"
                 f"=== exit code: {result.returncode} ===\n"
                 "=== STDERR ===\n"

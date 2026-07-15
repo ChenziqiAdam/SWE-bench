@@ -36,11 +36,14 @@ def test_claude_code_inference_writes_backend_tagged_prediction(tmp_path, monkey
     claude.write_text(
         "#!/usr/bin/env python3\n"
         "import json, pathlib, sys\n"
+        "prompt = sys.stdin.read()\n"
+        "assert 'Change value to 2.' in prompt\n"
         "assert '-p' in sys.argv\n"
         "assert '--verbose' in sys.argv\n"
         "assert sys.argv[sys.argv.index('--model') + 1] == 'claude-test'\n"
         "assert sys.argv[sys.argv.index('--permission-mode') + 1] == 'acceptEdits'\n"
         "assert sys.argv[sys.argv.index('--allowedTools') + 1] == 'Bash'\n"
+        "assert sys.argv[-1] == 'Bash'\n"
         "repo = pathlib.Path.cwd()\n"
         "(repo / 'module.py').write_text('value = 2\\n')\n"
         "print(json.dumps({'type': 'result', 'duration_ms': 1500, "
@@ -83,6 +86,9 @@ def test_claude_code_inference_writes_backend_tagged_prediction(tmp_path, monkey
     assert rows[0]["metrics"]["provider_duration_seconds"] == 1.5
     assert rows[0]["metrics"]["cost_usd"] == 0.25
     assert (tmp_path / "claude_code_logs" / "demo__repo-1.jsonl").exists()
+    human_log = (tmp_path / "claude_code_logs" / "demo__repo-1.log").read_text()
+    assert "prompt transport === stdin" in human_log
+    assert "Change value to 2." not in human_log
 
 
 def test_claude_code_inference_maps_endpoint_and_api_key_to_env(tmp_path, monkeypatch):

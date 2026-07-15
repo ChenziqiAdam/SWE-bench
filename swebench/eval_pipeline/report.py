@@ -387,21 +387,24 @@ def render_coverage_generation_table(
         after_cov = info.get("coverage_after") or {}
         before_mut = info.get("mutation_before") or {}
         after_mut = info.get("mutation_after") or {}
-        metrics = (predictions.get(instance_id) or {}).get("metrics") or info.get("inference_metrics") or {}
+        prediction = predictions.get(instance_id) or {}
+        metrics = prediction.get("metrics") or info.get("inference_metrics") or {}
         rows.append({
             "instance_id": instance_id,
             "repo": inst.get("repo", ""),
             "pr_number": inst.get("pull_number", ""),
             "category": inst.get("category", ""),
             "coverage_targets": ";".join(info.get("coverage_targets") or []),
-            "coverage_scope": info.get("coverage_scope", "targeted"),
+            "coverage_scope": info.get("coverage_scope") or (
+                "repository" if inst.get("standalone") else "targeted"
+            ),
             "mutation_targets": ";".join(info.get("mutation_targets") or []),
             "mutation_skipped_no_selected_modules": (
                 "yes" if info.get("mutation_skipped_no_selected_modules") else "no"
             ),
             "base_commit": info.get("base_commit", inst.get("base_commit", "")),
             "status": status,
-            "failure_reason": info.get("failure_reason", ""),
+            "failure_reason": info.get("failure_reason") or prediction.get("error", ""),
             "has_pred": "yes" if instance_id in nonempty else "no",
             "tests_only_patch": "yes" if info.get("tests_only_patch") else "no",
             "no_existing_test_lines_removed": (

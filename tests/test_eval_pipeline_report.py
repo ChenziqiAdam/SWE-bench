@@ -161,3 +161,28 @@ def test_coverage_generation_report_exports_scientific_metrics(tmp_path):
     assert row["mutation_timeout_adjusted_score_after"] == "65.0"
     assert row["mutation_score_definition"] == "100 * killed / total"
     assert row["turns"] == "3"
+
+
+def test_coverage_no_prediction_reports_repository_scope_and_inference_error(tmp_path):
+    predictions = tmp_path / "predictions.jsonl"
+    predictions.write_text(json.dumps({
+        "instance_id": "standalone__demo-1",
+        "model_patch": "",
+        "error": "claude exited with code 1: missing prompt",
+        "metrics": {"wall_time_seconds": 2.0},
+    }) + "\n")
+    output_csv = tmp_path / "coverage.csv"
+    render_coverage_generation_table(
+        results={"standalone__demo-1": {"status": "no-pred"}},
+        instances=[{
+            "instance_id": "standalone__demo-1",
+            "repo": "demo/repo",
+            "standalone": True,
+        }],
+        output_csv=str(output_csv),
+        predictions_path=str(predictions),
+    )
+    with open(output_csv, newline="") as handle:
+        row = next(csv.DictReader(handle))
+    assert row["coverage_scope"] == "repository"
+    assert row["failure_reason"] == "claude exited with code 1: missing prompt"

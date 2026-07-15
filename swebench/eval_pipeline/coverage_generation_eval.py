@@ -851,13 +851,28 @@ def run_standalone_coverage_evaluation(
     patch_info = inspect_test_patch(patch)
     targets = infer_coverage_targets(instance)
     if not patch.strip():
+        inference_error = (prediction or {}).get("error") or "empty_prediction"
+        baseline = baseline or {}
+        baseline_repeats = baseline.get("repeat_exits") or []
         result = {
             "status": "no-pred",
-            "failure_reason": "",
+            "failure_reason": inference_error,
+            "error": inference_error,
             **patch_info,
+            "standalone": True,
             "coverage_targets": targets,
+            "coverage_scope": "repository",
+            "mutation_targets": [],
+            "mutation_skipped_no_selected_modules": True,
             "repo_url": instance.get("repo_url") or instance.get("repo"),
             "base_commit": instance["base_commit"],
+            "setup_before_exit_code": baseline.get("setup_exit"),
+            "tools_before_exit_code": baseline.get("tools_exit"),
+            "base_tests_passed": baseline.get("test_exit") == 0,
+            "base_coverage_tests_passed": baseline.get("coverage_test_exit") == 0,
+            "baseline_flaky": any(code != 0 for code in baseline_repeats),
+            "coverage_before": baseline.get("coverage"),
+            "before_wall_time_seconds": round(float(baseline.get("runtime", 0.0)), 6),
             "inference_metrics": (prediction or {}).get("metrics", {}),
             "evaluation_wall_time_seconds": round(time.perf_counter() - started, 6),
         }
