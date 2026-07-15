@@ -29,7 +29,11 @@ from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
 from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json, with_wall_time
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
 from swebench.eval_pipeline.prediction_utils import prediction_matches_backend
-from swebench.eval_pipeline.prompt_builder import _problem_text, _test_generation_instruction
+from swebench.eval_pipeline.prompt_builder import (
+    _coverage_generation_instruction,
+    _problem_text,
+    _test_generation_instruction,
+)
 
 logger = logging.getLogger(__name__)
 AGENT_BACKEND = "sweagent"
@@ -56,7 +60,14 @@ def _sweagent_problem_text(instance: dict, eval_mode: str = "fix") -> str:
     target_files = sorted(file_contents)
     f2p = instance.get("FAIL_TO_PASS") or []
 
-    if eval_mode == "test_generation":
+    if eval_mode == "coverage_generation":
+        guidance = [
+            "Operational constraints for this SWE-agent run:",
+            "- Use exactly one tool call per assistant turn.",
+            f"- {_coverage_generation_instruction(instance)}",
+            "- Submit as soon as meaningful tests and assertions are ready.",
+        ]
+    elif eval_mode == "test_generation":
         guidance = [
             "Operational constraints for this SWE-agent run:",
             "- Use exactly one tool call per assistant turn. Never emit multiple tool calls in one response.",

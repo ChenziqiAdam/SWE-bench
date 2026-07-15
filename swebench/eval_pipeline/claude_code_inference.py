@@ -25,7 +25,11 @@ from swebench.eval_pipeline.prediction_utils import (
     unique_instances_by_id,
     write_prediction_rows,
 )
-from swebench.eval_pipeline.prompt_builder import _problem_text, _test_generation_instruction
+from swebench.eval_pipeline.prompt_builder import (
+    _coverage_generation_instruction,
+    _problem_text,
+    _test_generation_instruction,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +67,13 @@ def _claude_problem_text(instance: dict, eval_mode: str = "fix") -> str:
     target_files = sorted(file_contents)
     f2p = instance.get("FAIL_TO_PASS") or []
 
-    if eval_mode == "test_generation":
+    if eval_mode == "coverage_generation":
+        guidance = [
+            _coverage_generation_instruction(instance),
+            "Inspect the target modules and existing tests, and run tests/coverage while iterating.",
+            "When finished, leave the test edits in the working tree; the evaluator captures git diff.",
+        ]
+    elif eval_mode == "test_generation":
         guidance = [
             "Write a minimal regression test patch for this SWE-bench issue.",
             "Do not fix the bug or modify implementation/source files.",

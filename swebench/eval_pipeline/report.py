@@ -365,3 +365,128 @@ def render_test_generation_table(
         f"evaluation={_sum('evaluation_wall_time_seconds'):.1f}s"
     )
     print("=" * 78 + "\n")
+
+
+def render_coverage_generation_table(
+    results: dict[str, dict],
+    instances: list[dict],
+    output_csv: str,
+    predictions_path: str | None = None,
+    run_config: dict | None = None,
+) -> None:
+    """Write coverage/mutation deltas and test-patch integrity metrics."""
+    meta = {inst["instance_id"]: inst for inst in instances}
+    nonempty = _load_nonempty_prediction_ids(predictions_path)
+    predictions = _load_predictions(predictions_path)
+    rows = []
+    for instance_id in sorted(meta):
+        inst = meta[instance_id]
+        info = results.get(instance_id) or {}
+        status = info.get("status") or ("errored" if instance_id in nonempty else "no-pred")
+        before_cov = info.get("coverage_before") or {}
+        after_cov = info.get("coverage_after") or {}
+        before_mut = info.get("mutation_before") or {}
+        after_mut = info.get("mutation_after") or {}
+        metrics = (predictions.get(instance_id) or {}).get("metrics") or info.get("inference_metrics") or {}
+        rows.append({
+            "instance_id": instance_id,
+            "repo": inst.get("repo", ""),
+            "pr_number": inst.get("pull_number", ""),
+            "category": inst.get("category", ""),
+            "coverage_targets": ";".join(info.get("coverage_targets") or []),
+            "status": status,
+            "failure_reason": info.get("failure_reason", ""),
+            "has_pred": "yes" if instance_id in nonempty else "no",
+            "tests_only_patch": "yes" if info.get("tests_only_patch") else "no",
+            "no_existing_test_lines_removed": (
+                "yes" if info.get(
+                    "no_existing_test_lines_removed",
+                    info.get("preserves_existing_test_behavior", False),
+                ) else "no"
+            ),
+            "illegal_changed_files": ";".join(info.get("illegal_changed_files") or []),
+            "base_tests_passed": "yes" if info.get("base_tests_passed") else "no",
+            "after_tests_passed": "yes" if info.get("after_tests_passed") else "no",
+            "base_coverage_tests_passed": (
+                "yes" if info.get("base_coverage_tests_passed") else "no"
+            ),
+            "after_coverage_tests_passed": (
+                "yes" if info.get("after_coverage_tests_passed") else "no"
+            ),
+            "baseline_flaky": "yes" if info.get("baseline_flaky") else "no",
+            "generated_tests_flaky": "yes" if info.get("generated_tests_flaky") else "no",
+            "flaky": "yes" if info.get("flaky") else "no",
+            "added_test_count": info.get("added_test_count", 0),
+            "added_assertion_count": info.get("added_assertion_count", 0),
+            "removed_test_line_count": info.get("removed_test_line_count", 0),
+            "line_coverage_before": before_cov.get("line_coverage", ""),
+            "line_coverage_after": after_cov.get("line_coverage", ""),
+            "line_coverage_delta": info.get("coverage_line_delta", ""),
+            "branch_coverage_before": before_cov.get("branch_coverage", ""),
+            "branch_coverage_after": after_cov.get("branch_coverage", ""),
+            "branch_coverage_delta": info.get("coverage_branch_delta", ""),
+            "mutation_score_before": before_mut.get("score", ""),
+            "mutation_score_after": after_mut.get("score", ""),
+            "mutation_timeout_adjusted_score_before": before_mut.get(
+                "score_killed_or_timeout", ""
+            ),
+            "mutation_timeout_adjusted_score_after": after_mut.get(
+                "score_killed_or_timeout", ""
+            ),
+            "mutation_score_definition": before_mut.get(
+                "score_definition", after_mut.get("score_definition", "")
+            ),
+            "mutation_score_delta": info.get("mutation_score_delta", ""),
+            "mutation_before_exit_code": info.get("mutation_before_exit_code", ""),
+            "mutation_after_exit_code": info.get("mutation_after_exit_code", ""),
+            "mutation_before_tool_error": (
+                "yes" if info.get("mutation_before_tool_error") else "no"
+            ),
+            "mutation_after_tool_error": (
+                "yes" if info.get("mutation_after_tool_error") else "no"
+            ),
+            "mutation_unsupported_python": (
+                "yes" if info.get("mutation_unsupported_python") else "no"
+            ),
+            "inference_wall_time_seconds": metrics.get("wall_time_seconds", ""),
+            "input_tokens": metrics.get("input_tokens", ""),
+            "output_tokens": metrics.get("output_tokens", ""),
+            "total_tokens": metrics.get("total_tokens", ""),
+            "cost_usd": metrics.get("cost_usd", ""),
+            "turns": metrics.get("turns", ""),
+            "before_wall_time_seconds": info.get("before_wall_time_seconds", ""),
+            "after_wall_time_seconds": info.get("after_wall_time_seconds", ""),
+            "evaluation_wall_time_seconds": info.get("evaluation_wall_time_seconds", ""),
+        })
+    Path(output_csv).parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = list(rows[0]) if rows else ["instance_id", "status"]
+    with open(output_csv, "w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+    logger.info("Coverage-generation results written to %s", output_csv)
+
+    counts: dict[str, int] = {}
+    for row in rows:
+        counts[row["status"]] = counts.get(row["status"], 0) + 1
+    print("\n" + "=" * 92)
+    print(f"{'COVERAGE-GENERATION RESULTS':^92}")
+    print("=" * 92)
+    if run_config:
+        print("RUN CONFIGURATION")
+        for key, value in run_config.items():
+            print(f"  {key:<28} {value}")
+        print("-" * 92)
+    print(f"{'Instance':<40} {'Status':^12} {'Line Δ':>10} {'Branch Δ':>10} {'Mutation Δ':>12}")
+    print("-" * 92)
+    for row in rows:
+        def fmt(value):
+            return f"{value:+.2f}" if isinstance(value, (int, float)) else "-"
+        print(
+            f"{row['instance_id']:<40} {row['status']:^12} "
+            f"{fmt(row['line_coverage_delta']):>10} {fmt(row['branch_coverage_delta']):>10} "
+            f"{fmt(row['mutation_score_delta']):>12}"
+        )
+    print("=" * 92)
+    print("  " + "  ".join(f"{name}={count}" for name, count in sorted(counts.items())))
+    print("=" * 92 + "\n")

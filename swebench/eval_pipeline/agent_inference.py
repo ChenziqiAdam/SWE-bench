@@ -28,7 +28,11 @@ from swebench.eval_pipeline.inference import _calc_cost, _clean_patch, _repair_p
 from swebench.eval_pipeline.inference_metrics import with_wall_time
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
 from swebench.eval_pipeline.prediction_utils import prediction_matches_backend, unique_instances_by_id
-from swebench.eval_pipeline.prompt_builder import _problem_text, _test_generation_instruction
+from swebench.eval_pipeline.prompt_builder import (
+    _coverage_generation_instruction,
+    _problem_text,
+    _test_generation_instruction,
+)
 
 logger = logging.getLogger(__name__)
 AGENT_BACKEND = "builtin"
@@ -220,6 +224,15 @@ def _build_issue_prompt(instance: dict, eval_mode: str = "fix") -> str:
     problem = _problem_text(instance)
 
     media_ctx = format_issue_media_for_prompt(instance)
+    if eval_mode == "coverage_generation":
+        return (
+            f"Repository: {repo}\n\n"
+            f"{_coverage_generation_instruction(instance)}\n\n"
+            f"{media_ctx}"
+            f"Background issue context:\n<issue>\n{problem}\n</issue>\n\n"
+            f"Explore the repository using the provided tools and call submit_patch() "
+            f"when the test patch is complete."
+        )
     if eval_mode == "test_generation":
         return (
             f"Repository: {repo}\n\n"
@@ -253,7 +266,7 @@ def _run_agentic_loop(
     messages = [{"role": "user", "content": _build_issue_prompt(instance, eval_mode=eval_mode)}]
     system_prompt = (
         TEST_GENERATION_SYSTEM_PROMPT
-        if eval_mode == "test_generation"
+        if eval_mode in {"test_generation", "coverage_generation"}
         else SYSTEM_PROMPT
     )
 

@@ -73,10 +73,25 @@ def parse_args():
     p.add_argument(
         "--eval_mode",
         default="fix",
-        choices=["fix", "test_generation"],
+        choices=["fix", "test_generation", "coverage_generation"],
         help="Evaluation mode. 'fix' preserves normal SWE-bench patch evaluation; "
              "'test_generation' asks agents to write regression tests and scores "
-             "fail-on-base/pass-after-golden-patch.",
+             "fail-on-base/pass-after-golden-patch; 'coverage_generation' asks "
+             "agents to improve tests and compares coverage and mutation metrics.",
+    )
+    p.add_argument(
+        "--coverage_target", action="append", default=None,
+        help="Repo-relative target module for coverage_generation. Repeat for multiple "
+             "modules. Overrides inferred implementation files for all selected instances.",
+    )
+    p.add_argument(
+        "--coverage_eval_timeout", type=int, default=3600,
+        help="Seconds allowed for each before/after coverage+mutation phase (default 3600).",
+    )
+    p.add_argument(
+        "--coverage_flaky_runs", type=int, default=2,
+        help="Additional complete pytest reruns in both baseline and generated-test phases "
+             "for comparable flakiness checks (default 2).",
     )
     p.add_argument("--github_token", default=None,
                    help="GitHub token (or set GITHUB_TOKEN env var)")
@@ -408,6 +423,11 @@ def main():
         instances = [i for i in instances if i.get("FAIL_TO_PASS")]
         logger.info(f"--has_tests: kept {len(instances)}/{before} instances with FAIL_TO_PASS tests")
 
+    if args.eval_mode == "coverage_generation" and args.coverage_target:
+        targets = [path.strip().lstrip("./") for path in args.coverage_target if path.strip()]
+        instances = [{**instance, "coverage_targets": targets} for instance in instances]
+        logger.info("Coverage targets overridden for %s instance(s): %s", len(instances), targets)
+
     # ── Stage 2.5: Base-commit Build Validation ──────────────────────────────
     build_validation: dict[str, dict] = {}
     if not args.skip_validation:
@@ -607,11 +627,10 @@ def main():
         f"Selected {selected_count} {args.agent_backend}/{inference_model} prediction(s) "
         f"for eval → {agent_predictions_path}"
     )
-    run_id = (
-        f"{args.run_id}_testgen"
-        if args.eval_mode == "test_generation"
-        else f"{args.run_id}_agent"
-    )
+    run_id = {
+        "test_generation": f"{args.run_id}_testgen",
+        "coverage_generation": f"{args.run_id}_coveragegen",
+    }.get(args.eval_mode, f"{args.run_id}_agent")
     if not args.skip_eval:
         logger.info("=== Stage 5: Running Docker evaluation ===")
 
@@ -634,7 +653,7 @@ def main():
                 import shutil
                 import subprocess
                 removed = 0
-                if args.eval_mode == "test_generation":
+                if args.eval_mode in {"test_generation", "coverage_generation"}:
                     model_report_dir = (
                         Path(args.log_dir)
                         / run_id
@@ -672,6 +691,24 @@ def main():
                     log_dir=args.log_dir,
                     max_workers=args.max_workers,
                     timeout=1800,
+                )
+            elif args.eval_mode == "coverage_generation":
+                from swebench.eval_pipeline.coverage_generation_eval import (
+                    run_coverage_generation_evaluation,
+                )
+
+                logger.info(
+                    "--- Evaluating coverage-generating tests (run_id=%s, %s instances) ---",
+                    run_id, len(eval_instance_ids),
+                )
+                run_coverage_generation_evaluation(
+                    instances=unique_eval_instances,
+                    predictions_path=agent_predictions_path,
+                    run_id=run_id,
+                    log_dir=args.log_dir,
+                    max_workers=args.max_workers,
+                    timeout=args.coverage_eval_timeout,
+                    flaky_runs=args.coverage_flaky_runs,
                 )
             else:
                 wallclock = args.eval_wallclock_per_instance * max(1, len(eval_instance_ids))
@@ -711,6 +748,7 @@ def main():
         collect_results,
         collect_test_generation_results,
         render_comparison_table,
+        render_coverage_generation_table,
         render_test_generation_table,
     )
 
@@ -751,6 +789,9 @@ def main():
         "claude_code_permission_mode": args.claude_code_permission_mode,
         "claude_code_max_turns": args.claude_code_max_turns,
         "claude_code_model": args.claude_code_model,
+        "coverage_target": args.coverage_target or "(inferred per instance)",
+        "coverage_eval_timeout": args.coverage_eval_timeout,
+        "coverage_flaky_runs": args.coverage_flaky_runs,
     }
     if args.eval_mode == "test_generation":
         results = collect_test_generation_results(
@@ -760,6 +801,20 @@ def main():
             model_name=inference_model,
         )
         render_test_generation_table(
+            results=results,
+            instances=instances,
+            output_csv=output_csv,
+            predictions_path=agent_predictions_path,
+            run_config=run_config,
+        )
+    elif args.eval_mode == "coverage_generation":
+        results = collect_test_generation_results(
+            run_id=run_id,
+            log_dir=args.log_dir,
+            instance_ids={i["instance_id"] for i in instances},
+            model_name=inference_model,
+        )
+        render_coverage_generation_table(
             results=results,
             instances=instances,
             output_csv=output_csv,

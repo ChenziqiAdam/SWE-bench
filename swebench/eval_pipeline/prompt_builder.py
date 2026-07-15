@@ -20,6 +20,11 @@ TEST_GENERATION_SYSTEM_MESSAGE = (
     "modifies tests only."
 )
 
+COVERAGE_GENERATION_SYSTEM_MESSAGE = (
+    "You are an expert scientific-software test engineer. "
+    "You must improve tests for specified production modules without changing production code."
+)
+
 # Max chars per file to include in the prompt (~200k chars fits in DeepSeek 1M context)
 _MAX_FILE_CHARS = 200_000
 
@@ -69,6 +74,25 @@ def _test_generation_instruction() -> str:
     )
 
 
+def _coverage_generation_instruction(instance: dict) -> str:
+    from swebench.eval_pipeline.coverage_generation_eval import infer_coverage_targets
+
+    targets = infer_coverage_targets(instance)
+    target_text = "\n".join(f"    {path}" for path in targets) or "    (no target inferred)"
+    return (
+        "Improve the test suite for these target modules:\n"
+        f"{target_text}\n\n"
+        "Requirements:\n"
+        "1. Only add or modify test files and small test data files.\n"
+        "2. Do not modify production code, configuration files, or existing test behavior.\n"
+        "3. Add meaningful assertions, not merely execution-based tests.\n"
+        "4. Keep the complete existing test suite passing.\n"
+        "5. Focus on edge cases, numerical behavior, and scientific invariants.\n"
+        "6. Run tests and coverage tools as useful, then leave the test edits in the working tree.\n"
+        "Return only a valid unified git diff."
+    )
+
+
 def build_agent_prompt(instance: dict, eval_mode: str = "fix") -> Optional[str]:
     """
     The agent task: the GitHub issue / problem statement, with no solution hints.
@@ -77,7 +101,7 @@ def build_agent_prompt(instance: dict, eval_mode: str = "fix") -> Optional[str]:
     problem_statement = _problem_text(instance)
     repo = instance["repo"]
 
-    if not problem_statement:
+    if not problem_statement and eval_mode != "coverage_generation":
         logger.warning(f"[{instance['instance_id']}] No problem statement — cannot build agent prompt")
         return None
 
@@ -93,6 +117,15 @@ def build_agent_prompt(instance: dict, eval_mode: str = "fix") -> Optional[str]:
             f"{media_ctx}"
             f"{file_ctx}"
             f"{_test_generation_instruction()}"
+        )
+
+    if eval_mode == "coverage_generation":
+        return (
+            f"{COVERAGE_GENERATION_SYSTEM_MESSAGE}\n"
+            f"Repository: {repo}\n\n"
+            f"{_coverage_generation_instruction(instance)}\n\n"
+            f"{media_ctx}{file_ctx}"
+            f"Background issue context:\n<issue>\n{problem_statement}\n</issue>"
         )
 
     return (
