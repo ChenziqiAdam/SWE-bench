@@ -95,7 +95,8 @@ def _sweagent_problem_text(instance: dict, eval_mode: str = "fix") -> str:
         guidance.extend(f"- {test}" for test in f2p[:12])
 
     media_ctx = format_issue_media_for_prompt(instance)
-    return "\n".join(guidance) + "\n\n" + media_ctx + "Issue:\n" + problem
+    issue_text = ("Issue:\n" + problem) if problem else ""
+    return "\n".join(guidance) + "\n\n" + media_ctx + issue_text
 
 
 def _sweagent_bin() -> str:

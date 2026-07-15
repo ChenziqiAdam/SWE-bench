@@ -394,6 +394,12 @@ def render_coverage_generation_table(
             "pr_number": inst.get("pull_number", ""),
             "category": inst.get("category", ""),
             "coverage_targets": ";".join(info.get("coverage_targets") or []),
+            "coverage_scope": info.get("coverage_scope", "targeted"),
+            "mutation_targets": ";".join(info.get("mutation_targets") or []),
+            "mutation_skipped_no_selected_modules": (
+                "yes" if info.get("mutation_skipped_no_selected_modules") else "no"
+            ),
+            "base_commit": info.get("base_commit", inst.get("base_commit", "")),
             "status": status,
             "failure_reason": info.get("failure_reason", ""),
             "has_pred": "yes" if instance_id in nonempty else "no",
@@ -407,6 +413,8 @@ def render_coverage_generation_table(
             "illegal_changed_files": ";".join(info.get("illegal_changed_files") or []),
             "base_tests_passed": "yes" if info.get("base_tests_passed") else "no",
             "after_tests_passed": "yes" if info.get("after_tests_passed") else "no",
+            "setup_before_exit_code": info.get("setup_before_exit_code", ""),
+            "setup_after_exit_code": info.get("setup_after_exit_code", ""),
             "base_coverage_tests_passed": (
                 "yes" if info.get("base_coverage_tests_passed") else "no"
             ),
@@ -439,6 +447,12 @@ def render_coverage_generation_table(
             "mutation_score_delta": info.get("mutation_score_delta", ""),
             "mutation_before_exit_code": info.get("mutation_before_exit_code", ""),
             "mutation_after_exit_code": info.get("mutation_after_exit_code", ""),
+            "mutation_setup_before_exit_code": info.get(
+                "mutation_setup_before_exit_code", ""
+            ),
+            "mutation_setup_after_exit_code": info.get(
+                "mutation_setup_after_exit_code", ""
+            ),
             "mutation_before_tool_error": (
                 "yes" if info.get("mutation_before_tool_error") else "no"
             ),
@@ -456,6 +470,12 @@ def render_coverage_generation_table(
             "turns": metrics.get("turns", ""),
             "before_wall_time_seconds": info.get("before_wall_time_seconds", ""),
             "after_wall_time_seconds": info.get("after_wall_time_seconds", ""),
+            "mutation_before_wall_time_seconds": info.get(
+                "mutation_before_wall_time_seconds", ""
+            ),
+            "mutation_after_wall_time_seconds": info.get(
+                "mutation_after_wall_time_seconds", ""
+            ),
             "evaluation_wall_time_seconds": info.get("evaluation_wall_time_seconds", ""),
         })
     Path(output_csv).parent.mkdir(parents=True, exist_ok=True)

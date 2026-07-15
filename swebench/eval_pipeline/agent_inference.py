@@ -51,6 +51,14 @@ TEST_GENERATION_SYSTEM_PROMPT = (
     "call submit_patch()."
 )
 
+COVERAGE_GENERATION_SYSTEM_PROMPT = (
+    "You are an expert software engineer improving tests in a real codebase. "
+    "There is no issue to resolve and production code must not be changed. "
+    "Use the supplied repository-wide baseline coverage report to choose poorly "
+    "tested production modules, run tests and coverage, add meaningful tests, "
+    "and call submit_patch() when complete."
+)
+
 TOOLS = [
     {
         "name": "read_file",
@@ -85,6 +93,17 @@ TOOLS = [
                 "file_pattern": {"type": "string", "description": "Glob pattern to filter files, e.g. '*.py'"},
             },
             "required": ["query"],
+        },
+    },
+    {
+        "name": "run_command",
+        "description": "Run a shell command in the repository, for tests, coverage, or inspection.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "command": {"type": "string", "description": "Shell command to run"},
+            },
+            "required": ["command"],
         },
     },
     {
@@ -131,8 +150,14 @@ def _clone_repo_at_commit(
     root = Path(tmp_root or os.environ.get("SWE_AGENT_TMPDIR") or tempfile.gettempdir())
     root.mkdir(parents=True, exist_ok=True)
     tmpdir = Path(tempfile.mkdtemp(prefix="sweagent_", dir=str(root)))
-    token_prefix = f"{github_token}@" if github_token else ""
-    url = f"https://{token_prefix}github.com/{repo}.git"
+    if "://" in repo or repo.startswith("git@"):
+        url = repo
+        if github_token and url.startswith("https://github.com/"):
+            url = url.replace("https://", f"https://{github_token}@", 1)
+    else:
+        token_prefix = f"{github_token}@" if github_token else ""
+        repo_name = repo[:-4] if repo.endswith(".git") else repo
+        url = f"https://{token_prefix}github.com/{repo_name}.git"
     try:
         subprocess.run(
             ["git", "clone", "--quiet", url, str(tmpdir)],
@@ -212,6 +237,20 @@ def _execute_tool(tool_name: str, tool_input: dict, repo_dir: Path) -> str:
         except Exception as e:
             return f"Error writing file: {e}"
 
+    elif tool_name == "run_command":
+        try:
+            result = subprocess.run(
+                ["/bin/bash", "-lc", tool_input["command"]],
+                cwd=repo_dir,
+                capture_output=True,
+                text=True,
+                timeout=180,
+            )
+            output = (result.stdout or "") + (result.stderr or "")
+            return f"exit_code={result.returncode}\n{output[-20_000:]}"
+        except subprocess.TimeoutExpired:
+            return "Error: command timed out after 180 seconds"
+
     elif tool_name == "submit_patch":
         return "SUBMIT"
 
@@ -225,11 +264,14 @@ def _build_issue_prompt(instance: dict, eval_mode: str = "fix") -> str:
 
     media_ctx = format_issue_media_for_prompt(instance)
     if eval_mode == "coverage_generation":
+        issue_context = (
+            f"Background issue context:\n<issue>\n{problem}\n</issue>\n\n"
+            if problem else ""
+        )
         return (
             f"Repository: {repo}\n\n"
             f"{_coverage_generation_instruction(instance)}\n\n"
-            f"{media_ctx}"
-            f"Background issue context:\n<issue>\n{problem}\n</issue>\n\n"
+            f"{media_ctx}{issue_context}"
             f"Explore the repository using the provided tools and call submit_patch() "
             f"when the test patch is complete."
         )
@@ -264,11 +306,12 @@ def _run_agentic_loop(
 ) -> tuple[str, dict]:
     """Run multi-turn tool-use loop. Return the patch and API usage metrics."""
     messages = [{"role": "user", "content": _build_issue_prompt(instance, eval_mode=eval_mode)}]
-    system_prompt = (
-        TEST_GENERATION_SYSTEM_PROMPT
-        if eval_mode in {"test_generation", "coverage_generation"}
-        else SYSTEM_PROMPT
-    )
+    if eval_mode == "coverage_generation":
+        system_prompt = COVERAGE_GENERATION_SYSTEM_PROMPT
+    elif eval_mode == "test_generation":
+        system_prompt = TEST_GENERATION_SYSTEM_PROMPT
+    else:
+        system_prompt = SYSTEM_PROMPT
 
     metrics = {
         "input_tokens": 0,

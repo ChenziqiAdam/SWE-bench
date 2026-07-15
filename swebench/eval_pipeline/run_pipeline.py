@@ -2,10 +2,14 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import os
+import re
+import shutil
 from pathlib import Path
+from urllib.parse import urlparse
 
 from swebench.eval_pipeline.prediction_utils import unique_instances_by_id, write_selected_predictions
 
@@ -126,8 +130,47 @@ def parse_args():
     )
     p.add_argument(
         "--coverage_target", action="append", default=None,
-        help="Repo-relative target module for coverage_generation. Repeat for multiple "
-             "modules. Overrides inferred implementation files for all selected instances.",
+        help="Optional repo-relative mutation target. Repeat for multiple modules. "
+             "Without it, the agent chooses modules from whole-repository coverage.",
+    )
+    p.add_argument(
+        "--repo_url", default=None,
+        help="Standalone coverage_generation repository URL. Bypasses spreadsheet/issue "
+             "ingestion and requires --base_commit.",
+    )
+    p.add_argument(
+        "--base_commit", default=None,
+        help="Fixed git commit for standalone --repo_url coverage generation.",
+    )
+    p.add_argument(
+        "--coverage_setup_command", default="python -m pip install .",
+        help="Repository setup command run before each standalone baseline/after phase.",
+    )
+    p.add_argument(
+        "--coverage_test_command", default="python -m pytest",
+        help="Complete test command for standalone coverage generation.",
+    )
+    p.add_argument(
+        "--coverage_command", default=None,
+        help="Standalone whole-repository coverage command (default: coverage run "
+             "--branch --source=. -m pytest).",
+    )
+    p.add_argument(
+        "--coverage_results_command", default=None,
+        help="Standalone command that writes coverage JSON to {output}; defaults to coverage json.",
+    )
+    p.add_argument(
+        "--mutation_command", default=None,
+        help="Mutation command scoped after coverage analysis. Use {targets} in a custom "
+             "command; default: mutmut run for agent-selected modules.",
+    )
+    p.add_argument(
+        "--mutation_results_command", default="mutmut results",
+        help="Standalone command that prints the mutation summary.",
+    )
+    p.add_argument(
+        "--coverage_tool_install_command", default=None,
+        help="Optional standalone coverage/mutation tool installation command.",
     )
     p.add_argument(
         "--coverage_eval_timeout", type=int, default=3600,
@@ -336,6 +379,213 @@ def _run_eval_with_timeout(timeout_seconds: int, **eval_kwargs) -> bool:
     return True
 
 
+def _run_agent_backend(args, instances: list[dict], output_file: str,
+                       inference_model: str, github_token: str | None) -> None:
+    """Dispatch one inference backend for both SWE-bench and standalone modes."""
+    if args.agent_backend == "sweagent":
+        from swebench.eval_pipeline.swe_agent_inference import run_sweagent_inference
+        run_sweagent_inference(
+            instances=instances, output_file=output_file, model_name=inference_model,
+            github_token=github_token, max_workers=args.max_workers,
+            sweagent_config=args.sweagent_config, api_base=args.endpoint,
+            api_key=args.api_key, retry_empty_predictions=args.retry_empty_predictions,
+            max_input_tokens=args.sweagent_max_input_tokens, eval_mode=args.eval_mode,
+        )
+    elif args.agent_backend == "codex":
+        from swebench.eval_pipeline.codex_inference import run_codex_inference
+        run_codex_inference(
+            instances=instances, output_file=output_file, model_name=inference_model,
+            github_token=github_token, max_workers=args.max_workers,
+            timeout=args.codex_timeout, sandbox=args.codex_sandbox,
+            profile=args.codex_profile, api_base=args.endpoint, api_key=args.api_key,
+            retry_empty_predictions=args.retry_empty_predictions, eval_mode=args.eval_mode,
+        )
+    elif args.agent_backend == "claude_code":
+        from swebench.eval_pipeline.claude_code_inference import run_claude_code_inference
+        run_claude_code_inference(
+            instances=instances, output_file=output_file, model_name=inference_model,
+            github_token=github_token, max_workers=args.max_workers,
+            timeout=args.claude_code_timeout,
+            permission_mode=args.claude_code_permission_mode, api_base=args.endpoint,
+            api_key=args.api_key, retry_empty_predictions=args.retry_empty_predictions,
+            max_turns=args.claude_code_max_turns, eval_mode=args.eval_mode,
+        )
+    else:
+        from swebench.eval_pipeline.agent_inference import run_agent_inference_for_level
+        from swebench.eval_pipeline.inference import make_clients
+        anthropic_client, _ = make_clients(
+            args.model, endpoint=args.endpoint, api_key=args.api_key
+        )
+        run_agent_inference_for_level(
+            instances=instances, output_file=output_file, model_name=inference_model,
+            anthropic_client=anthropic_client, github_token=github_token,
+            max_turns=args.max_turns, max_workers=args.max_workers,
+            eval_mode=args.eval_mode,
+        )
+
+
+def _standalone_coverage_instance(args) -> dict:
+    if not args.base_commit:
+        raise SystemExit("--base_commit is required with --repo_url")
+    if not re.fullmatch(r"(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})", args.base_commit):
+        raise SystemExit("--base_commit must be a full 40- or 64-character commit hash")
+    targets = []
+    for raw_path in args.coverage_target or []:
+        path = raw_path.strip().replace("\\", "/")
+        if not path:
+            continue
+        if path.startswith("/"):
+            raise SystemExit("--coverage_target values must be repository-relative paths")
+        while path.startswith("./"):
+            path = path[2:]
+        targets.append(path)
+    if any(".." in Path(path).parts for path in targets):
+        raise SystemExit("--coverage_target values must be repository-relative paths")
+    if args.mutation_command and not targets and "{targets}" not in args.mutation_command:
+        raise SystemExit(
+            "repository-wide --mutation_command must contain {targets}; otherwise "
+            "the pipeline cannot enforce agent-selected mutation scope"
+        )
+    parsed = urlparse(args.repo_url)
+    repo_path = parsed.path if parsed.scheme else args.repo_url
+    repo_path = repo_path.strip("/")
+    if repo_path.endswith(".git"):
+        repo_path = repo_path[:-4]
+    slug = re.sub(r"[^A-Za-z0-9_.-]+", "__", repo_path)
+    identity = hashlib.sha256(
+        json.dumps([args.repo_url, args.base_commit, sorted(targets)]).encode()
+    ).hexdigest()[:10]
+    return {
+        "instance_id": f"standalone__{slug}-{identity}",
+        "repo": args.repo_url,
+        "repo_url": args.repo_url,
+        "base_commit": args.base_commit,
+        "problem_statement": "",
+        "coverage_targets": sorted(set(targets)),
+        "coverage_setup_command": args.coverage_setup_command,
+        "coverage_test_command": args.coverage_test_command,
+        "coverage_command": args.coverage_command,
+        "coverage_results_command": args.coverage_results_command,
+        "mutation_command": args.mutation_command,
+        "mutation_results_command": args.mutation_results_command,
+        "coverage_tool_install_command": args.coverage_tool_install_command,
+        "standalone": True,
+    }
+
+
+def _run_standalone_coverage(args, inference_model: str, github_token: str | None) -> None:
+    from swebench.eval_pipeline.coverage_generation_eval import (
+        format_baseline_coverage_report,
+        prepare_standalone_coverage_baseline,
+        run_standalone_coverage_evaluation,
+    )
+    from swebench.eval_pipeline.prediction_utils import (
+        read_prediction_rows,
+        write_selected_predictions,
+    )
+    from swebench.eval_pipeline.prompt_builder import build_all_prompts
+    from swebench.eval_pipeline.report import (
+        collect_test_generation_results,
+        render_coverage_generation_table,
+    )
+
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    instance = _standalone_coverage_instance(args)
+    eval_run_id = f"{args.run_id}_coveragegen"
+    baseline = None
+    if not args.skip_inference or not args.skip_eval:
+        logger.info("=== Standalone coverage generation: whole-repository baseline ===")
+        baseline = prepare_standalone_coverage_baseline(
+            instance=instance,
+            run_id=eval_run_id,
+            log_dir=args.log_dir,
+            timeout=args.coverage_eval_timeout,
+            flaky_runs=args.coverage_flaky_runs,
+            github_token=github_token,
+        )
+        instance["baseline_coverage_report"] = format_baseline_coverage_report(
+            baseline.get("coverage")
+        )
+    instances = [instance]
+    (output_dir / "instances.jsonl").write_text(json.dumps(instance) + "\n")
+    prompts = build_all_prompts(instances, eval_mode="coverage_generation")
+    _write_prompts_preserving_unselected(
+        output_dir / "agent_prompts.jsonl", prompts, preserve_existing=False
+    )
+
+    predictions_master = output_dir / "agent_predictions.jsonl"
+    if args.force_inference and predictions_master.exists():
+        retained = [
+            row for row in read_prediction_rows(predictions_master)
+            if row.get("instance_id") != instance["instance_id"]
+        ]
+        from swebench.eval_pipeline.prediction_utils import write_prediction_rows
+        write_prediction_rows(predictions_master, retained)
+    if not args.skip_inference:
+        logger.info("=== Standalone coverage generation: agent inference ===")
+        _run_agent_backend(
+            args, instances, str(predictions_master), inference_model, github_token
+        )
+
+    selected_path = output_dir / "agent_predictions.selected.jsonl"
+    write_selected_predictions(
+        predictions_master,
+        selected_path,
+        backend=args.agent_backend,
+        model_name=inference_model,
+        eval_mode="coverage_generation",
+        instance_ids={instance["instance_id"]},
+    )
+    selected = read_prediction_rows(selected_path)
+    prediction = selected[-1] if selected else {
+        "model_name_or_path": inference_model,
+        "model_patch": "",
+        "metrics": {},
+    }
+    model_dir = inference_model.replace("/", "__")
+    report_dir = Path(args.log_dir) / eval_run_id / model_dir / instance["instance_id"]
+    if args.force_eval and report_dir.exists():
+        shutil.rmtree(report_dir)
+    if not args.skip_eval:
+        logger.info("=== Standalone coverage generation: independent before/after evaluation ===")
+        result = run_standalone_coverage_evaluation(
+            instance=instance,
+            prediction=prediction,
+            run_id=eval_run_id,
+            log_dir=args.log_dir,
+            timeout=args.coverage_eval_timeout,
+            flaky_runs=args.coverage_flaky_runs,
+            github_token=github_token,
+            baseline=baseline,
+        )
+        results = {instance["instance_id"]: result}
+    else:
+        results = collect_test_generation_results(
+            run_id=eval_run_id,
+            log_dir=args.log_dir,
+            instance_ids={instance["instance_id"]},
+            model_name=inference_model,
+        )
+    render_coverage_generation_table(
+        results=results,
+        instances=instances,
+        output_csv=str(output_dir / f"{args.run_id}_results.csv"),
+        predictions_path=str(selected_path),
+        run_config={
+            "mode": "standalone repository",
+            "repo_url": args.repo_url,
+            "base_commit": args.base_commit,
+            "coverage_scope": "repository",
+            "mutation_targets": ";".join(instance["coverage_targets"])
+            or "agent-selected from coverage increases",
+            "agent_backend": args.agent_backend,
+            "model": inference_model,
+            "run_id": args.run_id,
+        },
+    )
+
+
 def main():
     args = parse_args()
     inference_model = args.model
@@ -359,6 +609,11 @@ def main():
     instances_path = str(output_dir / "instances.jsonl")
 
     github_token = args.github_token or os.environ.get("GITHUB_TOKEN")
+    if args.repo_url:
+        if args.eval_mode != "coverage_generation":
+            raise SystemExit("--repo_url is only valid with --eval_mode coverage_generation")
+        _run_standalone_coverage(args, inference_model, github_token)
+        return
     filter_ids = set(args.instance_ids.split(",")) if args.instance_ids else None
     filter_repos = set(args.repos.split(",")) if args.repos else None
     filter_issue_types = _parse_issue_types(args.issue_types)
@@ -589,72 +844,9 @@ def main():
             if pred_path.exists():
                 pred_path.unlink()
                 logger.info(f"--force_inference: removed {pred_path}")
-        if args.agent_backend == "sweagent":
-            from swebench.eval_pipeline.swe_agent_inference import run_sweagent_inference
-            logger.info(f"--- SWE-agent inference → {agent_predictions_file} ---")
-            run_sweagent_inference(
-                instances=instances,
-                output_file=agent_predictions_file,
-                model_name=inference_model,
-                github_token=github_token,
-                max_workers=args.max_workers,
-                sweagent_config=args.sweagent_config,
-                api_base=args.endpoint,
-                api_key=args.api_key,
-                retry_empty_predictions=args.retry_empty_predictions,
-                max_input_tokens=args.sweagent_max_input_tokens,
-                eval_mode=args.eval_mode,
-            )
-        elif args.agent_backend == "codex":
-            from swebench.eval_pipeline.codex_inference import run_codex_inference
-            logger.info(f"--- Codex inference → {agent_predictions_file} ---")
-            run_codex_inference(
-                instances=instances,
-                output_file=agent_predictions_file,
-                model_name=inference_model,
-                github_token=github_token,
-                max_workers=args.max_workers,
-                timeout=args.codex_timeout,
-                sandbox=args.codex_sandbox,
-                profile=args.codex_profile,
-                api_base=args.endpoint,
-                api_key=args.api_key,
-                retry_empty_predictions=args.retry_empty_predictions,
-                eval_mode=args.eval_mode,
-            )
-        elif args.agent_backend == "claude_code":
-            from swebench.eval_pipeline.claude_code_inference import run_claude_code_inference
-            logger.info(f"--- Claude Code inference → {agent_predictions_file} ---")
-            run_claude_code_inference(
-                instances=instances,
-                output_file=agent_predictions_file,
-                model_name=inference_model,
-                github_token=github_token,
-                max_workers=args.max_workers,
-                timeout=args.claude_code_timeout,
-                permission_mode=args.claude_code_permission_mode,
-                api_base=args.endpoint,
-                api_key=args.api_key,
-                retry_empty_predictions=args.retry_empty_predictions,
-                max_turns=args.claude_code_max_turns,
-                eval_mode=args.eval_mode,
-            )
-        else:
-            # Builtin: multi-turn Anthropic tool-use loop
-            from swebench.eval_pipeline.inference import make_clients
-            from swebench.eval_pipeline.agent_inference import run_agent_inference_for_level
-            anthropic_client, _ = make_clients(args.model, endpoint=args.endpoint, api_key=args.api_key)
-            logger.info(f"--- Agent inference (builtin, issue description) → {agent_predictions_file} ---")
-            run_agent_inference_for_level(
-                instances=instances,
-                output_file=agent_predictions_file,
-                model_name=inference_model,
-                anthropic_client=anthropic_client,
-                github_token=github_token,
-                max_turns=args.max_turns,
-                max_workers=args.max_workers,
-                eval_mode=args.eval_mode,
-            )
+        _run_agent_backend(
+            args, instances, agent_predictions_file, inference_model, github_token
+        )
 
     # ── Stage 5: Docker Evaluation (agent-only) ───────────────────────────────
     run_ids: dict[str, str] = {}

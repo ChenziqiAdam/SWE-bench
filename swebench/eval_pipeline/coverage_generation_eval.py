@@ -4,7 +4,9 @@ from __future__ import annotations
 import json
 import logging
 import re
+import shutil
 import shlex
+import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path, PurePosixPath
@@ -27,6 +29,7 @@ _COVERAGE_END = "COVERAGE_JSON_END"
 _MUTATION_START = "MUTATION_RESULTS_START"
 _MUTATION_END = "MUTATION_RESULTS_END"
 _MUTATION_UNSUPPORTED = "MUTATION_UNSUPPORTED_PYTHON"
+_MUTATION_SKIPPED = "MUTATION_SKIPPED_NO_SELECTED_MODULES"
 
 _TEST_CONFIG_NAMES = {
     "conftest.py", "pytest.ini", "pyproject.toml", "setup.cfg", "setup.py",
@@ -107,32 +110,132 @@ def inspect_test_patch(patch: str) -> dict:
 
 
 def parse_coverage_json(payload: str, targets: list[str]) -> dict | None:
-    try:
-        data = json.loads(payload)
-    except (TypeError, json.JSONDecodeError):
+    if not isinstance(payload, str):
+        return None
+    data = None
+    decoder = json.JSONDecoder()
+    for match in re.finditer(r"\{", payload):
+        try:
+            candidate, _end = decoder.raw_decode(payload[match.start():])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(candidate, dict) and "files" in candidate:
+            data = candidate
+            break
+    if data is None:
         return None
     files = data.get("files") or {}
-    matched = []
+    matched: list[tuple[str, dict]] = []
     normalized_targets = [target.replace("\\", "/").lstrip("./") for target in targets]
     for path, info in files.items():
         normalized = path.replace("\\", "/").lstrip("./")
-        if any(normalized == target or normalized.endswith("/" + target) for target in normalized_targets):
-            matched.append(info.get("summary") or {})
+        selected = (
+            any(
+                normalized == target or normalized.endswith("/" + target)
+                for target in normalized_targets
+            )
+            if normalized_targets
+            else normalized.endswith(".py")
+            and not _is_test_path(normalized)
+            and normalized.rsplit("/", 1)[-1].lower() not in _TEST_CONFIG_NAMES
+            and not any(
+                part.lower() in {
+                    ".git", ".tox", ".venv", "build", "dist", "site-packages",
+                    "venv", "__pycache__",
+                }
+                for part in normalized.split("/")[:-1]
+            )
+        )
+        if selected:
+            matched.append((normalized, info.get("summary") or {}))
     if not matched:
         return None
-    statements = sum(int(item.get("num_statements", 0)) for item in matched)
-    covered_lines = sum(int(item.get("covered_lines", 0)) for item in matched)
-    branches = sum(int(item.get("num_branches", 0)) for item in matched)
-    covered_branches = sum(int(item.get("covered_branches", 0)) for item in matched)
+    statements = sum(int(item.get("num_statements", 0)) for _, item in matched)
+    covered_lines = sum(int(item.get("covered_lines", 0)) for _, item in matched)
+    branches = sum(int(item.get("num_branches", 0)) for _, item in matched)
+    covered_branches = sum(int(item.get("covered_branches", 0)) for _, item in matched)
+    file_summaries = {
+        path: {
+            "line_coverage": (
+                100.0 * int(summary.get("covered_lines", 0))
+                / int(summary.get("num_statements", 0))
+                if int(summary.get("num_statements", 0)) else 100.0
+            ),
+            "branch_coverage": (
+                100.0 * int(summary.get("covered_branches", 0))
+                / int(summary.get("num_branches", 0))
+                if int(summary.get("num_branches", 0)) else 100.0
+            ),
+            **{
+                key: int(summary.get(key, 0))
+                for key in (
+                    "covered_lines", "num_statements", "covered_branches", "num_branches"
+                )
+            },
+        }
+        for path, summary in matched
+    }
     return {
         "target_file_count": len(matched),
+        "scope": "targeted" if normalized_targets else "repository",
         "line_coverage": 100.0 * covered_lines / statements if statements else 100.0,
         "branch_coverage": 100.0 * covered_branches / branches if branches else 100.0,
         "covered_lines": covered_lines,
         "num_statements": statements,
         "covered_branches": covered_branches,
         "num_branches": branches,
+        "files": file_summaries,
     }
+
+
+def format_baseline_coverage_report(coverage: dict | None, max_files: int = 200) -> str:
+    """Format a compact, poorest-first repository coverage report for the agent."""
+    if not coverage:
+        return "Coverage report unavailable. Run coverage yourself before editing tests."
+    files = coverage.get("files") or {}
+    ranked = sorted(
+        files.items(),
+        key=lambda item: (
+            item[1].get("line_coverage", 100.0),
+            item[1].get("branch_coverage", 100.0),
+            item[0],
+        ),
+    )
+    lines = [
+        f"Repository totals: line {coverage['line_coverage']:.2f}%, "
+        f"branch {coverage['branch_coverage']:.2f}%, {len(files)} source files.",
+        "Per-file coverage (poorest first):",
+    ]
+    for path, summary in ranked[:max_files]:
+        lines.append(
+            f"- {path}: line {summary['line_coverage']:.2f}% "
+            f"({summary['covered_lines']}/{summary['num_statements']}), "
+            f"branch {summary['branch_coverage']:.2f}% "
+            f"({summary['covered_branches']}/{summary['num_branches']})"
+        )
+    if len(ranked) > max_files:
+        lines.append(f"- ... {len(ranked) - max_files} additional files omitted")
+    return "\n".join(lines)
+
+
+def select_mutation_targets(
+    before: dict | None, after: dict | None, explicit_targets: list[str] | None = None
+) -> list[str]:
+    """Select explicit modules or modules whose coverage increased after the patch."""
+    if explicit_targets:
+        return sorted(set(explicit_targets))
+    before_files = (before or {}).get("files") or {}
+    after_files = (after or {}).get("files") or {}
+    return sorted(
+        path
+        for path, post in after_files.items()
+        if path in before_files
+        and (
+            post.get("covered_lines", 0) > before_files[path].get("covered_lines", 0)
+            or post.get("covered_branches", 0)
+            > before_files[path].get("covered_branches", 0)
+        )
+    )
 
 
 def parse_mutation_results(text: str) -> dict | None:
@@ -189,16 +292,44 @@ def _is_flaky(main_exit: int | None, repeat_exits: list[int | None]) -> bool:
     return main_exit is not None and any(code is None or code != main_exit for code in repeat_exits)
 
 
+def _tool_install_lines(instance: dict) -> list[str]:
+    tool_install = instance.get("coverage_tool_install_command")
+    if tool_install:
+        return [tool_install]
+    old_python_unsupported = [] if instance.get("mutation_command") else [
+        f"  {_MUTATION_UNSUPPORTED}=1",
+        f"  echo {_MUTATION_UNSUPPORTED}=1",
+    ]
+    return [
+        "if python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 7) else 1)'; then",
+        "  python -m pip install --disable-pip-version-check coverage 'mutmut<3'",
+        "elif python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 6) else 1)'; then",
+        "  python -m pip install --disable-pip-version-check 'coverage<6' 'mutmut<2'",
+        "else",
+        "  python -m pip install --disable-pip-version-check 'coverage<6'",
+        *old_python_unsupported,
+        "fi",
+    ]
+
+
 def _extract_block(output: str, start: str, end: str) -> str:
-    if start not in output or end not in output:
+    start_matches = list(re.finditer(rf"(?m)^{re.escape(start)}\s*$", output))
+    if not start_matches:
         return ""
-    return output.split(start, 1)[1].split(end, 1)[0].strip()
+    block_start = start_matches[-1].end()
+    end_match = re.search(rf"(?m)^{re.escape(end)}\s*$", output[block_start:])
+    if not end_match:
+        return ""
+    return output[block_start:block_start + end_match.start()].strip()
 
 
 def _phase_script(instance: dict, apply_patch: bool, flaky_runs: int) -> str:
     specs = MAP_REPO_VERSION_TO_SPECS[instance["repo"]][instance["version"]]
     pytest_command = instance.get("coverage_test_command") or "python -m pytest"
     coverage_command = instance.get("coverage_command") or "python -m coverage run --branch -m pytest"
+    coverage_results_command = instance.get("coverage_results_command") or (
+        "python -m coverage json -o /tmp/coverage.json"
+    )
     targets = infer_coverage_targets(instance)
     default_mutation = "mutmut run --paths-to-mutate=" + shlex.quote(",".join(targets))
     mutation_command = instance.get("mutation_command") or default_mutation
@@ -213,23 +344,7 @@ def _phase_script(instance: dict, apply_patch: bool, flaky_runs: int) -> str:
         lines += specs["eval_commands"]
     if "install" in specs:
         lines.append(specs["install"])
-    tool_install = instance.get("coverage_tool_install_command")
-    if tool_install:
-        lines.append(tool_install)
-    else:
-        lines += [
-            "if python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 7) else 1)'; then",
-            "  python -m pip install --disable-pip-version-check coverage 'mutmut<3'",
-            "elif python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 6) else 1)'; then",
-            "  python -m pip install --disable-pip-version-check 'coverage<6' 'mutmut<2'",
-            "else",
-            "  python -m pip install --disable-pip-version-check 'coverage<6'",
-            *([] if instance.get("mutation_command") else [
-                f"  {_MUTATION_UNSUPPORTED}=1",
-                f"  echo {_MUTATION_UNSUPPORTED}=1",
-            ]),
-            "fi",
-        ]
+    lines += _tool_install_lines(instance)
     if apply_patch:
         lines += [
             f"git apply -v {GENERATED_TEST_PATCH} || git apply -v --3way {GENERATED_TEST_PATCH} || patch --batch --fuzz=5 -p1 -i {GENERATED_TEST_PATCH} || {{ echo {PATCH_FAILED}; exit 11; }}",
@@ -245,7 +360,7 @@ def _phase_script(instance: dict, apply_patch: bool, flaky_runs: int) -> str:
         "python -m coverage erase",
         coverage_command,
         "COVERAGE_TEST_EXIT=$?",
-        "python -m coverage json -o /tmp/coverage.json",
+        coverage_results_command.replace("{output}", "/tmp/coverage.json"),
         f"echo {_COVERAGE_START}; cat /tmp/coverage.json 2>/dev/null || true; echo {_COVERAGE_END}",
     ]
     for index in range(flaky_runs):
@@ -272,9 +387,252 @@ def _run_script(container, script: str, out_dir: Path, name: str, timeout: int) 
     return output, timed_out, runtime
 
 
+def _standalone_phase_script(
+    instance: dict,
+    patch_path: Path,
+    apply_patch: bool,
+    flaky_runs: int,
+) -> str:
+    """Build a host-side phase script for a clean standalone repository clone."""
+    pytest_command = instance.get("coverage_test_command") or "python -m pytest"
+    coverage_command = instance.get("coverage_command") or (
+        "python -m coverage run --branch --source=. -m pytest"
+    )
+    coverage_output = "/tmp/coverage-generation.json"
+    coverage_results_command = instance.get("coverage_results_command") or (
+        "python -m coverage json -o {output}"
+    )
+    lines = [
+        "#!/bin/bash",
+        "set -uxo pipefail",
+        f"git reset --hard {shlex.quote(instance['base_commit'])}",
+        "git clean -fdx",
+    ]
+    if apply_patch:
+        lines += [
+            f"git apply -v {shlex.quote(str(patch_path))} || "
+            f"git apply -v --3way {shlex.quote(str(patch_path))} || "
+            f"patch --batch --fuzz=5 -p1 -i {shlex.quote(str(patch_path))} || "
+            f"{{ echo {PATCH_FAILED}; exit 11; }}",
+            f"echo {PATCH_APPLIED}",
+        ]
+    setup_command = instance.get("coverage_setup_command")
+    if setup_command:
+        lines += [setup_command, "SETUP_EXIT=$?"]
+    else:
+        lines.append("SETUP_EXIT=0")
+    lines += _tool_install_lines({**instance, "mutation_command": "coverage-phase"})
+    lines += [
+        pytest_command,
+        "PYTEST_EXIT=$?",
+        "python -m coverage erase",
+        coverage_command,
+        "COVERAGE_TEST_EXIT=$?",
+        coverage_results_command.replace("{output}", shlex.quote(coverage_output)),
+        f"echo {_COVERAGE_START}; cat {coverage_output} 2>/dev/null || true; echo {_COVERAGE_END}",
+    ]
+    for index in range(flaky_runs):
+        lines += [pytest_command, f"echo REPEAT_RUN_{index + 1}_EXIT=$?"]
+    lines += [
+        "echo SETUP_EXIT=$SETUP_EXIT",
+        "echo PYTEST_EXIT=$PYTEST_EXIT",
+        "echo COVERAGE_TEST_EXIT=$COVERAGE_TEST_EXIT",
+        "exit 0",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def _standalone_mutation_script(
+    instance: dict,
+    patch_path: Path,
+    apply_patch: bool,
+    targets: list[str],
+) -> str:
+    """Build a mutation-only script scoped to agent-selected production modules."""
+    quoted_targets = shlex.quote(",".join(targets))
+    custom_command = instance.get("mutation_command")
+    mutation_command = (
+        custom_command.replace("{targets}", quoted_targets)
+        if custom_command and "{targets}" in custom_command
+        else custom_command
+        if custom_command
+        else "mutmut run --paths-to-mutate=" + quoted_targets
+    )
+    mutation_results_command = instance.get("mutation_results_command") or "mutmut results"
+    lines = [
+        "#!/bin/bash",
+        "set -uxo pipefail",
+        f"git reset --hard {shlex.quote(instance['base_commit'])}",
+        "git clean -fdx",
+    ]
+    if apply_patch:
+        lines += [
+            f"git apply -v {shlex.quote(str(patch_path))} || "
+            f"git apply -v --3way {shlex.quote(str(patch_path))} || "
+            f"patch --batch --fuzz=5 -p1 -i {shlex.quote(str(patch_path))} || "
+            f"{{ echo {PATCH_FAILED}; exit 11; }}",
+            f"echo {PATCH_APPLIED}",
+        ]
+    setup_command = instance.get("coverage_setup_command")
+    lines += [setup_command, "SETUP_EXIT=$?"] if setup_command else ["SETUP_EXIT=0"]
+    lines += _tool_install_lines(instance)
+    lines += [
+        f"echo {_MUTATION_START}",
+        f"if [ \"${{{_MUTATION_UNSUPPORTED}:-0}}\" = 1 ]; then",
+        "  MUTATION_EXIT=125",
+        "else",
+        f"  {mutation_command}",
+        "  MUTATION_EXIT=$?",
+        f"  {mutation_results_command} 2>&1 || true",
+        "fi",
+        f"echo {_MUTATION_END}",
+        "echo SETUP_EXIT=$SETUP_EXIT",
+        "echo MUTATION_EXIT=$MUTATION_EXIT",
+        "exit 0",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def _run_standalone_phase(
+    instance: dict,
+    patch_path: Path,
+    apply_patch: bool,
+    flaky_runs: int,
+    out_dir: Path,
+    name: str,
+    timeout: int,
+    github_token: str | None,
+) -> tuple[str, bool, float]:
+    from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
+
+    started = time.perf_counter()
+    repo_dir = None
+    script_path = out_dir / f"{name}.sh"
+    script_path.write_text(
+        _standalone_phase_script(instance, patch_path, apply_patch, flaky_runs)
+    )
+    try:
+        repo_dir = _clone_repo_at_commit(
+            instance.get("repo_url") or instance["repo"],
+            instance["base_commit"],
+            github_token,
+            tmp_root=out_dir / "worktrees",
+        )
+        try:
+            completed = subprocess.run(
+                ["/bin/bash", str(script_path.resolve())],
+                cwd=repo_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=timeout,
+            )
+            output, timed_out = completed.stdout or "", False
+        except subprocess.TimeoutExpired as exc:
+            raw = exc.stdout or ""
+            output = raw if isinstance(raw, str) else raw.decode(errors="replace")
+            timed_out = True
+        (out_dir / f"{name}.log").write_text(output)
+        return output, timed_out, time.perf_counter() - started
+    finally:
+        if repo_dir:
+            shutil.rmtree(repo_dir, ignore_errors=True)
+
+
+def _run_standalone_mutation_phase(
+    instance: dict,
+    patch_path: Path,
+    apply_patch: bool,
+    targets: list[str],
+    out_dir: Path,
+    name: str,
+    timeout: int,
+    github_token: str | None,
+) -> tuple[str, bool, float]:
+    """Run one clean, target-scoped mutation phase."""
+    from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
+
+    started = time.perf_counter()
+    repo_dir = None
+    script_path = out_dir / f"{name}.sh"
+    script_path.write_text(
+        _standalone_mutation_script(instance, patch_path, apply_patch, targets)
+    )
+    try:
+        repo_dir = _clone_repo_at_commit(
+            instance.get("repo_url") or instance["repo"],
+            instance["base_commit"],
+            github_token,
+            tmp_root=out_dir / "worktrees",
+        )
+        try:
+            completed = subprocess.run(
+                ["/bin/bash", str(script_path.resolve())],
+                cwd=repo_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=timeout,
+            )
+            output, timed_out = completed.stdout or "", False
+        except subprocess.TimeoutExpired as exc:
+            raw = exc.stdout or ""
+            output = raw if isinstance(raw, str) else raw.decode(errors="replace")
+            timed_out = True
+        (out_dir / f"{name}.log").write_text(output)
+        return output, timed_out, time.perf_counter() - started
+    finally:
+        if repo_dir:
+            shutil.rmtree(repo_dir, ignore_errors=True)
+
+
 def _exit_code(output: str, name: str) -> int | None:
     matches = re.findall(rf"(?m)^{re.escape(name)}=(\d+)\s*$", output)
     return int(matches[-1]) if matches else None
+
+
+def prepare_standalone_coverage_baseline(
+    instance: dict,
+    run_id: str,
+    log_dir: str = "logs/run_evaluation",
+    timeout: int = 3600,
+    flaky_runs: int = 2,
+    github_token: str | None = None,
+) -> dict:
+    """Measure whole-repository baseline coverage before agent inference."""
+    out_dir = Path(log_dir) / run_id / "baseline" / instance["instance_id"]
+    out_dir.mkdir(parents=True, exist_ok=True)
+    placeholder_patch = out_dir / "unused.patch"
+    placeholder_patch.write_text("")
+    output, timed_out, runtime = _run_standalone_phase(
+        instance,
+        placeholder_patch,
+        False,
+        flaky_runs,
+        out_dir,
+        "baseline_coverage",
+        timeout,
+        github_token,
+    )
+    coverage = parse_coverage_json(
+        _extract_block(output, _COVERAGE_START, _COVERAGE_END), []
+    )
+    result = {
+        "output": output,
+        "coverage": coverage,
+        "timed_out": timed_out,
+        "runtime": runtime,
+        "setup_exit": _exit_code(output, "SETUP_EXIT"),
+        "test_exit": _exit_code(output, "PYTEST_EXIT"),
+        "coverage_test_exit": _exit_code(output, "COVERAGE_TEST_EXIT"),
+        "repeat_exits": [
+            _exit_code(output, f"REPEAT_RUN_{index + 1}_EXIT")
+            for index in range(flaky_runs)
+        ],
+    }
+    serializable = {key: value for key, value in result.items() if key != "output"}
+    (out_dir / "baseline.json").write_text(json.dumps(serializable, indent=2))
+    return result
 
 
 def classify_coverage_result(before: dict | None, after: dict | None, patch_info: dict,
@@ -436,6 +794,216 @@ def _evaluate_one(instance: dict, prediction: dict | None, run_id: str, client,
     finally:
         cleanup_container(client, container, inst_logger)
         close_logger(inst_logger)
+    result["evaluation_wall_time_seconds"] = round(time.perf_counter() - started, 6)
+    report_path.write_text(json.dumps({iid: result}, indent=2))
+    return result
+
+
+def run_standalone_coverage_evaluation(
+    instance: dict,
+    prediction: dict | None,
+    run_id: str,
+    log_dir: str = "logs/run_evaluation",
+    timeout: int = 3600,
+    flaky_runs: int = 2,
+    github_token: str | None = None,
+    baseline: dict | None = None,
+) -> dict:
+    """Evaluate one repo/commit directly, without SWE-bench issue or Docker metadata."""
+    started = time.perf_counter()
+    iid = instance["instance_id"]
+    model_dir = ((prediction or {}).get("model_name_or_path") or "unknown").replace("/", "__")
+    out_dir = Path(log_dir) / run_id / model_dir / iid
+    out_dir.mkdir(parents=True, exist_ok=True)
+    report_path = out_dir / "report.json"
+    patch = (prediction or {}).get("model_patch") or ""
+    patch_info = inspect_test_patch(patch)
+    targets = infer_coverage_targets(instance)
+    if not patch.strip():
+        result = {
+            "status": "no-pred",
+            "failure_reason": "",
+            **patch_info,
+            "coverage_targets": targets,
+            "repo_url": instance.get("repo_url") or instance.get("repo"),
+            "base_commit": instance["base_commit"],
+            "inference_metrics": (prediction or {}).get("metrics", {}),
+            "evaluation_wall_time_seconds": round(time.perf_counter() - started, 6),
+        }
+        report_path.write_text(json.dumps({iid: result}, indent=2))
+        return result
+
+    patch_path = out_dir / "generated_test.patch"
+    patch_path.write_text(patch)
+    try:
+        if baseline is None:
+            before_output, before_timeout, before_runtime = _run_standalone_phase(
+                instance, patch_path, False, flaky_runs, out_dir, "before", timeout,
+                github_token,
+            )
+            before_cov = parse_coverage_json(
+                _extract_block(before_output, _COVERAGE_START, _COVERAGE_END), []
+            )
+            before_exit = _exit_code(before_output, "PYTEST_EXIT")
+            before_coverage_exit = _exit_code(before_output, "COVERAGE_TEST_EXIT")
+            before_setup_exit = _exit_code(before_output, "SETUP_EXIT")
+            baseline_repeat_exits = [
+                _exit_code(before_output, f"REPEAT_RUN_{i + 1}_EXIT")
+                for i in range(flaky_runs)
+            ]
+        else:
+            before_output = baseline.get("output", "")
+            before_timeout = bool(baseline.get("timed_out"))
+            before_runtime = float(baseline.get("runtime", 0.0))
+            before_cov = baseline.get("coverage")
+            before_exit = baseline.get("test_exit")
+            before_coverage_exit = baseline.get("coverage_test_exit")
+            before_setup_exit = baseline.get("setup_exit")
+            baseline_repeat_exits = baseline.get("repeat_exits") or []
+        after_output, after_timeout, after_runtime = _run_standalone_phase(
+            instance, patch_path, True, flaky_runs, out_dir, "after", timeout, github_token
+        )
+        after_cov = parse_coverage_json(
+            _extract_block(after_output, _COVERAGE_START, _COVERAGE_END), []
+        )
+        after_exit = _exit_code(after_output, "PYTEST_EXIT")
+        after_coverage_exit = _exit_code(after_output, "COVERAGE_TEST_EXIT")
+        after_setup_exit = _exit_code(after_output, "SETUP_EXIT")
+        after_repeat_exits = [
+            _exit_code(after_output, f"REPEAT_RUN_{i + 1}_EXIT") for i in range(flaky_runs)
+        ]
+        baseline_flaky = _is_flaky(before_exit, baseline_repeat_exits)
+        generated_tests_flaky = _is_flaky(after_exit, after_repeat_exits)
+        mutation_targets = select_mutation_targets(before_cov, after_cov, targets)
+        before_mut = after_mut = None
+        before_mutation_exit = after_mutation_exit = 125
+        mutation_before_setup_exit = mutation_after_setup_exit = None
+        mutation_before_timeout = mutation_after_timeout = False
+        mutation_before_runtime = mutation_after_runtime = 0.0
+        mutation_before_output = mutation_after_output = _MUTATION_SKIPPED
+        if mutation_targets:
+            (
+                mutation_before_output,
+                mutation_before_timeout,
+                mutation_before_runtime,
+            ) = _run_standalone_mutation_phase(
+                instance, patch_path, False, mutation_targets, out_dir,
+                "mutation_before", timeout, github_token,
+            )
+            (
+                mutation_after_output,
+                mutation_after_timeout,
+                mutation_after_runtime,
+            ) = _run_standalone_mutation_phase(
+                instance, patch_path, True, mutation_targets, out_dir,
+                "mutation_after", timeout, github_token,
+            )
+            before_mut = parse_mutation_results(
+                _extract_block(mutation_before_output, _MUTATION_START, _MUTATION_END)
+            )
+            after_mut = parse_mutation_results(
+                _extract_block(mutation_after_output, _MUTATION_START, _MUTATION_END)
+            )
+            before_mutation_exit = _exit_code(mutation_before_output, "MUTATION_EXIT")
+            after_mutation_exit = _exit_code(mutation_after_output, "MUTATION_EXIT")
+            mutation_before_setup_exit = _exit_code(mutation_before_output, "SETUP_EXIT")
+            mutation_after_setup_exit = _exit_code(mutation_after_output, "SETUP_EXIT")
+        usable_before_mut = None if mutation_exit_is_fatal(before_mutation_exit) else before_mut
+        usable_after_mut = None if mutation_exit_is_fatal(after_mutation_exit) else after_mut
+        if (
+            before_setup_exit != 0
+            or after_setup_exit != 0
+            or mutation_before_setup_exit not in {None, 0}
+            or mutation_after_setup_exit not in {None, 0}
+        ):
+            status, reason = "errored", "repository_setup_failed"
+        else:
+            status, reason = classify_coverage_result(
+                before_cov,
+                after_cov,
+                patch_info,
+                before_exit,
+                after_exit,
+                PATCH_APPLIED in after_output,
+                before_timeout or after_timeout or mutation_before_timeout
+                or mutation_after_timeout,
+                coverage_test_failed=(before_coverage_exit != 0 or after_coverage_exit != 0),
+                mutation_before=usable_before_mut,
+                mutation_after=usable_after_mut,
+                baseline_flaky=baseline_flaky,
+                generated_tests_flaky=generated_tests_flaky,
+            )
+        result = {
+            "status": status,
+            "failure_reason": reason,
+            **patch_info,
+            "standalone": True,
+            "repo_url": instance.get("repo_url") or instance.get("repo"),
+            "base_commit": instance["base_commit"],
+            "coverage_targets": targets,
+            "coverage_scope": "repository",
+            "mutation_targets": mutation_targets,
+            "mutation_skipped_no_selected_modules": not mutation_targets,
+            "test_patch_applied": PATCH_APPLIED in after_output,
+            "setup_before_exit_code": before_setup_exit,
+            "setup_after_exit_code": after_setup_exit,
+            "base_tests_passed": before_exit == 0,
+            "after_tests_passed": after_exit == 0,
+            "base_coverage_tests_passed": before_coverage_exit == 0,
+            "after_coverage_tests_passed": after_coverage_exit == 0,
+            "baseline_flaky": baseline_flaky,
+            "generated_tests_flaky": generated_tests_flaky,
+            "flaky": baseline_flaky or generated_tests_flaky,
+            "baseline_repeat_exit_codes": baseline_repeat_exits,
+            "after_repeat_exit_codes": after_repeat_exits,
+            "flaky_run_exit_codes": after_repeat_exits,
+            "coverage_before": before_cov,
+            "coverage_after": after_cov,
+            "coverage_line_delta": (
+                after_cov["line_coverage"] - before_cov["line_coverage"]
+                if before_cov and after_cov else None
+            ),
+            "coverage_branch_delta": (
+                after_cov["branch_coverage"] - before_cov["branch_coverage"]
+                if before_cov and after_cov else None
+            ),
+            "mutation_before": before_mut,
+            "mutation_after": after_mut,
+            "mutation_before_exit_code": before_mutation_exit,
+            "mutation_after_exit_code": after_mutation_exit,
+            "mutation_setup_before_exit_code": mutation_before_setup_exit,
+            "mutation_setup_after_exit_code": mutation_after_setup_exit,
+            "mutation_before_tool_error": bool(mutation_targets)
+            and mutation_exit_is_fatal(before_mutation_exit),
+            "mutation_after_tool_error": bool(mutation_targets)
+            and mutation_exit_is_fatal(after_mutation_exit),
+            "mutation_unsupported_python": (
+                f"{_MUTATION_UNSUPPORTED}=1" in mutation_before_output
+                or f"{_MUTATION_UNSUPPORTED}=1" in mutation_after_output
+            ),
+            "mutation_score_delta": (
+                usable_after_mut["score"] - usable_before_mut["score"]
+                if usable_before_mut and usable_after_mut else None
+            ),
+            "before_wall_time_seconds": round(before_runtime, 6),
+            "after_wall_time_seconds": round(after_runtime, 6),
+            "mutation_before_wall_time_seconds": round(mutation_before_runtime, 6),
+            "mutation_after_wall_time_seconds": round(mutation_after_runtime, 6),
+            "inference_metrics": (prediction or {}).get("metrics", {}),
+        }
+    except Exception as exc:
+        logger.exception("standalone coverage-generation evaluation failed for %s", iid)
+        result = {
+            "status": "errored",
+            "failure_reason": "evaluation_exception",
+            "error": f"{type(exc).__name__}: {exc}",
+            **patch_info,
+            "standalone": True,
+            "repo_url": instance.get("repo_url") or instance.get("repo"),
+            "base_commit": instance["base_commit"],
+            "coverage_targets": targets,
+            "inference_metrics": (prediction or {}).get("metrics", {}),
+        }
     result["evaluation_wall_time_seconds"] = round(time.perf_counter() - started, 6)
     report_path.write_text(json.dumps({iid: result}, indent=2))
     return result

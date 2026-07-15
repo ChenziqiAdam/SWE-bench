@@ -1,24 +1,49 @@
 # Coverage-generation pipeline
 
-`coverage_generation` asks an agent to add meaningful tests, then independently
-evaluates the patch at the fixed base commit. It runs the complete pytest suite,
-branch coverage, and mutation testing before and after the generated test patch.
+`coverage_generation` is a standalone repository experiment. It asks an agent
+to add meaningful tests, then independently evaluates the patch at a fixed
+commit. No issue, PR, spreadsheet, gold patch, or SWE-bench instance is needed.
+It first measures whole-repository branch coverage, gives the per-file report to
+the agent, and lets the agent choose poorly tested modules. It then measures
+whole-repository coverage again and runs mutation testing only on production
+modules whose coverage increased.
 
 ```bash
 python -m swebench.eval_pipeline.run_pipeline \
   --eval_mode coverage_generation \
+  --repo_url https://github.com/owner/repository.git \
+  --base_commit <full-commit-sha> \
   --agent_backend claude_code \
-  --instance_ids owner__repo-123 \
-  --coverage_target src/package/target_module.py \
   --run_id coverage_001
 ```
 
-Repeat `--coverage_target` for multiple modules. Without it, targets are inferred
-from Python implementation files touched by each instance's gold patch and
-captured in `file_contents`. The repository and fixed commit come from the
-selected SWE-bench instance; use `--instance_ids` or `--repos` to select them.
-For batches whose repositories need different targets, set `coverage_targets`
-on each instance instead of using the global CLI override.
+`--coverage_target` is optional. Without it, modules whose covered lines or
+branches increase after the agent patch become the mutation targets. Repeat the
+flag only when an experiment needs fixed mutation targets; coverage remains
+repository-wide.
+
+The default commands are:
+
+```text
+setup:             python -m pip install .
+tests:             python -m pytest
+coverage:          python -m coverage run --branch --source=. -m pytest
+coverage results:  python -m coverage json -o <phase-output>
+mutation:          mutmut run --paths-to-mutate=<agent-selected-targets>
+mutation results:  mutmut results
+```
+
+Override repository-specific behavior with `--coverage_setup_command`,
+`--coverage_test_command`, `--coverage_command`,
+`--coverage_results_command`, `--mutation_command`,
+`--mutation_results_command`, or `--coverage_tool_install_command`. Run the
+pipeline in a dedicated Python/Conda environment because setup and tests execute
+trusted repository code on the host. Claude Code/Codex also work in their own
+clean clone; the evaluator never trusts agent-reported metrics.
+
+A custom mutation command may use `{targets}` where the pipeline should insert
+the comma-separated selected module paths. Mutation is skipped and explicitly
+reported when no production module gains coverage.
 
 The result CSV records line/branch coverage and mutation-score deltas, complete
 test-suite status, tests-only scope violations, separate baseline/generated-test
@@ -28,13 +53,11 @@ agent turns. The scope check accepts conventional `test`/`tests` trees and
 `testing` package trees, production/configuration files, and `conftest.py`.
 Removing existing test lines is reported as a conservative integrity violation;
 the evaluator does not claim to prove semantic preservation of existing tests.
+The CSV also records repository coverage scope and the exact mutation targets.
 Raw scripts, logs, patches, and JSON reports are kept under
 `logs/run_evaluation/<run_id>_coveragegen/<model>/<instance_id>/`.
 
-Python/pytest is the default. Instances may override `coverage_test_command`,
-`coverage_command`, `mutation_command`, `mutation_results_command`, and
-`coverage_tool_install_command` when a repository needs a specialized
-invocation. By default, Python >=3.7 uses `mutmut<3`, Python 3.6 uses
+By default, Python >=3.7 uses `mutmut<3`, Python 3.6 uses
 `mutmut<2`, and Python 3.5 records mutation testing as unsupported while still
 measuring coverage. A custom mutation command can opt an older environment back
 in.
@@ -44,3 +67,7 @@ The primary mutation score is conservative:
 treated as killed, skipped mutants are excluded, and a timeout-adjusted score is
 also exported for comparison. Mutmut survivor/timeout exit bits are treated as
 valid outcomes; only its internal-error bit makes mutation results unusable.
+
+The original SWE-bench-instance path remains available when `--repo_url` is
+omitted, for compatibility with earlier experiments. New coverage research
+should use standalone `--repo_url` mode.

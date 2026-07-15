@@ -22,7 +22,7 @@ TEST_GENERATION_SYSTEM_MESSAGE = (
 
 COVERAGE_GENERATION_SYSTEM_MESSAGE = (
     "You are an expert scientific-software test engineer. "
-    "You must improve tests for specified production modules without changing production code."
+    "You must improve repository-wide test coverage without changing production code."
 )
 
 # Max chars per file to include in the prompt (~200k chars fits in DeepSeek 1M context)
@@ -78,10 +78,22 @@ def _coverage_generation_instruction(instance: dict) -> str:
     from swebench.eval_pipeline.coverage_generation_eval import infer_coverage_targets
 
     targets = infer_coverage_targets(instance)
-    target_text = "\n".join(f"    {path}" for path in targets) or "    (no target inferred)"
+    target_text = "\n".join(f"    {path}" for path in targets)
+    baseline_report = (instance.get("baseline_coverage_report") or "").strip()
+    commands = []
+    if instance.get("coverage_setup_command"):
+        commands.append(f"Environment setup command: {instance['coverage_setup_command']}")
+    if instance.get("coverage_test_command"):
+        commands.append(f"Complete test command: {instance['coverage_test_command']}")
+    command_text = ("\n" + "\n".join(commands) + "\n") if commands else ""
     return (
-        "Improve the test suite for these target modules:\n"
-        f"{target_text}\n\n"
+        "Improve whole-repository test coverage. Choose meaningful, poorly tested "
+        "production modules using the independent baseline report below.\n"
+        + (f"Preferred mutation targets (coverage remains repository-wide):\n{target_text}\n\n"
+           if target_text else "")
+        + f"<baseline_coverage_report>\n{baseline_report}\n"
+        "</baseline_coverage_report>\n\n"
+        f"{command_text}"
         "Requirements:\n"
         "1. Only add or modify test files and small test data files.\n"
         "2. Do not modify production code, configuration files, or existing test behavior.\n"
@@ -120,12 +132,15 @@ def build_agent_prompt(instance: dict, eval_mode: str = "fix") -> Optional[str]:
         )
 
     if eval_mode == "coverage_generation":
+        issue_context = (
+            f"Background issue context:\n<issue>\n{problem_statement}\n</issue>"
+            if problem_statement else ""
+        )
         return (
             f"{COVERAGE_GENERATION_SYSTEM_MESSAGE}\n"
             f"Repository: {repo}\n\n"
             f"{_coverage_generation_instruction(instance)}\n\n"
-            f"{media_ctx}{file_ctx}"
-            f"Background issue context:\n<issue>\n{problem_statement}\n</issue>"
+            f"{media_ctx}{file_ctx}{issue_context}"
         )
 
     return (

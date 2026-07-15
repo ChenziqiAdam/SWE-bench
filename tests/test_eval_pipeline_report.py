@@ -125,6 +125,7 @@ def test_coverage_generation_report_exports_scientific_metrics(tmp_path):
     render_coverage_generation_table(
         results={"demo__repo-1": {
             "status": "resolved",
+            "base_commit": "abc123",
             "coverage_targets": ["src/pkg/core.py"],
             "tests_only_patch": True,
             "no_existing_test_lines_removed": True,
@@ -153,6 +154,7 @@ def test_coverage_generation_report_exports_scientific_metrics(tmp_path):
     with open(output_csv, newline="") as handle:
         row = next(csv.DictReader(handle))
     assert row["line_coverage_delta"] == "20.0"
+    assert row["base_commit"] == "abc123"
     assert row["mutation_score_delta"] == "30.0"
     assert row["added_assertion_count"] == "4"
     assert row["no_existing_test_lines_removed"] == "yes"

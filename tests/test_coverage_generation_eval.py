@@ -1,4 +1,6 @@
 import json
+import subprocess
+import sys
 
 import pytest
 
@@ -6,11 +8,16 @@ from swebench.eval_pipeline.coverage_generation_eval import (
     _is_flaky,
     _is_test_path,
     _phase_script,
+    _standalone_mutation_script,
+    _standalone_phase_script,
     classify_coverage_result,
+    format_baseline_coverage_report,
     infer_coverage_targets,
     inspect_test_patch,
     parse_coverage_json,
     parse_mutation_results,
+    run_standalone_coverage_evaluation,
+    select_mutation_targets,
     mutation_exit_is_fatal,
 )
 from swebench.eval_pipeline.prompt_builder import build_agent_prompt
@@ -43,6 +50,51 @@ def test_coverage_prompt_does_not_require_issue_text():
         eval_mode="coverage_generation",
     )
     assert prompt is not None
+    assert "Background issue context" not in prompt
+    assert "<issue>" not in prompt
+
+
+def test_coverage_prompt_includes_standalone_repository_commands():
+    prompt = build_agent_prompt(
+        {
+            "instance_id": "standalone__demo-1",
+            "repo": "https://github.com/example/science.git",
+            "problem_statement": "",
+            "coverage_targets": ["src/science/core.py"],
+            "coverage_setup_command": "python -m pip install .",
+            "coverage_test_command": "python -m pytest -q",
+            "baseline_coverage_report": "Repository totals: line 42.00%",
+        },
+        eval_mode="coverage_generation",
+    )
+    assert "Environment setup command: python -m pip install ." in prompt
+    assert "Complete test command: python -m pytest -q" in prompt
+    assert "Repository totals: line 42.00%" in prompt
+
+
+def test_repository_coverage_aggregates_production_files_and_selects_improvements():
+    payload = json.dumps({"files": {
+        "pkg/core.py": {"summary": {
+            "covered_lines": 2, "num_statements": 4,
+            "covered_branches": 0, "num_branches": 2,
+        }},
+        "pkg/other.py": {"summary": {
+            "covered_lines": 3, "num_statements": 3,
+            "covered_branches": 0, "num_branches": 0,
+        }},
+        "tests/test_core.py": {"summary": {
+            "covered_lines": 10, "num_statements": 10,
+            "covered_branches": 0, "num_branches": 0,
+        }},
+    }})
+    before = parse_coverage_json(payload, [])
+    assert before["scope"] == "repository"
+    assert before["target_file_count"] == 2
+    assert "tests/test_core.py" not in before["files"]
+    after = json.loads(json.dumps(before))
+    after["files"]["pkg/core.py"]["covered_lines"] = 3
+    assert select_mutation_targets(before, after) == ["pkg/core.py"]
+    assert "pkg/core.py" in format_baseline_coverage_report(before)
 
 
 def test_targets_default_to_python_implementation_files():
@@ -238,6 +290,144 @@ def test_phase_script_repeats_both_phases_and_guards_old_python(monkeypatch):
     assert "REPEAT_RUN_2_EXIT" in after
     assert "MUTATION_UNSUPPORTED_PYTHON=1" in before
     assert "'coverage<6' 'mutmut<2'" in before
+
+
+def test_standalone_script_uses_repo_commands_without_swebench_paths(tmp_path):
+    instance = {
+        "base_commit": "abc123",
+        "coverage_targets": [],
+        "coverage_setup_command": "python -m pip install -e .",
+        "coverage_test_command": "python -m pytest -q",
+        "coverage_tool_install_command": "true",
+    }
+    script = _standalone_phase_script(instance, tmp_path / "test.patch", True, 1)
+    assert "/testbed" not in script
+    assert "python -m pip install -e ." in script
+    assert "python -m pytest -q" in script
+    assert "COVERAGE_TEST_PATCH_APPLIED" in script
+    completed = subprocess.run(["bash", "-n"], input=script, text=True)
+    assert completed.returncode == 0
+
+
+def test_standalone_mutation_script_is_scoped_to_selected_modules(tmp_path):
+    instance = {
+        "base_commit": "abc123",
+        "coverage_setup_command": "true",
+        "coverage_tool_install_command": "true",
+        "mutation_command": "mutation-tool --paths {targets}",
+        "mutation_results_command": "mutation-tool results",
+    }
+    script = _standalone_mutation_script(
+        instance, tmp_path / "test.patch", False, ["pkg/core.py", "pkg/math.py"]
+    )
+    assert "mutation-tool --paths pkg/core.py,pkg/math.py" in script
+    completed = subprocess.run(["bash", "-n"], input=script, text=True)
+    assert completed.returncode == 0
+
+
+def test_standalone_evaluation_runs_repo_before_and_after_without_issue(tmp_path):
+    repo = tmp_path / "source"
+    repo.mkdir()
+    (repo / "pkg").mkdir()
+    (repo / "tests").mkdir()
+    (repo / "pkg" / "__init__.py").write_text("")
+    (repo / "pkg" / "core.py").write_text(
+        "def classify(value):\n"
+        "    if value > 0:\n"
+        "        return 'positive'\n"
+        "    return 'nonpositive'\n"
+    )
+    (repo / "tests" / "test_core.py").write_text(
+        "from pkg.core import classify\n\n"
+        "def test_positive():\n"
+        "    assert classify(1) == 'positive'\n"
+    )
+    (repo / "make_coverage.py").write_text(
+        "import json\n"
+        "from pathlib import Path\n"
+        "improved = 'test_zero' in Path('tests/test_core.py').read_text()\n"
+        "summary = {'covered_lines': 4 if improved else 3, 'num_statements': 4, "
+        "'covered_branches': 2 if improved else 1, 'num_branches': 2}\n"
+        "Path('/tmp/coverage-generation.json').write_text(json.dumps("
+        "{'files': {'pkg/core.py': {'summary': summary}}}))\n"
+    )
+    subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+    subprocess.run(["git", "add", "."], cwd=repo, check=True)
+    subprocess.run(
+        ["git", "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-qm", "base"],
+        cwd=repo,
+        check=True,
+    )
+    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
+    patch = """diff --git a/tests/test_core.py b/tests/test_core.py
+--- a/tests/test_core.py
++++ b/tests/test_core.py
+@@ -3,2 +3,5 @@
+ def test_positive():
+     assert classify(1) == 'positive'
++
++def test_zero():
++    assert classify(0) == 'nonpositive'
+"""
+    instance = {
+        "instance_id": "standalone__demo-1",
+        "repo": repo.as_uri(),
+        "repo_url": repo.as_uri(),
+        "base_commit": commit,
+        "coverage_targets": [],
+        "coverage_setup_command": "true",
+        "coverage_test_command": "python -m pytest -q",
+        "coverage_command": "python make_coverage.py",
+        "coverage_results_command": "true",
+        "coverage_tool_install_command": "true",
+        "mutation_command": "printf 'Killed: 1\\nSurvived: 1\\n'",
+        "mutation_results_command": "true",
+    }
+    result = run_standalone_coverage_evaluation(
+        instance,
+        {
+            "model_name_or_path": "demo-model",
+            "model_patch": patch,
+            "metrics": {"turns": 1},
+        },
+        run_id="standalone-test",
+        log_dir=str(tmp_path / "logs"),
+        timeout=120,
+        flaky_runs=0,
+    )
+    assert result["status"] == "resolved"
+    assert result["standalone"] is True
+    assert result["base_tests_passed"] is True
+    assert result["after_tests_passed"] is True
+    assert result["coverage_line_delta"] > 0
+    assert result["coverage_scope"] == "repository"
+    assert result["mutation_targets"] == ["pkg/core.py"]
+    assert result["mutation_before"]["score"] == 50.0
+
+
+def test_repo_url_mode_bypasses_spreadsheet_and_issue_ingestion(tmp_path, monkeypatch):
+    from swebench.eval_pipeline.run_pipeline import main
+
+    monkeypatch.setattr(sys, "argv", [
+        "run_pipeline",
+        "--eval_mode", "coverage_generation",
+        "--repo_url", "https://github.com/example/science.git",
+        "--base_commit", "a" * 40,
+        "--output_dir", str(tmp_path / "output"),
+        "--run_id", "standalone-smoke",
+        "--model", "demo-model",
+        "--agent_backend", "claude_code",
+        "--skip_inference",
+        "--skip_eval",
+    ])
+    main()
+
+    instance = json.loads((tmp_path / "output" / "instances.jsonl").read_text())
+    assert instance["repo_url"] == "https://github.com/example/science.git"
+    assert instance["coverage_targets"] == []
+    assert instance["standalone"] is True
+    assert instance["problem_statement"] == ""
+    assert (tmp_path / "output" / "standalone-smoke_results.csv").exists()
 
 
 @pytest.mark.parametrize("path", ["pyproject.toml", "src/pkg/core.py"])

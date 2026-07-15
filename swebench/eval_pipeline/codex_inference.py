@@ -102,13 +102,13 @@ def _codex_problem_text(instance: dict, eval_mode: str = "fix") -> str:
 
     repo = instance["repo"]
     media_ctx = format_issue_media_for_prompt(instance)
+    issue_text = ("\n\nIssue:\n" + problem) if problem else ""
     return (
         f"Repository: {repo}\n\n"
         + "\n".join(guidance)
         + "\n\n"
         + media_ctx
-        + "\n\nIssue:\n"
-        + problem
+        + issue_text
     )
 
 
