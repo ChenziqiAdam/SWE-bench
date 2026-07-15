@@ -35,6 +35,74 @@ logger = logging.getLogger(__name__)
 
 AGENT_BACKEND = "claude_code"
 _CLAUDE_CODE_TIMEOUT = 900
+_INTERRUPTED_EXIT_CODES = {129, 130, 143}
+
+
+def _is_interrupted_exit(returncode: int) -> bool:
+    """Whether the CLI appears to have ended due to a Unix signal."""
+    return returncode < 0 or returncode in _INTERRUPTED_EXIT_CODES
+
+
+def _stream_diagnostics(stdout: str) -> dict:
+    """Summarize a stream without requiring a terminal result event."""
+    event_count = 0
+    terminal_event_seen = False
+    last_event_type = ""
+    last_event_subtype = ""
+    for line in (stdout or "").splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(event, dict):
+            continue
+        event_count += 1
+        last_event_type = str(event.get("type") or "")
+        last_event_subtype = str(event.get("subtype") or "")
+        if event.get("type") in {"result", "turn.completed", "thread.completed"}:
+            terminal_event_seen = True
+    return {
+        "event_count": event_count,
+        "terminal_event_seen": terminal_event_seen,
+        "last_event_type": last_event_type,
+        "last_event_subtype": last_event_subtype,
+    }
+
+
+def _aggregate_attempt_metrics(attempts: list[dict]) -> dict:
+    """Combine observed usage without claiming unavailable interrupted cost."""
+    metrics_list = [attempt.get("metrics") or {} for attempt in attempts]
+    aggregate: dict[str, int | float | bool] = {
+        "attempt_count": len(attempts),
+        "interrupted_attempts": sum(
+            _is_interrupted_exit(int(attempt.get("exit_code", 0))) for attempt in attempts
+        ),
+    }
+    for key in (
+        "input_tokens",
+        "output_tokens",
+        "cache_read_input_tokens",
+        "cache_creation_input_tokens",
+        "turns",
+    ):
+        values = [metric[key] for metric in metrics_list if key in metric]
+        if values:
+            aggregate[key] = int(sum(values))
+    if "input_tokens" in aggregate or "output_tokens" in aggregate:
+        aggregate["total_tokens"] = int(aggregate.get("input_tokens", 0)) + int(
+            aggregate.get("output_tokens", 0)
+        )
+    # Cost/provider duration are valid totals only when every attempt emitted
+    # them. Interrupted streams commonly do not, so do not under-report spend.
+    for key in ("cost_usd", "provider_duration_seconds", "provider_api_duration_seconds"):
+        if metrics_list and all(key in metric for metric in metrics_list):
+            aggregate[key] = sum(float(metric[key]) for metric in metrics_list)
+    if any(
+        metric.get("usage_incomplete") or not attempt.get("terminal_event_seen")
+        for metric, attempt in zip(metrics_list, attempts)
+    ):
+        aggregate["usage_incomplete"] = True
+    return aggregate
 
 
 def _claude_bin() -> str:
@@ -249,6 +317,7 @@ def run_claude_code_inference(
     retry_empty_predictions: bool = False,
     max_turns: Optional[int] = None,
     eval_mode: str = "fix",
+    interrupt_retries: int = 1,
 ) -> None:
     """Run Claude Code inference for all instances. Writes standard prediction JSONL."""
     if api_base:
@@ -323,22 +392,83 @@ def run_claude_code_inference(
             if max_turns is not None:
                 env["CLAUDE_CODE_MAX_TURNS"] = str(max_turns)
 
-            result = subprocess.run(
-                cmd,
-                cwd=repo_dir,
-                capture_output=True,
-                text=True,
-                input=prompt,
-                timeout=timeout,
-                env=env,
-            )
+            attempts = []
+            combined_stdout = []
+            result = None
+            for attempt_index in range(max(0, interrupt_retries) + 1):
+                attempt_number = attempt_index + 1
+                attempt_prompt = prompt
+                if attempt_index:
+                    attempt_prompt += (
+                        "\n\nA previous Claude Code process was interrupted. Existing "
+                        "working-tree edits were preserved. Inspect them, finish any "
+                        "incomplete test work, run the required tests, and leave the "
+                        "completed tests-only patch in the working tree."
+                    )
+                attempt_started = time.perf_counter()
+                result = subprocess.run(
+                    cmd,
+                    cwd=repo_dir,
+                    capture_output=True,
+                    text=True,
+                    input=attempt_prompt,
+                    timeout=timeout,
+                    env=env,
+                    start_new_session=os.name == "posix",
+                )
+                attempt_runtime = round(time.perf_counter() - attempt_started, 6)
+                attempt_stdout = result.stdout or ""
+                attempt_stderr = result.stderr or ""
+                combined_stdout.append(attempt_stdout)
+                diagnostics = _stream_diagnostics(attempt_stdout)
+                attempt_record = {
+                    "attempt": attempt_number,
+                    "exit_code": result.returncode,
+                    "wall_time_seconds": attempt_runtime,
+                    "prompt_chars": len(attempt_prompt),
+                    "metrics": metrics_from_stream_json(attempt_stdout),
+                    **diagnostics,
+                }
+                if result.returncode:
+                    attempt_record["error"] = _extract_claude_error(
+                        attempt_stdout, attempt_stderr
+                    )
+                attempts.append(attempt_record)
+                (logs_dir / f"{instance_id}.attempt-{attempt_number}.jsonl").write_text(
+                    attempt_stdout
+                )
+                (logs_dir / f"{instance_id}.attempt-{attempt_number}.log").write_text(
+                    f"=== command ===\n{json.dumps(cmd)}\n"
+                    f"=== prompt transport === stdin ({len(attempt_prompt)} chars)\n"
+                    f"=== cwd ===\n{repo_dir}\n"
+                    f"=== exit code: {result.returncode} ===\n"
+                    "=== STDERR ===\n"
+                    + attempt_stderr
+                    + "\n=== STDOUT tail ===\n"
+                    + attempt_stdout[-4000:]
+                )
+                if not _is_interrupted_exit(result.returncode):
+                    break
+                if attempt_index >= max(0, interrupt_retries):
+                    break
+                logger.warning(
+                    "[%s] Claude Code attempt %d exited %d; retrying in the "
+                    "preserved working tree",
+                    instance_id,
+                    attempt_number,
+                    result.returncode,
+                )
+
+            assert result is not None
+            stdout = "".join(combined_stdout)
 
             stdout_path = logs_dir / f"{instance_id}.jsonl"
             stderr_path = logs_dir / f"{instance_id}.log"
-            stdout_path.write_text(result.stdout or "")
+            stdout_path.write_text(stdout)
             stderr_path.write_text(
                 f"=== command ===\n{json.dumps(cmd)}\n"
-                f"=== prompt transport === stdin ({len(prompt)} chars)\n"
+                f"=== prompt transport === stdin ({len(prompt)} initial chars)\n"
+                f"=== attempts ===\n{json.dumps(attempts, indent=2)}\n"
                 f"=== cwd ===\n{repo_dir}\n"
                 f"=== exit code: {result.returncode} ===\n"
                 "=== STDERR ===\n"
@@ -367,9 +497,10 @@ def run_claude_code_inference(
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
                 "metrics": with_wall_time(
-                    metrics_from_stream_json(result.stdout or ""),
+                    _aggregate_attempt_metrics(attempts),
                     time.perf_counter() - started,
                 ),
+                "inference_attempts": attempts,
             }
             if error:
                 record["error"] = error

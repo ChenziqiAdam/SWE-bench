@@ -33,6 +33,7 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
             "python -m coverage run --branch --source=Bio "
             "Tests/run_tests.py --offline"
         ),
+        "mutation_test_style": "biopython",
     },
 }
 
@@ -293,6 +294,13 @@ def parse_args():
     p.add_argument("--claude_code_timeout", type=int, default=900,
                    help="Wall-clock timeout per instance in seconds for Claude Code CLI inference. "
                         "Only used with --agent_backend claude_code.")
+    p.add_argument(
+        "--claude_code_interrupt_retries",
+        type=int,
+        default=1,
+        help="Retries after interruption-style Claude Code exits such as 129/SIGHUP "
+             "(default 1). The retry continues from the same working tree.",
+    )
     p.add_argument("--claude_code_permission_mode", default="acceptEdits",
                    choices=["acceptEdits", "auto", "bypassPermissions", "default", "dontAsk", "plan"],
                    help="Permission mode passed to `claude -p`. Only used with "
@@ -428,6 +436,7 @@ def _run_agent_backend(args, instances: list[dict], output_file: str,
             permission_mode=args.claude_code_permission_mode, api_base=args.endpoint,
             api_key=args.api_key, retry_empty_predictions=args.retry_empty_predictions,
             max_turns=args.claude_code_max_turns, eval_mode=args.eval_mode,
+            interrupt_retries=args.claude_code_interrupt_retries,
         )
     else:
         from swebench.eval_pipeline.agent_inference import run_agent_inference_for_level
@@ -474,6 +483,7 @@ def _standalone_coverage_instance(args) -> dict:
     setup_command = args.coverage_setup_command
     test_command = args.coverage_test_command
     coverage_command = args.coverage_command
+    mutation_results_command = args.mutation_results_command
     if profile:
         if setup_command == DEFAULT_COVERAGE_SETUP_COMMAND:
             setup_command = profile["coverage_setup_command"]
@@ -481,6 +491,10 @@ def _standalone_coverage_instance(args) -> dict:
             test_command = profile["coverage_test_command"]
         if coverage_command is None:
             coverage_command = profile["coverage_command"]
+        if mutation_results_command == "mutmut results":
+            # mutmut 2.5's results renderer crashes through Pony ORM on the
+            # Python 3.13 environment; its run progress already has the counts.
+            mutation_results_command = "true"
         logger.info("Using standalone coverage profile for %s", repo_path.lower())
     slug = re.sub(r"[^A-Za-z0-9_.-]+", "__", repo_path)
     identity = hashlib.sha256(
@@ -498,7 +512,8 @@ def _standalone_coverage_instance(args) -> dict:
         "coverage_command": coverage_command,
         "coverage_results_command": args.coverage_results_command,
         "mutation_command": args.mutation_command,
-        "mutation_results_command": args.mutation_results_command,
+        "mutation_results_command": mutation_results_command,
+        "mutation_test_style": profile.get("mutation_test_style"),
         "coverage_tool_install_command": args.coverage_tool_install_command,
         "standalone": True,
     }
@@ -1050,6 +1065,7 @@ def main():
         "codex_profile": args.codex_profile,
         "codex_model": args.codex_model,
         "claude_code_timeout": args.claude_code_timeout,
+        "claude_code_interrupt_retries": args.claude_code_interrupt_retries,
         "claude_code_permission_mode": args.claude_code_permission_mode,
         "claude_code_max_turns": args.claude_code_max_turns,
         "claude_code_model": args.claude_code_model,

@@ -62,7 +62,30 @@ def metrics_from_stream_json(text: str) -> dict:
     ]
     candidates = terminal or [obj for obj in objects if isinstance(obj.get("usage"), dict)]
     if not candidates:
-        return {}
+        # Claude stream-json can end before its terminal result (for example,
+        # exit 129/SIGHUP) while still containing usage on assistant messages.
+        # Keep the last usage snapshot per message id to avoid counting streamed
+        # chunks repeatedly, then expose the observed lower bound explicitly.
+        messages: dict[str, dict] = {}
+        for index, event in enumerate(objects):
+            message = event.get("message")
+            if not isinstance(message, dict) or not isinstance(message.get("usage"), dict):
+                continue
+            key = str(message.get("id") or event.get("uuid") or index)
+            messages[key] = message["usage"]
+        if not messages:
+            return {}
+        observed: dict[str, int | bool] = {"usage_incomplete": True}
+        for usage in messages.values():
+            for key, value in _usage_metrics(usage).items():
+                if key == "total_tokens":
+                    continue
+                observed[key] = int(observed.get(key, 0)) + int(value)
+        observed["total_tokens"] = int(observed.get("input_tokens", 0)) + int(
+            observed.get("output_tokens", 0)
+        )
+        observed["turns"] = len(messages)
+        return observed
 
     obj = candidates[-1]
     metrics = _usage_metrics(obj.get("usage") or {})

@@ -140,7 +140,13 @@ def test_coverage_generation_report_exports_scientific_metrics(tmp_path):
     predictions.write_text(json.dumps({
         "instance_id": "demo__repo-1",
         "model_patch": "diff --git a/tests/test_x.py b/tests/test_x.py\n",
-        "metrics": {"input_tokens": 10, "turns": 3},
+        "metrics": {
+            "input_tokens": 10,
+            "turns": 3,
+            "attempt_count": 2,
+            "interrupted_attempts": 1,
+            "usage_incomplete": True,
+        },
     }) + "\n")
     output_csv = tmp_path / "coverage.csv"
     render_coverage_generation_table(
@@ -182,6 +188,9 @@ def test_coverage_generation_report_exports_scientific_metrics(tmp_path):
     assert row["mutation_timeout_adjusted_score_after"] == "65.0"
     assert row["mutation_score_definition"] == "100 * killed / total"
     assert row["turns"] == "3"
+    assert row["inference_attempt_count"] == "2"
+    assert row["inference_interrupted_attempts"] == "1"
+    assert row["inference_usage_incomplete"] == "yes"
 
 
 def test_coverage_no_prediction_reports_repository_scope_and_inference_error(tmp_path):

@@ -227,6 +227,68 @@ def test_claude_code_inference_records_nonzero_exit_detail(tmp_path, monkeypatch
     assert "STDOUT tail" in (tmp_path / "claude_code_logs" / "demo__repo-exit.log").read_text()
 
 
+def test_claude_code_retries_interruption_in_preserved_worktree(tmp_path, monkeypatch):
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    claude = fake_bin / "claude"
+    claude.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json, pathlib, sys\n"
+        "repo = pathlib.Path.cwd()\n"
+        "counter = repo / '.attempt-count'\n"
+        "attempt = int(counter.read_text()) + 1 if counter.exists() else 1\n"
+        "counter.write_text(str(attempt))\n"
+        "prompt = sys.stdin.read()\n"
+        "if attempt == 1:\n"
+        "    (repo / 'module.py').write_text('value = 7\\n')\n"
+        "    print(json.dumps({'type': 'assistant', 'message': {"
+        "'id': 'partial-1', 'usage': {'input_tokens': 11, 'output_tokens': 3}}}))\n"
+        "    raise SystemExit(129)\n"
+        "assert 'previous Claude Code process was interrupted' in prompt\n"
+        "assert (repo / 'module.py').read_text() == 'value = 7\\n'\n"
+        "(repo / 'module.py').write_text('value = 8\\n')\n"
+        "print(json.dumps({'type': 'result', 'num_turns': 2, "
+        "'usage': {'input_tokens': 20, 'output_tokens': 5}}))\n"
+    )
+    claude.chmod(0o755)
+    monkeypatch.setenv("PATH", str(fake_bin) + os.pathsep + os.environ.get("PATH", ""))
+    repo = _make_git_repo(tmp_path / "repo")
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.claude_code_inference._clone_repo_at_commit",
+        lambda repo_name, base_commit, github_token, tmp_root=None: repo,
+    )
+
+    out = tmp_path / "predictions.jsonl"
+    run_claude_code_inference(
+        instances=[{
+            "instance_id": "demo__repo-retry",
+            "repo": "demo/repo",
+            "base_commit": "HEAD",
+            "problem_statement": "Finish after interruption.",
+        }],
+        output_file=str(out),
+        model_name="provider-claude",
+        max_workers=1,
+        timeout=30,
+        interrupt_retries=1,
+    )
+
+    row = json.loads(out.read_text())
+    assert "value = 8" in row["model_patch"]
+    assert "error" not in row
+    assert [attempt["exit_code"] for attempt in row["inference_attempts"]] == [129, 0]
+    assert row["inference_attempts"][0]["metrics"]["usage_incomplete"] is True
+    assert row["inference_attempts"][0]["metrics"]["input_tokens"] == 11
+    assert row["inference_attempts"][1]["terminal_event_seen"] is True
+    assert row["metrics"]["input_tokens"] == 31
+    assert row["metrics"]["output_tokens"] == 8
+    assert row["metrics"]["attempt_count"] == 2
+    assert row["metrics"]["interrupted_attempts"] == 1
+    assert row["metrics"]["usage_incomplete"] is True
+    assert (tmp_path / "claude_code_logs" / "demo__repo-retry.attempt-1.log").exists()
+    assert (tmp_path / "claude_code_logs" / "demo__repo-retry.attempt-2.log").exists()
+
+
 def test_claude_code_inference_extracts_stream_json_api_error(tmp_path, monkeypatch):
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()

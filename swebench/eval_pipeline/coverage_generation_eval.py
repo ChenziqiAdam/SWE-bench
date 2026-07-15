@@ -460,13 +460,45 @@ def _standalone_mutation_script(
     """Build a mutation-only script scoped to agent-selected production modules."""
     quoted_targets = shlex.quote(",".join(targets))
     custom_command = instance.get("mutation_command")
-    mutation_command = (
-        custom_command.replace("{targets}", quoted_targets)
-        if custom_command and "{targets}" in custom_command
-        else custom_command
-        if custom_command
-        else "mutmut run --paths-to-mutate=" + quoted_targets
-    )
+    runner_setup: list[str] = []
+    if not custom_command and instance.get("mutation_test_style") == "biopython":
+        patch_info = inspect_test_patch(patch_path.read_text())
+        test_modules = sorted({
+            Path(path).stem
+            for path in patch_info.get("changed_files", [])
+            if Path(path).parts[:1] == ("Tests",)
+            and Path(path).name.startswith("test_")
+            and Path(path).suffix == ".py"
+        })
+        runner = ".coverage-generation-mutmut-runner.sh"
+        runner_lines = ["#!/bin/bash", "set -uo pipefail", "tests=()"]
+        for module in test_modules:
+            runner_lines.append(
+                f"[ ! -f Tests/{shlex.quote(module)}.py ] || tests+=({shlex.quote(module)})"
+            )
+        runner_lines += [
+            "if [ ${#tests[@]} -eq 0 ]; then",
+            "  exec python Tests/run_tests.py --offline",
+            "fi",
+            'exec python Tests/run_tests.py --offline "${tests[@]}"',
+        ]
+        runner_content = "\n".join(runner_lines) + "\n"
+        runner_setup = [
+            f"printf %s {shlex.quote(runner_content)} > {runner}",
+            f"chmod +x {runner}",
+        ]
+        mutation_command = (
+            "mutmut run --paths-to-mutate=" + quoted_targets
+            + " --tests-dir=Tests --runner=" + shlex.quote(f"./{runner}")
+        )
+    else:
+        mutation_command = (
+            custom_command.replace("{targets}", quoted_targets)
+            if custom_command and "{targets}" in custom_command
+            else custom_command
+            if custom_command
+            else "mutmut run --paths-to-mutate=" + quoted_targets
+        )
     mutation_results_command = instance.get("mutation_results_command") or "mutmut results"
     lines = [
         "#!/bin/bash",
@@ -486,6 +518,7 @@ def _standalone_mutation_script(
     setup_command = instance.get("coverage_setup_command")
     lines += [setup_command, "SETUP_EXIT=$?"] if setup_command else ["SETUP_EXIT=0"]
     lines += _tool_install_lines(instance)
+    lines += runner_setup
     lines += [
         f"echo {_MUTATION_START}",
         f"if [ \"${{{_MUTATION_UNSUPPORTED}:-0}}\" = 1 ]; then",
@@ -830,6 +863,19 @@ def _evaluate_one(instance: dict, prediction: dict | None, run_id: str, client,
     return result
 
 
+def _mark_inference_completion(result: dict, prediction: dict | None) -> dict:
+    """Preserve scientific metrics while flagging an interrupted agent result."""
+    inference_error = (prediction or {}).get("error")
+    result["inference_completed"] = not bool(inference_error)
+    if inference_error:
+        result["inference_error"] = inference_error
+        result["failure_reason"] = result.get("failure_reason") or inference_error
+        if result.get("status") == "resolved":
+            result["coverage_status"] = "resolved"
+            result["status"] = "partial"
+    return result
+
+
 def run_standalone_coverage_evaluation(
     instance: dict,
     prediction: dict | None,
@@ -876,6 +922,7 @@ def run_standalone_coverage_evaluation(
             "inference_metrics": (prediction or {}).get("metrics", {}),
             "evaluation_wall_time_seconds": round(time.perf_counter() - started, 6),
         }
+        _mark_inference_completion(result, prediction)
         report_path.write_text(json.dumps({iid: result}, indent=2))
         return result
 
@@ -1059,6 +1106,7 @@ def run_standalone_coverage_evaluation(
             "coverage_targets": targets,
             "inference_metrics": (prediction or {}).get("metrics", {}),
         }
+    _mark_inference_completion(result, prediction)
     result["evaluation_wall_time_seconds"] = round(time.perf_counter() - started, 6)
     report_path.write_text(json.dumps({iid: result}, indent=2))
     return result

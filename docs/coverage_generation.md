@@ -63,6 +63,19 @@ the configured permission mode still controls other tools. The prompt is sent
 through stdin so variadic tool-list flags cannot consume it as a CLI argument.
 If inference returns no patch, the CSV preserves the backend error and valid
 baseline coverage rather than mislabeling the run as targeted coverage.
+Interruption-style Claude Code exits (including 129/SIGHUP) are retried once by
+default in the preserved working tree. Each attempt gets separate JSONL/text
+logs; the prediction and CSV record attempt count, interrupted attempts, and
+whether usage is only a partial observed lower bound. Configure this with
+`--claude_code_interrupt_retries`. If all retries remain interrupted but leave
+a usable patch, evaluation still records its scientific metrics, while the
+overall status is `partial` rather than silently reporting a complete resolve.
+
+The Biopython profile also configures mutmut for its capitalized `Tests`
+directory and project test runner. Mutation runs select agent-touched test
+modules that exist in each clean before/after checkout, and use mutmut's live
+run summary because its separate results renderer is incompatible with the
+Python 3.13/Pony ORM environment used in the observed run.
 
 A custom mutation command may use `{targets}` where the pipeline should insert
 the comma-separated selected module paths. Mutation is skipped and explicitly

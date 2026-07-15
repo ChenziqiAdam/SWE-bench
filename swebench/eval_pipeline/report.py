@@ -407,6 +407,9 @@ def render_coverage_generation_table(
             "base_commit": info.get("base_commit", inst.get("base_commit", "")),
             "status": status,
             "failure_reason": info.get("failure_reason") or prediction.get("error", ""),
+            "inference_completed": (
+                "yes" if info.get("inference_completed", not prediction.get("error")) else "no"
+            ),
             "has_pred": "yes" if instance_id in nonempty else "no",
             "tests_only_patch": "yes" if info.get("tests_only_patch") else "no",
             "no_existing_test_lines_removed": (
@@ -470,6 +473,11 @@ def render_coverage_generation_table(
                 "yes" if info.get("mutation_unsupported_python") else "no"
             ),
             "inference_wall_time_seconds": metrics.get("wall_time_seconds", ""),
+            "inference_attempt_count": metrics.get("attempt_count", ""),
+            "inference_interrupted_attempts": metrics.get("interrupted_attempts", ""),
+            "inference_usage_incomplete": (
+                "yes" if metrics.get("usage_incomplete") else "no"
+            ),
             "input_tokens": metrics.get("input_tokens", ""),
             "output_tokens": metrics.get("output_tokens", ""),
             "total_tokens": metrics.get("total_tokens", ""),

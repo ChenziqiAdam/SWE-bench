@@ -7,6 +7,7 @@ import pytest
 from swebench.eval_pipeline.coverage_generation_eval import (
     _is_flaky,
     _is_test_path,
+    _mark_inference_completion,
     _phase_script,
     _standalone_mutation_script,
     _standalone_phase_script,
@@ -48,6 +49,8 @@ def test_biopython_profile_builds_extensions_and_uses_offline_runner(monkeypatch
     assert instance["coverage_test_command"] == "python Tests/run_tests.py --offline"
     assert "--source=Bio" in instance["coverage_command"]
     assert "Tests/run_tests.py --offline" in instance["coverage_command"]
+    assert instance["mutation_test_style"] == "biopython"
+    assert instance["mutation_results_command"] == "true"
 
 
 def test_coverage_prompt_names_target_and_tests_only_constraints():
@@ -349,6 +352,41 @@ def test_standalone_mutation_script_is_scoped_to_selected_modules(tmp_path):
         instance, tmp_path / "test.patch", False, ["pkg/core.py", "pkg/math.py"]
     )
     assert "mutation-tool --paths pkg/core.py,pkg/math.py" in script
+
+
+def test_biopython_mutation_script_uses_touched_test_modules(tmp_path):
+    patch = tmp_path / "test.patch"
+    patch.write_text(
+        "diff --git a/Tests/test_Phylo.py b/Tests/test_Phylo.py\n"
+        "--- a/Tests/test_Phylo.py\n"
+        "+++ b/Tests/test_Phylo.py\n"
+        "@@ -1 +1,2 @@\n"
+        " old\n"
+        "+new\n"
+        "diff --git a/Tests/test_New.py b/Tests/test_New.py\n"
+        "--- /dev/null\n"
+        "+++ b/Tests/test_New.py\n"
+        "@@ -0,0 +1 @@\n"
+        "+new\n"
+    )
+    instance = {
+        "base_commit": "abc123",
+        "coverage_setup_command": "true",
+        "coverage_tool_install_command": "true",
+        "mutation_test_style": "biopython",
+        "mutation_results_command": "true",
+    }
+    script = _standalone_mutation_script(
+        instance, patch, False, ["Bio/_utils.py", "Bio/Phylo/_utils.py"]
+    )
+    assert "--tests-dir=Tests" in script
+    assert "--runner=./.coverage-generation-mutmut-runner.sh" in script
+    assert "Tests/test_New.py" in script
+    assert "Tests/test_Phylo.py" in script
+    assert "python Tests/run_tests.py --offline" in script
+    assert "mutmut results" not in script
+    completed = subprocess.run(["bash", "-n"], input=script, text=True)
+    assert completed.returncode == 0
     completed = subprocess.run(["bash", "-n"], input=script, text=True)
     assert completed.returncode == 0
 
@@ -426,6 +464,18 @@ def test_standalone_empty_prediction_preserves_error_and_baseline(tmp_path):
     assert result["coverage_before"] == baseline_coverage
     assert result["base_tests_passed"] is True
     assert result["before_wall_time_seconds"] == 12.5
+    assert result["inference_completed"] is False
+
+
+def test_interrupted_resolved_patch_is_marked_partial():
+    result = _mark_inference_completion(
+        {"status": "resolved", "failure_reason": ""},
+        {"error": "claude exited with code 129: interrupted"},
+    )
+    assert result["status"] == "partial"
+    assert result["coverage_status"] == "resolved"
+    assert result["inference_completed"] is False
+    assert result["failure_reason"] == "claude exited with code 129: interrupted"
 
 
 def test_standalone_evaluation_runs_repo_before_and_after_without_issue(tmp_path):

@@ -55,3 +55,43 @@ def test_metrics_from_codex_turn_event_aliases():
     metrics = metrics_from_stream_json(stream)
     assert metrics["total_tokens"] == 17
     assert metrics["cache_read_input_tokens"] == 8
+
+
+def test_metrics_recovers_observed_claude_usage_without_terminal_event():
+    stream = "\n".join([
+        json.dumps({
+            "type": "assistant",
+            "message": {
+                "id": "message-1",
+                "usage": {"input_tokens": 10, "output_tokens": 2},
+            },
+        }),
+        # A second streamed chunk for the same message must not be double-counted.
+        json.dumps({
+            "type": "assistant",
+            "message": {
+                "id": "message-1",
+                "usage": {"input_tokens": 10, "output_tokens": 3},
+            },
+        }),
+        json.dumps({
+            "type": "assistant",
+            "message": {
+                "id": "message-2",
+                "usage": {
+                    "input_tokens": 4,
+                    "output_tokens": 1,
+                    "cache_read_input_tokens": 20,
+                },
+            },
+        }),
+    ])
+
+    assert metrics_from_stream_json(stream) == {
+        "usage_incomplete": True,
+        "input_tokens": 14,
+        "output_tokens": 4,
+        "cache_read_input_tokens": 20,
+        "total_tokens": 18,
+        "turns": 2,
+    }
