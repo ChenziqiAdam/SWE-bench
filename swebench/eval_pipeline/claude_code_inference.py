@@ -308,8 +308,13 @@ def run_claude_code_inference(
                 permission_mode,
                 "--model",
                 model_name,
-                prompt,
             ]
+            if eval_mode == "coverage_generation":
+                # Coverage agents must run setup, tests, and coverage in their
+                # disposable clone. In noninteractive print mode acceptEdits
+                # alone otherwise denies every Bash invocation.
+                cmd += ["--allowedTools", "Bash"]
+            cmd.append(prompt)
 
             env = dict(os.environ)
             if api_base:

@@ -40,6 +40,7 @@ def test_claude_code_inference_writes_backend_tagged_prediction(tmp_path, monkey
         "assert '--verbose' in sys.argv\n"
         "assert sys.argv[sys.argv.index('--model') + 1] == 'claude-test'\n"
         "assert sys.argv[sys.argv.index('--permission-mode') + 1] == 'acceptEdits'\n"
+        "assert sys.argv[sys.argv.index('--allowedTools') + 1] == 'Bash'\n"
         "repo = pathlib.Path.cwd()\n"
         "(repo / 'module.py').write_text('value = 2\\n')\n"
         "print(json.dumps({'type': 'result', 'duration_ms': 1500, "
@@ -70,6 +71,7 @@ def test_claude_code_inference_writes_backend_tagged_prediction(tmp_path, monkey
         model_name="claude-test",
         max_workers=1,
         timeout=30,
+        eval_mode="coverage_generation",
     )
 
     rows = [json.loads(line) for line in out.read_text().splitlines()]

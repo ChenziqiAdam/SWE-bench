@@ -18,6 +18,7 @@ from swebench.eval_pipeline.coverage_generation_eval import (
     parse_mutation_results,
     run_standalone_coverage_evaluation,
     select_mutation_targets,
+    standalone_baseline_failure,
     mutation_exit_is_fatal,
 )
 from swebench.eval_pipeline.prompt_builder import build_agent_prompt
@@ -298,13 +299,14 @@ def test_standalone_script_uses_repo_commands_without_swebench_paths(tmp_path):
         "coverage_targets": [],
         "coverage_setup_command": "python -m pip install -e .",
         "coverage_test_command": "python -m pytest -q",
-        "coverage_tool_install_command": "true",
     }
     script = _standalone_phase_script(instance, tmp_path / "test.patch", True, 1)
     assert "/testbed" not in script
     assert "python -m pip install -e ." in script
     assert "python -m pytest -q" in script
     assert "COVERAGE_TEST_PATCH_APPLIED" in script
+    assert str((tmp_path / "test.patch").resolve()) in script
+    assert "pip install --disable-pip-version-check pytest coverage" in script
     completed = subprocess.run(["bash", "-n"], input=script, text=True)
     assert completed.returncode == 0
 
@@ -323,6 +325,41 @@ def test_standalone_mutation_script_is_scoped_to_selected_modules(tmp_path):
     assert "mutation-tool --paths pkg/core.py,pkg/math.py" in script
     completed = subprocess.run(["bash", "-n"], input=script, text=True)
     assert completed.returncode == 0
+
+
+@pytest.mark.parametrize(
+    ("override", "reason"),
+    [
+        ({"timed_out": True}, "baseline_timeout"),
+        ({"setup_exit": 1}, "baseline_repository_setup_failed"),
+        ({"test_exit": 1}, "baseline_tests_failed"),
+        ({"coverage_test_exit": 1}, "baseline_coverage_test_failed"),
+        ({"coverage": None}, "baseline_coverage_unavailable"),
+        ({"repeat_exits": [0, 1]}, "baseline_test_suite_flaky_or_failed"),
+    ],
+)
+def test_invalid_standalone_baseline_stops_before_inference(override, reason):
+    baseline = {
+        "timed_out": False,
+        "setup_exit": 0,
+        "test_exit": 0,
+        "coverage_test_exit": 0,
+        "coverage": {"files": {}},
+        "repeat_exits": [0, 0],
+        **override,
+    }
+    assert standalone_baseline_failure(baseline) == reason
+
+
+def test_valid_standalone_baseline_can_reach_inference():
+    assert standalone_baseline_failure({
+        "timed_out": False,
+        "setup_exit": 0,
+        "test_exit": 0,
+        "coverage_test_exit": 0,
+        "coverage": {"files": {}},
+        "repeat_exits": [0, 0],
+    }) == ""
 
 
 def test_standalone_evaluation_runs_repo_before_and_after_without_issue(tmp_path):

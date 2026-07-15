@@ -31,6 +31,7 @@ coverage:          python -m coverage run --branch --source=. -m pytest
 coverage results:  python -m coverage json -o <phase-output>
 mutation:          mutmut run --paths-to-mutate=<agent-selected-targets>
 mutation results:  mutmut results
+tools:             pytest, coverage, and a Python-compatible mutmut version
 ```
 
 Override repository-specific behavior with `--coverage_setup_command`,
@@ -40,6 +41,14 @@ Override repository-specific behavior with `--coverage_setup_command`,
 pipeline in a dedicated Python/Conda environment because setup and tests execute
 trusted repository code on the host. Claude Code/Codex also work in their own
 clean clone; the evaluator never trusts agent-reported metrics.
+
+The pipeline stops before agent inference if repository setup, the complete
+baseline tests, flaky reruns, or baseline coverage fail. This prevents spending
+agent tokens on an invalid experiment. Generated patches are referenced by
+absolute paths so evaluation is independent of the caller's `--log_dir` form.
+For Claude Code coverage generation, the pipeline explicitly allows the `Bash`
+tool in its disposable clone so the agent can run setup, tests, and coverage;
+the configured permission mode still controls other tools.
 
 A custom mutation command may use `{targets}` where the pipeline should insert
 the comma-separated selected module paths. Mutation is skipped and explicitly

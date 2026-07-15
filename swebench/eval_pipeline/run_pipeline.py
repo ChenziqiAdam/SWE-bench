@@ -478,6 +478,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
         format_baseline_coverage_report,
         prepare_standalone_coverage_baseline,
         run_standalone_coverage_evaluation,
+        standalone_baseline_failure,
     )
     from swebench.eval_pipeline.prediction_utils import (
         read_prediction_rows,
@@ -504,6 +505,19 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
             flaky_runs=args.coverage_flaky_runs,
             github_token=github_token,
         )
+        baseline_failure = standalone_baseline_failure(baseline)
+        if baseline_failure:
+            baseline_log = (
+                Path(args.log_dir).resolve()
+                / eval_run_id
+                / "baseline"
+                / instance["instance_id"]
+                / "baseline_coverage.log"
+            )
+            raise SystemExit(
+                f"standalone coverage baseline is invalid: {baseline_failure}; "
+                f"see {baseline_log}"
+            )
         instance["baseline_coverage_report"] = format_baseline_coverage_report(
             baseline.get("coverage")
         )

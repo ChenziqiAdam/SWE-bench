@@ -301,12 +301,14 @@ def _tool_install_lines(instance: dict) -> list[str]:
         f"  echo {_MUTATION_UNSUPPORTED}=1",
     ]
     return [
-        "if python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 7) else 1)'; then",
-        "  python -m pip install --disable-pip-version-check coverage 'mutmut<3'",
+        "if python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 9) else 1)'; then",
+        "  python -m pip install --disable-pip-version-check pytest coverage 'mutmut<3'",
+        "elif python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 7) else 1)'; then",
+        "  python -m pip install --disable-pip-version-check 'pytest<8' coverage 'mutmut<3'",
         "elif python -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 6) else 1)'; then",
-        "  python -m pip install --disable-pip-version-check 'coverage<6' 'mutmut<2'",
+        "  python -m pip install --disable-pip-version-check 'pytest<7' 'coverage<6' 'mutmut<2'",
         "else",
-        "  python -m pip install --disable-pip-version-check 'coverage<6'",
+        "  python -m pip install --disable-pip-version-check 'pytest<6' 'coverage<6'",
         *old_python_unsupported,
         "fi",
     ]
@@ -408,11 +410,12 @@ def _standalone_phase_script(
         f"git reset --hard {shlex.quote(instance['base_commit'])}",
         "git clean -fdx",
     ]
+    absolute_patch_path = patch_path.resolve()
     if apply_patch:
         lines += [
-            f"git apply -v {shlex.quote(str(patch_path))} || "
-            f"git apply -v --3way {shlex.quote(str(patch_path))} || "
-            f"patch --batch --fuzz=5 -p1 -i {shlex.quote(str(patch_path))} || "
+            f"git apply -v {shlex.quote(str(absolute_patch_path))} || "
+            f"git apply -v --3way {shlex.quote(str(absolute_patch_path))} || "
+            f"patch --batch --fuzz=5 -p1 -i {shlex.quote(str(absolute_patch_path))} || "
             f"{{ echo {PATCH_FAILED}; exit 11; }}",
             f"echo {PATCH_APPLIED}",
         ]
@@ -465,11 +468,12 @@ def _standalone_mutation_script(
         f"git reset --hard {shlex.quote(instance['base_commit'])}",
         "git clean -fdx",
     ]
+    absolute_patch_path = patch_path.resolve()
     if apply_patch:
         lines += [
-            f"git apply -v {shlex.quote(str(patch_path))} || "
-            f"git apply -v --3way {shlex.quote(str(patch_path))} || "
-            f"patch --batch --fuzz=5 -p1 -i {shlex.quote(str(patch_path))} || "
+            f"git apply -v {shlex.quote(str(absolute_patch_path))} || "
+            f"git apply -v --3way {shlex.quote(str(absolute_patch_path))} || "
+            f"patch --batch --fuzz=5 -p1 -i {shlex.quote(str(absolute_patch_path))} || "
             f"{{ echo {PATCH_FAILED}; exit 11; }}",
             f"echo {PATCH_APPLIED}",
         ]
@@ -633,6 +637,24 @@ def prepare_standalone_coverage_baseline(
     serializable = {key: value for key, value in result.items() if key != "output"}
     (out_dir / "baseline.json").write_text(json.dumps(serializable, indent=2))
     return result
+
+
+def standalone_baseline_failure(baseline: dict) -> str:
+    """Return why a baseline is invalid, or an empty string when usable."""
+    if baseline.get("timed_out"):
+        return "baseline_timeout"
+    if baseline.get("setup_exit") != 0:
+        return "baseline_repository_setup_failed"
+    if baseline.get("test_exit") != 0:
+        return "baseline_tests_failed"
+    if baseline.get("coverage_test_exit") != 0:
+        return "baseline_coverage_test_failed"
+    if baseline.get("coverage") is None:
+        return "baseline_coverage_unavailable"
+    repeat_exits = baseline.get("repeat_exits") or []
+    if any(exit_code != 0 for exit_code in repeat_exits):
+        return "baseline_test_suite_flaky_or_failed"
+    return ""
 
 
 def classify_coverage_result(before: dict | None, after: dict | None, patch_info: dict,
@@ -910,7 +932,9 @@ def run_standalone_coverage_evaluation(
             mutation_after_setup_exit = _exit_code(mutation_after_output, "SETUP_EXIT")
         usable_before_mut = None if mutation_exit_is_fatal(before_mutation_exit) else before_mut
         usable_after_mut = None if mutation_exit_is_fatal(after_mutation_exit) else after_mut
-        if (
+        if PATCH_APPLIED not in after_output:
+            status, reason = "errored", "test_patch_failed"
+        elif (
             before_setup_exit != 0
             or after_setup_exit != 0
             or mutation_before_setup_exit not in {None, 0}
