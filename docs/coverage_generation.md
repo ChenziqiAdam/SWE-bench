@@ -25,7 +25,7 @@ repository-wide.
 The default commands are:
 
 ```text
-setup:             python -m pip install . pytest
+setup:             python -m pip install -e . pytest
 tests:             python -m pytest
 coverage:          python -m coverage run --branch --source=. -m pytest
 coverage results:  python -m coverage json -o <phase-output>
@@ -41,6 +41,17 @@ Override repository-specific behavior with `--coverage_setup_command`,
 pipeline in a dedicated Python/Conda environment because setup and tests execute
 trusted repository code on the host. Claude Code/Codex also work in their own
 clean clone; the evaluator never trusts agent-reported metrics.
+
+The editable default is important for scientific packages with compiled
+extensions: tests launched from the checkout import the checkout's package,
+not a separately installed wheel. The editable build makes those extensions
+available to source-tree imports. Projects with additional build or test
+dependencies should override the setup command.
+
+Biopython has a built-in standalone profile. For its GitHub URL, default CLI
+values automatically build C extensions in place and use Biopython's official
+offline `Tests/run_tests.py` suite for both testing and coverage. Explicit
+command overrides still take precedence.
 
 The pipeline stops before agent inference if repository setup, the complete
 baseline tests, flaky reruns, or baseline coverage fail. This prevents spending

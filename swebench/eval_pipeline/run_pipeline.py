@@ -19,6 +19,23 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+DEFAULT_COVERAGE_SETUP_COMMAND = "python -m pip install -e . pytest"
+DEFAULT_COVERAGE_TEST_COMMAND = "python -m pytest"
+
+STANDALONE_COVERAGE_REPO_PROFILES = {
+    "biopython/biopython": {
+        "coverage_setup_command": (
+            "python -m pip install -e . pytest && "
+            "python setup.py build_ext --inplace"
+        ),
+        "coverage_test_command": "python Tests/run_tests.py --offline",
+        "coverage_command": (
+            "python -m coverage run --branch --source=Bio "
+            "Tests/run_tests.py --offline"
+        ),
+    },
+}
+
 
 def _clear_selected_evaluation_cache(
     log_dir: str | Path,
@@ -143,12 +160,13 @@ def parse_args():
         help="Fixed git commit for standalone --repo_url coverage generation.",
     )
     p.add_argument(
-        "--coverage_setup_command", default="python -m pip install . pytest",
+        "--coverage_setup_command", default=DEFAULT_COVERAGE_SETUP_COMMAND,
         help="Repository setup command run before each standalone baseline/after phase "
-             "(default also installs pytest).",
+             "(default uses an editable install so source-tree tests can import built "
+             "extensions, and also installs pytest).",
     )
     p.add_argument(
-        "--coverage_test_command", default="python -m pytest",
+        "--coverage_test_command", default=DEFAULT_COVERAGE_TEST_COMMAND,
         help="Complete test command for standalone coverage generation.",
     )
     p.add_argument(
@@ -452,6 +470,18 @@ def _standalone_coverage_instance(args) -> dict:
     repo_path = repo_path.strip("/")
     if repo_path.endswith(".git"):
         repo_path = repo_path[:-4]
+    profile = STANDALONE_COVERAGE_REPO_PROFILES.get(repo_path.lower(), {})
+    setup_command = args.coverage_setup_command
+    test_command = args.coverage_test_command
+    coverage_command = args.coverage_command
+    if profile:
+        if setup_command == DEFAULT_COVERAGE_SETUP_COMMAND:
+            setup_command = profile["coverage_setup_command"]
+        if test_command == DEFAULT_COVERAGE_TEST_COMMAND:
+            test_command = profile["coverage_test_command"]
+        if coverage_command is None:
+            coverage_command = profile["coverage_command"]
+        logger.info("Using standalone coverage profile for %s", repo_path.lower())
     slug = re.sub(r"[^A-Za-z0-9_.-]+", "__", repo_path)
     identity = hashlib.sha256(
         json.dumps([args.repo_url, args.base_commit, sorted(targets)]).encode()
@@ -463,9 +493,9 @@ def _standalone_coverage_instance(args) -> dict:
         "base_commit": args.base_commit,
         "problem_statement": "",
         "coverage_targets": sorted(set(targets)),
-        "coverage_setup_command": args.coverage_setup_command,
-        "coverage_test_command": args.coverage_test_command,
-        "coverage_command": args.coverage_command,
+        "coverage_setup_command": setup_command,
+        "coverage_test_command": test_command,
+        "coverage_command": coverage_command,
         "coverage_results_command": args.coverage_results_command,
         "mutation_command": args.mutation_command,
         "mutation_results_command": args.mutation_results_command,

@@ -22,6 +22,32 @@ from swebench.eval_pipeline.coverage_generation_eval import (
     mutation_exit_is_fatal,
 )
 from swebench.eval_pipeline.prompt_builder import build_agent_prompt
+from swebench.eval_pipeline.run_pipeline import _standalone_coverage_instance, parse_args
+
+
+def test_standalone_default_setup_uses_editable_install(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["run_pipeline"])
+    args = parse_args()
+    assert args.coverage_setup_command == "python -m pip install -e . pytest"
+
+
+def test_biopython_profile_builds_extensions_and_uses_offline_runner(monkeypatch):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_pipeline",
+            "--repo_url",
+            "https://github.com/biopython/biopython.git",
+            "--base_commit",
+            "8ef753085b11520207d5a8f6122e6fb53fddedba",
+        ],
+    )
+    instance = _standalone_coverage_instance(parse_args())
+    assert "build_ext --inplace" in instance["coverage_setup_command"]
+    assert instance["coverage_test_command"] == "python Tests/run_tests.py --offline"
+    assert "--source=Bio" in instance["coverage_command"]
+    assert "Tests/run_tests.py --offline" in instance["coverage_command"]
 
 
 def test_coverage_prompt_names_target_and_tests_only_constraints():
