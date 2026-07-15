@@ -16,6 +16,51 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def _clear_selected_evaluation_cache(
+    log_dir: str | Path,
+    run_id: str,
+    instance_ids: list[str],
+) -> int:
+    """Clear only selected reports and stale containers for a forced rerun."""
+    import shutil
+    import subprocess
+
+    removed = 0
+    for instance_id in instance_ids:
+        for report_dir in Path(log_dir).glob(f"{run_id}/*/{instance_id}"):
+            shutil.rmtree(report_dir, ignore_errors=True)
+            removed += 1
+        subprocess.run(
+            ["docker", "rm", "-f", f"sweb.eval.{instance_id}.{run_id}"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    return removed
+
+
+def _write_prompts_preserving_unselected(
+    prompts_path: Path,
+    prompts: dict[str, str],
+    preserve_existing: bool,
+) -> int:
+    """Write prompts without pruning unrelated rows during a partial rerun."""
+    merged: dict[str, str] = {}
+    if preserve_existing and prompts_path.exists():
+        for line in prompts_path.read_text().splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if row.get("instance_id"):
+                merged[row["instance_id"]] = row.get("prompt", "")
+    merged.update(prompts)
+    with prompts_path.open("w") as prompt_file:
+        for instance_id, prompt in merged.items():
+            prompt_file.write(
+                json.dumps({"instance_id": instance_id, "prompt": prompt}) + "\n"
+            )
+    return len(merged)
+
+
 def parse_args():
     p = argparse.ArgumentParser(
         description="Evaluate an agent's issue-resolution rate on scientific-software PRs"
@@ -529,10 +574,10 @@ def main():
     all_prompts = build_all_prompts(instances, eval_mode=args.eval_mode)
 
     prompts_path = output_dir / "agent_prompts.jsonl"
-    with open(prompts_path, "w") as pf:
-        for iid, prompt in all_prompts.items():
-            pf.write(json.dumps({"instance_id": iid, "prompt": prompt}) + "\n")
-    logger.info(f"Wrote agent prompts → {prompts_path}")
+    prompt_count = _write_prompts_preserving_unselected(
+        prompts_path, all_prompts, preserve_existing=bool(filter_ids)
+    )
+    logger.info(f"Wrote {prompt_count} agent prompts → {prompts_path}")
 
     # ── Stage 4: Inference (agent-only) ───────────────────────────────────────
     if not args.skip_inference:
@@ -650,27 +695,9 @@ def main():
             # would otherwise cause a 409 Conflict on create — the bug that made
             # 4881 silently error). Both are best-effort.
             if args.force_eval:
-                import shutil
-                import subprocess
-                removed = 0
-                if args.eval_mode in {"test_generation", "coverage_generation"}:
-                    model_report_dir = (
-                        Path(args.log_dir)
-                        / run_id
-                        / inference_model.replace("/", "__")
-                    )
-                    if model_report_dir.exists():
-                        shutil.rmtree(model_report_dir, ignore_errors=True)
-                        removed += 1
-                for iid in eval_instance_ids:
-                    for report_dir in Path(args.log_dir).glob(f"{run_id}/*/{iid}"):
-                        shutil.rmtree(report_dir, ignore_errors=True)
-                        removed += 1
-                    container = f"sweb.eval.{iid}.{run_id}"
-                    subprocess.run(
-                        ["docker", "rm", "-f", container],
-                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                    )
+                removed = _clear_selected_evaluation_cache(
+                    args.log_dir, run_id, eval_instance_ids
+                )
                 logger.info(
                     f"--force_eval: cleared {removed} cached report dir(s) and removed "
                     f"any stale eval containers under {args.log_dir}/{run_id}/."
@@ -794,17 +821,30 @@ def main():
         "coverage_flaky_runs": args.coverage_flaky_runs,
     }
     if args.eval_mode == "test_generation":
+        report_instances = instances
+        report_predictions_path = agent_predictions_path
+        if args.force_eval and args.skip_inference and filter_ids:
+            # A targeted harness repair should update the selected cached
+            # reports, then regenerate the complete run CSV from all cached
+            # instances and master predictions.
+            cached_instances = []
+            with open(instances_path) as instance_file:
+                for line in instance_file:
+                    if line.strip():
+                        cached_instances.append(json.loads(line))
+            report_instances = unique_instances_by_id(cached_instances)
+            report_predictions_path = agent_predictions_master_path
         results = collect_test_generation_results(
             run_id=run_id,
             log_dir=args.log_dir,
-            instance_ids={i["instance_id"] for i in instances},
+            instance_ids={i["instance_id"] for i in report_instances},
             model_name=inference_model,
         )
         render_test_generation_table(
             results=results,
-            instances=instances,
+            instances=report_instances,
             output_csv=output_csv,
-            predictions_path=agent_predictions_path,
+            predictions_path=report_predictions_path,
             run_config=run_config,
         )
     elif args.eval_mode == "coverage_generation":
