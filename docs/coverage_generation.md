@@ -25,7 +25,7 @@ repository-wide.
 The default commands are:
 
 ```text
-setup:             python -m pip install .
+setup:             python -m pip install . pytest
 tests:             python -m pytest
 coverage:          python -m coverage run --branch --source=. -m pytest
 coverage results:  python -m coverage json -o <phase-output>

@@ -425,7 +425,12 @@ def _standalone_phase_script(
     else:
         lines.append("SETUP_EXIT=0")
     lines += _tool_install_lines({**instance, "mutation_command": "coverage-phase"})
+    tools_check = "python -c 'import pytest'"
+    if not instance.get("coverage_command"):
+        tools_check += " && python -m coverage --version"
     lines += [
+        tools_check,
+        "TOOLS_EXIT=$?",
         pytest_command,
         "PYTEST_EXIT=$?",
         "python -m coverage erase",
@@ -438,6 +443,7 @@ def _standalone_phase_script(
         lines += [pytest_command, f"echo REPEAT_RUN_{index + 1}_EXIT=$?"]
     lines += [
         "echo SETUP_EXIT=$SETUP_EXIT",
+        "echo TOOLS_EXIT=$TOOLS_EXIT",
         "echo PYTEST_EXIT=$PYTEST_EXIT",
         "echo COVERAGE_TEST_EXIT=$COVERAGE_TEST_EXIT",
         "exit 0",
@@ -627,6 +633,7 @@ def prepare_standalone_coverage_baseline(
         "timed_out": timed_out,
         "runtime": runtime,
         "setup_exit": _exit_code(output, "SETUP_EXIT"),
+        "tools_exit": _exit_code(output, "TOOLS_EXIT"),
         "test_exit": _exit_code(output, "PYTEST_EXIT"),
         "coverage_test_exit": _exit_code(output, "COVERAGE_TEST_EXIT"),
         "repeat_exits": [
@@ -645,6 +652,8 @@ def standalone_baseline_failure(baseline: dict) -> str:
         return "baseline_timeout"
     if baseline.get("setup_exit") != 0:
         return "baseline_repository_setup_failed"
+    if baseline.get("tools_exit") != 0:
+        return "baseline_test_or_coverage_tools_unavailable"
     if baseline.get("test_exit") != 0:
         return "baseline_tests_failed"
     if baseline.get("coverage_test_exit") != 0:
@@ -869,6 +878,7 @@ def run_standalone_coverage_evaluation(
             before_exit = _exit_code(before_output, "PYTEST_EXIT")
             before_coverage_exit = _exit_code(before_output, "COVERAGE_TEST_EXIT")
             before_setup_exit = _exit_code(before_output, "SETUP_EXIT")
+            before_tools_exit = _exit_code(before_output, "TOOLS_EXIT")
             baseline_repeat_exits = [
                 _exit_code(before_output, f"REPEAT_RUN_{i + 1}_EXIT")
                 for i in range(flaky_runs)
@@ -881,6 +891,7 @@ def run_standalone_coverage_evaluation(
             before_exit = baseline.get("test_exit")
             before_coverage_exit = baseline.get("coverage_test_exit")
             before_setup_exit = baseline.get("setup_exit")
+            before_tools_exit = baseline.get("tools_exit")
             baseline_repeat_exits = baseline.get("repeat_exits") or []
         after_output, after_timeout, after_runtime = _run_standalone_phase(
             instance, patch_path, True, flaky_runs, out_dir, "after", timeout, github_token
@@ -891,6 +902,7 @@ def run_standalone_coverage_evaluation(
         after_exit = _exit_code(after_output, "PYTEST_EXIT")
         after_coverage_exit = _exit_code(after_output, "COVERAGE_TEST_EXIT")
         after_setup_exit = _exit_code(after_output, "SETUP_EXIT")
+        after_tools_exit = _exit_code(after_output, "TOOLS_EXIT")
         after_repeat_exits = [
             _exit_code(after_output, f"REPEAT_RUN_{i + 1}_EXIT") for i in range(flaky_runs)
         ]
@@ -941,6 +953,8 @@ def run_standalone_coverage_evaluation(
             or mutation_after_setup_exit not in {None, 0}
         ):
             status, reason = "errored", "repository_setup_failed"
+        elif before_tools_exit != 0 or after_tools_exit != 0:
+            status, reason = "errored", "test_or_coverage_tools_unavailable"
         else:
             status, reason = classify_coverage_result(
                 before_cov,
@@ -971,6 +985,8 @@ def run_standalone_coverage_evaluation(
             "test_patch_applied": PATCH_APPLIED in after_output,
             "setup_before_exit_code": before_setup_exit,
             "setup_after_exit_code": after_setup_exit,
+            "tools_before_exit_code": before_tools_exit,
+            "tools_after_exit_code": after_tools_exit,
             "base_tests_passed": before_exit == 0,
             "after_tests_passed": after_exit == 0,
             "base_coverage_tests_passed": before_coverage_exit == 0,

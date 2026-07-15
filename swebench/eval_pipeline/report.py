@@ -415,6 +415,8 @@ def render_coverage_generation_table(
             "after_tests_passed": "yes" if info.get("after_tests_passed") else "no",
             "setup_before_exit_code": info.get("setup_before_exit_code", ""),
             "setup_after_exit_code": info.get("setup_after_exit_code", ""),
+            "tools_before_exit_code": info.get("tools_before_exit_code", ""),
+            "tools_after_exit_code": info.get("tools_after_exit_code", ""),
             "base_coverage_tests_passed": (
                 "yes" if info.get("base_coverage_tests_passed") else "no"
             ),

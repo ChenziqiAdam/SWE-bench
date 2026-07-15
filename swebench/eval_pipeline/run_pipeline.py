@@ -143,8 +143,9 @@ def parse_args():
         help="Fixed git commit for standalone --repo_url coverage generation.",
     )
     p.add_argument(
-        "--coverage_setup_command", default="python -m pip install .",
-        help="Repository setup command run before each standalone baseline/after phase.",
+        "--coverage_setup_command", default="python -m pip install . pytest",
+        help="Repository setup command run before each standalone baseline/after phase "
+             "(default also installs pytest).",
     )
     p.add_argument(
         "--coverage_test_command", default="python -m pytest",

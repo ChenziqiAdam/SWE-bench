@@ -332,6 +332,7 @@ def test_standalone_mutation_script_is_scoped_to_selected_modules(tmp_path):
     [
         ({"timed_out": True}, "baseline_timeout"),
         ({"setup_exit": 1}, "baseline_repository_setup_failed"),
+        ({"tools_exit": 1}, "baseline_test_or_coverage_tools_unavailable"),
         ({"test_exit": 1}, "baseline_tests_failed"),
         ({"coverage_test_exit": 1}, "baseline_coverage_test_failed"),
         ({"coverage": None}, "baseline_coverage_unavailable"),
@@ -342,6 +343,7 @@ def test_invalid_standalone_baseline_stops_before_inference(override, reason):
     baseline = {
         "timed_out": False,
         "setup_exit": 0,
+        "tools_exit": 0,
         "test_exit": 0,
         "coverage_test_exit": 0,
         "coverage": {"files": {}},
@@ -355,6 +357,7 @@ def test_valid_standalone_baseline_can_reach_inference():
     assert standalone_baseline_failure({
         "timed_out": False,
         "setup_exit": 0,
+        "tools_exit": 0,
         "test_exit": 0,
         "coverage_test_exit": 0,
         "coverage": {"files": {}},
