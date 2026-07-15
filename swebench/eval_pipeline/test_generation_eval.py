@@ -59,6 +59,7 @@ def classify_test_generation_result(
     gold_patch_applied: bool,
     had_runtime_error: bool = False,
     no_tests_selected: bool = False,
+    collection_failed: bool = False,
     non_evaluable: bool = False,
     build_failed: bool = False,
     base_build_failed: bool = False,
@@ -69,9 +70,6 @@ def classify_test_generation_result(
     if non_evaluable:
         status = "excluded"
         failure_reason = "non_evaluable_spec"
-    elif no_tests_selected:
-        status = "not_exercised"
-        failure_reason = "no_tests_selected"
     elif not test_patch_applied or had_runtime_error:
         status = "errored"
         failure_reason = "test_patch_failed_or_timeout"
@@ -81,6 +79,12 @@ def classify_test_generation_result(
     elif build_failed or gold_build_failed:
         status = "errored"
         failure_reason = "generated_test_build_failed"
+    elif collection_failed:
+        status = "errored"
+        failure_reason = "test_collection_failed"
+    elif no_tests_selected:
+        status = "not_exercised"
+        failure_reason = "no_tests_selected"
     elif base_build_failed:
         # A generated regression test may intentionally use an API introduced
         # by the fix.  Failing to compile on base is therefore a valid failing
@@ -139,6 +143,20 @@ def _no_tests_selected(output: str) -> bool:
     )
 
 
+def _test_collection_failed(output: str) -> bool:
+    """Distinguish broken collection/imports from a valid empty selection."""
+    lowered = output.lower()
+    return any(
+        marker in lowered
+        for marker in (
+            "error collecting",
+            "errors during collection",
+            "error during collection",
+            "found no collectors",
+        )
+    )
+
+
 def _openmm_generated_pytest_command(
     pytest_targets: list[str],
     pytest_filter: str | None = None,
@@ -151,8 +169,10 @@ def _openmm_generated_pytest_command(
         "mkdir -p \"$SIMTK_SITE\" && "
         "if [ ! -f \"$(dirname \"$SIMTK_SITE\")/__init__.py\" ]; then echo '' > \"$(dirname \"$SIMTK_SITE\")/__init__.py\"; fi && "
         "if [ ! -f \"$SIMTK_SITE/__init__.py\" ]; then echo 'from openmm import *' > \"$SIMTK_SITE/__init__.py\"; fi && "
-        "cp -f /testbed/wrappers/python/openmm/*.py \"$OPENMM_SITE/\" 2>/dev/null || true; "
-        "cp -f /testbed/wrappers/python/simtk/openmm/*.py \"$SIMTK_SITE/\" 2>/dev/null || true; "
+        # Keep pip's complete top-level packages (compiled extension, version
+        # module, and simtk compatibility shim).  Old source trees frequently
+        # lack generated version.py; copying their __init__.py over the wheel
+        # creates a circular/partially-initialized import during collection.
         "SIMTK_ROOT=$(dirname \"$SIMTK_SITE\") && "
         "if [ -d /testbed/wrappers/python/simtk/unit ]; then rm -rf \"$SIMTK_ROOT/unit\" && cp -r /testbed/wrappers/python/simtk/unit \"$SIMTK_ROOT/\"; fi && "
         "if [ -d /testbed/wrappers/python/openmm/app ]; then cp -r /testbed/wrappers/python/openmm/app \"$OPENMM_SITE/\"; fi && "
@@ -172,6 +192,7 @@ def _openmm_generated_pytest_command(
         "done; "
         "if [ ! -e \"$SIMTK_SITE/vec3.py\" ]; then echo 'from openmm.vec3 import *' > \"$SIMTK_SITE/vec3.py\"; fi && "
         "if [ ! -e \"$SIMTK_SITE/unit.py\" ] && [ ! -d \"$SIMTK_SITE/unit\" ]; then echo 'from openmm.unit import *' > \"$SIMTK_SITE/unit.py\"; fi && "
+        "python -c 'import openmm, simtk.openmm' && "
         "export PYTHONPATH=\"$SIMTK_SITE/app:${PYTHONPATH:-}\""
     )
     command = (
@@ -459,6 +480,8 @@ def _evaluate_one(
             gold_patch_applied=gold_patch_applied,
             had_runtime_error=base_timed_out or gold_timed_out,
             no_tests_selected=_no_tests_selected(base_output) or _no_tests_selected(gold_output),
+            collection_failed=_test_collection_failed(base_output)
+            or _test_collection_failed(gold_output),
             non_evaluable=_non_evaluable_output(base_output) or _non_evaluable_output(gold_output),
             base_build_failed=BUILD_FAIL in base_output,
             gold_build_failed=BUILD_FAIL in gold_output,

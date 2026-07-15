@@ -256,7 +256,10 @@ def exec_run_with_timeout(container, cmd, timeout: int | None = 60):
             container.exec_run(f"kill -TERM {exec_pid}", detach=True)
         timed_out = True
     end_time = time.time()
-    return exec_result.decode(), timed_out, end_time - start_time
+    # Scientific test programs occasionally emit locale-specific or arbitrary
+    # binary bytes.  Preserve the readable output instead of turning a complete
+    # evaluation into a UnicodeDecodeError.
+    return exec_result.decode("utf-8", errors="replace"), timed_out, end_time - start_time
 
 
 def find_dependent_images(client: docker.DockerClient, image_name: str):

@@ -8,6 +8,7 @@ from swebench.eval_pipeline.test_generation_eval import (
     _build_script,
     _evaluate_one,
     _no_tests_selected,
+    _test_collection_failed,
     _openmm_generated_pytest_targets,
     _test_command,
     classify_test_generation_result,
@@ -88,6 +89,27 @@ def test_test_generation_marks_zero_selected_not_exercised():
 
     assert result["status"] == "not_exercised"
     assert result["failure_reason"] == "no_tests_selected"
+
+
+def test_test_generation_marks_collection_failure_errored_before_empty_selection():
+    result = classify_test_generation_result(
+        {},
+        {},
+        test_patch_applied=True,
+        gold_patch_applied=True,
+        no_tests_selected=True,
+        collection_failed=True,
+    )
+
+    assert result["status"] == "errored"
+    assert result["failure_reason"] == "test_collection_failed"
+
+
+def test_collection_failure_detection_distinguishes_valid_empty_selection():
+    assert _test_collection_failed(
+        "collected 0 items / 1 error\nERROR collecting TestForceField.py"
+    )
+    assert not _test_collection_failed("collected 0 items\n0 selected")
 
 
 def test_test_generation_marks_build_failure_errored():
@@ -187,8 +209,10 @@ def test_openmm_test_generation_runs_touched_pytest_file_not_fixed_selector(monk
     assert "compiled*" in command
     assert "from openmm.vec3 import *" in command
     assert "from openmm.unit import *" in command
-    assert "wrappers/python/openmm/*.py" in command
+    assert "wrappers/python/openmm/*.py" not in command
+    assert "wrappers/python/simtk/openmm/*.py" not in command
     assert "wrappers/python/simtk/unit" in command
+    assert "import openmm, simtk.openmm" in command
     assert "python -m lib2to3 -w -n \"$SIMTK_SITE/app\"" in command
     assert command.index("/testbed/wrappers/python/openmm/app") < command.index(
         "/testbed/wrappers/python/simtk/openmm/app"

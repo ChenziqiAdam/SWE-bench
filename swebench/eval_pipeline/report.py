@@ -85,6 +85,8 @@ def collect_test_generation_results(
         report_files = list((run_path / model_dir).glob("*/report.json"))
     else:
         report_files = list(run_path.glob("*/*/report.json"))
+    if instance_ids is not None:
+        report_files = [p for p in report_files if p.parent.name in instance_ids]
     logger.info(f"Test-generation run ({run_id}): found {len(report_files)} report files")
     for report_file in report_files:
         try:

@@ -350,7 +350,12 @@ def _openmm_native_python_spec(test_file: str, test_filter: str) -> dict:
             "-DOPENMM_BUILD_PYTHON_WRAPPERS=ON "
             "-DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF "
             "-DOPENMM_BUILD_EXAMPLES=OFF",
-            "cmake --build build --parallel $(nproc) --target PythonInstall",
+            # PythonInstall links against the configured install prefix.  Some
+            # OpenMM versions incorrectly return success when setup.py linking
+            # failed, so install the native libraries first and verify import.
+            "cmake --build build --parallel $(nproc) --target install",
+            "cmake --build build --parallel $(nproc) --target PythonInstall && "
+            "python -c 'import openmm, simtk.openmm'",
         ],
         "test_cmd": [
             "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
@@ -974,8 +979,8 @@ SPECS_RDKIT = _RDKitSpecs({
     # These targets correspond to the test files touched by the generated
     # patches.  Keeping them concrete avoids excluding valid generated tests
     # through the numeric non-evaluable fallback above.
-    "2083": _rdkit_cpp_targets_spec("fileParsersTest1"),
-    "2377": _rdkit_cpp_targets_spec("testReaction"),
+    "2083": _rdkit_cpp_targets_spec("fileParsersTest1", legacy_boost_endian=True),
+    "2377": _rdkit_cpp_targets_spec("testReaction", legacy_boost_endian=True),
     "2548": _rdkit_mixed_tests_spec(
         ("testReaction",),
         ("Code/GraphMol/ChemReactions/Wrap/testSanitize.py",),

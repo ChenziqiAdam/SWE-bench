@@ -210,8 +210,15 @@ def test_openmm_native_python_api_spec_builds_wrappers():
     spec = SPECS_OPENMM["4870"]
     assert spec["test_generation_use_spec_cmd"] is True
     assert "-DOPENMM_BUILD_PYTHON_WRAPPERS=ON" in spec["build_after_test_patch"][0]
-    assert "PythonInstall" in spec["build_after_test_patch"][1]
+    assert "--target install" in spec["build_after_test_patch"][1]
+    assert "PythonInstall" in spec["build_after_test_patch"][2]
+    assert "import openmm, simtk.openmm" in spec["build_after_test_patch"][2]
     assert SPECS_OPENMM["1837"]["test_generation_use_spec_cmd"] is True
+
+
+def test_legacy_rdkit_specs_install_boost_endian_compatibility_header():
+    for pr in ("2083", "2377"):
+        assert any("boost/detail/endian.hpp" in cmd for cmd in SPECS_RDKIT[pr]["pre_install"])
 
 
 def test_issues_testgen_rdkit_rows_have_concrete_specs():

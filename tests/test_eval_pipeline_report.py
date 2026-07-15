@@ -74,6 +74,27 @@ def test_collect_test_generation_results_filters_model_dir(tmp_path):
     assert results["demo__repo-1"]["status"] == "resolved"
 
 
+def test_collect_test_generation_results_counts_only_selected_instances(tmp_path, caplog):
+    caplog.set_level("INFO")
+    run_id = "run_testgen"
+    for instance_id in ("demo__repo-1", "stale__repo-2"):
+        report_dir = tmp_path / run_id / "model" / instance_id
+        report_dir.mkdir(parents=True)
+        (report_dir / "report.json").write_text(
+            json.dumps({instance_id: {"status": "resolved"}})
+        )
+
+    results = collect_test_generation_results(
+        run_id,
+        log_dir=str(tmp_path),
+        instance_ids={"demo__repo-1"},
+        model_name="model",
+    )
+
+    assert set(results) == {"demo__repo-1"}
+    assert "found 1 report files" in caplog.text
+
+
 def test_test_generation_report_exports_resource_metrics(tmp_path, capsys):
     predictions = tmp_path / "predictions.jsonl"
     predictions.write_text(
