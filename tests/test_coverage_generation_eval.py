@@ -274,6 +274,45 @@ def test_mutation_improvement_can_resolve_without_coverage_delta():
     assert result == ("resolved", "")
 
 
+def test_mutation_timeout_does_not_mask_coverage_improvement():
+    before = {"line_coverage": 50.0, "branch_coverage": 25.0}
+    after = {"line_coverage": 60.0, "branch_coverage": 25.0}
+    patch_info = {
+        "tests_only_patch": True,
+        "preserves_existing_test_behavior": True,
+        "added_assertion_count": 1,
+    }
+    assert classify_coverage_result(
+        before,
+        after,
+        patch_info,
+        0,
+        0,
+        True,
+        False,
+        mutation_timed_out=True,
+    ) == ("resolved", "")
+
+
+def test_mutation_timeout_is_reported_without_coverage_improvement():
+    coverage = {"line_coverage": 50.0, "branch_coverage": 25.0}
+    patch_info = {
+        "tests_only_patch": True,
+        "preserves_existing_test_behavior": True,
+        "added_assertion_count": 1,
+    }
+    assert classify_coverage_result(
+        coverage,
+        coverage,
+        patch_info,
+        0,
+        0,
+        True,
+        False,
+        mutation_timed_out=True,
+    ) == ("errored", "mutation_evaluation_timeout")
+
+
 def test_flakiness_is_compared_separately_before_and_after_patch():
     coverage = {"line_coverage": 50.0, "branch_coverage": 25.0}
     improved = {"line_coverage": 60.0, "branch_coverage": 25.0}
@@ -296,6 +335,7 @@ def test_mutmut_nonzero_outcomes_are_not_all_tool_errors():
     assert mutation_exit_is_fatal(0) is False
     assert mutation_exit_is_fatal(2) is False  # survivors
     assert mutation_exit_is_fatal(4) is False  # timeouts
+    assert mutation_exit_is_fatal(6) is False  # survivors and timeouts
     assert mutation_exit_is_fatal(1) is True
     assert mutation_exit_is_fatal(None) is True
 
@@ -384,6 +424,8 @@ def test_biopython_mutation_script_uses_touched_test_modules(tmp_path):
     assert "Tests/test_New.py" in script
     assert "Tests/test_Phylo.py" in script
     assert "python Tests/run_tests.py --offline" in script
+    assert "if [ ${#tests[@]} -eq 0 ]; then\n  exit 0" in script
+    assert "then\n  exec python Tests/run_tests.py --offline\nfi" not in script
     assert "mutmut results" not in script
     completed = subprocess.run(["bash", "-n"], input=script, text=True)
     assert completed.returncode == 0

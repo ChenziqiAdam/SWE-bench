@@ -173,6 +173,8 @@ def test_coverage_generation_report_exports_scientific_metrics(tmp_path):
             },
             "mutation_after": {"score": 60.0, "score_killed_or_timeout": 65.0},
             "mutation_score_delta": 30.0,
+            "mutation_before_timed_out": True,
+            "mutation_after_timed_out": False,
         }},
         instances=[{"instance_id": "demo__repo-1", "repo": "demo/repo"}],
         output_csv=str(output_csv),
@@ -187,6 +189,8 @@ def test_coverage_generation_report_exports_scientific_metrics(tmp_path):
     assert row["no_existing_test_lines_removed"] == "yes"
     assert row["mutation_timeout_adjusted_score_after"] == "65.0"
     assert row["mutation_score_definition"] == "100 * killed / total"
+    assert row["mutation_before_timed_out"] == "yes"
+    assert row["mutation_after_timed_out"] == "no"
     assert row["turns"] == "3"
     assert row["inference_attempt_count"] == "2"
     assert row["inference_interrupted_attempts"] == "1"

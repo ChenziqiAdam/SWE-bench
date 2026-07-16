@@ -457,6 +457,12 @@ def render_coverage_generation_table(
             "mutation_score_delta": info.get("mutation_score_delta", ""),
             "mutation_before_exit_code": info.get("mutation_before_exit_code", ""),
             "mutation_after_exit_code": info.get("mutation_after_exit_code", ""),
+            "mutation_before_timed_out": (
+                "yes" if info.get("mutation_before_timed_out") else "no"
+            ),
+            "mutation_after_timed_out": (
+                "yes" if info.get("mutation_after_timed_out") else "no"
+            ),
             "mutation_setup_before_exit_code": info.get(
                 "mutation_setup_before_exit_code", ""
             ),

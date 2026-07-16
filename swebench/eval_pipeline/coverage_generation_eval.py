@@ -478,7 +478,10 @@ def _standalone_mutation_script(
             )
         runner_lines += [
             "if [ ${#tests[@]} -eq 0 ]; then",
-            "  exec python Tests/run_tests.py --offline",
+            # Keep before/after selection symmetric when the patch creates every
+            # touched test module. Expanding only the baseline to the full suite
+            # makes mutation scores incomparable and can be prohibitively slow.
+            "  exit 0",
             "fi",
             'exec python Tests/run_tests.py --offline "${tests[@]}"',
         ]
@@ -705,6 +708,7 @@ def classify_coverage_result(before: dict | None, after: dict | None, patch_info
                              coverage_test_failed: bool = False,
                              mutation_before: dict | None = None,
                              mutation_after: dict | None = None,
+                             mutation_timed_out: bool = False,
                              baseline_flaky: bool = False,
                              generated_tests_flaky: bool = False) -> tuple[str, str]:
     if timed_out:
@@ -745,6 +749,8 @@ def classify_coverage_result(before: dict | None, after: dict | None, patch_info
         or mutation_improved
     ):
         return "resolved", ""
+    if mutation_timed_out:
+        return "errored", "mutation_evaluation_timeout"
     return "unresolved", "no_coverage_or_mutation_improvement"
 
 
@@ -1025,11 +1031,11 @@ def run_standalone_coverage_evaluation(
                 before_exit,
                 after_exit,
                 PATCH_APPLIED in after_output,
-                before_timeout or after_timeout or mutation_before_timeout
-                or mutation_after_timeout,
+                before_timeout or after_timeout,
                 coverage_test_failed=(before_coverage_exit != 0 or after_coverage_exit != 0),
                 mutation_before=usable_before_mut,
                 mutation_after=usable_after_mut,
+                mutation_timed_out=mutation_before_timeout or mutation_after_timeout,
                 baseline_flaky=baseline_flaky,
                 generated_tests_flaky=generated_tests_flaky,
             )
@@ -1073,6 +1079,8 @@ def run_standalone_coverage_evaluation(
             "mutation_after": after_mut,
             "mutation_before_exit_code": before_mutation_exit,
             "mutation_after_exit_code": after_mutation_exit,
+            "mutation_before_timed_out": mutation_before_timeout,
+            "mutation_after_timed_out": mutation_after_timeout,
             "mutation_setup_before_exit_code": mutation_before_setup_exit,
             "mutation_setup_after_exit_code": mutation_after_setup_exit,
             "mutation_before_tool_error": bool(mutation_targets)
