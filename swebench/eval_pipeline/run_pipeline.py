@@ -152,6 +152,19 @@ def parse_args():
              "Without it, the agent chooses modules from whole-repository coverage.",
     )
     p.add_argument(
+        "--traditional_test_generator", choices=["pynguin"], default=None,
+        help="Optional conventional control arm for standalone coverage generation.",
+    )
+    p.add_argument("--pynguin_version", default="0.45.0")
+    p.add_argument("--pynguin_seed", type=int, default=0)
+    p.add_argument("--pynguin_total_budget", type=int, default=900)
+    p.add_argument("--pynguin_module_slice", type=int, default=60)
+    p.add_argument("--pynguin_assertion_mode", default="SIMPLE")
+    p.add_argument(
+        "--pynguin_module", action="append", default=None,
+        help="Optional import name or source path; repeat to restrict Pynguin eligibility.",
+    )
+    p.add_argument(
         "--repo_url", default=None,
         help="Standalone coverage_generation repository URL. Bypasses spreadsheet/issue "
              "ingestion and requires --base_commit.",
@@ -521,6 +534,7 @@ def _standalone_coverage_instance(args) -> dict:
 
 def _run_standalone_coverage(args, inference_model: str, github_token: str | None) -> None:
     from swebench.eval_pipeline.coverage_generation_eval import (
+        evaluate_common_mutation_targets,
         format_baseline_coverage_report,
         prepare_standalone_coverage_baseline,
         run_standalone_coverage_evaluation,
@@ -533,6 +547,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
     from swebench.eval_pipeline.prompt_builder import build_all_prompts
     from swebench.eval_pipeline.report import (
         collect_test_generation_results,
+        render_coverage_comparison_table,
         render_coverage_generation_table,
     )
 
@@ -603,12 +618,44 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
         "model_patch": "",
         "metrics": {},
     }
+    pynguin_prediction = None
+    if args.traditional_test_generator == "pynguin":
+        pynguin_path = output_dir / "pynguin_predictions.jsonl"
+        if not args.skip_inference:
+            logger.info("=== Standalone coverage generation: Pynguin control ===")
+            from swebench.eval_pipeline.pynguin_generation import generate_pynguin_prediction
+
+            pynguin_prediction = generate_pynguin_prediction(
+                instance,
+                baseline.get("coverage") or {},
+                Path(args.log_dir) / eval_run_id / "pynguin" / instance["instance_id"],
+                github_token=github_token,
+                version=args.pynguin_version,
+                seed=args.pynguin_seed,
+                total_budget=args.pynguin_total_budget,
+                module_slice=args.pynguin_module_slice,
+                assertion_mode=args.pynguin_assertion_mode,
+                explicit_modules=args.pynguin_module,
+            )
+            pynguin_path.write_text(json.dumps(pynguin_prediction) + "\n")
+        elif pynguin_path.exists():
+            rows = read_prediction_rows(pynguin_path)
+            pynguin_prediction = rows[-1] if rows else None
+        if pynguin_prediction is None:
+            pynguin_prediction = {
+                "instance_id": instance["instance_id"],
+                "model_name_or_path": "pynguin", "model_patch": "",
+                "error": "missing_cached_prediction", "metrics": {
+                    "method": "pynguin", "version": args.pynguin_version,
+                    "seed": args.pynguin_seed,
+                },
+            }
     model_dir = inference_model.replace("/", "__")
     report_dir = Path(args.log_dir) / eval_run_id / model_dir / instance["instance_id"]
     if args.force_eval and report_dir.exists():
         shutil.rmtree(report_dir)
     if not args.skip_eval:
-        logger.info("=== Standalone coverage generation: independent before/after evaluation ===")
+        logger.info("=== Standalone coverage generation: independent coverage evaluation ===")
         result = run_standalone_coverage_evaluation(
             instance=instance,
             prediction=prediction,
@@ -618,8 +665,45 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
             flaky_runs=args.coverage_flaky_runs,
             github_token=github_token,
             baseline=baseline,
+            run_mutation=False,
         )
+        arm_predictions = {"agent": prediction}
+        arm_results = {"agent": result}
+        if pynguin_prediction is not None:
+            pynguin_result = run_standalone_coverage_evaluation(
+                instance=instance,
+                prediction=pynguin_prediction,
+                run_id=eval_run_id,
+                log_dir=args.log_dir,
+                timeout=args.coverage_eval_timeout,
+                flaky_runs=args.coverage_flaky_runs,
+                github_token=github_token,
+                baseline=baseline,
+                run_mutation=False,
+            )
+            arm_predictions["pynguin"] = pynguin_prediction
+            arm_results["pynguin"] = pynguin_result
+        original, arm_results = evaluate_common_mutation_targets(
+            instance, arm_predictions, arm_results, baseline, eval_run_id,
+            log_dir=args.log_dir, timeout=args.coverage_eval_timeout,
+            github_token=github_token,
+        )
+        result = arm_results["agent"]
+        result["method_version"] = inference_model
         results = {instance["instance_id"]: result}
+        comparison_rows = [original]
+        if "pynguin" in arm_results:
+            comparison_rows.append(arm_results["pynguin"])
+        comparison_rows.append(result)
+        render_coverage_comparison_table(
+            comparison_rows, str(output_dir / f"{args.run_id}_comparison.csv")
+        )
+        if "pynguin" in arm_results:
+            render_coverage_generation_table(
+                {instance["instance_id"]: arm_results["pynguin"]}, instances,
+                str(output_dir / f"{args.run_id}_pynguin_results.csv"),
+                predictions_path=str(output_dir / "pynguin_predictions.jsonl"),
+            )
     else:
         results = collect_test_generation_results(
             run_id=eval_run_id,

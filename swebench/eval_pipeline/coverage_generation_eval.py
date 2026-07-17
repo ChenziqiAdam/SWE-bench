@@ -891,6 +891,7 @@ def run_standalone_coverage_evaluation(
     flaky_runs: int = 2,
     github_token: str | None = None,
     baseline: dict | None = None,
+    run_mutation: bool = True,
 ) -> dict:
     """Evaluate one repo/commit directly, without SWE-bench issue or Docker metadata."""
     started = time.perf_counter()
@@ -976,7 +977,10 @@ def run_standalone_coverage_evaluation(
         ]
         baseline_flaky = _is_flaky(before_exit, baseline_repeat_exits)
         generated_tests_flaky = _is_flaky(after_exit, after_repeat_exits)
-        mutation_targets = select_mutation_targets(before_cov, after_cov, targets)
+        mutation_targets = (
+            select_mutation_targets(before_cov, after_cov, targets)
+            if run_mutation else []
+        )
         before_mut = after_mut = None
         before_mutation_exit = after_mutation_exit = 125
         mutation_before_setup_exit = mutation_after_setup_exit = None
@@ -1118,6 +1122,127 @@ def run_standalone_coverage_evaluation(
     result["evaluation_wall_time_seconds"] = round(time.perf_counter() - started, 6)
     report_path.write_text(json.dumps({iid: result}, indent=2))
     return result
+
+
+def common_improved_modules(
+    baseline_coverage: dict | None, arm_results: list[dict],
+    explicit_targets: list[str] | None = None,
+) -> list[str]:
+    """Form one deterministic mutation target union across generator arms."""
+    if explicit_targets:
+        return sorted(set(explicit_targets))
+    targets: set[str] = set()
+    for result in arm_results:
+        targets.update(
+            select_mutation_targets(baseline_coverage, result.get("coverage_after"), None)
+        )
+    return sorted(targets)
+
+
+def evaluate_common_mutation_targets(
+    instance: dict,
+    predictions: dict[str, dict],
+    arm_results: dict[str, dict],
+    baseline: dict,
+    run_id: str,
+    log_dir: str = "logs/run_evaluation",
+    timeout: int = 3600,
+    github_token: str | None = None,
+) -> tuple[dict, dict[str, dict]]:
+    """Evaluate original and every generator against an identical module union.
+
+    Under the Biopython profile, each arm still uses only that arm's generated
+    test modules; this is explicitly reported as marginal mutation effectiveness.
+    """
+    targets = common_improved_modules(
+        baseline.get("coverage"), list(arm_results.values()),
+        infer_coverage_targets(instance),
+    )
+    root = Path(log_dir) / run_id / "comparison" / instance["instance_id"]
+    root.mkdir(parents=True, exist_ok=True)
+    def run_arm(name: str, patch: str, apply_patch: bool) -> dict:
+        arm_dir = root / name
+        arm_dir.mkdir(parents=True, exist_ok=True)
+        patch_path = arm_dir / "generated_test.patch"
+        patch_path.write_text(patch)
+        if not targets:
+            return {
+                "mutation": None, "exit_code": 125, "timed_out": False,
+                "setup_exit_code": None, "runtime": 0.0,
+                "tool_error": False, "unsupported": False,
+            }
+        output, timed_out, runtime = _run_standalone_mutation_phase(
+            instance, patch_path, apply_patch, targets, arm_dir,
+            "mutation", timeout, github_token,
+        )
+        exit_code = _exit_code(output, "MUTATION_EXIT")
+        return {
+            "mutation": parse_mutation_results(
+                _extract_block(output, _MUTATION_START, _MUTATION_END)
+            ),
+            "exit_code": exit_code,
+            "timed_out": timed_out,
+            "setup_exit_code": _exit_code(output, "SETUP_EXIT"),
+            "runtime": runtime,
+            "tool_error": mutation_exit_is_fatal(exit_code),
+            "unsupported": f"{_MUTATION_UNSUPPORTED}=1" in output,
+        }
+
+    original_mutation = run_arm("original", "", False)
+    original = {
+        "method": "original", "method_version": instance.get("base_commit", ""),
+        "seed": "",
+        "status": "resolved", "failure_reason": "",
+        "coverage_before": baseline.get("coverage"),
+        "coverage_after": baseline.get("coverage"),
+        "coverage_line_delta": 0.0, "coverage_branch_delta": 0.0,
+        "mutation_targets": targets,
+        "mutation_after": original_mutation["mutation"],
+        "mutation_after_exit_code": original_mutation["exit_code"],
+        "mutation_after_timed_out": original_mutation["timed_out"],
+        "mutation_after_tool_error": original_mutation["tool_error"],
+        "mutation_policy": (
+            "generated-tests-only marginal mutation effectiveness"
+            if instance.get("mutation_test_style") == "biopython"
+            else "full configured test command"
+        ),
+        "flaky": any(code != 0 for code in (baseline.get("repeat_exits") or [])),
+        "evaluation_wall_time_seconds": (
+            float(baseline.get("runtime", 0.0)) + original_mutation["runtime"]
+        ),
+    }
+    baseline_score = (original_mutation.get("mutation") or {}).get("score")
+    for name, result in arm_results.items():
+        prediction = predictions.get(name) or {}
+        patch = prediction.get("model_patch") or ""
+        arm_mutation = run_arm(name, patch, bool(patch.strip()))
+        result.update({
+            "method": name,
+            "method_version": (prediction.get("metrics") or {}).get("version", ""),
+            "seed": (prediction.get("metrics") or {}).get("seed", ""),
+            "mutation_targets": targets,
+            "mutation_skipped_no_selected_modules": not targets,
+            "mutation_before": original_mutation["mutation"],
+            "mutation_after": arm_mutation["mutation"],
+            "mutation_before_exit_code": original_mutation["exit_code"],
+            "mutation_after_exit_code": arm_mutation["exit_code"],
+            "mutation_before_timed_out": original_mutation["timed_out"],
+            "mutation_after_timed_out": arm_mutation["timed_out"],
+            "mutation_before_tool_error": original_mutation["tool_error"],
+            "mutation_after_tool_error": arm_mutation["tool_error"],
+            "mutation_policy": original["mutation_policy"],
+        })
+        after_score = (arm_mutation.get("mutation") or {}).get("score")
+        result["mutation_score_delta"] = (
+            after_score - baseline_score
+            if after_score is not None and baseline_score is not None else None
+        )
+        result["mutation_after_wall_time_seconds"] = arm_mutation["runtime"]
+        result["evaluation_wall_time_seconds"] = (
+            float(result.get("evaluation_wall_time_seconds", 0.0))
+            + arm_mutation["runtime"]
+        )
+    return original, arm_results
 
 
 def run_coverage_generation_evaluation(instances: list[dict], predictions_path: str | Path,

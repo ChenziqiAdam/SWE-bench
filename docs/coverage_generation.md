@@ -5,8 +5,10 @@ to add meaningful tests, then independently evaluates the patch at a fixed
 commit. No issue, PR, spreadsheet, gold patch, or SWE-bench instance is needed.
 It first measures whole-repository branch coverage, gives the per-file report to
 the agent, and lets the agent choose poorly tested modules. It then measures
-whole-repository coverage again and runs mutation testing only on production
-modules whose coverage increased.
+whole-repository coverage again. An optional Pynguin control receives the same
+commit and baseline. Mutation testing then uses the union of production modules
+whose coverage increased in either generated-test arm, making mutation targets
+identical for the original, Pynguin, and agent rows.
 
 ```bash
 python -m swebench.eval_pipeline.run_pipeline \
@@ -16,6 +18,20 @@ python -m swebench.eval_pipeline.run_pipeline \
   --agent_backend claude_code \
   --run_id coverage_001
 ```
+
+Enable the Python-first conventional baseline with:
+
+```bash
+  --traditional_test_generator pynguin
+```
+
+The defaults pin Pynguin `0.45.0`, seed `0`, `PYTHONHASHSEED=0`, DynaMOSA,
+`SIMPLE` assertions, a 900-second end-to-end budget, and sequential 60-second
+module slices. Override them with `--pynguin_version`, `--pynguin_seed`,
+`--pynguin_total_budget`, `--pynguin_module_slice`, and
+`--pynguin_assertion_mode`. Repeat `--pynguin_module` to restrict eligible
+import names or source paths. Otherwise every uncovered, importable production
+module is eligible and is prioritized by uncovered branches, then lines.
 
 `--coverage_target` is optional. Without it, modules whose covered lines or
 branches increase after the agent patch become the mutation targets. Repeat the
@@ -71,17 +87,19 @@ whether usage is only a partial observed lower bound. Configure this with
 a usable patch, evaluation still records its scientific metrics, while the
 overall status is `partial` rather than silently reporting a complete resolve.
 
-The Biopython profile also configures mutmut for its capitalized `Tests`
-directory and project test runner. Mutation runs select agent-touched test
-modules that exist in each clean before/after checkout, and use mutmut's live
+The Biopython profile also configures Pynguin output and mutmut for its capitalized `Tests`
+directory and project test runner. Mutation runs select each arm's generated test
+modules that exist in its clean checkout, and use mutmut's live
 run summary because its separate results renderer is incompatible with the
 Python 3.13/Pony ORM environment used in the observed run.
+This generated-tests-only score is explicitly labeled as **marginal mutation
+effectiveness**, not whole-suite mutation adequacy.
 
 A custom mutation command may use `{targets}` where the pipeline should insert
 the comma-separated selected module paths. Mutation is skipped and explicitly
 reported when no production module gains coverage.
 
-The result CSV records line/branch coverage and mutation-score deltas, complete
+The detailed result CSV records line/branch coverage and mutation-score deltas, complete
 test-suite status, tests-only scope violations, separate baseline/generated-test
 flakiness, added test/assertion evidence counts, runtime, token usage, cost, and
 agent turns. The scope check accepts conventional `test`/`tests` trees and
@@ -92,6 +110,13 @@ the evaluator does not claim to prove semantic preservation of existing tests.
 The CSV also records repository coverage scope and the exact mutation targets.
 Raw scripts, logs, patches, and JSON reports are kept under
 `logs/run_evaluation/<run_id>_coveragegen/<model>/<instance_id>/`.
+Standalone runs also write `<run_id>_comparison.csv` with exactly one original
+row, one agent row, and one Pynguin row when enabled. It includes method/version,
+seed, status/failure, absolute and delta coverage, common mutation targets and
+scores, test/assertion counts, flakiness, timing, and applicable token/cost data.
+Pynguin installation, import, timeout, or per-module failures are retained in
+its prediction metadata and do not prevent the original or agent arms from
+finishing.
 
 By default, Python >=3.7 uses `mutmut<3`, Python 3.6 uses
 `mutmut<2`, and Python 3.5 records mutation testing as unsupported while still

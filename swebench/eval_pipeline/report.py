@@ -557,3 +557,43 @@ def render_coverage_generation_table(
     print("=" * 92)
     print("  " + "  ".join(f"{name}={count}" for name, count in sorted(counts.items())))
     print("=" * 92 + "\n")
+
+
+def render_coverage_comparison_table(rows: list[dict], output_csv: str) -> None:
+    """Write one normalized row per original/generator comparison arm."""
+    normalized = []
+    for info in rows:
+        after = info.get("coverage_after") or {}
+        mutation = info.get("mutation_after") or {}
+        metrics = info.get("inference_metrics") or {}
+        normalized.append({
+            "method": info.get("method", ""),
+            "method_version": info.get("method_version", ""),
+            "seed": info.get("seed", ""),
+            "status": info.get("status", ""),
+            "failure_reason": info.get("failure_reason", ""),
+            "line_coverage": after.get("line_coverage", ""),
+            "line_coverage_delta": info.get("coverage_line_delta", ""),
+            "branch_coverage": after.get("branch_coverage", ""),
+            "branch_coverage_delta": info.get("coverage_branch_delta", ""),
+            "mutation_targets": ";".join(info.get("mutation_targets") or []),
+            "mutation_score": mutation.get("score", ""),
+            "mutation_score_delta": info.get("mutation_score_delta", ""),
+            "mutation_policy": info.get("mutation_policy", ""),
+            "added_test_count": info.get("added_test_count", 0),
+            "added_assertion_count": info.get("added_assertion_count", 0),
+            "flaky": "yes" if info.get("flaky") else "no",
+            "generation_wall_time_seconds": metrics.get("wall_time_seconds", ""),
+            "evaluation_wall_time_seconds": info.get("evaluation_wall_time_seconds", ""),
+            "input_tokens": metrics.get("input_tokens", ""),
+            "output_tokens": metrics.get("output_tokens", ""),
+            "total_tokens": metrics.get("total_tokens", ""),
+            "cost_usd": metrics.get("cost_usd", ""),
+        })
+    Path(output_csv).parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = list(normalized[0]) if normalized else ["method", "status"]
+    with open(output_csv, "w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(normalized)
+    logger.info("Coverage comparison written to %s", output_csv)
