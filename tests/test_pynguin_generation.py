@@ -11,7 +11,10 @@ from swebench.eval_pipeline.pynguin_generation import (
     run_pynguin_generation,
 )
 from swebench.eval_pipeline.report import render_coverage_comparison_table
-from swebench.eval_pipeline.run_pipeline import parse_args
+from swebench.eval_pipeline.run_pipeline import (
+    _reuse_cached_pynguin_prediction,
+    parse_args,
+)
 
 
 def test_pynguin_cli_defaults_and_overrides(monkeypatch):
@@ -24,17 +27,32 @@ def test_pynguin_cli_defaults_and_overrides(monkeypatch):
     assert defaults.pynguin_module_slice == 60
     assert defaults.pynguin_assertion_mode == "SIMPLE"
     assert defaults.skip_pynguin is False
+    assert defaults.force_pynguin is False
 
     monkeypatch.setattr(sys, "argv", [
         "run_pipeline", "--traditional_test_generator", "pynguin",
         "--pynguin_seed", "7", "--pynguin_module", "pkg.core",
-        "--skip_pynguin",
+        "--skip_pynguin", "--force_pynguin",
     ])
     overridden = parse_args()
     assert overridden.traditional_test_generator == "pynguin"
     assert overridden.pynguin_seed == 7
     assert overridden.pynguin_module == ["pkg.core"]
     assert overridden.skip_pynguin is True
+    assert overridden.force_pynguin is True
+
+
+def test_force_pynguin_cache_precedence(monkeypatch):
+    def options(*flags):
+        monkeypatch.setattr(sys, "argv", ["run_pipeline", *flags])
+        return parse_args()
+
+    assert _reuse_cached_pynguin_prediction(options()) is True
+    assert _reuse_cached_pynguin_prediction(options("--force_pynguin")) is False
+    assert _reuse_cached_pynguin_prediction(options("--force_inference")) is False
+    assert _reuse_cached_pynguin_prediction(
+        options("--force_pynguin", "--force_inference", "--skip_pynguin")
+    ) is True
 
 
 def test_module_resolution_and_uncovered_ranking_are_deterministic():
@@ -110,7 +128,7 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
     calls = []
 
     def fake_run(command, repo_dir, timeout, env):
-        calls.append((command, timeout, env.get("PYTHONHASHSEED")))
+        calls.append((command, timeout, env.copy()))
         if command[:3] == ["python", "-m", "pynguin"]:
             output = Path(command[command.index("--output-path") + 1])
             output.mkdir(parents=True, exist_ok=True)
@@ -131,7 +149,8 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
         seed=11, total_budget=20, module_slice=7,
     )
     pynguin_call = next(call for call in calls if call[0][:3] == ["python", "-m", "pynguin"])
-    assert pynguin_call[2] == "11"
+    assert pynguin_call[2]["PYTHONHASHSEED"] == "11"
+    assert pynguin_call[2]["PYNGUIN_DANGER_AWARE"] == "1"
     assert pynguin_call[0][pynguin_call[0].index("--maximum-search-time") + 1] == "7"
     assert result["model_patch"].startswith("diff --git")
     assert result["metrics"]["successful_modules"] == ["pkg.core"]
@@ -146,3 +165,26 @@ def test_scheduler_reports_install_failure(tmp_path, monkeypatch):
     result = run_pynguin_generation(tmp_path, {"files": {}}, total_budget=10)
     assert result["error"] == "installation_failed"
     assert result["metrics"]["exit_code"] == 2
+    assert result["metrics"]["diagnostic_output_tail"] == "offline"
+
+
+def test_scheduler_preserves_failed_module_diagnostics(tmp_path, monkeypatch):
+    (tmp_path / "tests").mkdir()
+
+    def fake_run(command, repo_dir, timeout, env):
+        if command[:3] == ["python", "-m", "pynguin"]:
+            return subprocess.CompletedProcess(command, 255, stdout="missing acknowledgement")
+        return subprocess.CompletedProcess(command, 0, stdout="")
+
+    monkeypatch.setattr("swebench.eval_pipeline.pynguin_generation._run", fake_run)
+    result = run_pynguin_generation(
+        tmp_path,
+        {"files": {"pkg/core.py": {
+            "covered_lines": 0, "num_statements": 1,
+            "covered_branches": 0, "num_branches": 0,
+        }}},
+        total_budget=10,
+    )
+    attempt = result["metrics"]["module_attempts"][0]
+    assert attempt["exit_code"] == 255
+    assert attempt["output_tail"] == "missing acknowledgement"

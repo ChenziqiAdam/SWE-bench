@@ -87,7 +87,13 @@ def run_pynguin_generation(
     """Install and schedule Pynguin under one end-to-end deadline."""
     started = time.monotonic()
     deadline = started + total_budget
-    env = {**os.environ, "PYTHONHASHSEED": str(seed)}
+    env = {
+        **os.environ,
+        "PYTHONHASHSEED": str(seed),
+        # Pynguin refuses to execute the subject under test unless callers
+        # explicitly acknowledge that generated inputs may invoke unsafe code.
+        "PYNGUIN_DANGER_AWARE": "1",
+    }
     attempts: list[dict] = []
     successful: list[str] = []
     output_chunks: list[str] = []
@@ -117,6 +123,7 @@ def run_pynguin_generation(
                 "wall_time_seconds": round(time.monotonic() - started, 6),
                 "timed_out": status == "timeout" or remaining() <= 0,
                 "test_directory": str(test_dir.relative_to(repo_dir)),
+                "diagnostic_output_tail": "".join(output_chunks)[-8000:],
             },
         }
 
@@ -165,11 +172,13 @@ def run_pynguin_generation(
             try:
                 completed = _run(command, repo_dir, remaining(), env)
                 code, timed_out = completed.returncode, False
-                output_chunks.append(completed.stdout or "")
+                module_output = completed.stdout or ""
+                output_chunks.append(module_output)
             except subprocess.TimeoutExpired as exc:
                 code, timed_out = None, True
                 raw = exc.stdout or ""
-                output_chunks.append(raw if isinstance(raw, str) else raw.decode(errors="replace"))
+                module_output = raw if isinstance(raw, str) else raw.decode(errors="replace")
+                output_chunks.append(module_output)
             generated = sorted(scratch.rglob("test_*.py"))
             for index, source in enumerate(generated):
                 test_dir.mkdir(parents=True, exist_ok=True)
@@ -184,6 +193,7 @@ def run_pynguin_generation(
                 "timed_out": timed_out, "generated_files": len(generated),
                 "runtime_seconds": round(time.monotonic() - module_started, 6),
                 "status": "generated" if generated else "no_tests_generated",
+                "output_tail": module_output[-2000:] if code else "",
             })
         _run(["git", "add", "-N", str(test_dir.relative_to(repo_dir))], repo_dir, min(remaining(), 10), env)
         diff = _run(["git", "diff", "--", str(test_dir.relative_to(repo_dir))], repo_dir, min(remaining(), 10), env)

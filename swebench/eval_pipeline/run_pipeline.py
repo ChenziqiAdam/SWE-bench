@@ -166,6 +166,11 @@ def parse_args():
              "Reports a missing cached prediction when none is available.",
     )
     p.add_argument(
+        "--force_pynguin", action="store_true",
+        help="Regenerate the Pynguin prediction even when a matching cache exists, "
+             "without forcing agent inference. --skip_pynguin takes precedence.",
+    )
+    p.add_argument(
         "--pynguin_module", action="append", default=None,
         help="Optional import name or source path; repeat to restrict Pynguin eligibility.",
     )
@@ -537,6 +542,11 @@ def _standalone_coverage_instance(args) -> dict:
     }
 
 
+def _reuse_cached_pynguin_prediction(args) -> bool:
+    """Return whether the matching control cache may be reused."""
+    return args.skip_pynguin or not (args.force_inference or args.force_pynguin)
+
+
 def _run_standalone_coverage(args, inference_model: str, github_token: str | None) -> None:
     from swebench.eval_pipeline.coverage_generation_eval import (
         evaluate_common_mutation_targets,
@@ -626,7 +636,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
     pynguin_prediction = None
     if args.traditional_test_generator == "pynguin":
         pynguin_path = output_dir / "pynguin_predictions.jsonl"
-        if pynguin_path.exists() and (not args.force_inference or args.skip_pynguin):
+        if pynguin_path.exists() and _reuse_cached_pynguin_prediction(args):
             rows = read_prediction_rows(pynguin_path)
             candidate = rows[-1] if rows else None
             metrics = (candidate or {}).get("metrics") or {}
