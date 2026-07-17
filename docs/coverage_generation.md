@@ -32,6 +32,12 @@ module slices. Override them with `--pynguin_version`, `--pynguin_seed`,
 `--pynguin_assertion_mode`. Repeat `--pynguin_module` to restrict eligible
 import names or source paths. Otherwise every uncovered, importable production
 module is eligible and is prioritized by uncovered branches, then lines.
+`--skip_inference` skips only the coding-agent call: Pynguin is generated when
+its matching cached prediction is absent, so an existing agent patch can be
+compared without paying for agent inference again.
+Use `--skip_pynguin` to make the Pynguin arm cache-only as well. A matching
+`pynguin_predictions.jsonl` row is reused; if it is absent, the comparison row
+reports `missing_cached_prediction` instead of running Pynguin.
 
 `--coverage_target` is optional. Without it, modules whose covered lines or
 branches increase after the agent patch become the mutation targets. Repeat the

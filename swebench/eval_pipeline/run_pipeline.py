@@ -161,6 +161,11 @@ def parse_args():
     p.add_argument("--pynguin_module_slice", type=int, default=60)
     p.add_argument("--pynguin_assertion_mode", default="SIMPLE")
     p.add_argument(
+        "--skip_pynguin", action="store_true",
+        help="Reuse a matching cached Pynguin prediction without running Pynguin. "
+             "Reports a missing cached prediction when none is available.",
+    )
+    p.add_argument(
         "--pynguin_module", action="append", default=None,
         help="Optional import name or source path; repeat to restrict Pynguin eligibility.",
     )
@@ -621,7 +626,24 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
     pynguin_prediction = None
     if args.traditional_test_generator == "pynguin":
         pynguin_path = output_dir / "pynguin_predictions.jsonl"
-        if not args.skip_inference:
+        if pynguin_path.exists() and (not args.force_inference or args.skip_pynguin):
+            rows = read_prediction_rows(pynguin_path)
+            candidate = rows[-1] if rows else None
+            metrics = (candidate or {}).get("metrics") or {}
+            if (
+                metrics.get("version") == args.pynguin_version
+                and metrics.get("seed") == args.pynguin_seed
+                and metrics.get("total_budget_seconds") == args.pynguin_total_budget
+                and metrics.get("module_slice_seconds") == args.pynguin_module_slice
+                and metrics.get("assertion_mode") == args.pynguin_assertion_mode
+            ):
+                pynguin_prediction = candidate
+                logger.info("Reusing cached Pynguin prediction from %s", pynguin_path)
+        if (
+            pynguin_prediction is None
+            and baseline is not None
+            and not args.skip_pynguin
+        ):
             logger.info("=== Standalone coverage generation: Pynguin control ===")
             from swebench.eval_pipeline.pynguin_generation import generate_pynguin_prediction
 
@@ -638,10 +660,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                 explicit_modules=args.pynguin_module,
             )
             pynguin_path.write_text(json.dumps(pynguin_prediction) + "\n")
-        elif pynguin_path.exists():
-            rows = read_prediction_rows(pynguin_path)
-            pynguin_prediction = rows[-1] if rows else None
-        if pynguin_prediction is None:
+        elif pynguin_prediction is None:
             pynguin_prediction = {
                 "instance_id": instance["instance_id"],
                 "model_name_or_path": "pynguin", "model_patch": "",

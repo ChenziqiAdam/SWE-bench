@@ -23,15 +23,18 @@ def test_pynguin_cli_defaults_and_overrides(monkeypatch):
     assert defaults.pynguin_total_budget == 900
     assert defaults.pynguin_module_slice == 60
     assert defaults.pynguin_assertion_mode == "SIMPLE"
+    assert defaults.skip_pynguin is False
 
     monkeypatch.setattr(sys, "argv", [
         "run_pipeline", "--traditional_test_generator", "pynguin",
         "--pynguin_seed", "7", "--pynguin_module", "pkg.core",
+        "--skip_pynguin",
     ])
     overridden = parse_args()
     assert overridden.traditional_test_generator == "pynguin"
     assert overridden.pynguin_seed == 7
     assert overridden.pynguin_module == ["pkg.core"]
+    assert overridden.skip_pynguin is True
 
 
 def test_module_resolution_and_uncovered_ranking_are_deterministic():
