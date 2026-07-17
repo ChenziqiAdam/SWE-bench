@@ -401,13 +401,30 @@ _RDKIT_PRE_INSTALL = [
     "cmake g++ make libboost-all-dev libeigen3-dev pkg-config libfreetype-dev",
 ]
 
+_RDKIT_APT_RETRY = (
+    "apt_retry() { local attempt; for attempt in 1 2 3 4 5; do "
+    "apt-get -o Acquire::Retries=5 \"$@\" && return 0; "
+    "sleep $((attempt * 5)); done; return 1; }"
+)
+
+_RDKIT_BOOST_183_KEY_FINGERPRINT = "77520E7EB41800A93E3E0D9431F54F3E108EAD31"
+
 _RDKIT_BOOST_183_PRE_INSTALL = [
-    "apt-get update -q",
-    "apt-get install -y --no-install-recommends ca-certificates gnupg",
-    "echo 'deb https://ppa.launchpadcontent.net/mhier/libboost-latest/ubuntu jammy main' > /etc/apt/sources.list.d/mhier-libboost-latest.list",
-    "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 31F54F3E108EAD31",
-    "apt-get update -q",
-    "apt-get install -y --no-install-recommends "
+    _RDKIT_APT_RETRY,
+    "apt_retry update -q",
+    "apt_retry install -y --no-install-recommends ca-certificates gnupg wget",
+    "wget --tries=5 --timeout=30 --waitretry=5 --retry-connrefused "
+    "--retry-on-http-error=429,500,502,503,504 -O /tmp/mhier-libboost-latest.asc "
+    f"'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x{_RDKIT_BOOST_183_KEY_FINGERPRINT}'",
+    "gpg --batch --show-keys --with-colons /tmp/mhier-libboost-latest.asc | "
+    f"grep -q 'fpr:::::::::{_RDKIT_BOOST_183_KEY_FINGERPRINT}:'",
+    "gpg --batch --yes --dearmor "
+    "--output /usr/share/keyrings/mhier-libboost-latest.gpg /tmp/mhier-libboost-latest.asc",
+    "echo 'deb [signed-by=/usr/share/keyrings/mhier-libboost-latest.gpg] "
+    "https://ppa.launchpadcontent.net/mhier/libboost-latest/ubuntu jammy main' "
+    "> /etc/apt/sources.list.d/mhier-libboost-latest.list",
+    "apt_retry update -q",
+    "apt_retry install -y --no-install-recommends "
     "cmake g++ make libboost1.83-all-dev libeigen3-dev pkg-config libfreetype-dev",
 ]
 

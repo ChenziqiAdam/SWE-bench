@@ -92,6 +92,10 @@ def test_newer_rdkit_specs_install_required_new_boost():
 
         assert "libboost1.83-all-dev" in pre_install
         assert "launchpadcontent.net/mhier/libboost-latest" in pre_install
+        assert "Acquire::Retries=5" in pre_install
+        assert "signed-by=/usr/share/keyrings/mhier-libboost-latest.gpg" in pre_install
+        assert "77520E7EB41800A93E3E0D9431F54F3E108EAD31" in pre_install
+        assert "apt-key" not in pre_install
         assert "-DBoost_NO_BOOST_CMAKE=ON" in cmake
         assert "-DRDK_BUILD_COORDGEN_SUPPORT=OFF" in cmake
         assert "-DRDK_BUILD_MAEPARSER_SUPPORT=OFF" in cmake

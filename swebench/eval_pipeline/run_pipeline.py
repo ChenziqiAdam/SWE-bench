@@ -1097,6 +1097,7 @@ def main():
             results=results,
             instances=report_instances,
             output_csv=output_csv,
+            build_validation=build_validation,
             predictions_path=report_predictions_path,
             run_config=run_config,
         )

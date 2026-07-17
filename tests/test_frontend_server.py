@@ -72,6 +72,14 @@ def client(tmp_path):
     with open(run_dir / "level2_predictions.jsonl", "w") as f:
         f.write(json.dumps({"instance_id": "scipy__scipy-100", "model_patch": "diff l2", "model_name_or_path": "claude", "full_output": "raw output l2"}) + "\n")
 
+    with open(run_dir / "agent_predictions.selected.jsonl", "w") as f:
+        f.write(json.dumps({
+            "instance_id": "scipy__scipy-100",
+            "model_patch": "diff generated test",
+            "model_name_or_path": "test-model",
+            "eval_mode": "test_generation",
+        }) + "\n")
+
     # level3 absent (no file) — tests graceful handling
 
     # CSV eval results
@@ -186,6 +194,13 @@ def test_instance_detail_has_predictions(client):
     assert levels["1"]["model_patch"] == "diff l1"
     assert levels["1"]["full_output"] == "raw output l1"
     assert levels["1"]["model_name_or_path"] == "claude"
+
+
+def test_instance_detail_compares_agent_and_gold_tests(client):
+    data = client.get("/api/runs/my_run/instance/scipy__scipy-100").json()
+    assert data["comparison"]["agent_test_patch"] == "diff generated test"
+    assert data["comparison"]["gold_test_patch"] == ""
+    assert data["comparison"]["model_name"] == "test-model"
 
 
 def test_instance_detail_missing_prediction_is_none(client):

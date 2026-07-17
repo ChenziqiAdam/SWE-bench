@@ -135,6 +135,64 @@ def test_test_generation_report_exports_resource_metrics(tmp_path, capsys):
     assert "tracked totals" in capsys.readouterr().out
 
 
+def test_test_generation_report_excludes_base_image_infrastructure_failure(
+    tmp_path, capsys
+):
+    predictions = tmp_path / "predictions.jsonl"
+    predictions.write_text(
+        json.dumps(
+            {
+                "instance_id": "demo__repo-1",
+                "model_patch": "diff --git a/x b/x\n",
+            }
+        )
+        + "\n"
+    )
+    output_csv = tmp_path / "results.csv"
+    render_test_generation_table(
+        results={
+            "demo__repo-1": {
+                "status": "errored",
+                "failure_reason": "evaluation_exception",
+            }
+        },
+        instances=[{"instance_id": "demo__repo-1", "repo": "demo/repo"}],
+        output_csv=str(output_csv),
+        build_validation={
+            "demo__repo-1": {
+                "buildable": False,
+                "error": "apt exited with code 100",
+            }
+        },
+        predictions_path=str(predictions),
+    )
+
+    with open(output_csv, newline="") as handle:
+        row = next(csv.DictReader(handle))
+    assert row["status"] == "excluded"
+    assert row["buildable"] == "no"
+    assert row["failure_reason"] == "base_image_not_buildable"
+    assert row["build_validation_error"] == "apt exited with code 100"
+    assert "0/0 scorable; 1 total" in capsys.readouterr().out
+
+
+def test_test_generation_report_keeps_successful_validation_retry(tmp_path):
+    output_csv = tmp_path / "results.csv"
+    render_test_generation_table(
+        results={"demo__repo-1": {"status": "resolved"}},
+        instances=[{"instance_id": "demo__repo-1", "repo": "demo/repo"}],
+        output_csv=str(output_csv),
+        build_validation={
+            "demo__repo-1": {"buildable": False, "error": "transient apt failure"}
+        },
+    )
+
+    with open(output_csv, newline="") as handle:
+        row = next(csv.DictReader(handle))
+    assert row["status"] == "resolved"
+    assert row["buildable"] == "no"
+
+
 def test_coverage_generation_report_exports_scientific_metrics(tmp_path):
     predictions = tmp_path / "predictions.jsonl"
     predictions.write_text(json.dumps({

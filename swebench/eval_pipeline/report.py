@@ -247,11 +247,13 @@ def render_test_generation_table(
     results: dict[str, dict],
     instances: list[dict],
     output_csv: str,
+    build_validation: dict[str, dict] | None = None,
     predictions_path: str | None = None,
     run_config: dict | None = None,
 ) -> None:
     """Write a CSV and print test-generation success results."""
     meta = {inst["instance_id"]: inst for inst in instances}
+    build_validation = build_validation or {}
     nonempty = _load_nonempty_prediction_ids(predictions_path)
     predictions = _load_predictions(predictions_path)
     statuses = ("resolved", "unresolved", "excluded", "not_exercised", "errored", "no-pred")
@@ -263,6 +265,18 @@ def render_test_generation_table(
         status = info.get("status")
         if not status:
             status = "errored" if instance_id in nonempty else "no-pred"
+        validation = build_validation.get(instance_id, {})
+        buildable = validation.get("buildable", True)
+        # A later successful evaluation is stronger evidence than an earlier
+        # transient validation failure. Only neutralise rows that still could
+        # not create their base image during evaluation.
+        infrastructure_failure = (
+            not buildable
+            and status == "errored"
+            and info.get("failure_reason") == "evaluation_exception"
+        )
+        if infrastructure_failure:
+            status = "excluded"
         metrics = (predictions.get(instance_id) or {}).get("metrics") or info.get(
             "inference_metrics"
         ) or {}
@@ -271,13 +285,19 @@ def render_test_generation_table(
             "repo": inst.get("repo", ""),
             "pr_number": inst.get("pull_number", ""),
             "category": inst.get("category", ""),
+            "buildable": "" if not build_validation else ("yes" if buildable else "no"),
             "status": status,
             "has_pred": "yes" if instance_id in nonempty else "no",
             "test_patch_applied": "yes" if info.get("test_patch_applied") else "no",
             "gold_patch_applied": "yes" if info.get("gold_patch_applied") else "no",
             "base_failed_tests": len(info.get("base_failed_tests") or []),
             "gold_passed_tests": len(info.get("gold_passed_tests") or []),
-            "failure_reason": info.get("failure_reason", ""),
+            "failure_reason": (
+                "base_image_not_buildable"
+                if infrastructure_failure
+                else info.get("failure_reason", "")
+            ),
+            "build_validation_error": validation.get("error", ""),
             "inference_wall_time_seconds": metrics.get("wall_time_seconds", ""),
             "provider_duration_seconds": metrics.get("provider_duration_seconds", ""),
             "input_tokens": metrics.get("input_tokens", ""),
@@ -298,6 +318,7 @@ def render_test_generation_table(
         "repo",
         "pr_number",
         "category",
+        "buildable",
         "status",
         "has_pred",
         "test_patch_applied",
@@ -305,6 +326,7 @@ def render_test_generation_table(
         "base_failed_tests",
         "gold_passed_tests",
         "failure_reason",
+        "build_validation_error",
         "inference_wall_time_seconds",
         "provider_duration_seconds",
         "input_tokens",
@@ -328,7 +350,8 @@ def render_test_generation_table(
     for row in rows:
         counts[row["status"]] = counts.get(row["status"], 0) + 1
     total = len(rows)
-    rate = counts["resolved"] / total if total else 0.0
+    scorable = total - counts["excluded"]
+    rate = counts["resolved"] / scorable if scorable else 0.0
 
     print("\n" + "=" * 78)
     print(f"{'TEST-GENERATION RESULTS':^78}")
@@ -346,7 +369,10 @@ def render_test_generation_table(
             f"{row['base_failed_tests']:^8} {row['gold_passed_tests']:^8}"
         )
     print("=" * 78)
-    print(f"TEST-GENERATION SUCCESS RATE {rate:6.1%}  ({counts['resolved']}/{total})")
+    print(
+        f"TEST-GENERATION SUCCESS RATE {rate:6.1%}  "
+        f"({counts['resolved']}/{scorable} scorable; {total} total)"
+    )
     print(
         f"  resolved={counts['resolved']}  unresolved={counts['unresolved']}  "
         f"excluded={counts['excluded']}  not_exercised={counts['not_exercised']}  "
