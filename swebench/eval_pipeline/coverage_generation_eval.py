@@ -325,6 +325,26 @@ def _extract_block(output: str, start: str, end: str) -> str:
     return output[block_start:block_start + end_match.start()].strip()
 
 
+def _module_level_pytest_files(patch: str) -> list[str]:
+    """Find Biopython test files containing added module-level pytest tests."""
+    current = None
+    matched: set[str] = set()
+    for line in patch.splitlines():
+        header = re.match(r"^diff --git a/(.+) b/(.+)$", line)
+        if header:
+            current = header.group(2)
+            continue
+        if (
+            current
+            and Path(current).parts[:1] == ("Tests",)
+            and Path(current).name.startswith("test_")
+            and Path(current).suffix == ".py"
+            and re.match(r"^\+(?:async\s+)?def\s+test_", line)
+        ):
+            matched.add(current)
+    return sorted(matched)
+
+
 def _phase_script(instance: dict, apply_patch: bool, flaky_runs: int) -> str:
     specs = MAP_REPO_VERSION_TO_SPECS[instance["repo"]][instance["version"]]
     pytest_command = instance.get("coverage_test_command") or "python -m pytest"
@@ -404,6 +424,20 @@ def _standalone_phase_script(
     coverage_results_command = instance.get("coverage_results_command") or (
         "python -m coverage json -o {output}"
     )
+    supplemental_pytest_files = (
+        _module_level_pytest_files(patch_path.read_text())
+        if apply_patch and patch_path.exists()
+        and instance.get("mutation_test_style") == "biopython"
+        else []
+    )
+    supplemental_pytest = "python -m pytest -- " + " ".join(
+        shlex.quote(path) for path in supplemental_pytest_files
+    )
+    supplemental_coverage = instance.get("coverage_pytest_command")
+    if supplemental_coverage and supplemental_pytest_files:
+        supplemental_coverage += " -- " + " ".join(
+            shlex.quote(path) for path in supplemental_pytest_files
+        )
     lines = [
         "#!/bin/bash",
         "set -uxo pipefail",
@@ -419,6 +453,20 @@ def _standalone_phase_script(
             f"{{ echo {PATCH_FAILED}; exit 11; }}",
             f"echo {PATCH_APPLIED}",
         ]
+    if supplemental_pytest_files:
+        quoted_files = " ".join(shlex.quote(path) for path in supplemental_pytest_files)
+        lines += [
+            "run_without_generated_pytests() {",
+            "  local command=$1 status path stash",
+            "  stash=$(mktemp -d)",
+            f"  for path in {quoted_files}; do mv \"$path\" \"$stash/$(basename \"$path\")\"; done",
+            "  eval \"$command\"",
+            "  status=$?",
+            f"  for path in {quoted_files}; do mv \"$stash/$(basename \"$path\")\" \"$path\"; done",
+            "  rmdir \"$stash\"",
+            "  return $status",
+            "}",
+        ]
     setup_command = instance.get("coverage_setup_command")
     if setup_command:
         lines += [setup_command, "SETUP_EXIT=$?"]
@@ -428,19 +476,60 @@ def _standalone_phase_script(
     tools_check = "python -c 'import pytest'"
     if not instance.get("coverage_command"):
         tools_check += " && python -m coverage --version"
+    primary_test_command = (
+        f"run_without_generated_pytests {shlex.quote(pytest_command)}"
+        if supplemental_pytest_files else pytest_command
+    )
+    primary_coverage_command = (
+        f"run_without_generated_pytests {shlex.quote(coverage_command)}"
+        if supplemental_pytest_files else coverage_command
+    )
     lines += [
         tools_check,
         "TOOLS_EXIT=$?",
-        pytest_command,
-        "PYTEST_EXIT=$?",
+        primary_test_command,
+        "PRIMARY_TEST_EXIT=$?",
+    ]
+    if supplemental_pytest_files:
+        lines += [
+            supplemental_pytest,
+            "GENERATED_PYTEST_EXIT=$?",
+            "PYTEST_EXIT=$PRIMARY_TEST_EXIT",
+            '[ "$PYTEST_EXIT" -ne 0 ] || PYTEST_EXIT=$GENERATED_PYTEST_EXIT',
+        ]
+    else:
+        lines.append("PYTEST_EXIT=$PRIMARY_TEST_EXIT")
+    lines += [
         "python -m coverage erase",
-        coverage_command,
-        "COVERAGE_TEST_EXIT=$?",
+        primary_coverage_command,
+        "PRIMARY_COVERAGE_EXIT=$?",
+    ]
+    if supplemental_pytest_files and supplemental_coverage:
+        lines += [
+            supplemental_coverage,
+            "GENERATED_COVERAGE_EXIT=$?",
+            "COVERAGE_TEST_EXIT=$PRIMARY_COVERAGE_EXIT",
+            '[ "$COVERAGE_TEST_EXIT" -ne 0 ] || COVERAGE_TEST_EXIT=$GENERATED_COVERAGE_EXIT',
+        ]
+    else:
+        lines.append("COVERAGE_TEST_EXIT=$PRIMARY_COVERAGE_EXIT")
+    lines += [
         coverage_results_command.replace("{output}", shlex.quote(coverage_output)),
         f"echo {_COVERAGE_START}; cat {coverage_output} 2>/dev/null || true; echo {_COVERAGE_END}",
     ]
     for index in range(flaky_runs):
-        lines += [pytest_command, f"echo REPEAT_RUN_{index + 1}_EXIT=$?"]
+        repeat_var = f"REPEAT_RUN_{index + 1}_EXIT"
+        lines += [primary_test_command, "PRIMARY_REPEAT_EXIT=$?"]
+        if supplemental_pytest_files:
+            lines += [
+                supplemental_pytest,
+                "GENERATED_REPEAT_EXIT=$?",
+                f"{repeat_var}=$PRIMARY_REPEAT_EXIT",
+                f'[ "${repeat_var}" -ne 0 ] || {repeat_var}=$GENERATED_REPEAT_EXIT',
+                f"echo {repeat_var}=${{{repeat_var}}}",
+            ]
+        else:
+            lines.append(f"echo {repeat_var}=$PRIMARY_REPEAT_EXIT")
     lines += [
         "echo SETUP_EXIT=$SETUP_EXIT",
         "echo TOOLS_EXIT=$TOOLS_EXIT",
@@ -463,8 +552,8 @@ def _standalone_mutation_script(
     runner_setup: list[str] = []
     if not custom_command and instance.get("mutation_test_style") == "biopython":
         patch_info = inspect_test_patch(patch_path.read_text())
-        test_modules = sorted({
-            Path(path).stem
+        test_files = sorted({
+            path
             for path in patch_info.get("changed_files", [])
             if Path(path).parts[:1] == ("Tests",)
             and Path(path).name.startswith("test_")
@@ -472,9 +561,9 @@ def _standalone_mutation_script(
         })
         runner = ".coverage-generation-mutmut-runner.sh"
         runner_lines = ["#!/bin/bash", "set -uo pipefail", "tests=()"]
-        for module in test_modules:
+        for path in test_files:
             runner_lines.append(
-                f"[ ! -f Tests/{shlex.quote(module)}.py ] || tests+=({shlex.quote(module)})"
+                f"[ ! -f {shlex.quote(path)} ] || tests+=({shlex.quote(path)})"
             )
         runner_lines += [
             "if [ ${#tests[@]} -eq 0 ]; then",
@@ -483,7 +572,7 @@ def _standalone_mutation_script(
             # makes mutation scores incomparable and can be prohibitively slow.
             "  exit 0",
             "fi",
-            'exec python Tests/run_tests.py --offline "${tests[@]}"',
+            'exec python -m pytest -- "${tests[@]}"',
         ]
         runner_content = "\n".join(runner_lines) + "\n"
         runner_setup = [

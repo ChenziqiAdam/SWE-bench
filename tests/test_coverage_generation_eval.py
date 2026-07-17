@@ -8,6 +8,7 @@ from swebench.eval_pipeline.coverage_generation_eval import (
     _is_flaky,
     _is_test_path,
     _mark_inference_completion,
+    _module_level_pytest_files,
     _phase_script,
     _standalone_mutation_script,
     _standalone_phase_script,
@@ -49,6 +50,7 @@ def test_biopython_profile_builds_extensions_and_uses_offline_runner(monkeypatch
     assert instance["coverage_test_command"] == "python Tests/run_tests.py --offline"
     assert "--source=Bio" in instance["coverage_command"]
     assert "Tests/run_tests.py --offline" in instance["coverage_command"]
+    assert "--append -m pytest" in instance["coverage_pytest_command"]
     assert instance["mutation_test_style"] == "biopython"
     assert instance["mutation_results_command"] == "true"
 
@@ -380,6 +382,47 @@ def test_standalone_script_uses_repo_commands_without_swebench_paths(tmp_path):
     assert completed.returncode == 0
 
 
+def test_biopython_script_runs_module_level_tests_with_pytest_and_combines_coverage(
+    tmp_path,
+):
+    patch = tmp_path / "test.patch"
+    patch.write_text(
+        "diff --git a/Tests/test_pynguin_Bio_Seq.py "
+        "b/Tests/test_pynguin_Bio_Seq.py\n"
+        "--- /dev/null\n"
+        "+++ b/Tests/test_pynguin_Bio_Seq.py\n"
+        "@@ -0,0 +1,4 @@\n"
+        "+import pytest\n"
+        "+\n"
+        "+def test_case_0():\n"
+        "+    assert True\n"
+    )
+    instance = {
+        "base_commit": "abc123",
+        "coverage_setup_command": "true",
+        "coverage_tool_install_command": "true",
+        "coverage_test_command": "python Tests/run_tests.py --offline",
+        "coverage_command": (
+            "python -m coverage run --branch --source=Bio "
+            "Tests/run_tests.py --offline"
+        ),
+        "coverage_pytest_command": (
+            "python -m coverage run --branch --source=Bio --append -m pytest"
+        ),
+        "mutation_test_style": "biopython",
+    }
+    script = _standalone_phase_script(instance, patch, True, 1)
+    generated = "Tests/test_pynguin_Bio_Seq.py"
+    assert _module_level_pytest_files(patch.read_text()) == [generated]
+    assert f"python -m pytest -- {generated}" in script
+    assert f"--append -m pytest -- {generated}" in script
+    assert "run_without_generated_pytests" in script
+    assert "PYTEST_EXIT=$PRIMARY_TEST_EXIT" in script
+    assert "COVERAGE_TEST_EXIT=$PRIMARY_COVERAGE_EXIT" in script
+    completed = subprocess.run(["bash", "-n"], input=script, text=True)
+    assert completed.returncode == 0
+
+
 def test_standalone_mutation_script_is_scoped_to_selected_modules(tmp_path):
     instance = {
         "base_commit": "abc123",
@@ -423,9 +466,9 @@ def test_biopython_mutation_script_uses_touched_test_modules(tmp_path):
     assert "--runner=./.coverage-generation-mutmut-runner.sh" in script
     assert "Tests/test_New.py" in script
     assert "Tests/test_Phylo.py" in script
-    assert "python Tests/run_tests.py --offline" in script
+    assert 'python -m pytest -- "${tests[@]}"' in script
     assert "if [ ${#tests[@]} -eq 0 ]; then\n  exit 0" in script
-    assert "then\n  exec python Tests/run_tests.py --offline\nfi" not in script
+    assert "then\n  exec python -m pytest\nfi" not in script
     assert "mutmut results" not in script
     completed = subprocess.run(["bash", "-n"], input=script, text=True)
     assert completed.returncode == 0

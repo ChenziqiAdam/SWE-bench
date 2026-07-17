@@ -33,6 +33,9 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
             "python -m coverage run --branch --source=Bio "
             "Tests/run_tests.py --offline"
         ),
+        "coverage_pytest_command": (
+            "python -m coverage run --branch --source=Bio --append -m pytest"
+        ),
         "mutation_test_style": "biopython",
     },
 }
@@ -533,6 +536,7 @@ def _standalone_coverage_instance(args) -> dict:
         "coverage_setup_command": setup_command,
         "coverage_test_command": test_command,
         "coverage_command": coverage_command,
+        "coverage_pytest_command": profile.get("coverage_pytest_command"),
         "coverage_results_command": args.coverage_results_command,
         "mutation_command": args.mutation_command,
         "mutation_results_command": mutation_results_command,
