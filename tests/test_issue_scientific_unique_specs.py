@@ -73,8 +73,78 @@ def test_remaining_scientific_issue_specs_are_concrete():
             assert "placeholder" not in text
 
 
+def test_current_scientific_issues_sheet_specs_are_concrete():
+    expected = {
+        "openmm/openmm": {
+            "4138": "langevin_documentation_variance",
+            "4618": "TestOpenCLMonteCarloFlexibleBarostat",
+            "2318": "TestOpenCLNonbondedForce",
+            "5219": "cm_motion_remover_documentation",
+            "2322": "TestOpenCLCustomCentroidBondForce",
+            "2257": "TestOpenCLNonbondedForce",
+            "4440": "TestReferenceLangevinIntegrator",
+            "1100": "TestReferenceSettle",
+            "3151": "test_addSolventPeriodicBox",
+            "5302": "TestOpenCLAmoebaMultipoleForce",
+            "4760": "absinth_force_field_removed",
+            "4161": "test_IgnoreExternalBonds",
+            "3851": "test_CharmmPolar",
+            "3311": "test_Amoeba18BPTI",
+            "3210": "test_NBFIX",
+            "2897": "benchmark_hydrogen_mass",
+            "3872": "TestOpenCLAmoebaVdwForce",
+            "3659": "testChemCompBonds",
+        },
+        "rdkit/rdkit": {
+            "9141": "fileParsersCatchTest",
+            "7183": "molfileStereoCatchTest",
+            "8904": "graphmolTestsCatch",
+            "8957": "chiralityTestsCatch",
+            "8736": "chiralityTestsCatch",
+            "8247": "testRascalMCES",
+            "8301": "molopsTestsCatch",
+            "8257": "graphmolAdjustQueryCatch",
+            "3018": "graphmolTestsCatch",
+            "7990": "deprotectTest",
+            "7347": "chiralityTestsCatch",
+            "5560": "chiralityTestsCatch",
+            "6240": "chiralityTestsCatch",
+            "6892": "cdxmlParserCatchTest",
+            "4806": "fileParsersCatchTest",
+            "5407": "chiralityTestsCatch",
+        },
+        "qgis/QGIS": {
+            "60631": "test_analysis_processingalgspt1",
+            "35852": "PyQgsRasterColorRampShader",
+        },
+    }
+    maps = {
+        "openmm/openmm": SPECS_OPENMM,
+        "rdkit/rdkit": SPECS_RDKIT,
+        "qgis/QGIS": SPECS_QGIS,
+    }
+
+    assert sum(len(prs) for prs in expected.values()) == 36
+    for repo, prs in expected.items():
+        for pr, marker in prs.items():
+            spec = maps[repo][pr]
+            text = _spec_text(spec)
+            assert spec.get("fail_to_pass"), (repo, pr)
+            assert marker in text, (repo, pr, marker)
+            assert "not evaluable" not in text
+            assert "no curated" not in text
+
+
+def test_scientific_opencl_specs_use_a_cpu_opencl_runtime():
+    for pr in ("4618", "2318", "2322", "2257", "5302", "3872"):
+        text = _spec_text(SPECS_OPENMM[pr])
+        assert "pocl-opencl-icd" in text
+        assert "-DOPENMM_BUILD_OPENCL_LIB=ON" in text
+        assert SPECS_OPENMM[pr]["test_generation_use_spec_cmd"] is True
+
+
 def test_qgis_specs_use_pinned_official_build_images():
-    for pr in ("40837", "63639", "66353"):
+    for pr in ("35852", "40837", "60631", "63639", "66353"):
         image = SPECS_QGIS[pr]["docker_specs"]["c_base_image"]
         assert image.startswith("qgis/")
         assert "@sha256:" in image

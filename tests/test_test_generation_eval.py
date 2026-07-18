@@ -254,6 +254,66 @@ def test_openmm_test_generation_can_force_native_spec_command(monkeypatch):
     assert command == "./build/TestReferenceCustomIntegrator"
 
 
+def test_openmm_source_spec_requires_generated_pytest(monkeypatch):
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.MAP_REPO_VERSION_TO_SPECS",
+        {
+            "openmm/openmm": {
+                "4138": {
+                    "test_cmd": ["fixed source oracle"],
+                    "test_generation_requires_generated_pytest": True,
+                }
+            }
+        },
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.get_test_cmds",
+        lambda _instance: ["fixed source oracle"],
+    )
+
+    command = _test_command(
+        {"repo": "openmm/openmm", "version": "4138", "test_patch": ""},
+        "diff --git a/docs/file.rst b/docs/file.rst\n",
+    )
+
+    assert "no curated generated pytest target" in command
+    assert command.endswith("&& false")
+    assert "fixed source oracle" not in command
+
+
+def test_qgis_test_generation_keeps_fixed_ctest_command(monkeypatch):
+    fixed = "ctest --test-dir build -V -R '^PyQgsRasterColorRampShader$'"
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.MAP_REPO_VERSION_TO_SPECS",
+        {
+            "qgis/QGIS": {
+                "35852": {
+                    "test_cmd": [fixed],
+                    "test_generation_use_spec_cmd": True,
+                }
+            }
+        },
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.get_test_cmds",
+        lambda _instance: [fixed],
+    )
+    patch = """diff --git a/tests/src/python/test_qgsrastercolorrampshader.py b/tests/src/python/test_qgsrastercolorrampshader.py
+--- a/tests/src/python/test_qgsrastercolorrampshader.py
++++ b/tests/src/python/test_qgsrastercolorrampshader.py
+@@ -1 +1,2 @@
+ pass
++def test_regression(): pass
+"""
+
+    command = _test_command(
+        {"repo": "qgis/QGIS", "version": "35852", "test_patch": ""}, patch
+    )
+
+    assert command == fixed
+    assert "test_qgsrastercolorrampshader.py" not in command
+
+
 def test_openmm_test_generation_runs_added_unittest_method_nodeids():
     patch = """diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py
 --- a/wrappers/python/tests/TestForceField.py

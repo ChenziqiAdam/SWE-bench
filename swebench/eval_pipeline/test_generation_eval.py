@@ -290,8 +290,16 @@ def _test_command(instance: dict, generated_patch: str) -> str:
         pytest_targets, pytest_filter = _openmm_generated_pytest_targets(generated_patch)
         if pytest_targets:
             return _openmm_generated_pytest_command(pytest_targets, pytest_filter)
+        if specs.get("test_generation_requires_generated_pytest"):
+            version = instance.get("version", "unknown")
+            return (
+                f"echo 'openmm#{version} has no curated generated pytest target' "
+                "&& false"
+            )
 
     raw = commands[0] if len(commands) == 1 else None
+    if raw and specs.get("test_generation_use_spec_cmd"):
+        return raw
     if raw and isinstance(raw, str) and instance["repo"] not in {
         "openmm/openmm",
         "rdkit/rdkit",

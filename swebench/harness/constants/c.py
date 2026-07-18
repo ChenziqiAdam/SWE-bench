@@ -259,11 +259,14 @@ SPECS_OPENBABEL = {
 }
 
 
-def _openmm_python_app_spec(test_file: str, test_filter: str) -> dict:
+def _openmm_python_app_spec(
+    test_file: str, test_filter: str, test_class: str | None = None
+) -> dict:
     """Run OpenMM Python app tests against the patched pure-Python app package."""
+    class_name = test_class or Path(test_file).stem
     fallback_tests = [
-        f"wrappers/python/tests/{test_file}::{Path(test_file).stem}::{name}"
-        for name in re.findall(r"test_[A-Za-z0-9_]+", test_filter)
+        f"wrappers/python/tests/{test_file}::{class_name}::{name}"
+        for name in re.findall(r"test[A-Za-z0-9_]+", test_filter)
     ]
     pre_install = [
         "python -m pip install --no-cache-dir --upgrade pip setuptools wheel",
@@ -330,6 +333,55 @@ def _openmm_cpp_targets_spec(*targets: str) -> dict:
             for target in targets
         ],
         "fail_to_pass": list(targets),
+    }
+
+
+def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False) -> dict:
+    """Build OpenCL tests against POCL so GPU-kernel fixes remain CPU-evaluable."""
+    cmake_targets = " ".join(targets)
+    return {
+        "pre_install": [
+            "apt-get update -q",
+            "apt-get install -y --no-install-recommends "
+            "cmake g++ make ocl-icd-opencl-dev pocl-opencl-icd",
+        ],
+        "build_after_test_patch": [
+            "cmake -B build -S . "
+            "-DCMAKE_BUILD_TYPE=Release "
+            "-DOPENMM_BUILD_CUDA_LIB=OFF "
+            "-DOPENMM_BUILD_OPENCL_LIB=ON "
+            "-DOPENMM_BUILD_HIP_LIB=OFF "
+            "-DOPENMM_BUILD_PYTHON_WRAPPERS=OFF "
+            "-DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF "
+            + ("-DOPENMM_BUILD_AMOEBA_PLUGIN=ON " if amoeba else "")
+            + "-DOPENMM_BUILD_EXAMPLES=OFF",
+            f"cmake --build build --parallel $(nproc) --target {cmake_targets}",
+        ],
+        "test_cmd": [
+            "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
+            "OPENMM_PLUGIN_DIR=$PWD/build "
+            f"./build/{target}"
+            for target in targets
+        ],
+        "fail_to_pass": list(targets),
+        "test_generation_use_spec_cmd": True,
+    }
+
+
+def _openmm_source_check_spec(name: str, condition: str) -> dict:
+    """Expose a source/data/documentation-only correction as a parsed test."""
+    nodeid = f"scientific_spec::{name}"
+    return {
+        "pre_install": [],
+        "build": [],
+        "test_cmd": [
+            f"if {condition}; then echo '{nodeid} PASSED'; "
+            f"else echo '{nodeid} FAILED'; false; fi"
+        ],
+        "fail_to_pass": [nodeid],
+        # In bug-reproduction mode the generated pytest must supply the oracle;
+        # do not let this fixed source check resolve an empty/irrelevant patch.
+        "test_generation_requires_generated_pytest": True,
     }
 
 
@@ -613,6 +665,59 @@ class _OpenMMSpecs(dict):
 
 
 SPECS_OPENMM = _OpenMMSpecs({
+    # Current Scientific Issues sheet.  PRs without authored tests use the
+    # closest registered subsystem suite; source-only fixes get a narrow
+    # parsed check so they do not fall through to the non-evaluable placeholder.
+    "4138": _openmm_source_check_spec(
+        "langevin_documentation_variance",
+        "grep -Fq 'normal distribution with mean zero and unit variance' "
+        "docs-source/usersguide/theory/04_integrators.rst",
+    ),
+    "4618": _openmm_opencl_targets_spec(
+        "TestOpenCLMonteCarloFlexibleBarostat"
+    ),
+    "2318": _openmm_opencl_targets_spec("TestOpenCLNonbondedForce"),
+    "5219": _openmm_source_check_spec(
+        "cm_motion_remover_documentation",
+        "grep -Fq 'not a rigorous constraint' "
+        "docs-source/usersguide/theory/02_standard_forces.rst",
+    ),
+    "2322": _openmm_opencl_targets_spec("TestOpenCLCustomCentroidBondForce"),
+    "2257": _openmm_opencl_targets_spec("TestOpenCLNonbondedForce"),
+    "4440": _openmm_cpp_targets_spec(
+        "TestReferenceLangevinIntegrator",
+        "TestReferenceVariableLangevinIntegrator",
+    ),
+    "1100": _openmm_cpp_targets_spec("TestReferenceSettle"),
+    "3151": _openmm_python_app_spec(
+        "TestModeller.py", "test_addSolventPeriodicBox"
+    ),
+    "5302": _openmm_opencl_targets_spec(
+        "TestOpenCLAmoebaMultipoleForce", amoeba=True
+    ),
+    "4760": _openmm_source_check_spec(
+        "absinth_force_field_removed",
+        "test ! -e wrappers/python/openmm/app/data/absinth.xml "
+        "-a ! -e wrappers/python/simtk/openmm/app/data/absinth.xml",
+    ),
+    "4161": _openmm_python_app_spec(
+        "TestForceField.py", "test_IgnoreExternalBonds"
+    ),
+    "3851": _openmm_python_app_spec("TestForceField.py", "test_CharmmPolar"),
+    "3311": _openmm_python_app_spec(
+        "TestForceField.py",
+        "test_Amoeba18BPTI or test_Amoeba18Nucleic",
+        test_class="AmoebaTestForceField",
+    ),
+    "3210": _openmm_python_app_spec("TestCharmmFiles.py", "test_NBFIX"),
+    "2897": _openmm_source_check_spec(
+        "benchmark_hydrogen_mass",
+        "grep -Fq 'hydrogenMass = 1.5*unit.amu' examples/benchmark.py",
+    ),
+    "3872": _openmm_opencl_targets_spec("TestOpenCLAmoebaVdwForce", amoeba=True),
+    "3659": _openmm_python_app_spec(
+        "TestPdbxFile.py", "testChemCompBonds or testMultiChain"
+    ),
     "2802": _openmm_python_unit_spec(
         ["testCustomGBForce", "testCustomNonbondedForce"]
     ),
@@ -900,6 +1005,18 @@ def _qgis_spec(
 
 
 SPECS_QGIS = {
+    # Scientific Issues sheet: focused suites for the affected raster paths.
+    "60631": _qgis_spec(
+        ("test_analysis_processingalgspt1",),
+        ctest_regex="^test_analysis_processingalgspt1$",
+        base_image=_QGIS_316_BUILD_IMAGE,
+    ),
+    "35852": _qgis_spec(
+        ("PyQgsRasterColorRampShader",),
+        ctest_regex="^PyQgsRasterColorRampShader$",
+        base_image=_QGIS_316_BUILD_IMAGE,
+        bindings=True,
+    ),
     "40837": _qgis_spec(
         ("ProcessingGrass7AlgorithmsVectorTest",),
         ctest_regex="^ProcessingGrass7AlgorithmsVectorTest$",
@@ -1043,6 +1160,31 @@ SPECS_RDKIT = _RDKitSpecs({
         ]
     },
     "2059": _rdkit_cpp_targets_spec("smiTest1", legacy_boost_endian=True),
+    # Current Scientific Issues sheet: exact Catch2/CTest targets touched by
+    # each closing PR.  PR 8957 is defined separately below.
+    "9141": _rdkit_cpp_targets_spec("fileParsersCatchTest", new_boost=True),
+    "7183": _rdkit_cpp_targets_spec(
+        "molfileStereoCatchTest", "chiralityTestsCatch"
+    ),
+    "8904": _rdkit_cpp_targets_spec(
+        "graphmolTestsCatch", "fileParsersCatchTest", new_boost=True
+    ),
+    "8736": _rdkit_cpp_targets_spec("chiralityTestsCatch", new_boost=True),
+    "8247": _rdkit_cpp_targets_spec("testRascalMCES", new_boost=True),
+    "8301": _rdkit_cpp_targets_spec(
+        "molopsTestsCatch", "fileParsersCatchTest", new_boost=True
+    ),
+    "8257": _rdkit_cpp_targets_spec("graphmolAdjustQueryCatch", new_boost=True),
+    "3018": _rdkit_cpp_targets_spec("graphmolTestsCatch"),
+    "7990": _rdkit_cpp_targets_spec("deprotectTest", new_boost=True),
+    "7347": _rdkit_cpp_targets_spec("chiralityTestsCatch"),
+    "5560": _rdkit_cpp_targets_spec("chiralityTestsCatch"),
+    "6240": _rdkit_cpp_targets_spec("chiralityTestsCatch"),
+    "6892": _rdkit_cpp_targets_spec("cdxmlParserCatchTest"),
+    "4806": _rdkit_cpp_targets_spec(
+        "graphmolTestsCatch", "fileParsersCatchTest"
+    ),
+    "5407": _rdkit_cpp_targets_spec("chiralityTestsCatch"),
     # Scientific Issues sheet: concrete targets from each PR's base CMake files.
     "986": _rdkit_cpp_targets_spec(
         "moldraw2DTest1", legacy_boost_endian=True
@@ -1094,37 +1236,7 @@ SPECS_RDKIT = _RDKitSpecs({
     "8968": _rdkit_cpp_ctest_regex_spec(
         "smiTest|Smi|MolOps|molops", new_boost=True
     ),
-    "8957": {
-        # Ubuntu 22.04 apt ships Boost 1.74; RDKit requires >= 1.81.
-        # Refresh apt cache, install software-properties-common, then add Boost PPA.
-        "pre_install": [
-            "apt-get update -q",
-            "apt-get install -y libeigen3-dev pkg-config libfreetype-dev",
-            # Add Boost PPA repo file directly (avoids add-apt-repository's launchpadlib SSL dependency)
-            "echo 'deb https://ppa.launchpadcontent.net/mhier/libboost-latest/ubuntu jammy main' > /etc/apt/sources.list.d/mhier-libboost-latest.list",
-            "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 31F54F3E108EAD31",
-            "apt-get update -q",
-            "apt-get install -y libboost1.83-all-dev",
-        ],
-        "build": [
-            "mkdir -p build",
-            (
-                "cmake -B build -S . "
-                "-DCMAKE_BUILD_TYPE=Release "
-                "-DRDK_INSTALL_INTREE=ON "
-                "-DRDK_BUILD_CPP_TESTS=ON "
-                "-DRDK_BUILD_PYTHON_WRAPPERS=OFF "
-                "-DRDK_BUILD_INCHI_SUPPORT=OFF "
-                "-DRDK_BUILD_CAIRO_SUPPORT=OFF "
-                "-DRDK_BUILD_THREADSAFE_SSS=ON"
-            ),
-            "cmake --build build --parallel $(nproc) --target chiralityTestsCatch",
-        ],
-        "test_cmd": [
-            "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
-            "ctest --test-dir build -V -R chiralityTestsCatch"
-        ],
-    },
+    "8957": _rdkit_cpp_targets_spec("chiralityTestsCatch", new_boost=True),
     "9331": _rdkit_cpp_targets_spec(
         "chemdrawCatchTest",
         extra_cmake=(
