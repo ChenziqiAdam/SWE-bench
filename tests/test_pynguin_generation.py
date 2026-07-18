@@ -141,8 +141,29 @@ def test_pynguin_postprocessing_repairs_shadowed_imports_and_checkout_assertions
     assert metrics == {
         "rewritten_import_count": 2,
         "removed_nonportable_assertion_count": 1,
+        "network_guard_injected_count": 1,
     }
+    assert "def _pynguin_offline_network(monkeypatch):" in sanitized
     compile(sanitized, "<generated>", "exec")
+
+
+def test_pynguin_network_guard_xfails_network_calls(tmp_path):
+    source = (
+        "import socket\n\n"
+        "def test_case_0():\n"
+        "    socket.getaddrinfo('example.invalid', 443)\n"
+    )
+    sanitized, _ = sanitize_pynguin_test(source, tmp_path)
+    test_file = tmp_path / "test_generated.py"
+    test_file.write_text(sanitized)
+    completed = subprocess.run(
+        [sys.executable, "-m", "pytest", "-q", str(test_file)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert completed.returncode == 0
+    assert "1 xfailed" in completed.stdout
 
 
 def test_common_mutation_union_and_no_gain_case():
@@ -212,7 +233,8 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
     assert result["model_patch"].startswith("diff --git")
     assert result["metrics"]["successful_modules"] == ["pkg.core"]
     assert result["metrics"]["module_attempts"][0]["exit_code"] == 0
-    assert result["metrics"]["postprocessing_version"] == 1
+    assert result["metrics"]["postprocessing_version"] == 2
+    assert result["metrics"]["network_guard_injected_count"] == 1
     finalization_calls = [call for call in calls if call[0][:2] == ["git", "add"]]
     assert finalization_calls[0][1] >= 1
 

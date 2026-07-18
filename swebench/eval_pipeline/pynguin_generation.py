@@ -9,7 +9,25 @@ import time
 from pathlib import Path
 
 
-PYNGUIN_POSTPROCESSING_VERSION = 1
+PYNGUIN_POSTPROCESSING_VERSION = 2
+
+
+_OFFLINE_GUARD_SOURCE = """
+import pytest as _pynguin_pytest
+import socket as _pynguin_socket
+
+def _pynguin_block_network(*args, **kwargs):
+    _pynguin_pytest.xfail("Pynguin test requires network access")
+
+@_pynguin_pytest.fixture(autouse=True)
+def _pynguin_offline_network(monkeypatch):
+    monkeypatch.setattr(_pynguin_socket, "create_connection", _pynguin_block_network)
+    monkeypatch.setattr(_pynguin_socket, "getaddrinfo", _pynguin_block_network)
+    monkeypatch.setattr(_pynguin_socket, "gethostbyname", _pynguin_block_network)
+    monkeypatch.setattr(_pynguin_socket, "gethostbyname_ex", _pynguin_block_network)
+    monkeypatch.setattr(_pynguin_socket.socket, "connect", _pynguin_block_network)
+    monkeypatch.setattr(_pynguin_socket.socket, "connect_ex", _pynguin_block_network)
+"""
 
 
 class _PortablePynguinTransformer(ast.NodeTransformer):
@@ -59,35 +77,38 @@ class _PortablePynguinTransformer(ast.NodeTransformer):
 
 
 def sanitize_pynguin_test(source: str, repo_dir: Path) -> tuple[str, dict[str, int]]:
-    """Make exported tests portable without changing generated test actions."""
+    """Make exported tests portable and prevent uncontrolled network I/O."""
     tree = ast.parse(source)
     transformer = _PortablePynguinTransformer(str(repo_dir.resolve()))
     tree = transformer.visit(tree)
+    insert_at = 0
+    if (
+        tree.body
+        and isinstance(tree.body[0], ast.Expr)
+        and isinstance(tree.body[0].value, ast.Constant)
+        and isinstance(tree.body[0].value.value, str)
+    ):
+        insert_at = 1
+    while (
+        insert_at < len(tree.body)
+        and isinstance(tree.body[insert_at], ast.ImportFrom)
+        and tree.body[insert_at].module == "__future__"
+    ):
+        insert_at += 1
+    prefix = ast.parse(_OFFLINE_GUARD_SOURCE).body
     if transformer.rewritten_imports:
-        insert_at = 0
-        if (
-            tree.body
-            and isinstance(tree.body[0], ast.Expr)
-            and isinstance(tree.body[0].value, ast.Constant)
-            and isinstance(tree.body[0].value.value, str)
-        ):
-            insert_at = 1
-        while (
-            insert_at < len(tree.body)
-            and isinstance(tree.body[insert_at], ast.ImportFrom)
-            and tree.body[insert_at].module == "__future__"
-        ):
-            insert_at += 1
-        tree.body.insert(
-            insert_at,
+        prefix.insert(
+            0,
             ast.Import(
                 names=[ast.alias(name="importlib", asname="_pynguin_importlib")]
             ),
         )
+    tree.body[insert_at:insert_at] = prefix
     ast.fix_missing_locations(tree)
     return ast.unparse(tree) + "\n", {
         "rewritten_import_count": transformer.rewritten_imports,
         "removed_nonportable_assertion_count": transformer.removed_assertions,
+        "network_guard_injected_count": 1,
     }
 
 
@@ -183,6 +204,7 @@ def run_pynguin_generation(
     output_chunks: list[str] = []
     rewritten_import_count = 0
     removed_nonportable_assertion_count = 0
+    network_guard_injected_count = 0
     test_dir = conventional_test_directory(repo_dir)
     scratch = repo_dir / ".pynguin-generation"
 
@@ -221,6 +243,7 @@ def run_pynguin_generation(
                 "removed_nonportable_assertion_count": (
                     removed_nonportable_assertion_count
                 ),
+                "network_guard_injected_count": network_guard_injected_count,
                 "diagnostic_output_tail": "".join(output_chunks)[-8000:],
             },
         }
@@ -280,6 +303,7 @@ def run_pynguin_generation(
             generated = sorted(scratch.rglob("test_*.py"))
             attempt_rewritten_imports = 0
             attempt_removed_assertions = 0
+            attempt_network_guards = 0
             for index, source in enumerate(generated):
                 test_dir.mkdir(parents=True, exist_ok=True)
                 stem = "test_pynguin_" + module.replace(".", "_")
@@ -291,8 +315,10 @@ def run_pynguin_generation(
                 attempt_removed_assertions += sanitation[
                     "removed_nonportable_assertion_count"
                 ]
+                attempt_network_guards += sanitation["network_guard_injected_count"]
             rewritten_import_count += attempt_rewritten_imports
             removed_nonportable_assertion_count += attempt_removed_assertions
+            network_guard_injected_count += attempt_network_guards
             if generated:
                 successful.append(module)
             attempts.append({
@@ -302,6 +328,7 @@ def run_pynguin_generation(
                 "status": "generated" if generated else "no_tests_generated",
                 "rewritten_import_count": attempt_rewritten_imports,
                 "removed_nonportable_assertion_count": attempt_removed_assertions,
+                "network_guard_injected_count": attempt_network_guards,
                 "output_tail": module_output[-2000:] if code else "",
             })
         # Finalization must not discard tests already copied from completed

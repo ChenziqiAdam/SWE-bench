@@ -12,6 +12,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from swebench.eval_pipeline.prediction_utils import unique_instances_by_id, write_selected_predictions
+from swebench.eval_pipeline.pynguin_generation import PYNGUIN_POSTPROCESSING_VERSION
 
 logging.basicConfig(
     level=logging.INFO,
@@ -667,7 +668,8 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                 and metrics.get("total_budget_seconds") == args.pynguin_total_budget
                 and metrics.get("module_slice_seconds") == args.pynguin_module_slice
                 and metrics.get("assertion_mode") == args.pynguin_assertion_mode
-                and metrics.get("postprocessing_version") == 1
+                and metrics.get("postprocessing_version")
+                == PYNGUIN_POSTPROCESSING_VERSION
             ):
                 cached_pynguin_prediction = candidate
         if cached_pynguin_prediction and _reuse_cached_pynguin_prediction(args):

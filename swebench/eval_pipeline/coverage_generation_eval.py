@@ -1105,7 +1105,9 @@ def run_standalone_coverage_evaluation(
             mutation_after_setup_exit = _exit_code(mutation_after_output, "SETUP_EXIT")
         usable_before_mut = None if mutation_exit_is_fatal(before_mutation_exit) else before_mut
         usable_after_mut = None if mutation_exit_is_fatal(after_mutation_exit) else after_mut
-        if PATCH_APPLIED not in after_output:
+        if before_timeout or after_timeout:
+            status, reason = "errored", "evaluation_timeout"
+        elif PATCH_APPLIED not in after_output:
             status, reason = "errored", "test_patch_failed"
         elif (
             before_setup_exit != 0
