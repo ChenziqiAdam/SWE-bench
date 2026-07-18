@@ -667,6 +667,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                 and metrics.get("total_budget_seconds") == args.pynguin_total_budget
                 and metrics.get("module_slice_seconds") == args.pynguin_module_slice
                 and metrics.get("assertion_mode") == args.pynguin_assertion_mode
+                and metrics.get("postprocessing_version") == 1
             ):
                 cached_pynguin_prediction = candidate
         if cached_pynguin_prediction and _reuse_cached_pynguin_prediction(args):

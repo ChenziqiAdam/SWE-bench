@@ -1,11 +1,94 @@
 """Repository-level scheduler for the single-module Pynguin CLI."""
 from __future__ import annotations
 
+import ast
 import os
 import shutil
 import subprocess
 import time
 from pathlib import Path
+
+
+PYNGUIN_POSTPROCESSING_VERSION = 1
+
+
+class _PortablePynguinTransformer(ast.NodeTransformer):
+    """Repair exporter-only imports and remove checkout-specific assertions."""
+
+    def __init__(self, checkout_path: str):
+        self.checkout_path = checkout_path
+        self.rewritten_imports = 0
+        self.removed_assertions = 0
+
+    def visit_Import(self, node: ast.Import):  # noqa: N802
+        replacements: list[ast.stmt] = []
+        retained = []
+        for alias in node.names:
+            if "." in alias.name and alias.asname:
+                replacements.append(
+                    ast.Assign(
+                        targets=[ast.Name(id=alias.asname, ctx=ast.Store())],
+                        value=ast.Call(
+                            func=ast.Attribute(
+                                value=ast.Name(id="_pynguin_importlib", ctx=ast.Load()),
+                                attr="import_module",
+                                ctx=ast.Load(),
+                            ),
+                            args=[ast.Constant(alias.name)],
+                            keywords=[],
+                        ),
+                    )
+                )
+                self.rewritten_imports += 1
+            else:
+                retained.append(alias)
+        if retained:
+            replacements.insert(0, ast.Import(names=retained))
+        return replacements
+
+    def visit_Assert(self, node: ast.Assert):  # noqa: N802
+        if any(
+            isinstance(child, ast.Constant)
+            and isinstance(child.value, str)
+            and self.checkout_path in child.value
+            for child in ast.walk(node)
+        ):
+            self.removed_assertions += 1
+            return None
+        return self.generic_visit(node)
+
+
+def sanitize_pynguin_test(source: str, repo_dir: Path) -> tuple[str, dict[str, int]]:
+    """Make exported tests portable without changing generated test actions."""
+    tree = ast.parse(source)
+    transformer = _PortablePynguinTransformer(str(repo_dir.resolve()))
+    tree = transformer.visit(tree)
+    if transformer.rewritten_imports:
+        insert_at = 0
+        if (
+            tree.body
+            and isinstance(tree.body[0], ast.Expr)
+            and isinstance(tree.body[0].value, ast.Constant)
+            and isinstance(tree.body[0].value.value, str)
+        ):
+            insert_at = 1
+        while (
+            insert_at < len(tree.body)
+            and isinstance(tree.body[insert_at], ast.ImportFrom)
+            and tree.body[insert_at].module == "__future__"
+        ):
+            insert_at += 1
+        tree.body.insert(
+            insert_at,
+            ast.Import(
+                names=[ast.alias(name="importlib", asname="_pynguin_importlib")]
+            ),
+        )
+    ast.fix_missing_locations(tree)
+    return ast.unparse(tree) + "\n", {
+        "rewritten_import_count": transformer.rewritten_imports,
+        "removed_nonportable_assertion_count": transformer.removed_assertions,
+    }
 
 
 def module_name_from_path(path: str) -> str | None:
@@ -98,6 +181,8 @@ def run_pynguin_generation(
     attempts: list[dict] = []
     successful: list[str] = []
     output_chunks: list[str] = []
+    rewritten_import_count = 0
+    removed_nonportable_assertion_count = 0
     test_dir = conventional_test_directory(repo_dir)
     scratch = repo_dir / ".pynguin-generation"
 
@@ -131,6 +216,11 @@ def run_pynguin_generation(
                     or any(item.get("timed_out") for item in attempts)
                 ),
                 "test_directory": str(test_dir.relative_to(repo_dir)),
+                "postprocessing_version": PYNGUIN_POSTPROCESSING_VERSION,
+                "rewritten_import_count": rewritten_import_count,
+                "removed_nonportable_assertion_count": (
+                    removed_nonportable_assertion_count
+                ),
                 "diagnostic_output_tail": "".join(output_chunks)[-8000:],
             },
         }
@@ -188,12 +278,21 @@ def run_pynguin_generation(
                 module_output = raw if isinstance(raw, str) else raw.decode(errors="replace")
                 output_chunks.append(module_output)
             generated = sorted(scratch.rglob("test_*.py"))
+            attempt_rewritten_imports = 0
+            attempt_removed_assertions = 0
             for index, source in enumerate(generated):
                 test_dir.mkdir(parents=True, exist_ok=True)
                 stem = "test_pynguin_" + module.replace(".", "_")
                 suffix = f"_{index + 1}" if len(generated) > 1 else ""
                 destination = test_dir / f"{stem}{suffix}.py"
-                destination.write_text(source.read_text())
+                sanitized, sanitation = sanitize_pynguin_test(source.read_text(), repo_dir)
+                destination.write_text(sanitized)
+                attempt_rewritten_imports += sanitation["rewritten_import_count"]
+                attempt_removed_assertions += sanitation[
+                    "removed_nonportable_assertion_count"
+                ]
+            rewritten_import_count += attempt_rewritten_imports
+            removed_nonportable_assertion_count += attempt_removed_assertions
             if generated:
                 successful.append(module)
             attempts.append({
@@ -201,6 +300,8 @@ def run_pynguin_generation(
                 "timed_out": timed_out, "generated_files": len(generated),
                 "runtime_seconds": round(time.monotonic() - module_started, 6),
                 "status": "generated" if generated else "no_tests_generated",
+                "rewritten_import_count": attempt_rewritten_imports,
+                "removed_nonportable_assertion_count": attempt_removed_assertions,
                 "output_tail": module_output[-2000:] if code else "",
             })
         # Finalization must not discard tests already copied from completed

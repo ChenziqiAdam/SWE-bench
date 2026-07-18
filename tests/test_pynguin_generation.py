@@ -9,6 +9,7 @@ from swebench.eval_pipeline.pynguin_generation import (
     module_name_from_path,
     rank_pynguin_modules,
     run_pynguin_generation,
+    sanitize_pynguin_test,
 )
 from swebench.eval_pipeline.report import render_coverage_comparison_table
 from swebench.eval_pipeline.run_pipeline import (
@@ -120,6 +121,30 @@ def test_test_directory_selection_including_biopython(tmp_path):
     assert conventional_test_directory(tmp_path) == tmp_path / "Tests"
 
 
+def test_pynguin_postprocessing_repairs_shadowed_imports_and_checkout_assertions(
+    tmp_path,
+):
+    source = (
+        "import pytest\n"
+        "import Bio.PDB.PDBList as module_0\n"
+        "import numpy.lib.format as module_1\n\n"
+        "def test_case_0():\n"
+        "    value = module_0.PDBList()\n"
+        f"    assert value.local_pdb == {str(tmp_path)!r}\n"
+        "    assert module_1.MAGIC_LEN == 8\n"
+    )
+    sanitized, metrics = sanitize_pynguin_test(source, tmp_path)
+    assert "module_0 = _pynguin_importlib.import_module('Bio.PDB.PDBList')" in sanitized
+    assert "module_1 = _pynguin_importlib.import_module('numpy.lib.format')" in sanitized
+    assert str(tmp_path) not in sanitized
+    assert "assert module_1.MAGIC_LEN == 8" in sanitized
+    assert metrics == {
+        "rewritten_import_count": 2,
+        "removed_nonportable_assertion_count": 1,
+    }
+    compile(sanitized, "<generated>", "exec")
+
+
 def test_common_mutation_union_and_no_gain_case():
     baseline = {"files": {
         "pkg/a.py": {"covered_lines": 1, "covered_branches": 0},
@@ -187,6 +212,7 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
     assert result["model_patch"].startswith("diff --git")
     assert result["metrics"]["successful_modules"] == ["pkg.core"]
     assert result["metrics"]["module_attempts"][0]["exit_code"] == 0
+    assert result["metrics"]["postprocessing_version"] == 1
     finalization_calls = [call for call in calls if call[0][:2] == ["git", "add"]]
     assert finalization_calls[0][1] >= 1
 
