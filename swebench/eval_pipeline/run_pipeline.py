@@ -551,6 +551,22 @@ def _reuse_cached_pynguin_prediction(args) -> bool:
     return args.skip_pynguin or not (args.force_inference or args.force_pynguin)
 
 
+def _retain_cached_pynguin_prediction(cached: dict | None, generated: dict) -> dict:
+    """Keep a usable control patch when forced regeneration produces none."""
+    if generated.get("model_patch") or not (cached or {}).get("model_patch"):
+        return generated
+    retained = {**cached, "metrics": dict((cached or {}).get("metrics") or {})}
+    generated_metrics = generated.get("metrics") or {}
+    retained["metrics"]["last_regeneration_failure"] = {
+        "error": generated.get("error") or "empty_prediction",
+        "wall_time_seconds": generated_metrics.get("wall_time_seconds"),
+        "timed_out": generated_metrics.get("timed_out"),
+        "attempted_module_count": len(generated_metrics.get("attempted_modules") or []),
+        "successful_modules": generated_metrics.get("successful_modules") or [],
+    }
+    return retained
+
+
 def _run_standalone_coverage(args, inference_model: str, github_token: str | None) -> None:
     from swebench.eval_pipeline.coverage_generation_eval import (
         evaluate_common_mutation_targets,
@@ -640,7 +656,8 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
     pynguin_prediction = None
     if args.traditional_test_generator == "pynguin":
         pynguin_path = output_dir / "pynguin_predictions.jsonl"
-        if pynguin_path.exists() and _reuse_cached_pynguin_prediction(args):
+        cached_pynguin_prediction = None
+        if pynguin_path.exists():
             rows = read_prediction_rows(pynguin_path)
             candidate = rows[-1] if rows else None
             metrics = (candidate or {}).get("metrics") or {}
@@ -651,8 +668,10 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                 and metrics.get("module_slice_seconds") == args.pynguin_module_slice
                 and metrics.get("assertion_mode") == args.pynguin_assertion_mode
             ):
-                pynguin_prediction = candidate
-                logger.info("Reusing cached Pynguin prediction from %s", pynguin_path)
+                cached_pynguin_prediction = candidate
+        if cached_pynguin_prediction and _reuse_cached_pynguin_prediction(args):
+            pynguin_prediction = cached_pynguin_prediction
+            logger.info("Reusing cached Pynguin prediction from %s", pynguin_path)
         if (
             pynguin_prediction is None
             and baseline is not None
@@ -661,7 +680,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
             logger.info("=== Standalone coverage generation: Pynguin control ===")
             from swebench.eval_pipeline.pynguin_generation import generate_pynguin_prediction
 
-            pynguin_prediction = generate_pynguin_prediction(
+            generated_pynguin_prediction = generate_pynguin_prediction(
                 instance,
                 baseline.get("coverage") or {},
                 Path(args.log_dir) / eval_run_id / "pynguin" / instance["instance_id"],
@@ -673,6 +692,14 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                 assertion_mode=args.pynguin_assertion_mode,
                 explicit_modules=args.pynguin_module,
             )
+            pynguin_prediction = _retain_cached_pynguin_prediction(
+                cached_pynguin_prediction, generated_pynguin_prediction
+            )
+            if pynguin_prediction is not generated_pynguin_prediction:
+                logger.warning(
+                    "Pynguin regeneration produced no patch; retaining cached prediction from %s",
+                    pynguin_path,
+                )
             pynguin_path.write_text(json.dumps(pynguin_prediction) + "\n")
         elif pynguin_prediction is None:
             pynguin_prediction = {

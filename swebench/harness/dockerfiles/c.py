@@ -1,5 +1,5 @@
 _DOCKERFILE_BASE_C = r"""
-FROM --platform={platform} ubuntu:22.04
+FROM --platform={platform} {c_base_image}
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC

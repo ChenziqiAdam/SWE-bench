@@ -11,7 +11,7 @@ import openpyxl
 
 from swebench.collect.utils import Repo, PR_KEYWORDS
 from swebench.eval_pipeline.constants import (
-    COL_REPO, COL_PR_NUMBER, COL_TITLE, COL_URL,
+    COL_REPO, COL_PR_NUMBER, COL_TITLE,
     COL_CATEGORY, COL_ALGORITHM_NAME, COL_PAPER_REFERENCE,
     COL_HAS_TEST, COL_TEST_LINKS, COL_HAS_ISSUE,
 )
@@ -83,7 +83,7 @@ def load_spreadsheet_issues(path: str, sheet: Optional[str] = None) -> list[dict
     wb = openpyxl.load_workbook(path)
     ws = wb[sheet] if sheet else wb.active
     headers = [cell.value for cell in ws[1]]
-    rows = []
+    rows_by_pr: dict[tuple[str, int], dict] = {}
     skipped = 0
     for raw_row in ws.iter_rows(min_row=2, values_only=True):
         row = dict(zip(headers, raw_row))
@@ -98,23 +98,32 @@ def load_spreadsheet_issues(path: str, sheet: Optional[str] = None) -> list[dict
             )
             skipped += 1
             continue
-        # Map to the standard pipeline schema
-        rows.append({
-            COL_REPO: repo,
-            COL_PR_NUMBER: int(closing_pr),
-            COL_HAS_ISSUE: "Yes",          # issue number IS the prompt source
-            _COL_ISSUE_NUMBER: int(issue_number),  # stored for direct fetch
-            # Optional metadata columns (may be absent)
-            COL_TITLE: row.get("Title", ""),
-            COL_CATEGORY: row.get("Type", ""),
-            COL_ALGORITHM_NAME: "",
-            COL_PAPER_REFERENCE: "",
-            COL_HAS_TEST: "Yes",
-            COL_TEST_LINKS: "",
-        })
+        # One closing PR can resolve multiple issue rows. Merge them before the
+        # PR-keyed ingest cache is consulted so no issue body is overwritten.
+        key = (str(repo), int(closing_pr))
+        if key not in rows_by_pr:
+            rows_by_pr[key] = {
+                COL_REPO: repo,
+                COL_PR_NUMBER: int(closing_pr),
+                COL_HAS_ISSUE: "Yes",
+                _COL_ISSUE_NUMBER: [],
+                COL_TITLE: [],
+                COL_CATEGORY: row.get("Type", ""),
+                COL_ALGORITHM_NAME: "",
+                COL_PAPER_REFERENCE: "",
+                COL_HAS_TEST: "Yes",
+                COL_TEST_LINKS: "",
+            }
+        grouped = rows_by_pr[key]
+        grouped[_COL_ISSUE_NUMBER].append(int(issue_number))
+        if row.get("Title"):
+            grouped[COL_TITLE].append(str(row["Title"]))
+    rows = list(rows_by_pr.values())
+    for row in rows:
+        row[COL_TITLE] = " | ".join(row[COL_TITLE])
     if skipped:
         logger.info(f"Skipped {skipped} issue row(s) with no closing PR.")
-    logger.info(f"Loaded {len(rows)} issue row(s) with paired PRs from {path}")
+    logger.info(f"Loaded {len(rows)} PR group(s) with paired issues from {path}")
     return rows
 
 
@@ -324,8 +333,16 @@ def fetch_all(
         # otherwise mine it from the PR body via keyword matching.
         direct_issue = row.get(_COL_ISSUE_NUMBER)
         if direct_issue is not None:
-            issue_numbers = [str(int(direct_issue))]
-            logger.debug(f"  Using direct issue number {direct_issue} for {repo_full}#{pr_number}")
+            direct_issues = (
+                direct_issue
+                if isinstance(direct_issue, (list, tuple, set))
+                else [direct_issue]
+            )
+            issue_numbers = [str(int(number)) for number in direct_issues]
+            logger.debug(
+                f"  Using direct issue numbers {issue_numbers} for "
+                f"{repo_full}#{pr_number}"
+            )
         else:
             issue_numbers = find_linked_issue_numbers(pull)
         row["issue_numbers"] = issue_numbers

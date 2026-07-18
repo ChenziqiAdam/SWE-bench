@@ -124,6 +124,7 @@ NON_TEST_EXTS = [
 ]
 SWE_BENCH_URL_RAW = "https://raw.githubusercontent.com/"
 DEFAULT_DOCKER_SPECS = {
+    "c_base_image": "ubuntu:22.04",
     "conda_version": "py311_23.11.0-2",
     "node_version": "21.6.2",
     "pnpm_version": "9.5.0",

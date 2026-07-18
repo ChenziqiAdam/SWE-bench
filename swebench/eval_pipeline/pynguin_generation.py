@@ -87,6 +87,7 @@ def run_pynguin_generation(
     """Install and schedule Pynguin under one end-to-end deadline."""
     started = time.monotonic()
     deadline = started + total_budget
+    finalization_reserve = min(10.0, max(1.0, total_budget * 0.1))
     env = {
         **os.environ,
         "PYTHONHASHSEED": str(seed),
@@ -102,6 +103,9 @@ def run_pynguin_generation(
 
     def remaining() -> float:
         return max(0.0, deadline - time.monotonic())
+
+    def generation_remaining() -> float:
+        return max(0.0, remaining() - finalization_reserve)
 
     def _result(status: str, exit_code: int | None, patch: str = "") -> dict:
         return {
@@ -121,7 +125,11 @@ def run_pynguin_generation(
                 "module_attempts": attempts,
                 "exit_code": exit_code,
                 "wall_time_seconds": round(time.monotonic() - started, 6),
-                "timed_out": status == "timeout" or remaining() <= 0,
+                "timed_out": (
+                    status == "timeout"
+                    or generation_remaining() <= 0
+                    or any(item.get("timed_out") for item in attempts)
+                ),
                 "test_directory": str(test_dir.relative_to(repo_dir)),
                 "diagnostic_output_tail": "".join(output_chunks)[-8000:],
             },
@@ -149,11 +157,11 @@ def run_pynguin_generation(
             return _result("import_failed", version_check.returncode)
 
         for module, path in rank_pynguin_modules(baseline_coverage, explicit_modules):
-            if remaining() <= 0:
+            if generation_remaining() <= 0:
                 break
             import_check = _run(
                 ["python", "-c", f"import {module}"], repo_dir,
-                min(remaining(), 30), env,
+                min(generation_remaining(), 30), env,
             )
             if import_check.returncode:
                 attempts.append({"module": module, "path": path, "exit_code": import_check.returncode,
@@ -161,7 +169,7 @@ def run_pynguin_generation(
                 continue
             shutil.rmtree(scratch, ignore_errors=True)
             scratch.mkdir(parents=True)
-            slice_seconds = max(1, min(module_slice, int(remaining())))
+            slice_seconds = max(1, min(module_slice, int(generation_remaining())))
             command = [
                 "python", "-m", "pynguin", "--project-path", str(repo_dir),
                 "--module-name", module, "--output-path", str(scratch),
@@ -170,7 +178,7 @@ def run_pynguin_generation(
             ]
             module_started = time.monotonic()
             try:
-                completed = _run(command, repo_dir, remaining(), env)
+                completed = _run(command, repo_dir, generation_remaining(), env)
                 code, timed_out = completed.returncode, False
                 module_output = completed.stdout or ""
                 output_chunks.append(module_output)
@@ -195,8 +203,17 @@ def run_pynguin_generation(
                 "status": "generated" if generated else "no_tests_generated",
                 "output_tail": module_output[-2000:] if code else "",
             })
-        _run(["git", "add", "-N", str(test_dir.relative_to(repo_dir))], repo_dir, min(remaining(), 10), env)
-        diff = _run(["git", "diff", "--", str(test_dir.relative_to(repo_dir))], repo_dir, min(remaining(), 10), env)
+        # Finalization must not discard tests already copied from completed
+        # modules merely because the search phase consumed its deadline.
+        finalize_timeout = max(1.0, finalization_reserve / 2)
+        _run(
+            ["git", "add", "-N", str(test_dir.relative_to(repo_dir))],
+            repo_dir, finalize_timeout, env,
+        )
+        diff = _run(
+            ["git", "diff", "--", str(test_dir.relative_to(repo_dir))],
+            repo_dir, finalize_timeout, env,
+        )
         patch = diff.stdout or ""
         return _result("success" if patch else "no_tests_generated", 0, patch)
     except subprocess.TimeoutExpired:

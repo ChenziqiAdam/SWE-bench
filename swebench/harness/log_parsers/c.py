@@ -125,9 +125,6 @@ def parse_log_catch2(log: str, test_spec: TestSpec) -> dict[str, str]:
     test_status_map = {}
     passed_re = re.compile(r"^\s*PASSED:\s*\[([^\]]+)\]\s*(.+)$")
     failed_re = re.compile(r"^\s*FAILED:\s*\[([^\]]+)\]\s*(.+)$")
-    # Catch2 also emits summary lines like "test cases: N | N passed | N failed"
-    # and per-test lines "  TestName  -  N assertion(s) failed"
-    per_test_re = re.compile(r"^\s*(PASSED|FAILED)\s*-\s*(.+)$")
     # v3 style: "PASSED  <TestName>" or "FAILED  <TestName>"
     simple_re = re.compile(r"^(PASSED|FAILED)\s{2,}(.+)$")
     ctest_re = re.compile(
@@ -198,6 +195,33 @@ def parse_log_googletest(log: str, test_spec: TestSpec) -> dict[str, str]:
             elif status == "FAILED":
                 test_status_map[test_name] = TestStatus.FAILED.value
 
+    return test_status_map
+
+
+def parse_log_qgis(log: str, test_spec: TestSpec) -> dict[str, str]:
+    """Parse QGIS GoogleTest output and CTest-wrapped Python test results."""
+    test_status_map = parse_log_googletest(log, test_spec)
+    ctest_re = re.compile(
+        r"^\s*\d+/\d+\s+Test\s+#\d+:\s+(.+?)\s+\.+\s*"
+        r"(?:\*+)?(Passed|Failed)\b"
+    )
+    ctest_error_re = re.compile(
+        r"^\s*\d+/\d+\s+Test\s+#\d+:\s+(.+?)\s+\.+.*"
+        r"(?:Subprocess aborted|Exception|Timeout)\b"
+    )
+    for line in log.splitlines():
+        match = ctest_re.match(line)
+        if match:
+            name, status = match.groups()
+            test_status_map[name.strip()] = (
+                TestStatus.PASSED.value
+                if status == "Passed"
+                else TestStatus.FAILED.value
+            )
+            continue
+        match = ctest_error_re.match(line)
+        if match:
+            test_status_map[match.group(1).strip()] = TestStatus.FAILED.value
     return test_status_map
 
 
@@ -315,6 +339,6 @@ MAP_REPO_TO_PARSER_C = {
     "openbabel/openbabel": parse_log_googletest,
     "openmm/openmm": parse_log_openmm,
     "openmc-dev/openmc": parse_log_googletest,
-    "qgis/QGIS": parse_log_googletest,
+    "qgis/QGIS": parse_log_qgis,
     "rdkit/rdkit": parse_log_catch2,
 }

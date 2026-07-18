@@ -522,10 +522,15 @@ def _rdkit_python_wrapper_spec(
     test_path: str | tuple[str, ...],
     new_boost: bool = False,
     extra_cmake: str = "",
+    legacy_boost_endian: bool = False,
 ) -> dict:
     """Build RDKit in-tree with Python wrappers and run a focused Python test."""
     test_paths = (test_path,) if isinstance(test_path, str) else test_path
-    spec = _rdkit_cpp_targets_spec(extra_cmake=extra_cmake, new_boost=new_boost)
+    spec = _rdkit_cpp_targets_spec(
+        extra_cmake=extra_cmake,
+        new_boost=new_boost,
+        legacy_boost_endian=legacy_boost_endian,
+    )
     spec["build"][1] = spec["build"][1].replace(
         "-DRDK_BUILD_CPP_TESTS=ON ",
         "-DRDK_BUILD_CPP_TESTS=OFF ",
@@ -552,10 +557,14 @@ def _rdkit_mixed_tests_spec(
     python_tests: tuple[str, ...],
     new_boost: bool = False,
     extra_cmake: str = "",
+    legacy_boost_endian: bool = False,
 ) -> dict:
     """Build and run generated RDKit tests spanning C++ and Python wrappers."""
     spec = _rdkit_cpp_targets_spec(
-        *cpp_targets, extra_cmake=extra_cmake, new_boost=new_boost
+        *cpp_targets,
+        extra_cmake=extra_cmake,
+        new_boost=new_boost,
+        legacy_boost_endian=legacy_boost_endian,
     )
     spec["build"][1] = spec["build"][1].replace(
         "-DRDK_BUILD_PYTHON_WRAPPERS=OFF ",
@@ -607,6 +616,9 @@ SPECS_OPENMM = _OpenMMSpecs({
     "2802": _openmm_python_unit_spec(
         ["testCustomGBForce", "testCustomNonbondedForce"]
     ),
+    "3260": _openmm_cpp_targets_spec(
+        "TestReferenceMonteCarloAnisotropicBarostat"
+    ),
     # PR #4832: flexibleConstraints option for AmberPrmtopFile (Python-only change).
     # The C base image has python3/pip but NO conda, so install OpenMM via pip
     # to get the compiled `_openmm` extension + native libs. The patch edits the
@@ -637,7 +649,13 @@ SPECS_OPENMM = _OpenMMSpecs({
         "test_cmd": [
             "cd wrappers/python/tests && python -m pytest -xvs TestAmberPrmtopFile.py::TestAmberPrmtopFile::testFlexibleConstraints",
         ],
+        "fail_to_pass": [
+            "wrappers/python/tests/TestAmberPrmtopFile.py::TestAmberPrmtopFile::testFlexibleConstraints"
+        ],
     },
+    "4989": _openmm_python_app_spec(
+        "TestForceField.py", "test_CharmmLoad or test_CharmmVersionMismatchCheck"
+    ),
     "4881": _openmm_cpp_targets_spec(
         "TestReferenceMonteCarloAnisotropicBarostat",
         "TestReferenceMonteCarloBarostat",
@@ -805,14 +823,108 @@ SPECS_OPENMC = {
     #   "cd tests && python -m pytest -v <test_file>"
 }
 
+_QGIS_316_BUILD_IMAGE = (
+    "qgis/qgis3-build-deps@"
+    "sha256:2bb32b415971fcc63124eb5993c48777cf024f1478d6e414c601a1d8afb9c3eb"
+)
+_QGIS_QT6_BUILD_IMAGE = (
+    "qgis/qgis3-build-deps-ubuntu-qt6@"
+    "sha256:81b4d845b8704c068e2cc94238d45fee4fcd8d603744d635edea8a2966202005"
+)
+
+
+def _qgis_spec(
+    targets: tuple[str, ...],
+    *,
+    ctest_regex: str,
+    base_image: str,
+    bindings: bool = False,
+    grass: bool = False,
+    postgres: bool = False,
+) -> dict:
+    """Build and run concrete QGIS CTest targets in QGIS's build-deps image."""
+    cmake_flags = [
+        "-GNinja",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DENABLE_TESTS=ON",
+        "-DWITH_ANALYSIS=ON",
+        "-DWITH_GUI=ON",
+        "-DWITH_DESKTOP=OFF",
+        "-DWITH_SERVER=OFF",
+        "-DWITH_3D=OFF",
+        "-DWITH_QUICK=OFF",
+        "-DWITH_PDAL=OFF",
+        "-DWITH_ORACLE=OFF",
+        "-DWITH_HANA=OFF",
+        "-DWITH_MSSQL=OFF",
+        "-DWITH_QSPATIALITE=OFF",
+        f"-DWITH_BINDINGS={'ON' if bindings else 'OFF'}",
+        f"-DWITH_GRASS7={'ON' if grass else 'OFF'}",
+        "-DWITH_GRASS8=OFF",
+    ]
+    if grass:
+        cmake_flags.append("-DGRASS_PREFIX7=$(grass --config path)")
+    build_target = (
+        "cmake --build build --parallel $(nproc)"
+        if bindings
+        else "cmake --build build --parallel $(nproc) --target " + " ".join(targets)
+    )
+    spec = {
+        "docker_specs": {"c_base_image": base_image},
+        "pre_install": [],
+        "build": [
+            "cmake -B build -S . " + " ".join(cmake_flags),
+            build_target,
+        ],
+        "test_cmd": [
+            "QT_QPA_PLATFORM=offscreen xvfb-run -a "
+            f"ctest --test-dir build -V --output-on-failure -R '{ctest_regex}'"
+        ],
+        "fail_to_pass": list(targets),
+        "test_generation_use_spec_cmd": True,
+    }
+    if postgres:
+        spec["pre_install"] = [
+            "apt-get update -q",
+            "apt-get install -y --no-install-recommends postgresql postgresql-contrib postgis",
+        ]
+        spec["eval_commands"] = [
+            "service postgresql start",
+            "su postgres -c \"psql -tc \\\"SELECT 1 FROM pg_roles WHERE rolname='docker'\\\" | grep -q 1 || createuser -s docker\"",
+            "su postgres -c \"psql -c \\\"ALTER ROLE docker PASSWORD 'docker'\\\"\"",
+            "su postgres -c \"psql -tc \\\"SELECT 1 FROM pg_database WHERE datname='qgis_test'\\\" | grep -q 1 || createdb -O docker qgis_test\"",
+            "printf '[qgis_test]\\nhost=localhost\\nport=5432\\ndbname=qgis_test\\nuser=docker\\npassword=docker\\n' > /root/.pg_service.conf",
+            "PGHOST=localhost PGUSER=docker PGPASSWORD=docker PGDATABASE=qgis_test tests/testdata/provider/testdata_pg.sh",
+        ]
+    return spec
+
+
 SPECS_QGIS = {
-    # Add entries here: "<PR_NUMBER>": {"build": [...], "test_cmd": [...]}
-    # Build pattern:
-    #   "mkdir -p build",
-    #   "cmake -B build -S . -DENABLE_TESTS=ON -DWITH_QTWEBKIT=OFF",
-    #   "cmake --build build --parallel $(nproc) --target <test_target>",
-    # Test pattern:
-    #   "ctest --test-dir build -V -R <test_regex>"
+    "40837": _qgis_spec(
+        ("ProcessingGrass7AlgorithmsVectorTest",),
+        ctest_regex="^ProcessingGrass7AlgorithmsVectorTest$",
+        base_image=_QGIS_316_BUILD_IMAGE,
+        bindings=True,
+        grass=True,
+    ),
+    "63639": _qgis_spec(
+        (
+            "test_analysis_processingcheckgeometry",
+            "test_geometry_checker_geometrychecks",
+        ),
+        ctest_regex=(
+            "^(test_analysis_processingcheckgeometry|"
+            "test_geometry_checker_geometrychecks)$"
+        ),
+        base_image=_QGIS_QT6_BUILD_IMAGE,
+    ),
+    "66353": _qgis_spec(
+        ("PyQgsPostgresRasterProvider",),
+        ctest_regex="^PyQgsPostgresRasterProvider$",
+        base_image=_QGIS_QT6_BUILD_IMAGE,
+        bindings=True,
+        postgres=True,
+    ),
 }
 
 class _RDKitSpecs(dict):
@@ -931,6 +1043,49 @@ SPECS_RDKIT = _RDKitSpecs({
         ]
     },
     "2059": _rdkit_cpp_targets_spec("smiTest1", legacy_boost_endian=True),
+    # Scientific Issues sheet: concrete targets from each PR's base CMake files.
+    "986": _rdkit_cpp_targets_spec(
+        "moldraw2DTest1", legacy_boost_endian=True
+    ),
+    "1473": _rdkit_cpp_targets_spec("smaTest1", legacy_boost_endian=True),
+    "1521": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/MMPA/Wrap/testMMPA.py", legacy_boost_endian=True
+    ),
+    "1654": _rdkit_mixed_tests_spec(
+        ("smiTest1",),
+        ("rdkit/Chem/UnitTestSmiles.py",),
+        legacy_boost_endian=True,
+    ),
+    "2255": _rdkit_mixed_tests_spec(
+        ("testAvalonLib1",),
+        ("External/AvalonTools/Wrap/testAvalonTools.py",),
+        extra_cmake="-DRDK_BUILD_AVALON_SUPPORT=ON ",
+        legacy_boost_endian=True,
+    ),
+    "2646": _rdkit_cpp_targets_spec("graphmolTestsCatch"),
+    "2651": _rdkit_cpp_targets_spec("testSubgraphs2"),
+    "3170": _rdkit_cpp_targets_spec("testSGroup"),
+    "3237": _rdkit_python_wrapper_spec(
+        "Code/GraphMol/MolDraw2D/Wrap/testMolDraw2D.py"
+    ),
+    "3507": _rdkit_python_wrapper_spec("rdkit/Chem/UnitTestMol3D.py"),
+    "3900": _rdkit_mixed_tests_spec(
+        ("testFMCS",), ("Code/GraphMol/FMCS/Wrap/testFMCS.py",)
+    ),
+    "5425": _rdkit_cpp_targets_spec("moldraw2DTestCatch"),
+    "5735": _rdkit_cpp_targets_spec("testRGroupDecomp"),
+    "5775": _rdkit_cpp_targets_spec("moldraw2DTestCatch"),
+    "5776": _rdkit_cpp_targets_spec("moldraw2DTestCatch"),
+    "6247": _rdkit_cpp_targets_spec("testRGroupDecomp"),
+    "6897": _rdkit_cpp_targets_spec("rxnTestCatch"),
+    "6972": _rdkit_python_wrapper_spec("Code/GraphMol/Wrap/rough_test.py"),
+    "7166": _rdkit_cpp_targets_spec(
+        "cffi_test", extra_cmake="-DRDK_BUILD_CFFI_LIB=ON "
+    ),
+    "7419": _rdkit_cpp_targets_spec(
+        "testInchi", extra_cmake="-DRDK_BUILD_INCHI_SUPPORT=ON "
+    ),
+    "8173": _rdkit_cpp_targets_spec("molHashCatchTest", new_boost=True),
     "6646": _rdkit_python_wrapper_spec("Code/GraphMol/FMCS/Wrap/testFMCS.py"),
     "8376": _rdkit_python_wrapper_spec(
         "Code/GraphMol/RascalMCES/Wrap/testRascalMCES.py"

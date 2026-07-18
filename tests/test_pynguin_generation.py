@@ -12,6 +12,7 @@ from swebench.eval_pipeline.pynguin_generation import (
 )
 from swebench.eval_pipeline.report import render_coverage_comparison_table
 from swebench.eval_pipeline.run_pipeline import (
+    _retain_cached_pynguin_prediction,
     _reuse_cached_pynguin_prediction,
     parse_args,
 )
@@ -53,6 +54,37 @@ def test_force_pynguin_cache_precedence(monkeypatch):
     assert _reuse_cached_pynguin_prediction(
         options("--force_pynguin", "--force_inference", "--skip_pynguin")
     ) is True
+
+
+def test_failed_pynguin_regeneration_retains_nonempty_cache():
+    cached = {
+        "model_patch": "diff --git a/tests/test_old.py b/tests/test_old.py\n",
+        "error": "",
+        "metrics": {"version": "0.45.0"},
+    }
+    generated = {
+        "model_patch": "",
+        "error": "timeout",
+        "metrics": {
+            "wall_time_seconds": 900.1,
+            "timed_out": True,
+            "attempted_modules": ["pkg.a"],
+            "successful_modules": ["pkg.a"],
+        },
+    }
+    retained = _retain_cached_pynguin_prediction(cached, generated)
+    assert retained["model_patch"] == cached["model_patch"]
+    assert retained["metrics"]["last_regeneration_failure"] == {
+        "error": "timeout",
+        "wall_time_seconds": 900.1,
+        "timed_out": True,
+        "attempted_module_count": 1,
+        "successful_modules": ["pkg.a"],
+    }
+    assert "last_regeneration_failure" not in cached["metrics"]
+    assert _retain_cached_pynguin_prediction(cached, {**generated, "model_patch": "new"})[
+        "model_patch"
+    ] == "new"
 
 
 def test_module_resolution_and_uncovered_ranking_are_deterministic():
@@ -155,6 +187,39 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
     assert result["model_patch"].startswith("diff --git")
     assert result["metrics"]["successful_modules"] == ["pkg.core"]
     assert result["metrics"]["module_attempts"][0]["exit_code"] == 0
+    finalization_calls = [call for call in calls if call[0][:2] == ["git", "add"]]
+    assert finalization_calls[0][1] >= 1
+
+
+def test_scheduler_collects_tests_after_module_timeout(tmp_path, monkeypatch):
+    (tmp_path / "tests").mkdir()
+
+    def fake_run(command, repo_dir, timeout, env):
+        if command[:3] == ["python", "-m", "pynguin"]:
+            output = Path(command[command.index("--output-path") + 1])
+            output.mkdir(parents=True, exist_ok=True)
+            (output / "test_generated.py").write_text("def test_x():\n    assert 1\n")
+            raise subprocess.TimeoutExpired(command, timeout, output="partial output")
+        stdout = (
+            "diff --git a/tests/test_pynguin_pkg_core.py "
+            "b/tests/test_pynguin_pkg_core.py\n"
+            if command[:2] == ["git", "diff"] else ""
+        )
+        return subprocess.CompletedProcess(command, 0, stdout=stdout)
+
+    monkeypatch.setattr("swebench.eval_pipeline.pynguin_generation._run", fake_run)
+    result = run_pynguin_generation(
+        tmp_path,
+        {"files": {"pkg/core.py": {
+            "covered_lines": 0, "num_statements": 1,
+            "covered_branches": 0, "num_branches": 0,
+        }}},
+        total_budget=10,
+    )
+    assert result["model_patch"].startswith("diff --git")
+    assert result["metrics"]["successful_modules"] == ["pkg.core"]
+    assert result["metrics"]["module_attempts"][0]["timed_out"] is True
+    assert result["metrics"]["timed_out"] is True
 
 
 def test_scheduler_reports_install_failure(tmp_path, monkeypatch):

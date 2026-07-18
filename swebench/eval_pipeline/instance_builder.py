@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Optional
 from unidiff import PatchSet
 
-from swebench.collect.utils import Repo
 from swebench.eval_pipeline.constants import COL_REPO, COL_PR_NUMBER, COL_PAPER_REFERENCE, COL_HAS_ISSUE
 from swebench.eval_pipeline.media_assets import extract_image_urls
 from swebench.harness.constants.c import MAP_REPO_VERSION_TO_SPECS_C
@@ -32,6 +31,24 @@ _CLASS_DEF_RE = re.compile(r"^ ?class\s+(\w+)\s*[:(]")
 _TEST_FILE_RE = re.compile(r"^\+\+\+\s+b/(.+)$", re.MULTILINE)
 
 
+def _is_test_path(path: str) -> bool:
+    """Recognize test paths without substring false positives such as
+    ``EnumerateStereoisomers.py`` (which contains ``test`` across words)."""
+    parts = [part.lower() for part in Path(path).parts]
+    if any(
+        part in {"test", "tests", "testing", "e2e"}
+        or part.startswith("testdata")
+        for part in parts[:-1]
+    ):
+        return True
+    stem = Path(path).stem.lower()
+    return (
+        stem.startswith(("test", "unittest"))
+        or stem.endswith(("test", "tests", "_test", "_tests"))
+        or "catch_test" in stem
+    )
+
+
 def _get_diff(pull) -> str:
     """Download the raw unified diff for a PR."""
     diff_url = pull.get("diff_url") or pull["diff_url"]
@@ -52,7 +69,7 @@ def _fetch_file_contents(
     # Exclude test files and non-Python files (docs, build files)
     impl_paths = [
         p for p in file_paths
-        if not any(x in p for x in ["test", "tests", "e2e"])
+        if not _is_test_path(p)
         and p.endswith((".py", ".pyx", ".pxd", ".h", ".cpp", ".cxx", ".cc"))
     ]
 
@@ -80,7 +97,7 @@ def _split_patches(diff_text: str) -> tuple[str, str]:
     patch_test = ""
     patch_fix = ""
     for hunk in PatchSet(diff_text):
-        if any(word in hunk.path for word in ["test", "tests", "e2e", "testing"]):
+        if _is_test_path(hunk.path):
             patch_test += str(hunk)
         else:
             patch_fix += str(hunk)
