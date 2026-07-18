@@ -38,6 +38,29 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
             "python -m coverage run --branch --source=Bio --append -m pytest"
         ),
         "mutation_test_style": "biopython",
+        "mutation_tests_dir": "Tests",
+    },
+    "geopandas/geopandas": {
+        "coverage_setup_command": (
+            "python -m pip install -e . -r requirements-dev.txt"
+        ),
+        "coverage_test_command": "python -m pytest -m 'not web' geopandas",
+        "coverage_command": (
+            "python -m coverage run --branch --source=geopandas "
+            "-m pytest -m 'not web' geopandas"
+        ),
+        "mutation_test_style": "pytest_generated",
+        "mutation_tests_dir": "geopandas/tests",
+    },
+    "astropy/astropy": {
+        "coverage_setup_command": "python -m pip install -e '.[test]'",
+        "coverage_test_command": "python -m pytest --pyargs astropy",
+        "coverage_command": (
+            "python -m coverage run --branch --source=astropy "
+            "-m pytest --pyargs astropy"
+        ),
+        "mutation_test_style": "pytest_generated",
+        "mutation_tests_dir": "astropy",
     },
 }
 
@@ -542,6 +565,7 @@ def _standalone_coverage_instance(args) -> dict:
         "mutation_command": args.mutation_command,
         "mutation_results_command": mutation_results_command,
         "mutation_test_style": profile.get("mutation_test_style"),
+        "mutation_tests_dir": profile.get("mutation_tests_dir"),
         "coverage_tool_install_command": args.coverage_tool_install_command,
         "standalone": True,
     }
@@ -568,6 +592,36 @@ def _retain_cached_pynguin_prediction(cached: dict | None, generated: dict) -> d
     return retained
 
 
+def _matching_cached_pynguin_prediction(
+    rows: list[dict], instance_id: str, args
+) -> dict | None:
+    """Return the latest control cache matching this repository and policy."""
+    matched = None
+    for candidate in rows:
+        metrics = candidate.get("metrics") or {}
+        if (
+            candidate.get("instance_id") == instance_id
+            and metrics.get("version") == args.pynguin_version
+            and metrics.get("seed") == args.pynguin_seed
+            and metrics.get("total_budget_seconds") == args.pynguin_total_budget
+            and metrics.get("module_slice_seconds") == args.pynguin_module_slice
+            and metrics.get("assertion_mode") == args.pynguin_assertion_mode
+            and metrics.get("postprocessing_version")
+            == PYNGUIN_POSTPROCESSING_VERSION
+        ):
+            matched = candidate
+    return matched
+
+
+def _upsert_prediction_by_instance(rows: list[dict], prediction: dict) -> list[dict]:
+    """Preserve other repositories while replacing one cached prediction."""
+    instance_id = prediction.get("instance_id")
+    return [
+        *[row for row in rows if row.get("instance_id") != instance_id],
+        prediction,
+    ]
+
+
 def _run_standalone_coverage(args, inference_model: str, github_token: str | None) -> None:
     from swebench.eval_pipeline.coverage_generation_eval import (
         evaluate_common_mutation_targets,
@@ -578,6 +632,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
     )
     from swebench.eval_pipeline.prediction_utils import (
         read_prediction_rows,
+        write_prediction_rows,
         write_selected_predictions,
     )
     from swebench.eval_pipeline.prompt_builder import build_all_prompts
@@ -658,20 +713,12 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
     if args.traditional_test_generator == "pynguin":
         pynguin_path = output_dir / "pynguin_predictions.jsonl"
         cached_pynguin_prediction = None
+        pynguin_rows = []
         if pynguin_path.exists():
-            rows = read_prediction_rows(pynguin_path)
-            candidate = rows[-1] if rows else None
-            metrics = (candidate or {}).get("metrics") or {}
-            if (
-                metrics.get("version") == args.pynguin_version
-                and metrics.get("seed") == args.pynguin_seed
-                and metrics.get("total_budget_seconds") == args.pynguin_total_budget
-                and metrics.get("module_slice_seconds") == args.pynguin_module_slice
-                and metrics.get("assertion_mode") == args.pynguin_assertion_mode
-                and metrics.get("postprocessing_version")
-                == PYNGUIN_POSTPROCESSING_VERSION
-            ):
-                cached_pynguin_prediction = candidate
+            pynguin_rows = read_prediction_rows(pynguin_path)
+            cached_pynguin_prediction = _matching_cached_pynguin_prediction(
+                pynguin_rows, instance["instance_id"], args
+            )
         if cached_pynguin_prediction and _reuse_cached_pynguin_prediction(args):
             pynguin_prediction = cached_pynguin_prediction
             logger.info("Reusing cached Pynguin prediction from %s", pynguin_path)
@@ -703,7 +750,10 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                     "Pynguin regeneration produced no patch; retaining cached prediction from %s",
                     pynguin_path,
                 )
-            pynguin_path.write_text(json.dumps(pynguin_prediction) + "\n")
+            write_prediction_rows(
+                pynguin_path,
+                _upsert_prediction_by_instance(pynguin_rows, pynguin_prediction),
+            )
         elif pynguin_prediction is None:
             pynguin_prediction = {
                 "instance_id": instance["instance_id"],

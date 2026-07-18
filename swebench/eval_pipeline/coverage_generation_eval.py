@@ -550,15 +550,22 @@ def _standalone_mutation_script(
     quoted_targets = shlex.quote(",".join(targets))
     custom_command = instance.get("mutation_command")
     runner_setup: list[str] = []
-    if not custom_command and instance.get("mutation_test_style") == "biopython":
+    mutation_test_style = instance.get("mutation_test_style")
+    if not custom_command and mutation_test_style in {"biopython", "pytest_generated"}:
         patch_info = inspect_test_patch(patch_path.read_text())
         test_files = sorted({
             path
             for path in patch_info.get("changed_files", [])
-            if Path(path).parts[:1] == ("Tests",)
-            and Path(path).name.startswith("test_")
+            if _is_test_path(path)
+            and (
+                Path(path).name.startswith("test_")
+                or Path(path).name.endswith("_test.py")
+            )
             and Path(path).suffix == ".py"
         })
+        tests_dir = instance.get("mutation_tests_dir") or (
+            "Tests" if mutation_test_style == "biopython" else "tests"
+        )
         runner = ".coverage-generation-mutmut-runner.sh"
         runner_lines = ["#!/bin/bash", "set -uo pipefail", "tests=()"]
         for path in test_files:
@@ -581,7 +588,8 @@ def _standalone_mutation_script(
         ]
         mutation_command = (
             "mutmut run --paths-to-mutate=" + quoted_targets
-            + " --tests-dir=Tests --runner=" + shlex.quote(f"./{runner}")
+            + " --tests-dir=" + shlex.quote(tests_dir)
+            + " --runner=" + shlex.quote(f"./{runner}")
         )
     else:
         mutation_command = (
@@ -1242,8 +1250,8 @@ def evaluate_common_mutation_targets(
 ) -> tuple[dict, dict[str, dict]]:
     """Evaluate original and every generator against an identical module union.
 
-    Under the Biopython profile, each arm still uses only that arm's generated
-    test modules; this is explicitly reported as marginal mutation effectiveness.
+    Under generated-test profiles, each arm uses only that arm's touched test
+    modules; this is explicitly reported as marginal mutation effectiveness.
     """
     targets = common_improved_modules(
         baseline.get("coverage"), list(arm_results.values()),
@@ -1293,8 +1301,9 @@ def evaluate_common_mutation_targets(
         "mutation_after_timed_out": original_mutation["timed_out"],
         "mutation_after_tool_error": original_mutation["tool_error"],
         "mutation_policy": (
-            "generated-tests-only marginal mutation effectiveness"
-            if instance.get("mutation_test_style") == "biopython"
+            "touched-test-files-only marginal mutation effectiveness"
+            if instance.get("mutation_test_style")
+            in {"biopython", "pytest_generated"}
             else "full configured test command"
         ),
         "flaky": any(code != 0 for code in (baseline.get("repeat_exits") or [])),

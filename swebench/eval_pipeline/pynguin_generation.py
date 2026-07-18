@@ -162,9 +162,14 @@ def conventional_test_directory(repo_dir: Path) -> Path:
         if candidate.is_dir():
             return candidate
     candidates = sorted(
-        path for path in repo_dir.rglob("tests")
-        if path.is_dir()
-        and not any(part.startswith(".") for part in path.relative_to(repo_dir).parts)
+        (
+            path for path in repo_dir.rglob("tests")
+            if path.is_dir()
+            and not any(
+                part.startswith(".") for part in path.relative_to(repo_dir).parts
+            )
+        ),
+        key=lambda path: (len(path.relative_to(repo_dir).parts), str(path)),
     )
     return candidates[0] if candidates else repo_dir / "tests"
 

@@ -13,8 +13,10 @@ from swebench.eval_pipeline.pynguin_generation import (
 )
 from swebench.eval_pipeline.report import render_coverage_comparison_table
 from swebench.eval_pipeline.run_pipeline import (
+    _matching_cached_pynguin_prediction,
     _retain_cached_pynguin_prediction,
     _reuse_cached_pynguin_prediction,
+    _upsert_prediction_by_instance,
     parse_args,
 )
 
@@ -88,6 +90,34 @@ def test_failed_pynguin_regeneration_retains_nonempty_cache():
     ] == "new"
 
 
+def test_pynguin_cache_is_matched_and_replaced_by_instance(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["run_pipeline"])
+    args = parse_args()
+    matching_metrics = {
+        "version": args.pynguin_version,
+        "seed": args.pynguin_seed,
+        "total_budget_seconds": args.pynguin_total_budget,
+        "module_slice_seconds": args.pynguin_module_slice,
+        "assertion_mode": args.pynguin_assertion_mode,
+        "postprocessing_version": 2,
+    }
+    rows = [
+        {"instance_id": "repo-a", "model_patch": "a", "metrics": matching_metrics},
+        {"instance_id": "repo-b", "model_patch": "b", "metrics": matching_metrics},
+    ]
+    assert _matching_cached_pynguin_prediction(rows, "repo-b", args)[
+        "model_patch"
+    ] == "b"
+    assert _matching_cached_pynguin_prediction(rows, "repo-c", args) is None
+    replaced = _upsert_prediction_by_instance(
+        rows, {"instance_id": "repo-a", "model_patch": "new-a"}
+    )
+    assert [(row["instance_id"], row["model_patch"]) for row in replaced] == [
+        ("repo-b", "b"),
+        ("repo-a", "new-a"),
+    ]
+
+
 def test_module_resolution_and_uncovered_ranking_are_deterministic():
     assert module_name_from_path("src/pkg/core.py") == "pkg.core"
     assert module_name_from_path("Bio/Align/__init__.py") == "Bio.Align"
@@ -119,6 +149,12 @@ def test_module_resolution_and_uncovered_ranking_are_deterministic():
 def test_test_directory_selection_including_biopython(tmp_path):
     (tmp_path / "Tests").mkdir()
     assert conventional_test_directory(tmp_path) == tmp_path / "Tests"
+
+
+def test_test_directory_selection_prefers_shallow_package_tests(tmp_path):
+    (tmp_path / "geopandas" / "io" / "tests").mkdir(parents=True)
+    (tmp_path / "geopandas" / "tests").mkdir()
+    assert conventional_test_directory(tmp_path) == tmp_path / "geopandas" / "tests"
 
 
 def test_pynguin_postprocessing_repairs_shadowed_imports_and_checkout_assertions(

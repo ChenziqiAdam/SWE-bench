@@ -52,7 +52,68 @@ def test_biopython_profile_builds_extensions_and_uses_offline_runner(monkeypatch
     assert "Tests/run_tests.py --offline" in instance["coverage_command"]
     assert "--append -m pytest" in instance["coverage_pytest_command"]
     assert instance["mutation_test_style"] == "biopython"
+    assert instance["mutation_tests_dir"] == "Tests"
     assert instance["mutation_results_command"] == "true"
+
+
+@pytest.mark.parametrize(
+    ("repo_url", "commit", "source", "test_fragment", "tests_dir"),
+    [
+        (
+            "https://github.com/geopandas/geopandas.git",
+            "879ca939d490d66f8e6c7ab569a2827ab9bb8d85",
+            "geopandas",
+            "-m 'not web' geopandas",
+            "geopandas/tests",
+        ),
+        (
+            "https://github.com/astropy/astropy.git",
+            "1c9ff745b3247e9ec290c3492f773188c69db6fa",
+            "astropy",
+            "--pyargs astropy",
+            "astropy",
+        ),
+    ],
+)
+def test_scientific_pytest_profiles_are_offline_and_generated_test_scoped(
+    monkeypatch, repo_url, commit, source, test_fragment, tests_dir
+):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["run_pipeline", "--repo_url", repo_url, "--base_commit", commit],
+    )
+    instance = _standalone_coverage_instance(parse_args())
+    assert "pip install -e" in instance["coverage_setup_command"]
+    assert test_fragment in instance["coverage_test_command"]
+    assert f"--source={source}" in instance["coverage_command"]
+    assert test_fragment in instance["coverage_command"]
+    assert instance["mutation_test_style"] == "pytest_generated"
+    assert instance["mutation_tests_dir"] == tests_dir
+
+
+def test_scientific_profile_allows_explicit_command_overrides(monkeypatch):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_pipeline",
+            "--repo_url",
+            "https://github.com/astropy/astropy.git",
+            "--base_commit",
+            "1c9ff745b3247e9ec290c3492f773188c69db6fa",
+            "--coverage_setup_command",
+            "custom setup",
+            "--coverage_test_command",
+            "custom tests",
+            "--coverage_command",
+            "custom coverage",
+        ],
+    )
+    instance = _standalone_coverage_instance(parse_args())
+    assert instance["coverage_setup_command"] == "custom setup"
+    assert instance["coverage_test_command"] == "custom tests"
+    assert instance["coverage_command"] == "custom coverage"
 
 
 def test_coverage_prompt_names_target_and_tests_only_constraints():
@@ -470,6 +531,42 @@ def test_biopython_mutation_script_uses_touched_test_modules(tmp_path):
     assert "if [ ${#tests[@]} -eq 0 ]; then\n  exit 0" in script
     assert "then\n  exec python -m pytest\nfi" not in script
     assert "mutmut results" not in script
+    completed = subprocess.run(["bash", "-n"], input=script, text=True)
+    assert completed.returncode == 0
+
+
+def test_nested_pytest_mutation_script_uses_only_touched_test_files(tmp_path):
+    patch = tmp_path / "test.patch"
+    patch.write_text(
+        "diff --git a/astropy/table/tests/test_table.py "
+        "b/astropy/table/tests/test_table.py\n"
+        "--- a/astropy/table/tests/test_table.py\n"
+        "+++ b/astropy/table/tests/test_table.py\n"
+        "@@ -1 +1,2 @@\n"
+        " old\n"
+        "+new\n"
+        "diff --git a/astropy/table/helpers.py b/astropy/table/helpers.py\n"
+        "--- a/astropy/table/helpers.py\n"
+        "+++ b/astropy/table/helpers.py\n"
+        "@@ -1 +1,2 @@\n"
+        " old\n"
+        "+new\n"
+    )
+    instance = {
+        "base_commit": "abc123",
+        "coverage_setup_command": "true",
+        "coverage_tool_install_command": "true",
+        "mutation_test_style": "pytest_generated",
+        "mutation_tests_dir": "astropy",
+        "mutation_results_command": "true",
+    }
+    script = _standalone_mutation_script(
+        instance, patch, False, ["astropy/table/table.py"]
+    )
+    assert "--tests-dir=astropy" in script
+    assert "astropy/table/tests/test_table.py" in script
+    assert "astropy/table/helpers.py" not in script
+    assert 'python -m pytest -- "${tests[@]}"' in script
     completed = subprocess.run(["bash", "-n"], input=script, text=True)
     assert completed.returncode == 0
     completed = subprocess.run(["bash", "-n"], input=script, text=True)

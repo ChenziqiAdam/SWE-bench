@@ -70,10 +70,55 @@ not a separately installed wheel. The editable build makes those extensions
 available to source-tree imports. Projects with additional build or test
 dependencies should override the setup command.
 
-Biopython has a built-in standalone profile. For its GitHub URL, default CLI
-values automatically build C extensions in place and use Biopython's official
-offline `Tests/run_tests.py` suite for both testing and coverage. Explicit
-command overrides still take precedence.
+Biopython, GeoPandas, and Astropy have built-in standalone profiles. For their
+GitHub URLs, default CLI values select the repository's editable installation,
+offline/package test suite, coverage source package, and generated-test
+mutation layout. Explicit command overrides still take precedence.
+
+The GeoPandas and Astropy experiments can be launched on the remote server with
+the same 900-second agent/Pynguin budgets and 3600-second evaluation budget as
+the validated Biopython workflow. Keep separate output directories so reports
+and agent predictions are easy to audit (Pynguin caches are also keyed by
+instance and are safe if directories are intentionally shared).
+
+GeoPandas, pinned to the requested commit:
+
+```bash
+python -m swebench.eval_pipeline.run_pipeline \
+  --eval_mode coverage_generation \
+  --repo_url https://github.com/geopandas/geopandas.git \
+  --base_commit 879ca939d490d66f8e6c7ab569a2827ab9bb8d85 \
+  --agent_backend claude_code \
+  --model deepseek-v4-flash \
+  --claude_code_timeout 900 \
+  --traditional_test_generator pynguin \
+  --pynguin_total_budget 900 \
+  --coverage_eval_timeout 3600 \
+  --output_dir outputs/geopandas_coverage \
+  --run_id geopandas_coverage
+```
+
+Astropy, pinned to the requested commit:
+
+```bash
+python -m swebench.eval_pipeline.run_pipeline \
+  --eval_mode coverage_generation \
+  --repo_url https://github.com/astropy/astropy.git \
+  --base_commit 1c9ff745b3247e9ec290c3492f773188c69db6fa \
+  --agent_backend claude_code \
+  --model deepseek-v4-flash \
+  --claude_code_timeout 900 \
+  --traditional_test_generator pynguin \
+  --pynguin_total_budget 900 \
+  --coverage_eval_timeout 3600 \
+  --output_dir outputs/astropy_coverage \
+  --run_id astropy_coverage
+```
+
+Pass `--endpoint` and `--api_key` when they are not already supplied through
+the server's Anthropic-compatible environment. GeoPandas excludes its `web`
+marker and Astropy runs package tests only, so neither profile intentionally
+enables network or documentation tests.
 
 The pipeline stops before agent inference if repository setup, the complete
 baseline tests, flaky reruns, or baseline coverage fail. This prevents spending
@@ -94,11 +139,12 @@ a usable patch, evaluation still records its scientific metrics, while the
 overall status is `partial` rather than silently reporting a complete resolve.
 
 The Biopython profile also configures Pynguin output and mutmut for its capitalized `Tests`
-directory and project test runner. Mutation runs select each arm's generated test
-modules that exist in its clean checkout, and use mutmut's live
+directory and project test runner. All three profiles select each arm's touched
+test modules that exist in its clean checkout for marginal mutation evaluation,
+and use mutmut's live
 run summary because its separate results renderer is incompatible with the
 Python 3.13/Pony ORM environment used in the observed run.
-This generated-tests-only score is explicitly labeled as **marginal mutation
+This touched-test-files-only score is explicitly labeled as **marginal mutation
 effectiveness**, not whole-suite mutation adequacy.
 
 A custom mutation command may use `{targets}` where the pipeline should insert
