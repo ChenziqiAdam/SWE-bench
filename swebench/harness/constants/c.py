@@ -401,6 +401,7 @@ def _openmm_native_python_spec(test_file: str, test_filter: str) -> dict:
             "-DOPENMM_BUILD_HIP_LIB=OFF "
             "-DOPENMM_BUILD_PYTHON_WRAPPERS=ON "
             "-DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF "
+            "-DBUILD_TESTING=OFF "
             "-DOPENMM_BUILD_EXAMPLES=OFF",
             # PythonInstall links against the configured install prefix.  Some
             # OpenMM versions incorrectly return success when setup.py linking
@@ -806,7 +807,9 @@ SPECS_OPENMM = _OpenMMSpecs({
         "TestReferencePeriodicTorsionForce",
     ),
     "4732": _openmm_cpp_targets_spec("TestReferenceNonbondedForce"),
+    "5031": _openmm_cpp_targets_spec("TestReferenceCustomCentroidBondForce"),
     "5198": _openmm_cpp_targets_spec("TestCpuLocalEnergyMinimizer"),
+    "5322": _openmm_cpp_targets_spec("TestReferenceMonteCarloFlexibleBarostat"),
     # ── Exact Python wrapper tests ───────────────────────────────────────────
     # These PRs add or modify focused Python app tests. Use pip's compiled
     # OpenMM package for native libraries, then overlay the patched pure-Python

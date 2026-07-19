@@ -15,6 +15,7 @@ from pathlib import Path, PurePosixPath
 
 import docker
 
+from swebench.eval_pipeline.instance_builder import _is_test_path
 from swebench.eval_pipeline.prediction_utils import read_prediction_rows
 from swebench.harness.constants import (
     END_TEST_OUTPUT,
@@ -76,9 +77,22 @@ def classify_test_generation_result(
     elif not gold_patch_applied:
         status = "errored"
         failure_reason = "gold_patch_failed"
-    elif build_failed or gold_build_failed:
+    elif build_failed:
         status = "errored"
         failure_reason = "generated_test_build_failed"
+    elif gold_build_failed:
+        # A generated test that does not build against the fix is a model/test
+        # failure, not an evaluator infrastructure error.
+        return {
+            "status": "unresolved",
+            "failure_reason": "generated_test_did_not_build_on_gold",
+            "base_failed_tests": (
+                ["generated_test_build"]
+                if base_build_failed
+                else sorted(t for t, s in base_status_map.items() if _failed(s))
+            ),
+            "gold_passed_tests": [],
+        }
     elif collection_failed:
         status = "errored"
         failure_reason = "test_collection_failed"
@@ -157,6 +171,30 @@ def _test_collection_failed(output: str) -> bool:
     )
 
 
+def _exclude_gold_test_files(gold_patch: str) -> tuple[str, list[str]]:
+    """Apply only the gold implementation, never PR-authored tests.
+
+    Some C/C++ test files were historically misclassified into the gold patch.
+    Applying them can conflict with the independently generated test or make
+    unrelated old tests fail after a partial gold extraction.
+    """
+    sections = re.split(r"(?=^diff --git )", gold_patch, flags=re.MULTILINE)
+    kept: list[str] = []
+    excluded: set[str] = set()
+    for section in sections:
+        match = re.match(r"^diff --git a/(.+?) b/(.+)$", section, re.MULTILINE)
+        test_paths = (
+            {path for path in match.groups() if _is_test_path(path)}
+            if match
+            else set()
+        )
+        if test_paths:
+            excluded.update(test_paths)
+        else:
+            kept.append(section)
+    return "".join(kept), sorted(excluded)
+
+
 def _openmm_generated_pytest_command(
     pytest_targets: list[str],
     pytest_filter: str | None = None,
@@ -173,8 +211,6 @@ def _openmm_generated_pytest_command(
         # module, and simtk compatibility shim).  Old source trees frequently
         # lack generated version.py; copying their __init__.py over the wheel
         # creates a circular/partially-initialized import during collection.
-        "SIMTK_ROOT=$(dirname \"$SIMTK_SITE\") && "
-        "if [ -d /testbed/wrappers/python/simtk/unit ]; then rm -rf \"$SIMTK_ROOT/unit\" && cp -r /testbed/wrappers/python/simtk/unit \"$SIMTK_ROOT/\"; fi && "
         "if [ -d /testbed/wrappers/python/openmm/app ]; then cp -r /testbed/wrappers/python/openmm/app \"$OPENMM_SITE/\"; fi && "
         "rm -rf \"$SIMTK_SITE/app\" && "
         "if [ -d /testbed/wrappers/python/openmm/app ]; then "
@@ -331,15 +367,13 @@ def _build_script(instance: dict, generated_patch: str, apply_gold: bool) -> str
     generated_apply = [
         f"git apply -v {GENERATED_TEST_PATCH} "
         f"|| git apply -v --3way {GENERATED_TEST_PATCH} "
-        f"|| patch --batch --fuzz=5 -p1 -i {GENERATED_TEST_PATCH} "
         f"|| {{ echo {GEN_APPLY_FAIL}; exit 11; }}",
         f"echo {GEN_APPLY_PASS}",
     ]
     if apply_gold:
         lines += [
-            f"git apply -v {GOLD_PATCH} "
+            f"test ! -s {GOLD_PATCH} || git apply -v {GOLD_PATCH} "
             f"|| git apply -v --3way {GOLD_PATCH} "
-            f"|| patch --batch --fuzz=5 -p1 -i {GOLD_PATCH} "
             f"|| {{ echo {GOLD_APPLY_FAIL}; exit 12; }}",
             f"echo {GOLD_APPLY_PASS}",
         ]
@@ -454,7 +488,10 @@ def _evaluate_one(
         gen_patch_path = out_dir / "generated_test.patch"
         gold_patch_path = out_dir / "gold.patch"
         gen_patch_path.write_text(generated_patch)
-        gold_patch_path.write_text(instance.get("patch", "") or "")
+        effective_gold_patch, excluded_gold_test_paths = (
+            _exclude_gold_test_files(instance.get("patch", "") or "")
+        )
+        gold_patch_path.write_text(effective_gold_patch)
         copy_to_container(container, gen_patch_path, PurePosixPath(GENERATED_TEST_PATCH))
         copy_to_container(container, gold_patch_path, PurePosixPath(GOLD_PATCH))
 
@@ -503,6 +540,7 @@ def _evaluate_one(
                 "gold_status_count": len(gold_status),
                 "base_timed_out": base_timed_out,
                 "gold_timed_out": gold_timed_out,
+                "excluded_gold_test_paths": excluded_gold_test_paths,
                 "base_test_wall_time_seconds": round(base_duration, 6),
                 "gold_test_wall_time_seconds": round(gold_duration, 6),
                 "inference_metrics": prediction.get("metrics", {}),

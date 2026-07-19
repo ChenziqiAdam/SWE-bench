@@ -218,3 +218,25 @@ diff --git a/rdkit/Chem/UnitTestMol3D.py b/rdkit/Chem/UnitTestMol3D.py
     assert "EnumerateStereoisomers.py" in patch
     assert "UnitTestMol3D.py" not in patch
     assert "UnitTestMol3D.py" in test_patch
+
+
+def test_split_patches_recognizes_rdkit_catch_sources_as_tests():
+    diff = """diff --git a/Code/GraphMol/MolOps.cpp b/Code/GraphMol/MolOps.cpp
+--- a/Code/GraphMol/MolOps.cpp
++++ b/Code/GraphMol/MolOps.cpp
+@@ -1 +1 @@
+-old
++fixed
+diff --git a/Code/GraphMol/catch_graphmol.cpp b/Code/GraphMol/catch_graphmol.cpp
+--- a/Code/GraphMol/catch_graphmol.cpp
++++ b/Code/GraphMol/catch_graphmol.cpp
+@@ -1 +1,2 @@
+ old test
++new test
+"""
+
+    patch, test_patch = _split_patches(diff)
+
+    assert "MolOps.cpp" in patch
+    assert "catch_graphmol.cpp" not in patch
+    assert "catch_graphmol.cpp" in test_patch

@@ -6,6 +6,7 @@ from swebench.eval_pipeline.test_generation_eval import (
     GOLD_APPLY_PASS,
     GEN_APPLY_PASS,
     _build_script,
+    _exclude_gold_test_files,
     _evaluate_one,
     _no_tests_selected,
     _test_collection_failed,
@@ -138,7 +139,7 @@ def test_base_build_failure_resolves_when_gold_tests_pass():
     }
 
 
-def test_gold_build_failure_remains_errored():
+def test_gold_build_failure_is_an_unresolved_generated_test():
     result = classify_test_generation_result(
         {"TestNewAPI": "FAILED"},
         {},
@@ -147,8 +148,8 @@ def test_gold_build_failure_remains_errored():
         gold_build_failed=True,
     )
 
-    assert result["status"] == "errored"
-    assert result["failure_reason"] == "generated_test_build_failed"
+    assert result["status"] == "unresolved"
+    assert result["failure_reason"] == "generated_test_did_not_build_on_gold"
 
 
 def test_test_generation_reports_patch_failure_before_secondary_build_failure():
@@ -180,6 +181,28 @@ def test_gold_script_applies_gold_before_generated_test(monkeypatch):
 
     assert script.index(GOLD_APPLY_PASS) < script.index(GEN_APPLY_PASS)
     assert f"make tests || {{ echo {BUILD_FAIL}; exit 13; }}" in script
+    assert "--fuzz" not in script
+
+
+def test_gold_patch_excludes_pr_authored_cpp_tests():
+    gold = """diff --git a/src/fix.cpp b/src/fix.cpp
+--- a/src/fix.cpp
++++ b/src/fix.cpp
+@@ -1 +1 @@
+-old
++fixed
+diff --git a/Code/GraphMol/catch_graphmol.cpp b/Code/GraphMol/catch_graphmol.cpp
+--- a/Code/GraphMol/catch_graphmol.cpp
++++ b/Code/GraphMol/catch_graphmol.cpp
+@@ -1 +1 @@
+-old test
++gold test
+"""
+    filtered, excluded = _exclude_gold_test_files(gold)
+
+    assert "src/fix.cpp" in filtered
+    assert "catch_graphmol.cpp" not in filtered
+    assert excluded == ["Code/GraphMol/catch_graphmol.cpp"]
 
 
 def test_openmm_test_generation_runs_touched_pytest_file_not_fixed_selector(monkeypatch):
@@ -211,7 +234,7 @@ def test_openmm_test_generation_runs_touched_pytest_file_not_fixed_selector(monk
     assert "from openmm.unit import *" in command
     assert "wrappers/python/openmm/*.py" not in command
     assert "wrappers/python/simtk/openmm/*.py" not in command
-    assert "wrappers/python/simtk/unit" in command
+    assert "wrappers/python/simtk/unit" not in command
     assert "import openmm, simtk.openmm" in command
     assert "python -m lib2to3 -w -n \"$SIMTK_SITE/app\"" in command
     assert command.index("/testbed/wrappers/python/openmm/app") < command.index(

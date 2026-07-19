@@ -172,8 +172,10 @@ def test_current_testgen_openmm_placeholders_have_concrete_specs():
         "3286": "TestReferenceGBSAOBCForce",
         "4732": "TestReferenceNonbondedForce",
         "4881": "TestReferenceMonteCarloBarostat",
+        "5031": "TestReferenceCustomCentroidBondForce",
         "5137": "TestOpenCLFFT",
         "5198": "TestCpuLocalEnergyMinimizer",
+        "5322": "TestReferenceMonteCarloFlexibleBarostat",
     }
     for pr, target in expected_targets.items():
         spec_text = "\n".join(
@@ -214,6 +216,7 @@ def test_openmm_native_python_api_spec_builds_wrappers():
     spec = SPECS_OPENMM["4870"]
     assert spec["test_generation_use_spec_cmd"] is True
     assert "-DOPENMM_BUILD_PYTHON_WRAPPERS=ON" in spec["build_after_test_patch"][0]
+    assert "-DBUILD_TESTING=OFF" in spec["build_after_test_patch"][0]
     assert "--target install" in spec["build_after_test_patch"][1]
     assert "PythonInstall" in spec["build_after_test_patch"][2]
     assert "import openmm, simtk.openmm" in spec["build_after_test_patch"][2]
