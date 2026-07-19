@@ -1342,7 +1342,34 @@ def evaluate_common_mutation_targets(
             float(result.get("evaluation_wall_time_seconds", 0.0))
             + arm_mutation["runtime"]
         )
+        _refresh_status_after_common_mutation(
+            result,
+            baseline_score,
+            after_score,
+            arm_mutation["timed_out"],
+        )
     return original, arm_results
+
+
+def _refresh_status_after_common_mutation(
+    result: dict,
+    baseline_score: float | None,
+    after_score: float | None,
+    mutation_timed_out: bool,
+) -> None:
+    """Finalize a no-gain classification after the deferred common mutation run."""
+    if result.get("failure_reason") != "no_coverage_or_mutation_improvement":
+        return
+    if (
+        baseline_score is not None
+        and after_score is not None
+        and after_score > baseline_score
+    ):
+        result["status"] = "resolved"
+        result["failure_reason"] = ""
+    elif mutation_timed_out:
+        result["status"] = "errored"
+        result["failure_reason"] = "mutation_evaluation_timeout"
 
 
 def run_coverage_generation_evaluation(instances: list[dict], predictions_path: str | Path,

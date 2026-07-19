@@ -9,7 +9,8 @@ import time
 from pathlib import Path
 
 
-PYNGUIN_POSTPROCESSING_VERSION = 2
+PYNGUIN_POSTPROCESSING_VERSION = 3
+PYNGUIN_MODULE_SHUTDOWN_GRACE_SECONDS = 10
 
 
 _OFFLINE_GUARD_SOURCE = """
@@ -76,7 +77,11 @@ class _PortablePynguinTransformer(ast.NodeTransformer):
         return self.generic_visit(node)
 
 
-def sanitize_pynguin_test(source: str, repo_dir: Path) -> tuple[str, dict[str, int]]:
+def sanitize_pynguin_test(
+    source: str,
+    repo_dir: Path,
+    warning_filters: list[str] | None = None,
+) -> tuple[str, dict[str, int]]:
     """Make exported tests portable and prevent uncontrolled network I/O."""
     tree = ast.parse(source)
     transformer = _PortablePynguinTransformer(str(repo_dir.resolve()))
@@ -96,6 +101,18 @@ def sanitize_pynguin_test(source: str, repo_dir: Path) -> tuple[str, dict[str, i
     ):
         insert_at += 1
     prefix = ast.parse(_OFFLINE_GUARD_SOURCE).body
+    filters = warning_filters or []
+    if filters:
+        prefix.extend(
+            ast.parse(
+                "pytestmark = [\n"
+                + "\n".join(
+                    f"    _pynguin_pytest.mark.filterwarnings({item!r}),"
+                    for item in filters
+                )
+                + "\n]\n"
+            ).body
+        )
     if transformer.rewritten_imports:
         prefix.insert(
             0,
@@ -109,6 +126,7 @@ def sanitize_pynguin_test(source: str, repo_dir: Path) -> tuple[str, dict[str, i
         "rewritten_import_count": transformer.rewritten_imports,
         "removed_nonportable_assertion_count": transformer.removed_assertions,
         "network_guard_injected_count": 1,
+        "warning_filter_count": len(filters),
     }
 
 
@@ -192,6 +210,7 @@ def run_pynguin_generation(
     assertion_mode: str = "SIMPLE",
     explicit_modules: list[str] | None = None,
     setup_command: str | None = None,
+    warning_filters: list[str] | None = None,
 ) -> dict:
     """Install and schedule Pynguin under one end-to-end deadline."""
     started = time.monotonic()
@@ -249,6 +268,7 @@ def run_pynguin_generation(
                     removed_nonportable_assertion_count
                 ),
                 "network_guard_injected_count": network_guard_injected_count,
+                "warning_filters": warning_filters or [],
                 "diagnostic_output_tail": "".join(output_chunks)[-8000:],
             },
         }
@@ -296,7 +316,14 @@ def run_pynguin_generation(
             ]
             module_started = time.monotonic()
             try:
-                completed = _run(command, repo_dir, generation_remaining(), env)
+                # Pynguin's internal search timer does not cover every analysis,
+                # assertion-generation, and shutdown path. Enforce the advertised
+                # per-module slice externally, with a small finalization grace.
+                outer_slice_timeout = min(
+                    generation_remaining(),
+                    slice_seconds + PYNGUIN_MODULE_SHUTDOWN_GRACE_SECONDS,
+                )
+                completed = _run(command, repo_dir, outer_slice_timeout, env)
                 code, timed_out = completed.returncode, False
                 module_output = completed.stdout or ""
                 output_chunks.append(module_output)
@@ -314,7 +341,9 @@ def run_pynguin_generation(
                 stem = "test_pynguin_" + module.replace(".", "_")
                 suffix = f"_{index + 1}" if len(generated) > 1 else ""
                 destination = test_dir / f"{stem}{suffix}.py"
-                sanitized, sanitation = sanitize_pynguin_test(source.read_text(), repo_dir)
+                sanitized, sanitation = sanitize_pynguin_test(
+                    source.read_text(), repo_dir, warning_filters
+                )
                 destination.write_text(sanitized)
                 attempt_rewritten_imports += sanitation["rewritten_import_count"]
                 attempt_removed_assertions += sanitation[

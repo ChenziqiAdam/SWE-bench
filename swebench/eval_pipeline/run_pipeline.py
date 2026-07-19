@@ -61,6 +61,9 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
         ),
         "mutation_test_style": "pytest_generated",
         "mutation_tests_dir": "astropy",
+        "pynguin_warning_filters": [
+            "ignore::astropy.utils.exceptions.AstropyDeprecationWarning"
+        ],
     },
 }
 
@@ -566,6 +569,7 @@ def _standalone_coverage_instance(args) -> dict:
         "mutation_results_command": mutation_results_command,
         "mutation_test_style": profile.get("mutation_test_style"),
         "mutation_tests_dir": profile.get("mutation_tests_dir"),
+        "pynguin_warning_filters": profile.get("pynguin_warning_filters", []),
         "coverage_tool_install_command": args.coverage_tool_install_command,
         "standalone": True,
     }
@@ -741,6 +745,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                 module_slice=args.pynguin_module_slice,
                 assertion_mode=args.pynguin_assertion_mode,
                 explicit_modules=args.pynguin_module,
+                warning_filters=instance.get("pynguin_warning_filters"),
             )
             pynguin_prediction = _retain_cached_pynguin_prediction(
                 cached_pynguin_prediction, generated_pynguin_prediction

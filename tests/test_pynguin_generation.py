@@ -99,7 +99,7 @@ def test_pynguin_cache_is_matched_and_replaced_by_instance(monkeypatch):
         "total_budget_seconds": args.pynguin_total_budget,
         "module_slice_seconds": args.pynguin_module_slice,
         "assertion_mode": args.pynguin_assertion_mode,
-        "postprocessing_version": 2,
+        "postprocessing_version": 3,
     }
     rows = [
         {"instance_id": "repo-a", "model_patch": "a", "metrics": matching_metrics},
@@ -178,8 +178,22 @@ def test_pynguin_postprocessing_repairs_shadowed_imports_and_checkout_assertions
         "rewritten_import_count": 2,
         "removed_nonportable_assertion_count": 1,
         "network_guard_injected_count": 1,
+        "warning_filter_count": 0,
     }
     assert "def _pynguin_offline_network(monkeypatch):" in sanitized
+    compile(sanitized, "<generated>", "exec")
+
+
+def test_pynguin_postprocessing_adds_only_configured_warning_filters(tmp_path):
+    sanitized, metrics = sanitize_pynguin_test(
+        "def test_case_0():\n    assert True\n",
+        tmp_path,
+        ["ignore::astropy.utils.exceptions.AstropyDeprecationWarning"],
+    )
+    assert "pytestmark = [" in sanitized
+    assert "astropy.utils.exceptions.AstropyDeprecationWarning" in sanitized
+    assert "filterwarnings('ignore')" not in sanitized
+    assert metrics["warning_filter_count"] == 1
     compile(sanitized, "<generated>", "exec")
 
 
@@ -266,10 +280,11 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
     assert pynguin_call[2]["PYTHONHASHSEED"] == "11"
     assert pynguin_call[2]["PYNGUIN_DANGER_AWARE"] == "1"
     assert pynguin_call[0][pynguin_call[0].index("--maximum-search-time") + 1] == "7"
+    assert pynguin_call[1] <= 17
     assert result["model_patch"].startswith("diff --git")
     assert result["metrics"]["successful_modules"] == ["pkg.core"]
     assert result["metrics"]["module_attempts"][0]["exit_code"] == 0
-    assert result["metrics"]["postprocessing_version"] == 2
+    assert result["metrics"]["postprocessing_version"] == 3
     assert result["metrics"]["network_guard_injected_count"] == 1
     finalization_calls = [call for call in calls if call[0][:2] == ["git", "add"]]
     assert finalization_calls[0][1] >= 1

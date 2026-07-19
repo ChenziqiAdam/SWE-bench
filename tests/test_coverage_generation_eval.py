@@ -10,6 +10,7 @@ from swebench.eval_pipeline.coverage_generation_eval import (
     _mark_inference_completion,
     _module_level_pytest_files,
     _phase_script,
+    _refresh_status_after_common_mutation,
     _standalone_mutation_script,
     _standalone_phase_script,
     classify_coverage_result,
@@ -31,6 +32,21 @@ def test_standalone_default_setup_uses_editable_install(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["run_pipeline"])
     args = parse_args()
     assert args.coverage_setup_command == "python -m pip install -e . pytest"
+
+
+def test_common_mutation_gain_refreshes_deferred_no_gain_status():
+    result = {
+        "status": "unresolved",
+        "failure_reason": "no_coverage_or_mutation_improvement",
+    }
+    _refresh_status_after_common_mutation(result, 0.0, 14.8, False)
+    assert result == {"status": "resolved", "failure_reason": ""}
+
+
+def test_common_mutation_does_not_override_test_failure():
+    result = {"status": "unresolved", "failure_reason": "tests_failed_after_patch"}
+    _refresh_status_after_common_mutation(result, 0.0, 14.8, False)
+    assert result["failure_reason"] == "tests_failed_after_patch"
 
 
 def test_biopython_profile_builds_extensions_and_uses_offline_runner(monkeypatch):
@@ -90,6 +106,12 @@ def test_scientific_pytest_profiles_are_offline_and_generated_test_scoped(
     assert test_fragment in instance["coverage_command"]
     assert instance["mutation_test_style"] == "pytest_generated"
     assert instance["mutation_tests_dir"] == tests_dir
+    if source == "astropy":
+        assert instance["pynguin_warning_filters"] == [
+            "ignore::astropy.utils.exceptions.AstropyDeprecationWarning"
+        ]
+    else:
+        assert instance["pynguin_warning_filters"] == []
 
 
 def test_scientific_profile_allows_explicit_command_overrides(monkeypatch):
