@@ -1,10 +1,12 @@
 import csv
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 from swebench.eval_pipeline.coverage_generation_eval import common_improved_modules
 from swebench.eval_pipeline.pynguin_generation import (
+    _NONCALLABLE_SIGNATURE_COMPAT_SOURCE,
     conventional_test_directory,
     module_name_from_path,
     rank_pynguin_modules,
@@ -99,7 +101,7 @@ def test_pynguin_cache_is_matched_and_replaced_by_instance(monkeypatch):
         "total_budget_seconds": args.pynguin_total_budget,
         "module_slice_seconds": args.pynguin_module_slice,
         "assertion_mode": args.pynguin_assertion_mode,
-        "postprocessing_version": 3,
+        "postprocessing_version": 4,
     }
     rows = [
         {"instance_id": "repo-a", "model_patch": "a", "metrics": matching_metrics},
@@ -284,10 +286,65 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
     assert result["model_patch"].startswith("diff --git")
     assert result["metrics"]["successful_modules"] == ["pkg.core"]
     assert result["metrics"]["module_attempts"][0]["exit_code"] == 0
-    assert result["metrics"]["postprocessing_version"] == 3
+    assert result["metrics"]["postprocessing_version"] == 4
     assert result["metrics"]["network_guard_injected_count"] == 1
     finalization_calls = [call for call in calls if call[0][:2] == ["git", "add"]]
     assert finalization_calls[0][1] >= 1
+
+
+def test_scheduler_scopes_noncallable_signature_compatibility(tmp_path, monkeypatch):
+    (tmp_path / "tests").mkdir()
+    generation_environments = []
+
+    def fake_run(command, repo_dir, timeout, env):
+        if command[:3] == ["python", "-m", "pynguin"]:
+            generation_environments.append(env.copy())
+            output = Path(command[command.index("--output-path") + 1])
+            output.mkdir(parents=True, exist_ok=True)
+            (output / "test_generated.py").write_text("def test_x():\n    assert 1\n")
+        stdout = (
+            "diff --git a/tests/test.py b/tests/test.py\n"
+            if command[:2] == ["git", "diff"]
+            else ""
+        )
+        return subprocess.CompletedProcess(command, 0, stdout=stdout)
+
+    monkeypatch.setattr("swebench.eval_pipeline.pynguin_generation._run", fake_run)
+    result = run_pynguin_generation(
+        tmp_path,
+        {"files": {"pkg/core.py": {
+            "covered_lines": 0, "num_statements": 1,
+            "covered_branches": 0, "num_branches": 0,
+        }}},
+        total_budget=20,
+        ignore_noncallable_signatures=True,
+    )
+    assert generation_environments
+    assert ".pynguin-compatibility" in generation_environments[0]["PYTHONPATH"]
+    assert result["metrics"]["ignore_noncallable_signatures"] is True
+    assert not (tmp_path / ".pynguin-compatibility").exists()
+
+
+def test_noncallable_signature_compatibility_only_changes_pynguin_analysis(tmp_path):
+    (tmp_path / "sitecustomize.py").write_text(_NONCALLABLE_SIGNATURE_COMPAT_SOURCE)
+    script = (
+        "import inspect\n"
+        "namespace = {'__name__': 'pynguin.analyses.typesystem', 'inspect': inspect}\n"
+        "exec('def probe(): return inspect.signature(None)', namespace)\n"
+        "print(namespace['probe']())\n"
+        "try:\n"
+        "    inspect.signature(None)\n"
+        "except TypeError:\n"
+        "    print('normal-type-error')\n"
+    )
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        env={**os.environ, "PYTHONPATH": str(tmp_path)},
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+    )
+    assert completed.stdout.splitlines() == ["(*args, **kwargs)", "normal-type-error"]
 
 
 def test_scheduler_collects_tests_after_module_timeout(tmp_path, monkeypatch):

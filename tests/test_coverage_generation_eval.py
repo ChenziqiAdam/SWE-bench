@@ -14,6 +14,7 @@ from swebench.eval_pipeline.coverage_generation_eval import (
     _standalone_mutation_script,
     _standalone_phase_script,
     classify_coverage_result,
+    exclude_mutation_targets,
     format_baseline_coverage_report,
     infer_coverage_targets,
     inspect_test_patch,
@@ -110,8 +111,12 @@ def test_scientific_pytest_profiles_are_offline_and_generated_test_scoped(
         assert instance["pynguin_warning_filters"] == [
             "ignore::astropy.utils.exceptions.AstropyDeprecationWarning"
         ]
+        assert instance["mutation_excluded_targets"] == ["astropy/utils/data.py"]
+        assert instance["pynguin_ignore_noncallable_signatures"] is False
     else:
         assert instance["pynguin_warning_filters"] == []
+        assert instance["mutation_excluded_targets"] == []
+        assert instance["pynguin_ignore_noncallable_signatures"] is True
 
 
 def test_scientific_profile_allows_explicit_command_overrides(monkeypatch):
@@ -210,6 +215,13 @@ def test_repository_coverage_aggregates_production_files_and_selects_improvement
     after["files"]["pkg/core.py"]["covered_lines"] = 3
     assert select_mutation_targets(before, after) == ["pkg/core.py"]
     assert "pkg/core.py" in format_baseline_coverage_report(before)
+
+
+def test_mutation_target_exclusions_are_applied_and_reported():
+    assert exclude_mutation_targets(
+        ["pkg/core.py", "pkg/new_syntax.py"],
+        ["pkg/new_syntax.py", "pkg/unused.py"],
+    ) == (["pkg/core.py"], ["pkg/new_syntax.py"])
 
 
 def test_targets_default_to_python_implementation_files():

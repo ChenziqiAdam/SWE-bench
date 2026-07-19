@@ -9,8 +9,31 @@ import time
 from pathlib import Path
 
 
-PYNGUIN_POSTPROCESSING_VERSION = 3
+PYNGUIN_POSTPROCESSING_VERSION = 4
 PYNGUIN_MODULE_SHUTDOWN_GRACE_SECONDS = 10
+
+
+_NONCALLABLE_SIGNATURE_COMPAT_SOURCE = """\
+import inspect as _pynguin_inspect
+import sys as _pynguin_sys
+
+_pynguin_original_signature = _pynguin_inspect.signature
+
+def _pynguin_safe_signature(obj, *args, **kwargs):
+    caller = _pynguin_sys._getframe(1).f_globals.get("__name__", "")
+    if obj is None and caller == "pynguin.analyses.typesystem":
+        return _pynguin_inspect.Signature(parameters=[
+            _pynguin_inspect.Parameter(
+                "args", kind=_pynguin_inspect.Parameter.VAR_POSITIONAL
+            ),
+            _pynguin_inspect.Parameter(
+                "kwargs", kind=_pynguin_inspect.Parameter.VAR_KEYWORD
+            ),
+        ])
+    return _pynguin_original_signature(obj, *args, **kwargs)
+
+_pynguin_inspect.signature = _pynguin_safe_signature
+"""
 
 
 _OFFLINE_GUARD_SOURCE = """
@@ -211,6 +234,7 @@ def run_pynguin_generation(
     explicit_modules: list[str] | None = None,
     setup_command: str | None = None,
     warning_filters: list[str] | None = None,
+    ignore_noncallable_signatures: bool = False,
 ) -> dict:
     """Install and schedule Pynguin under one end-to-end deadline."""
     started = time.monotonic()
@@ -231,6 +255,7 @@ def run_pynguin_generation(
     network_guard_injected_count = 0
     test_dir = conventional_test_directory(repo_dir)
     scratch = repo_dir / ".pynguin-generation"
+    compatibility_dir = repo_dir / ".pynguin-compatibility"
 
     def remaining() -> float:
         return max(0.0, deadline - time.monotonic())
@@ -269,6 +294,7 @@ def run_pynguin_generation(
                 ),
                 "network_guard_injected_count": network_guard_injected_count,
                 "warning_filters": warning_filters or [],
+                "ignore_noncallable_signatures": ignore_noncallable_signatures,
                 "diagnostic_output_tail": "".join(output_chunks)[-8000:],
             },
         }
@@ -294,12 +320,25 @@ def run_pynguin_generation(
         if version_check.returncode:
             return _result("import_failed", version_check.returncode)
 
+        generation_env = env
+        if ignore_noncallable_signatures:
+            compatibility_dir.mkdir()
+            (compatibility_dir / "sitecustomize.py").write_text(
+                _NONCALLABLE_SIGNATURE_COMPAT_SOURCE
+            )
+            existing_pythonpath = env.get("PYTHONPATH", "")
+            generation_env = {
+                **env,
+                "PYTHONPATH": str(compatibility_dir)
+                + (os.pathsep + existing_pythonpath if existing_pythonpath else ""),
+            }
+
         for module, path in rank_pynguin_modules(baseline_coverage, explicit_modules):
             if generation_remaining() <= 0:
                 break
             import_check = _run(
                 ["python", "-c", f"import {module}"], repo_dir,
-                min(generation_remaining(), 30), env,
+                min(generation_remaining(), 30), generation_env,
             )
             if import_check.returncode:
                 attempts.append({"module": module, "path": path, "exit_code": import_check.returncode,
@@ -323,7 +362,7 @@ def run_pynguin_generation(
                     generation_remaining(),
                     slice_seconds + PYNGUIN_MODULE_SHUTDOWN_GRACE_SECONDS,
                 )
-                completed = _run(command, repo_dir, outer_slice_timeout, env)
+                completed = _run(command, repo_dir, outer_slice_timeout, generation_env)
                 code, timed_out = completed.returncode, False
                 module_output = completed.stdout or ""
                 output_chunks.append(module_output)
@@ -382,6 +421,7 @@ def run_pynguin_generation(
         return _result("timeout", None)
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
+        shutil.rmtree(compatibility_dir, ignore_errors=True)
 
 
 def generate_pynguin_prediction(

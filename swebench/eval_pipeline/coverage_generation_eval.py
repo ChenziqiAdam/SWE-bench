@@ -238,6 +238,15 @@ def select_mutation_targets(
     )
 
 
+def exclude_mutation_targets(
+    targets: list[str], excluded_targets: list[str] | None
+) -> tuple[list[str], list[str]]:
+    """Apply an explicit tool-compatibility exclusion to a mutation target set."""
+    excluded = set(excluded_targets or [])
+    applied = sorted(set(targets) & excluded)
+    return sorted(set(targets) - excluded), applied
+
+
 def parse_mutation_results(text: str) -> dict | None:
     """Parse common mutmut 2/3 textual summaries."""
     counts: dict[str, int] = {}
@@ -1074,9 +1083,12 @@ def run_standalone_coverage_evaluation(
         ]
         baseline_flaky = _is_flaky(before_exit, baseline_repeat_exits)
         generated_tests_flaky = _is_flaky(after_exit, after_repeat_exits)
-        mutation_targets = (
+        selected_mutation_targets = (
             select_mutation_targets(before_cov, after_cov, targets)
             if run_mutation else []
+        )
+        mutation_targets, mutation_excluded_targets = exclude_mutation_targets(
+            selected_mutation_targets, instance.get("mutation_excluded_targets")
         )
         before_mut = after_mut = None
         before_mutation_exit = after_mutation_exit = 125
@@ -1152,6 +1164,7 @@ def run_standalone_coverage_evaluation(
             "coverage_targets": targets,
             "coverage_scope": "repository",
             "mutation_targets": mutation_targets,
+            "mutation_excluded_targets": mutation_excluded_targets,
             "mutation_skipped_no_selected_modules": not mutation_targets,
             "test_patch_applied": PATCH_APPLIED in after_output,
             "setup_before_exit_code": before_setup_exit,
@@ -1253,9 +1266,12 @@ def evaluate_common_mutation_targets(
     Under generated-test profiles, each arm uses only that arm's touched test
     modules; this is explicitly reported as marginal mutation effectiveness.
     """
-    targets = common_improved_modules(
+    selected_targets = common_improved_modules(
         baseline.get("coverage"), list(arm_results.values()),
         infer_coverage_targets(instance),
+    )
+    targets, excluded_targets = exclude_mutation_targets(
+        selected_targets, instance.get("mutation_excluded_targets")
     )
     root = Path(log_dir) / run_id / "comparison" / instance["instance_id"]
     root.mkdir(parents=True, exist_ok=True)
@@ -1296,6 +1312,7 @@ def evaluate_common_mutation_targets(
         "coverage_after": baseline.get("coverage"),
         "coverage_line_delta": 0.0, "coverage_branch_delta": 0.0,
         "mutation_targets": targets,
+        "mutation_excluded_targets": excluded_targets,
         "mutation_after": original_mutation["mutation"],
         "mutation_after_exit_code": original_mutation["exit_code"],
         "mutation_after_timed_out": original_mutation["timed_out"],
@@ -1321,6 +1338,7 @@ def evaluate_common_mutation_targets(
             "method_version": (prediction.get("metrics") or {}).get("version", ""),
             "seed": (prediction.get("metrics") or {}).get("seed", ""),
             "mutation_targets": targets,
+            "mutation_excluded_targets": excluded_targets,
             "mutation_skipped_no_selected_modules": not targets,
             "mutation_before": original_mutation["mutation"],
             "mutation_after": arm_mutation["mutation"],

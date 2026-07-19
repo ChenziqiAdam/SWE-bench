@@ -427,6 +427,9 @@ def render_coverage_generation_table(
                 "repository" if inst.get("standalone") else "targeted"
             ),
             "mutation_targets": ";".join(info.get("mutation_targets") or []),
+            "mutation_excluded_targets": ";".join(
+                info.get("mutation_excluded_targets") or []
+            ),
             "mutation_skipped_no_selected_modules": (
                 "yes" if info.get("mutation_skipped_no_selected_modules") else "no"
             ),
@@ -577,6 +580,9 @@ def render_coverage_comparison_table(rows: list[dict], output_csv: str) -> None:
             "branch_coverage": after.get("branch_coverage", ""),
             "branch_coverage_delta": info.get("coverage_branch_delta", ""),
             "mutation_targets": ";".join(info.get("mutation_targets") or []),
+            "mutation_excluded_targets": ";".join(
+                info.get("mutation_excluded_targets") or []
+            ),
             "mutation_score": mutation.get("score", ""),
             "mutation_score_delta": info.get("mutation_score_delta", ""),
             "mutation_policy": info.get("mutation_policy", ""),

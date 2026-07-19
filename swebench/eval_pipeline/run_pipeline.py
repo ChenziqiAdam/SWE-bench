@@ -51,6 +51,7 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
         ),
         "mutation_test_style": "pytest_generated",
         "mutation_tests_dir": "geopandas/tests",
+        "pynguin_ignore_noncallable_signatures": True,
     },
     "astropy/astropy": {
         "coverage_setup_command": "python -m pip install -e '.[test]'",
@@ -64,6 +65,8 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
         "pynguin_warning_filters": [
             "ignore::astropy.utils.exceptions.AstropyDeprecationWarning"
         ],
+        # mutmut 2.5/parso cannot parse this module's current syntax.
+        "mutation_excluded_targets": ["astropy/utils/data.py"],
     },
 }
 
@@ -569,7 +572,11 @@ def _standalone_coverage_instance(args) -> dict:
         "mutation_results_command": mutation_results_command,
         "mutation_test_style": profile.get("mutation_test_style"),
         "mutation_tests_dir": profile.get("mutation_tests_dir"),
+        "mutation_excluded_targets": profile.get("mutation_excluded_targets", []),
         "pynguin_warning_filters": profile.get("pynguin_warning_filters", []),
+        "pynguin_ignore_noncallable_signatures": profile.get(
+            "pynguin_ignore_noncallable_signatures", False
+        ),
         "coverage_tool_install_command": args.coverage_tool_install_command,
         "standalone": True,
     }
@@ -746,6 +753,9 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                 assertion_mode=args.pynguin_assertion_mode,
                 explicit_modules=args.pynguin_module,
                 warning_filters=instance.get("pynguin_warning_filters"),
+                ignore_noncallable_signatures=instance.get(
+                    "pynguin_ignore_noncallable_signatures", False
+                ),
             )
             pynguin_prediction = _retain_cached_pynguin_prediction(
                 cached_pynguin_prediction, generated_pynguin_prediction
