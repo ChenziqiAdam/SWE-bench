@@ -9,6 +9,7 @@ from swebench.eval_pipeline.test_generation_eval import (
     _exclude_gold_test_files,
     _evaluate_one,
     _no_tests_selected,
+    _prepare_gold_patch,
     _test_collection_failed,
     _openmm_generated_pytest_targets,
     _test_command,
@@ -90,6 +91,10 @@ def test_test_generation_marks_zero_selected_not_exercised():
 
     assert result["status"] == "not_exercised"
     assert result["failure_reason"] == "no_tests_selected"
+
+
+def test_ctest_no_tests_output_is_detected():
+    assert _no_tests_selected("Test project /testbed\nNo tests were found!!!")
 
 
 def test_test_generation_marks_collection_failure_errored_before_empty_selection():
@@ -203,6 +208,27 @@ diff --git a/Code/GraphMol/catch_graphmol.cpp b/Code/GraphMol/catch_graphmol.cpp
     assert "src/fix.cpp" in filtered
     assert "catch_graphmol.cpp" not in filtered
     assert excluded == ["Code/GraphMol/catch_graphmol.cpp"]
+
+
+def test_gold_patch_excludes_unavailable_binary_placeholders():
+    gold = """diff --git a/src/fix.cpp b/src/fix.cpp
+--- a/src/fix.cpp
++++ b/src/fix.cpp
+@@ -1 +1 @@
+-old
++fixed
+diff --git a/Data/font.ttf b/Data/font.ttf
+new file mode 100644
+index 0000000..1234567
+Binary files /dev/null and b/Data/font.ttf differ
+"""
+
+    filtered, excluded_tests, excluded_binary = _prepare_gold_patch(gold)
+
+    assert "src/fix.cpp" in filtered
+    assert "Data/font.ttf" not in filtered
+    assert excluded_tests == []
+    assert excluded_binary == ["Data/font.ttf"]
 
 
 def test_openmm_test_generation_runs_touched_pytest_file_not_fixed_selector(monkeypatch):

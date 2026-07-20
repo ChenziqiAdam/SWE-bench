@@ -4,7 +4,10 @@ import docker
 import docker.errors
 import logging
 import sys
+import time
 import traceback
+
+import requests
 
 from pathlib import Path
 
@@ -37,6 +40,44 @@ class BuildImageError(Exception):
             f"Error building image {self.image_name}: {self.super_str}\n"
             f"Check ({self.log_path}) for more information."
         )
+
+
+def _create_eval_container(client, test_spec: TestSpec, run_id: str, logger):
+    """Create an eval container, recovering when a loaded daemon answers late."""
+    run_args = test_spec.docker_specs.get("run_args", {})
+    name = test_spec.get_instance_container_name(run_id)
+    kwargs = {
+        "image": test_spec.instance_image_key,
+        "name": name,
+        "user": DOCKER_USER,
+        "detach": True,
+        "command": "tail -f /dev/null",
+        "platform": test_spec.platform,
+        "cap_add": run_args.get("cap_add", []),
+    }
+    for attempt in range(1, 4):
+        try:
+            return client.containers.create(**kwargs)
+        except requests.exceptions.Timeout:
+            logger.warning(
+                "Docker create timed out for %s (attempt %s/3); checking whether "
+                "the daemon completed it asynchronously.",
+                test_spec.instance_id,
+                attempt,
+            )
+            time.sleep(2 * attempt)
+            try:
+                return client.containers.get(name)
+            except (docker.errors.NotFound, requests.exceptions.Timeout):
+                if attempt == 3:
+                    raise
+        except docker.errors.APIError as error:
+            if error.status_code != 409:
+                raise
+            # A create request that timed out can still complete server-side and
+            # make the retry report a name conflict.
+            return client.containers.get(name)
+    raise RuntimeError(f"Could not create container {name}")
 
 
 def setup_logger(instance_id: str, log_file: Path, mode="w", add_stdout: bool = False):
@@ -250,7 +291,6 @@ def get_env_configs_to_build(
                 base_images[test_spec.base_image_key] = client.images.get(
                     test_spec.base_image_key
                 )
-            base_image = base_images[test_spec.base_image_key]
         except docker.errors.ImageNotFound:
             raise Exception(
                 f"Base image {test_spec.base_image_key} not found for {test_spec.env_image_key}\n."
@@ -260,7 +300,7 @@ def get_env_configs_to_build(
         # Check if the environment image exists
         image_exists = False
         try:
-            env_image = client.images.get(test_spec.env_image_key)
+            client.images.get(test_spec.env_image_key)
             image_exists = True
         except docker.errors.ImageNotFound:
             pass
@@ -434,7 +474,7 @@ def build_instance_image(
 
     # Check that the env. image the instance image is based on exists
     try:
-        env_image = client.images.get(env_image_name)
+        client.images.get(env_image_name)
     except docker.errors.ImageNotFound as e:
         raise BuildImageError(
             test_spec.instance_id,
@@ -516,19 +556,7 @@ def build_container(
         # Create the container
         logger.info(f"Creating container for {test_spec.instance_id}...")
 
-        # Define arguments for running the container
-        run_args = test_spec.docker_specs.get("run_args", {})
-        cap_add = run_args.get("cap_add", [])
-
-        container = client.containers.create(
-            image=test_spec.instance_image_key,
-            name=test_spec.get_instance_container_name(run_id),
-            user=DOCKER_USER,
-            detach=True,
-            command="tail -f /dev/null",
-            platform=test_spec.platform,
-            cap_add=cap_add,
-        )
+        container = _create_eval_container(client, test_spec, run_id, logger)
         logger.info(f"Container for {test_spec.instance_id} created: {container.id}")
         return container
     except Exception as e:

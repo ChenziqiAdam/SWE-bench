@@ -260,7 +260,11 @@ def parse_args():
     p.add_argument("--github_token", default=None,
                    help="GitHub token (or set GITHUB_TOKEN env var)")
     p.add_argument("--max_workers", type=int, default=4,
-                   help="Parallel workers for Docker evaluation")
+                   help="Parallel workers for agent inference (default 4)")
+    p.add_argument(
+        "--docker_workers", type=int, default=2,
+        help="Parallel workers for image validation and Docker evaluation (default 2).",
+    )
     p.add_argument("--max_cost", type=float, default=None,
                    help="Max inference cost in USD before stopping")
     p.add_argument("--max_tokens", type=int, default=32768,
@@ -1008,7 +1012,7 @@ def main():
         build_validation = validate_buildable(
             instances=instances,
             cache_path=output_dir / "build_validation.json",
-            max_workers=args.max_workers,
+            max_workers=args.docker_workers,
             force=args.revalidate,
         )
         n_bad = sum(1 for iid in (i["instance_id"] for i in instances)
@@ -1180,7 +1184,7 @@ def main():
                     predictions_path=agent_predictions_path,
                     run_id=run_id,
                     log_dir=args.log_dir,
-                    max_workers=args.max_workers,
+                    max_workers=args.docker_workers,
                     timeout=1800,
                 )
             elif args.eval_mode == "coverage_generation":
@@ -1197,7 +1201,7 @@ def main():
                     predictions_path=agent_predictions_path,
                     run_id=run_id,
                     log_dir=args.log_dir,
-                    max_workers=args.max_workers,
+                    max_workers=args.docker_workers,
                     timeout=args.coverage_eval_timeout,
                     flaky_runs=args.coverage_flaky_runs,
                 )
@@ -1214,7 +1218,7 @@ def main():
                     split="test",
                     instance_ids=eval_instance_ids,
                     predictions_path=agent_predictions_path,
-                    max_workers=args.max_workers,
+                    max_workers=args.docker_workers,
                     force_rebuild=False,
                     cache_level="instance" if args.clean_images else "env",
                     clean=args.clean_images,
@@ -1252,6 +1256,7 @@ def main():
         "output_dir": str(output_dir),
         "max_tokens": args.max_tokens,
         "max_workers": args.max_workers,
+        "docker_workers": args.docker_workers,
         "max_cost": args.max_cost,
         "agent_backend": args.agent_backend,
         "limit": args.limit,

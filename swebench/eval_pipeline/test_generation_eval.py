@@ -152,6 +152,7 @@ def _no_tests_selected(output: str) -> bool:
         for marker in (
             " 0 selected",
             "collected 0 items",
+            "No tests were found!!!",
             "has no curated generated-test target",
         )
     )
@@ -193,6 +194,21 @@ def _exclude_gold_test_files(gold_patch: str) -> tuple[str, list[str]]:
         else:
             kept.append(section)
     return "".join(kept), sorted(excluded)
+
+
+def _prepare_gold_patch(gold_patch: str) -> tuple[str, list[str], list[str]]:
+    """Remove PR tests and binary placeholders unavailable in GitHub patches."""
+    without_tests, excluded_tests = _exclude_gold_test_files(gold_patch)
+    sections = re.split(r"(?=^diff --git )", without_tests, flags=re.MULTILINE)
+    kept: list[str] = []
+    excluded_binary: set[str] = set()
+    for section in sections:
+        match = re.match(r"^diff --git a/(.+?) b/(.+)$", section, re.MULTILINE)
+        if match and re.search(r"^Binary files .+ differ$", section, re.MULTILINE):
+            excluded_binary.update(match.groups())
+        else:
+            kept.append(section)
+    return "".join(kept), excluded_tests, sorted(excluded_binary)
 
 
 def _openmm_generated_pytest_command(
@@ -488,9 +504,11 @@ def _evaluate_one(
         gen_patch_path = out_dir / "generated_test.patch"
         gold_patch_path = out_dir / "gold.patch"
         gen_patch_path.write_text(generated_patch)
-        effective_gold_patch, excluded_gold_test_paths = (
-            _exclude_gold_test_files(instance.get("patch", "") or "")
-        )
+        (
+            effective_gold_patch,
+            excluded_gold_test_paths,
+            excluded_gold_binary_paths,
+        ) = _prepare_gold_patch(instance.get("patch", "") or "")
         gold_patch_path.write_text(effective_gold_patch)
         copy_to_container(container, gen_patch_path, PurePosixPath(GENERATED_TEST_PATCH))
         copy_to_container(container, gold_patch_path, PurePosixPath(GOLD_PATCH))
@@ -541,6 +559,7 @@ def _evaluate_one(
                 "base_timed_out": base_timed_out,
                 "gold_timed_out": gold_timed_out,
                 "excluded_gold_test_paths": excluded_gold_test_paths,
+                "excluded_gold_binary_paths": excluded_gold_binary_paths,
                 "base_test_wall_time_seconds": round(base_duration, 6),
                 "gold_test_wall_time_seconds": round(gold_duration, 6),
                 "inference_metrics": prediction.get("metrics", {}),

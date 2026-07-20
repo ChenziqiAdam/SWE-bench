@@ -1,4 +1,4 @@
-from swebench.harness.constants.c import SPECS_OPENMM, SPECS_RDKIT
+from swebench.harness.constants.c import SPECS_OPENMM, SPECS_QGIS, SPECS_RDKIT
 
 
 def test_openmm_python_specs_install_with_test_interpreter():
@@ -123,8 +123,22 @@ def test_rdkit_2059_uses_existing_smilesparse_target():
     assert spec["build"][-1].endswith("--target smiTest1")
     assert spec["test_cmd"] == [
         "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
-        "ctest --test-dir build -V -R smiTest1"
+        "ctest --test-dir build -V -R '^smiTest1$'"
     ]
+
+
+def test_rdkit_ctest_selectors_do_not_match_prefixed_targets():
+    assert SPECS_RDKIT["6247"]["test_cmd"] == [
+        "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
+        "ctest --test-dir build -V -R '^testRGroupDecomp$'"
+    ]
+
+
+def test_qgis_ctest_runs_from_build_directory_for_legacy_cmake():
+    command = SPECS_QGIS["40837"]["test_cmd"][0]
+
+    assert command.startswith("cd build && ")
+    assert "ctest --test-dir" not in command
 
 
 def test_rdkit_9331_enables_chemdraw_with_include_compatibility():
@@ -372,6 +386,6 @@ def test_sci_cc_001_rdkit_specs_use_registered_ctest_targets():
             + SPECS_RDKIT[pr].get("test_cmd", [])
         )
         for target in targets:
-            assert f"-R {target}" in spec_text
+            assert f"-R '^{target}$'" in spec_text
             assert f"--target {' '.join(targets)}" in spec_text
         assert not any(regex in spec_text for regex in known_bad_regexes)

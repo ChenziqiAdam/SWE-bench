@@ -553,7 +553,7 @@ def _rdkit_cpp_targets_spec(
         "build": build,
         "test_cmd": [
             f"RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${{LD_LIBRARY_PATH:-}} "
-            f"ctest --test-dir build -V -R {target}"
+            f"ctest --test-dir build -V -R '^{re.escape(target)}$'"
             for target in targets
         ],
         "fail_to_pass": list(targets),
@@ -993,8 +993,8 @@ def _qgis_spec(
             build_target,
         ],
         "test_cmd": [
-            "QT_QPA_PLATFORM=offscreen xvfb-run -a "
-            f"ctest --test-dir build -V --output-on-failure -R '{ctest_regex}'"
+            "cd build && QT_QPA_PLATFORM=offscreen xvfb-run -a "
+            f"ctest -V --output-on-failure -R '{ctest_regex}'"
         ],
         "fail_to_pass": list(targets),
         "test_generation_use_spec_cmd": True,
