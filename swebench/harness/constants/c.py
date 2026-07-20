@@ -406,6 +406,11 @@ def _openmm_native_python_spec(
             f"{'-DOPENMM_BUILD_AMOEBA_PLUGIN=ON ' if amoeba else ''}"
             "-DBUILD_TESTING=OFF "
             "-DOPENMM_BUILD_EXAMPLES=OFF",
+            # OpenMM 7.0's generated SWIG input contains a prose line beginning
+            # with '# Look'. Modern SWIG treats it as an unknown directive.
+            "if [ -f build/python/src/swig_lib/python/extend.i ]; then "
+            "sed -i 's/^# Look/\\/\\/ Look/' "
+            "build/python/src/swig_lib/python/extend.i; fi",
             # PythonInstall links against the configured install prefix.  Some
             # OpenMM versions incorrectly return success when setup.py linking
             # failed, so install the native libraries first and verify import.
@@ -781,7 +786,8 @@ SPECS_OPENMM = _OpenMMSpecs({
     "5137": {
         "pre_install": [
             "apt-get update -q",
-            "apt-get install -y --no-install-recommends cmake g++ make ocl-icd-opencl-dev",
+            "apt-get install -y --no-install-recommends "
+            "cmake g++ make ocl-icd-opencl-dev pocl-opencl-icd",
         ],
         "build_after_test_patch": [
             "cmake -B build -S . "

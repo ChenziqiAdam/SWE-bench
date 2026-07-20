@@ -62,6 +62,8 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
         ),
         "mutation_test_style": "pytest_generated",
         "mutation_tests_dir": "astropy",
+        # One phase includes primary, coverage, and two repeat runs of ~32k tests.
+        "coverage_phase_timeout": 7200,
         "pynguin_warning_filters": [
             "ignore::astropy.utils.exceptions.AstropyDeprecationWarning"
         ],
@@ -577,6 +579,7 @@ def _standalone_coverage_instance(args) -> dict:
         "mutation_test_style": profile.get("mutation_test_style"),
         "mutation_tests_dir": profile.get("mutation_tests_dir"),
         "mutation_excluded_targets": profile.get("mutation_excluded_targets", []),
+        "coverage_phase_timeout": profile.get("coverage_phase_timeout", 0),
         "pynguin_warning_filters": profile.get("pynguin_warning_filters", []),
         "pynguin_ignore_noncallable_signatures": profile.get(
             "pynguin_ignore_noncallable_signatures", False

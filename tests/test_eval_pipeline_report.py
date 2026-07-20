@@ -5,6 +5,7 @@ from swebench.eval_pipeline.report import (
     collect_results,
     collect_test_generation_results,
     render_comparison_table,
+    render_coverage_comparison_table,
     render_test_generation_table,
     render_coverage_generation_table,
 )
@@ -102,12 +103,14 @@ def test_test_generation_report_exports_resource_metrics(tmp_path, capsys):
             {
                 "instance_id": "demo__repo-1",
                 "model_patch": "diff --git a/x b/x\n",
+                "error": "timeout",
                 "metrics": {
                     "wall_time_seconds": 12.5,
                     "input_tokens": 100,
                     "output_tokens": 20,
                     "total_tokens": 120,
                     "cost_usd": 0.3,
+                    "usage_incomplete": True,
                 },
             }
         )
@@ -131,6 +134,8 @@ def test_test_generation_report_exports_resource_metrics(tmp_path, capsys):
     assert row["input_tokens"] == "100"
     assert row["cost_usd"] == "0.3"
     assert row["inference_wall_time_seconds"] == "12.5"
+    assert row["inference_error"] == "timeout"
+    assert row["inference_usage_incomplete"] == "yes"
     assert row["evaluation_wall_time_seconds"] == "7.25"
     assert "tracked totals" in capsys.readouterr().out
 
@@ -230,6 +235,12 @@ def test_coverage_generation_report_exports_scientific_metrics(tmp_path):
                 "score_definition": "100 * killed / total",
             },
             "mutation_after": {"score": 60.0, "score_killed_or_timeout": 65.0},
+            "mutation_before_partial": {
+                "processed": 100, "expected": 200, "killed": 10,
+            },
+            "mutation_after_partial": {
+                "processed": 150, "expected": 200, "killed": 40,
+            },
             "mutation_score_delta": 30.0,
             "mutation_before_timed_out": True,
             "mutation_after_timed_out": False,
@@ -249,10 +260,35 @@ def test_coverage_generation_report_exports_scientific_metrics(tmp_path):
     assert row["mutation_score_definition"] == "100 * killed / total"
     assert row["mutation_before_timed_out"] == "yes"
     assert row["mutation_after_timed_out"] == "no"
+    assert row["mutation_partial_before_processed"] == "100"
+    assert row["mutation_partial_after_expected"] == "200"
+    assert row["mutation_partial_after_killed"] == "40"
     assert row["turns"] == "3"
     assert row["inference_attempt_count"] == "2"
     assert row["inference_interrupted_attempts"] == "1"
     assert row["inference_usage_incomplete"] == "yes"
+
+
+def test_coverage_comparison_reports_partial_mutation_prefix(tmp_path):
+    output_csv = tmp_path / "comparison.csv"
+    render_coverage_comparison_table(
+        [{
+            "method": "pynguin",
+            "status": "partial",
+            "failure_reason": "mutation_evaluation_timeout",
+            "mutation_after_partial": {
+                "processed": 263, "expected": 309, "killed": 37,
+            },
+        }],
+        str(output_csv),
+    )
+    with open(output_csv, newline="") as handle:
+        row = next(csv.DictReader(handle))
+    assert row["status"] == "partial"
+    assert row["mutation_score"] == ""
+    assert row["mutation_partial_processed"] == "263"
+    assert row["mutation_partial_expected"] == "309"
+    assert row["mutation_partial_killed"] == "37"
 
 
 def test_coverage_no_prediction_reports_repository_scope_and_inference_error(tmp_path):

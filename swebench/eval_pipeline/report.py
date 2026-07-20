@@ -277,7 +277,8 @@ def render_test_generation_table(
         )
         if infrastructure_failure:
             status = "excluded"
-        metrics = (predictions.get(instance_id) or {}).get("metrics") or info.get(
+        prediction = predictions.get(instance_id) or {}
+        metrics = prediction.get("metrics") or info.get(
             "inference_metrics"
         ) or {}
         rows.append({
@@ -298,6 +299,10 @@ def render_test_generation_table(
                 else info.get("failure_reason", "")
             ),
             "build_validation_error": validation.get("error", ""),
+            "inference_error": prediction.get("error", ""),
+            "inference_usage_incomplete": (
+                "yes" if metrics.get("usage_incomplete") else "no"
+            ),
             "inference_wall_time_seconds": metrics.get("wall_time_seconds", ""),
             "provider_duration_seconds": metrics.get("provider_duration_seconds", ""),
             "input_tokens": metrics.get("input_tokens", ""),
@@ -327,6 +332,8 @@ def render_test_generation_table(
         "gold_passed_tests",
         "failure_reason",
         "build_validation_error",
+        "inference_error",
+        "inference_usage_incomplete",
         "inference_wall_time_seconds",
         "provider_duration_seconds",
         "input_tokens",
@@ -415,6 +422,8 @@ def render_coverage_generation_table(
         after_cov = info.get("coverage_after") or {}
         before_mut = info.get("mutation_before") or {}
         after_mut = info.get("mutation_after") or {}
+        before_partial = info.get("mutation_before_partial") or {}
+        after_partial = info.get("mutation_after_partial") or {}
         prediction = predictions.get(instance_id) or {}
         metrics = prediction.get("metrics") or info.get("inference_metrics") or {}
         rows.append({
@@ -484,6 +493,12 @@ def render_coverage_generation_table(
                 "score_definition", after_mut.get("score_definition", "")
             ),
             "mutation_score_delta": info.get("mutation_score_delta", ""),
+            "mutation_partial_before_processed": before_partial.get("processed", ""),
+            "mutation_partial_before_expected": before_partial.get("expected", ""),
+            "mutation_partial_before_killed": before_partial.get("killed", ""),
+            "mutation_partial_after_processed": after_partial.get("processed", ""),
+            "mutation_partial_after_expected": after_partial.get("expected", ""),
+            "mutation_partial_after_killed": after_partial.get("killed", ""),
             "mutation_before_exit_code": info.get("mutation_before_exit_code", ""),
             "mutation_after_exit_code": info.get("mutation_after_exit_code", ""),
             "mutation_before_timed_out": (
@@ -568,6 +583,7 @@ def render_coverage_comparison_table(rows: list[dict], output_csv: str) -> None:
     for info in rows:
         after = info.get("coverage_after") or {}
         mutation = info.get("mutation_after") or {}
+        partial = info.get("mutation_after_partial") or {}
         metrics = info.get("inference_metrics") or {}
         normalized.append({
             "method": info.get("method", ""),
@@ -585,6 +601,9 @@ def render_coverage_comparison_table(rows: list[dict], output_csv: str) -> None:
             ),
             "mutation_score": mutation.get("score", ""),
             "mutation_score_delta": info.get("mutation_score_delta", ""),
+            "mutation_partial_processed": partial.get("processed", ""),
+            "mutation_partial_expected": partial.get("expected", ""),
+            "mutation_partial_killed": partial.get("killed", ""),
             "mutation_policy": info.get("mutation_policy", ""),
             "added_test_count": info.get("added_test_count", 0),
             "added_assertion_count": info.get("added_assertion_count", 0),

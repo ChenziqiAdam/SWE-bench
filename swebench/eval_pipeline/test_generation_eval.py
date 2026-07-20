@@ -59,6 +59,9 @@ def classify_test_generation_result(
     test_patch_applied: bool,
     gold_patch_applied: bool,
     had_runtime_error: bool = False,
+    base_timed_out: bool = False,
+    gold_timed_out: bool = False,
+    test_execution_failed: bool = False,
     no_tests_selected: bool = False,
     collection_failed: bool = False,
     non_evaluable: bool = False,
@@ -77,6 +80,13 @@ def classify_test_generation_result(
     elif not gold_patch_applied:
         status = "errored"
         failure_reason = "gold_patch_failed"
+    elif base_timed_out or gold_timed_out:
+        status = "unresolved"
+        failure_reason = (
+            "generated_test_timed_out_on_gold"
+            if gold_timed_out
+            else "generated_test_timed_out_on_base"
+        )
     elif build_failed:
         status = "errored"
         failure_reason = "generated_test_build_failed"
@@ -94,8 +104,8 @@ def classify_test_generation_result(
             "gold_passed_tests": [],
         }
     elif collection_failed:
-        status = "errored"
-        failure_reason = "test_collection_failed"
+        status = "unresolved"
+        failure_reason = "generated_test_collection_failed"
     elif no_tests_selected:
         status = "not_exercised"
         failure_reason = "no_tests_selected"
@@ -114,6 +124,9 @@ def classify_test_generation_result(
                 ["generated_test_build"] if resolved else []
             ),
         }
+    elif test_execution_failed and (not base_status_map or not gold_status_map):
+        status = "unresolved"
+        failure_reason = "generated_test_execution_failed"
     elif not base_status_map or not gold_status_map:
         status = "errored"
         failure_reason = "no_parseable_test_status"
@@ -168,6 +181,23 @@ def _test_collection_failed(output: str) -> bool:
             "errors during collection",
             "error during collection",
             "found no collectors",
+        )
+    )
+
+
+def _test_execution_failed(output: str) -> bool:
+    """Detect a generated test process that failed before a parser status."""
+    if START_TEST_OUTPUT not in output:
+        return False
+    test_output = output.split(START_TEST_OUTPUT, 1)[1]
+    return any(
+        marker in test_output
+        for marker in (
+            "Traceback (most recent call last):",
+            "ImportError:",
+            "ModuleNotFoundError:",
+            "Segmentation fault",
+            "command not found",
         )
     )
 
@@ -289,7 +319,7 @@ def _openmm_generated_pytest_targets(
             continue
         hunk_match = re.match(r"^@@.*@@\s*(?:class\s+([A-Za-z_]\w*)\b.*)?$", raw)
         if hunk_match:
-            current_class = hunk_match.group(1) or current_class
+            current_class = hunk_match.group(1)
             continue
         content = raw[1:] if raw.startswith(("+", " ")) else raw
         class_match = re.match(r"^\s*class\s+([A-Za-z_]\w*)\b", content)
@@ -317,6 +347,58 @@ def _openmm_generated_pytest_targets(
     return sorted(files), None
 
 
+def _rdkit_generated_unittest_targets(generated_patch: str) -> dict[str, list[str]]:
+    """Return added RDKit unittest methods grouped by their Python test file."""
+    targets: dict[str, set[str]] = {}
+    current_file = None
+    current_class = None
+    for raw in generated_patch.splitlines():
+        diff_match = re.match(r"^diff --git a/(\S+) b/\S+", raw)
+        if diff_match:
+            current_file = diff_match.group(1)
+            current_class = None
+            continue
+        if not current_file or not current_file.endswith(".py"):
+            continue
+        hunk_match = re.match(r"^@@.*@@\s*(?:class\s+([A-Za-z_]\w*)\b.*)?$", raw)
+        if hunk_match:
+            current_class = hunk_match.group(1)
+            continue
+        content = raw[1:] if raw.startswith(("+", " ")) else raw
+        class_match = re.match(r"^\s*class\s+([A-Za-z_]\w*)\b", content)
+        if class_match:
+            current_class = class_match.group(1)
+            continue
+        if not raw.startswith("+") or raw.startswith("+++") or not current_class:
+            continue
+        test_match = re.match(r"^\s+def\s+(test[A-Za-z0-9_]*)\s*\(", content)
+        if test_match:
+            targets.setdefault(current_file, set()).add(
+                f"{current_class}.{test_match.group(1)}"
+            )
+    return {path: sorted(names) for path, names in sorted(targets.items())}
+
+
+def _rdkit_isolated_python_commands(
+    commands: list[str], generated_patch: str
+) -> list[str] | None:
+    """Add unittest method selectors to matching RDKit Python commands."""
+    targets = _rdkit_generated_unittest_targets(generated_patch)
+    if not targets:
+        return None
+    isolated: list[str] = []
+    matched = False
+    for command in commands:
+        updated = command
+        for path, names in targets.items():
+            pattern = rf"(\bpython3?\s+{re.escape(path)})(?!\S)"
+            if re.search(pattern, updated):
+                updated = re.sub(pattern, rf"\1 {' '.join(names)}", updated, count=1)
+                matched = True
+        isolated.append(updated)
+    return isolated if matched else None
+
+
 def _test_command(instance: dict, generated_patch: str) -> str:
     """Choose the command that runs the generated test patch."""
     if isinstance(get_test_cmds(instance), list):
@@ -326,6 +408,11 @@ def _test_command(instance: dict, generated_patch: str) -> str:
 
     generated_instance = {**instance, "test_patch": generated_patch}
     directives = get_test_directives(generated_instance)
+
+    if instance["repo"] == "rdkit/rdkit":
+        isolated_commands = _rdkit_isolated_python_commands(commands, generated_patch)
+        if isolated_commands:
+            return " && ".join(isolated_commands)
 
     # Scientific OpenMM specs normally contain a fixed selector for the
     # original PR test.  In test-generation mode that selector can silently
@@ -541,7 +628,10 @@ def _evaluate_one(
             gold_status,
             test_patch_applied=test_patch_applied,
             gold_patch_applied=gold_patch_applied,
-            had_runtime_error=base_timed_out or gold_timed_out,
+            base_timed_out=base_timed_out,
+            gold_timed_out=gold_timed_out,
+            test_execution_failed=_test_execution_failed(base_output)
+            or _test_execution_failed(gold_output),
             no_tests_selected=_no_tests_selected(base_output) or _no_tests_selected(gold_output),
             collection_failed=_test_collection_failed(base_output)
             or _test_collection_failed(gold_output),

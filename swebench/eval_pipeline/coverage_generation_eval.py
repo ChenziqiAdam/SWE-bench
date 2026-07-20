@@ -30,6 +30,7 @@ _MUTATION_START = "MUTATION_RESULTS_START"
 _MUTATION_END = "MUTATION_RESULTS_END"
 _MUTATION_UNSUPPORTED = "MUTATION_UNSUPPORTED_PYTHON"
 _MUTATION_SKIPPED = "MUTATION_SKIPPED_NO_SELECTED_MODULES"
+_MUTMUT_COMPATIBILITY_DIR = ".coverage-generation-mutmut-compatibility"
 
 _TEST_CONFIG_NAMES = {
     "conftest.py", "pytest.ini", "pyproject.toml", "setup.cfg", "setup.py",
@@ -292,9 +293,68 @@ def parse_mutation_results(text: str) -> dict | None:
     }
 
 
+def parse_mutation_progress(text: str) -> dict | None:
+    """Return transparent partial mutmut progress without treating it as a score."""
+    matches = re.findall(
+        r"(\d+)/(\d+)\s+🎉\s*(\d+)\s+⏰\s*(\d+)\s+"
+        r"🤔\s*(\d+)\s+🙁\s*(\d+)\s+🔇\s*(\d+)",
+        text,
+    )
+    if not matches:
+        return None
+    processed, expected, killed, timeout, suspicious, survived, skipped = map(
+        int, matches[-1]
+    )
+    return {
+        "processed": processed,
+        "expected": expected,
+        "killed": killed,
+        "timeout": timeout,
+        "suspicious": suspicious,
+        "survived": survived,
+        "skipped": skipped,
+    }
+
+
 def mutation_exit_is_fatal(exit_code: int | None) -> bool:
     """Mutmut 2 uses bit 0 for internal/tool errors; other bits are outcomes."""
     return exit_code is None or bool(exit_code & 1)
+
+
+def _mutmut_sqlite_compatibility_lines() -> list[str]:
+    """Make mutmut 2's Pony/SQLite cache wait for short parent/worker locks."""
+    sitecustomize = """from pony.orm import Database
+
+_original_bind = Database.bind
+
+def _coverage_generation_bind(self, *args, **kwargs):
+    provider = kwargs.get("provider") or (args[0] if args else None)
+    if provider == "sqlite":
+        kwargs.setdefault("timeout", 60.0)
+    return _original_bind(self, *args, **kwargs)
+
+Database.bind = _coverage_generation_bind
+"""
+    return [
+        f"mkdir -p {_MUTMUT_COMPATIBILITY_DIR}",
+        (
+            f"printf %s {shlex.quote(sitecustomize)} > "
+            f"{_MUTMUT_COMPATIBILITY_DIR}/sitecustomize.py"
+        ),
+    ]
+
+
+def _with_mutmut_compatibility(command: str) -> str:
+    return (
+        f'PYTHONPATH="$PWD/{_MUTMUT_COMPATIBILITY_DIR}'
+        '${PYTHONPATH:+:$PYTHONPATH}" '
+        f"{command}"
+    )
+
+
+def _coverage_phase_timeout(instance: dict, requested_timeout: int) -> int:
+    """Honor a profile minimum for repositories with expensive repeated suites."""
+    return max(requested_timeout, int(instance.get("coverage_phase_timeout", 0)))
 
 
 def _is_flaky(main_exit: int | None, repeat_exits: list[int | None]) -> bool:
@@ -364,6 +424,10 @@ def _phase_script(instance: dict, apply_patch: bool, flaky_runs: int) -> str:
     targets = infer_coverage_targets(instance)
     default_mutation = "mutmut run --paths-to-mutate=" + shlex.quote(",".join(targets))
     mutation_command = instance.get("mutation_command") or default_mutation
+    mutation_compatibility = []
+    if not instance.get("mutation_command"):
+        mutation_compatibility = _mutmut_sqlite_compatibility_lines()
+        mutation_command = _with_mutmut_compatibility(mutation_command)
     mutation_results_command = instance.get("mutation_results_command") or "mutmut results"
     lines = [
         "#!/bin/bash", "set -uxo pipefail",
@@ -396,6 +460,7 @@ def _phase_script(instance: dict, apply_patch: bool, flaky_runs: int) -> str:
     ]
     for index in range(flaky_runs):
         lines += [f"{pytest_command}", f"echo REPEAT_RUN_{index + 1}_EXIT=$?"]
+    lines += mutation_compatibility
     lines += [
         f"echo {_MUTATION_START}",
         f"if [ \"${{{_MUTATION_UNSUPPORTED}:-0}}\" = 1 ]; then",
@@ -608,6 +673,10 @@ def _standalone_mutation_script(
             if custom_command
             else "mutmut run --paths-to-mutate=" + quoted_targets
         )
+    mutation_compatibility = []
+    if not custom_command:
+        mutation_compatibility = _mutmut_sqlite_compatibility_lines()
+        mutation_command = _with_mutmut_compatibility(mutation_command)
     mutation_results_command = instance.get("mutation_results_command") or "mutmut results"
     lines = [
         "#!/bin/bash",
@@ -628,6 +697,7 @@ def _standalone_mutation_script(
     lines += [setup_command, "SETUP_EXIT=$?"] if setup_command else ["SETUP_EXIT=0"]
     lines += _tool_install_lines(instance)
     lines += runner_setup
+    lines += mutation_compatibility
     lines += [
         f"echo {_MUTATION_START}",
         f"if [ \"${{{_MUTATION_UNSUPPORTED}:-0}}\" = 1 ]; then",
@@ -763,7 +833,7 @@ def prepare_standalone_coverage_baseline(
         flaky_runs,
         out_dir,
         "baseline_coverage",
-        timeout,
+        _coverage_phase_timeout(instance, timeout),
         github_token,
     )
     coverage = parse_coverage_json(
@@ -856,7 +926,7 @@ def classify_coverage_result(before: dict | None, after: dict | None, patch_info
     ):
         return "resolved", ""
     if mutation_timed_out:
-        return "errored", "mutation_evaluation_timeout"
+        return "partial", "mutation_evaluation_timeout"
     return "unresolved", "no_coverage_or_mutation_improvement"
 
 
@@ -1044,7 +1114,8 @@ def run_standalone_coverage_evaluation(
     try:
         if baseline is None:
             before_output, before_timeout, before_runtime = _run_standalone_phase(
-                instance, patch_path, False, flaky_runs, out_dir, "before", timeout,
+                instance, patch_path, False, flaky_runs, out_dir, "before",
+                _coverage_phase_timeout(instance, timeout),
                 github_token,
             )
             before_cov = parse_coverage_json(
@@ -1069,7 +1140,8 @@ def run_standalone_coverage_evaluation(
             before_tools_exit = baseline.get("tools_exit")
             baseline_repeat_exits = baseline.get("repeat_exits") or []
         after_output, after_timeout, after_runtime = _run_standalone_phase(
-            instance, patch_path, True, flaky_runs, out_dir, "after", timeout, github_token
+            instance, patch_path, True, flaky_runs, out_dir, "after",
+            _coverage_phase_timeout(instance, timeout), github_token
         )
         after_cov = parse_coverage_json(
             _extract_block(after_output, _COVERAGE_START, _COVERAGE_END), []
@@ -1193,6 +1265,14 @@ def run_standalone_coverage_evaluation(
             ),
             "mutation_before": before_mut,
             "mutation_after": after_mut,
+            "mutation_before_partial": (
+                parse_mutation_progress(mutation_before_output)
+                if mutation_before_timeout else None
+            ),
+            "mutation_after_partial": (
+                parse_mutation_progress(mutation_after_output)
+                if mutation_after_timeout else None
+            ),
             "mutation_before_exit_code": before_mutation_exit,
             "mutation_after_exit_code": after_mutation_exit,
             "mutation_before_timed_out": mutation_before_timeout,
@@ -1284,7 +1364,7 @@ def evaluate_common_mutation_targets(
             return {
                 "mutation": None, "exit_code": 125, "timed_out": False,
                 "setup_exit_code": None, "runtime": 0.0,
-                "tool_error": False, "unsupported": False,
+                "tool_error": False, "unsupported": False, "partial": None,
             }
         output, timed_out, runtime = _run_standalone_mutation_phase(
             instance, patch_path, apply_patch, targets, arm_dir,
@@ -1301,6 +1381,7 @@ def evaluate_common_mutation_targets(
             "runtime": runtime,
             "tool_error": mutation_exit_is_fatal(exit_code),
             "unsupported": f"{_MUTATION_UNSUPPORTED}=1" in output,
+            "partial": parse_mutation_progress(output) if timed_out else None,
         }
 
     original_mutation = run_arm("original", "", False)
@@ -1314,6 +1395,7 @@ def evaluate_common_mutation_targets(
         "mutation_targets": targets,
         "mutation_excluded_targets": excluded_targets,
         "mutation_after": original_mutation["mutation"],
+        "mutation_after_partial": original_mutation["partial"],
         "mutation_after_exit_code": original_mutation["exit_code"],
         "mutation_after_timed_out": original_mutation["timed_out"],
         "mutation_after_tool_error": original_mutation["tool_error"],
@@ -1342,6 +1424,8 @@ def evaluate_common_mutation_targets(
             "mutation_skipped_no_selected_modules": not targets,
             "mutation_before": original_mutation["mutation"],
             "mutation_after": arm_mutation["mutation"],
+            "mutation_before_partial": original_mutation["partial"],
+            "mutation_after_partial": arm_mutation["partial"],
             "mutation_before_exit_code": original_mutation["exit_code"],
             "mutation_after_exit_code": arm_mutation["exit_code"],
             "mutation_before_timed_out": original_mutation["timed_out"],
@@ -1386,7 +1470,7 @@ def _refresh_status_after_common_mutation(
         result["status"] = "resolved"
         result["failure_reason"] = ""
     elif mutation_timed_out:
-        result["status"] = "errored"
+        result["status"] = "partial"
         result["failure_reason"] = "mutation_evaluation_timeout"
 
 

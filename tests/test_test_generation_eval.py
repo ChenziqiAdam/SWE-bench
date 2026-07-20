@@ -5,12 +5,16 @@ from swebench.eval_pipeline.test_generation_eval import (
     BUILD_FAIL,
     GOLD_APPLY_PASS,
     GEN_APPLY_PASS,
+    START_TEST_OUTPUT,
     _build_script,
     _exclude_gold_test_files,
     _evaluate_one,
     _no_tests_selected,
     _prepare_gold_patch,
+    _rdkit_generated_unittest_targets,
+    _rdkit_isolated_python_commands,
     _test_collection_failed,
+    _test_execution_failed,
     _openmm_generated_pytest_targets,
     _test_command,
     classify_test_generation_result,
@@ -97,7 +101,7 @@ def test_ctest_no_tests_output_is_detected():
     assert _no_tests_selected("Test project /testbed\nNo tests were found!!!")
 
 
-def test_test_generation_marks_collection_failure_errored_before_empty_selection():
+def test_test_generation_marks_collection_failure_as_generated_test_failure():
     result = classify_test_generation_result(
         {},
         {},
@@ -107,8 +111,8 @@ def test_test_generation_marks_collection_failure_errored_before_empty_selection
         collection_failed=True,
     )
 
-    assert result["status"] == "errored"
-    assert result["failure_reason"] == "test_collection_failed"
+    assert result["status"] == "unresolved"
+    assert result["failure_reason"] == "generated_test_collection_failed"
 
 
 def test_collection_failure_detection_distinguishes_valid_empty_selection():
@@ -116,6 +120,40 @@ def test_collection_failure_detection_distinguishes_valid_empty_selection():
         "collected 0 items / 1 error\nERROR collecting TestForceField.py"
     )
     assert not _test_collection_failed("collected 0 items\n0 selected")
+
+
+def test_test_execution_failure_detection_is_scoped_to_test_output():
+    assert _test_execution_failed(
+        f"{GEN_APPLY_PASS}\n{START_TEST_OUTPUT}\n"
+        "Traceback (most recent call last):\nImportError: invented API\n"
+    )
+    assert not _test_execution_failed("build warning: ImportError: documentation")
+
+
+def test_test_generation_marks_unparseable_execution_failure_unresolved():
+    result = classify_test_generation_result(
+        {},
+        {},
+        True,
+        True,
+        test_execution_failed=True,
+    )
+
+    assert result["status"] == "unresolved"
+    assert result["failure_reason"] == "generated_test_execution_failed"
+
+
+def test_test_generation_marks_phase_timeout_unresolved():
+    result = classify_test_generation_result(
+        {},
+        {"generated": "FAILED"},
+        True,
+        True,
+        base_timed_out=True,
+    )
+
+    assert result["status"] == "unresolved"
+    assert result["failure_reason"] == "generated_test_timed_out_on_base"
 
 
 def test_test_generation_marks_build_failure_errored():
@@ -271,6 +309,41 @@ def test_openmm_test_generation_runs_touched_pytest_file_not_fixed_selector(monk
         "TestForceField.py::test_generated_regression"
     )
     assert "-k 'original_test'" not in command
+
+
+def test_rdkit_test_generation_isolates_added_unittest_method(monkeypatch):
+    command = (
+        "cp -a build/rdkit/. rdkit/ && RDBASE=$PWD PYTHONPATH=$PWD "
+        "python3 Code/GraphMol/FMCS/Wrap/testFMCS.py"
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.get_test_cmds",
+        lambda _instance: [command],
+    )
+    patch = """diff --git a/Code/GraphMol/FMCS/Wrap/testFMCS.py b/Code/GraphMol/FMCS/Wrap/testFMCS.py
+--- a/Code/GraphMol/FMCS/Wrap/testFMCS.py
++++ b/Code/GraphMol/FMCS/Wrap/testFMCS.py
+@@ -1145,6 +1145,18 @@ class TestCase(unittest.TestCase):
++  def testGithubCompleteRingsOnlyMemory(self):
++    pass
+"""
+
+    targets = _rdkit_generated_unittest_targets(patch)
+    isolated = _rdkit_isolated_python_commands([command], patch)
+    selected = _test_command(
+        {"repo": "rdkit/rdkit", "version": "6646", "test_patch": ""}, patch
+    )
+
+    assert targets == {
+        "Code/GraphMol/FMCS/Wrap/testFMCS.py": [
+            "TestCase.testGithubCompleteRingsOnlyMemory"
+        ]
+    }
+    assert isolated is not None
+    assert selected.endswith(
+        "python3 Code/GraphMol/FMCS/Wrap/testFMCS.py "
+        "TestCase.testGithubCompleteRingsOnlyMemory"
+    )
 
 
 def test_openmm_test_generation_can_force_native_spec_command(monkeypatch):

@@ -20,6 +20,7 @@ from swebench.eval_pipeline.coverage_generation_eval import (
     inspect_test_patch,
     parse_coverage_json,
     parse_mutation_results,
+    parse_mutation_progress,
     run_standalone_coverage_evaluation,
     select_mutation_targets,
     standalone_baseline_failure,
@@ -113,6 +114,7 @@ def test_scientific_pytest_profiles_are_offline_and_generated_test_scoped(
         ]
         assert instance["mutation_excluded_targets"] == ["astropy/utils/data.py"]
         assert instance["pynguin_ignore_noncallable_signatures"] is False
+        assert instance["coverage_phase_timeout"] == 7200
     else:
         assert instance["pynguin_warning_filters"] == []
         assert instance["mutation_excluded_targets"] == []
@@ -407,7 +409,32 @@ def test_mutation_timeout_is_reported_without_coverage_improvement():
         True,
         False,
         mutation_timed_out=True,
-    ) == ("errored", "mutation_evaluation_timeout")
+    ) == ("partial", "mutation_evaluation_timeout")
+
+
+def test_common_mutation_timeout_is_partial_without_other_improvement():
+    result = {
+        "status": "unresolved",
+        "failure_reason": "no_coverage_or_mutation_improvement",
+    }
+    _refresh_status_after_common_mutation(result, 0.0, None, True)
+    assert result == {
+        "status": "partial",
+        "failure_reason": "mutation_evaluation_timeout",
+    }
+
+
+def test_partial_mutation_progress_is_reportable_without_becoming_a_score():
+    output = "\r263/309  🎉 37  ⏰ 0  🤔 1  🙁 225  🔇 0"
+    assert parse_mutation_progress(output) == {
+        "processed": 263,
+        "expected": 309,
+        "killed": 37,
+        "timeout": 0,
+        "suspicious": 1,
+        "survived": 225,
+        "skipped": 0,
+    }
 
 
 def test_flakiness_is_compared_separately_before_and_after_patch():
@@ -559,6 +586,8 @@ def test_biopython_mutation_script_uses_touched_test_modules(tmp_path):
     )
     assert "--tests-dir=Tests" in script
     assert "--runner=./.coverage-generation-mutmut-runner.sh" in script
+    assert "kwargs.setdefault(\"timeout\", 60.0)" in script
+    assert "PYTHONPATH=\"$PWD/.coverage-generation-mutmut-compatibility" in script
     assert "Tests/test_New.py" in script
     assert "Tests/test_Phylo.py" in script
     assert 'python -m pytest -- "${tests[@]}"' in script

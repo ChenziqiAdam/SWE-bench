@@ -231,9 +231,9 @@ def test_openmm_native_python_api_spec_builds_wrappers():
     assert spec["test_generation_use_spec_cmd"] is True
     assert "-DOPENMM_BUILD_PYTHON_WRAPPERS=ON" in spec["build_after_test_patch"][0]
     assert "-DBUILD_TESTING=OFF" in spec["build_after_test_patch"][0]
-    assert "--target install" in spec["build_after_test_patch"][1]
-    assert "PythonInstall" in spec["build_after_test_patch"][2]
-    assert "import openmm, simtk.openmm" in spec["build_after_test_patch"][2]
+    assert "--target install" in spec["build_after_test_patch"][2]
+    assert "PythonInstall" in spec["build_after_test_patch"][3]
+    assert "import openmm, simtk.openmm" in spec["build_after_test_patch"][3]
     assert SPECS_OPENMM["1837"]["test_generation_use_spec_cmd"] is True
 
 
@@ -248,13 +248,16 @@ def test_openmm_826_builds_matching_amoeba_python_bindings():
     )
     assert "OPENMM_PLUGIN_DIR=$PWD/build" in spec["test_cmd"][0]
     assert "test_RigidWater" in spec["test_cmd"][0]
+    assert "s/^# Look/\\/\\/ Look/" in spec["build_after_test_patch"][1]
 
 
 def test_openmm_5137_runs_cmake_runtime_output():
     command = SPECS_OPENMM["5137"]["test_cmd"][0]
+    pre_install = "\n".join(SPECS_OPENMM["5137"]["pre_install"])
 
     assert "./build/TestOpenCLFFT" in command
     assert "./build/platforms/opencl/tests/TestOpenCLFFT" not in command
+    assert "pocl-opencl-icd" in pre_install
 
 
 def test_legacy_rdkit_specs_install_boost_endian_compatibility_header():
