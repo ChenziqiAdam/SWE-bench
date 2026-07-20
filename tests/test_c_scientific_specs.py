@@ -223,6 +223,26 @@ def test_openmm_native_python_api_spec_builds_wrappers():
     assert SPECS_OPENMM["1837"]["test_generation_use_spec_cmd"] is True
 
 
+def test_openmm_826_builds_matching_amoeba_python_bindings():
+    spec = SPECS_OPENMM["826"]
+    configure = spec["build_after_test_patch"][0]
+
+    assert "-DOPENMM_BUILD_PYTHON_WRAPPERS=ON" in configure
+    assert "-DOPENMM_BUILD_AMOEBA_PLUGIN=ON" in configure
+    assert "python -m pip install --no-cache-dir openmm" not in "\n".join(
+        spec["pre_install"]
+    )
+    assert "OPENMM_PLUGIN_DIR=$PWD/build" in spec["test_cmd"][0]
+    assert "test_RigidWater" in spec["test_cmd"][0]
+
+
+def test_openmm_5137_runs_cmake_runtime_output():
+    command = SPECS_OPENMM["5137"]["test_cmd"][0]
+
+    assert "./build/TestOpenCLFFT" in command
+    assert "./build/platforms/opencl/tests/TestOpenCLFFT" not in command
+
+
 def test_legacy_rdkit_specs_install_boost_endian_compatibility_header():
     for pr in ("2083", "2377"):
         assert any("boost/detail/endian.hpp" in cmd for cmd in SPECS_RDKIT[pr]["pre_install"])

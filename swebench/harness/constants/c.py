@@ -385,7 +385,9 @@ def _openmm_source_check_spec(name: str, condition: str) -> dict:
     }
 
 
-def _openmm_native_python_spec(test_file: str, test_filter: str) -> dict:
+def _openmm_native_python_spec(
+    test_file: str, test_filter: str, *, amoeba: bool = False
+) -> dict:
     """Build native OpenMM Python wrappers for generated API tests."""
     return {
         "pre_install": [
@@ -401,6 +403,7 @@ def _openmm_native_python_spec(test_file: str, test_filter: str) -> dict:
             "-DOPENMM_BUILD_HIP_LIB=OFF "
             "-DOPENMM_BUILD_PYTHON_WRAPPERS=ON "
             "-DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF "
+            f"{'-DOPENMM_BUILD_AMOEBA_PLUGIN=ON ' if amoeba else ''}"
             "-DBUILD_TESTING=OFF "
             "-DOPENMM_BUILD_EXAMPLES=OFF",
             # PythonInstall links against the configured install prefix.  Some
@@ -412,6 +415,7 @@ def _openmm_native_python_spec(test_file: str, test_filter: str) -> dict:
         ],
         "test_cmd": [
             "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
+            "OPENMM_PLUGIN_DIR=$PWD/build "
             f"python -m pytest -xvs wrappers/python/tests/{test_file} -k '{test_filter}'"
         ],
         "fail_to_pass": [f"wrappers/python/tests/{test_file}"],
@@ -792,7 +796,7 @@ SPECS_OPENMM = _OpenMMSpecs({
         "test_cmd": [
             "LD_LIBRARY_PATH=$PWD/build:$PWD/build/platforms/opencl:${LD_LIBRARY_PATH:-} "
             "OPENMM_PLUGIN_DIR=$PWD/build/platforms/opencl "
-            "./build/platforms/opencl/tests/TestOpenCLFFT",
+            "./build/TestOpenCLFFT",
         ],
     },
     # ── Generated-test fallback specs for issue rows without mined F2P ───────
@@ -815,7 +819,11 @@ SPECS_OPENMM = _OpenMMSpecs({
     # OpenMM package for native libraries, then overlay the patched pure-Python
     # app package from /testbed before running the exact pytest selector.
     **{
-        pr: _openmm_python_app_spec(test_file, test_filter)
+        pr: (
+            _openmm_native_python_spec(test_file, test_filter, amoeba=True)
+            if pr == "826"
+            else _openmm_python_app_spec(test_file, test_filter)
+        )
         for pr, test_file, test_filter in [
             ("826", "TestForceField.py", "test_RigidWater"),
             ("1302", "TestPdbFile.py", "test_ExtraParticles"),
