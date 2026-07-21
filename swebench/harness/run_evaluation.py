@@ -137,7 +137,7 @@ def run_instance(
                 image_build_link.symlink_to(
                     build_dir.absolute(), target_is_directory=True
                 )
-            except:
+            except Exception:
                 # some error, idk why
                 pass
 
@@ -150,6 +150,8 @@ def run_instance(
     container = None
     eval_completed = False
     report = {}
+    evaluation_stage = "container_build_or_start"
+    evaluation_error = ""
     try:
         # Build + start instance container (instance image should already be built)
         container = build_container(
@@ -157,6 +159,7 @@ def run_instance(
         )
         container.start()
         logger.info(f"Container for {instance_id} started: {container.id}")
+        evaluation_stage = "patch_application"
 
         # Copy model prediction as patch file to container
         patch_file = Path(log_dir / "patch.diff")
@@ -206,6 +209,7 @@ def run_instance(
         copy_to_container(container, eval_file, PurePosixPath("/eval.sh"))
 
         # Run eval script, write output to logs
+        evaluation_stage = "test_execution"
         test_output, timed_out, total_runtime = exec_run_with_timeout(
             container, "/bin/bash /eval.sh", timeout
         )
@@ -238,6 +242,7 @@ def run_instance(
 
         # Get report from test output
         logger.info(f"Grading answer for {instance_id}...")
+        evaluation_stage = "grading"
         report = get_eval_report(
             test_spec=test_spec,
             prediction=pred,
@@ -254,10 +259,12 @@ def run_instance(
             f.write(json.dumps(report, indent=4))
         eval_completed = True
     except (EvaluationError, BuildImageError) as e:
+        evaluation_error = f"{type(e).__name__}: {e}"
         error_msg = traceback.format_exc()
         logger.info(error_msg)
         print(e)
     except Exception as e:
+        evaluation_error = f"{type(e).__name__}: {e}"
         error_msg = (
             f"Error in evaluating model for {instance_id}: {e}\n"
             f"{traceback.format_exc()}\n"
@@ -265,6 +272,19 @@ def run_instance(
         )
         logger.error(error_msg)
     finally:
+        if not eval_completed and evaluation_error:
+            (log_dir / "error.json").write_text(
+                json.dumps(
+                    {
+                        instance_id: {
+                            "status": "errored",
+                            "failure_reason": evaluation_stage,
+                            "error": evaluation_error,
+                        }
+                    },
+                    indent=2,
+                )
+            )
         # Remove instance container + image, close logger
         cleanup_container(client, container, logger)
         if rm_image:

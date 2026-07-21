@@ -2,7 +2,23 @@ import json
 
 import docker
 
-from swebench.eval_pipeline import mine_tests, validate_base
+from swebench.eval_pipeline import mine_tests, run_pipeline, validate_base
+
+
+def test_docker_preflight_pings_daemon_and_reports_failure(monkeypatch):
+    class DeadClient:
+        def ping(self):
+            raise docker.errors.DockerException("daemon did not start")
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(docker, "from_env", lambda: DeadClient())
+
+    reason = run_pipeline._docker_unavailable_reason()
+
+    assert "Docker daemon unavailable" in reason
+    assert "daemon did not start" in reason
 
 
 def test_validate_buildable_caches_docker_unavailable(monkeypatch, tmp_path):

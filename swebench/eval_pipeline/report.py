@@ -66,6 +66,23 @@ def collect_results(
                     "has_report": True,
                 }
 
+        error_files = list(run_path.glob("*/*/error.json")) if run_path.exists() else []
+        for error_file in error_files:
+            try:
+                data = json.loads(error_file.read_text())
+            except Exception as e:
+                logger.error(f"Error reading {error_file}: {e}")
+                continue
+            for instance_id, info in data.items():
+                if instance_ids is not None and instance_id not in instance_ids:
+                    continue
+                if instance_id not in results:
+                    results[instance_id] = {
+                        "has_report": False,
+                        "failure_reason": info.get("failure_reason", "evaluation_error"),
+                        "error": info.get("error", ""),
+                    }
+
     return results
 
 
@@ -160,6 +177,7 @@ def render_comparison_table(
     build_validation: dict[str, dict] | None = None,
     predictions_path: str | None = None,
     run_config: dict | None = None,
+    pipeline_failure: str | None = None,
 ) -> None:
     """Write a CSV and print the single-column agent resolution table."""
     meta = {inst["instance_id"]: inst for inst in instances}
@@ -180,6 +198,9 @@ def render_comparison_table(
             f2p_empty=f2p_empty,
             has_pred=has_pred,
         )
+        if pipeline_failure and not (results.get(instance_id) or {}).get("has_report"):
+            status = "errored"
+        result_info = results.get(instance_id) or {}
         rows.append({
             "instance_id": instance_id,
             "repo": inst.get("repo", ""),
@@ -188,12 +209,16 @@ def render_comparison_table(
             "buildable": "" if not build_validation else ("yes" if buildable else "no"),
             "status": status,
             "has_pred": "yes" if has_pred else "no",
+            "failure_reason": result_info.get("failure_reason", "") or (
+                "docker_infrastructure_failure" if pipeline_failure else ""
+            ),
+            "error": result_info.get("error", "") or (pipeline_failure or ""),
         })
 
     # ── CSV ───────────────────────────────────────────────────────────────────
     Path(output_csv).parent.mkdir(parents=True, exist_ok=True)
     fieldnames = ["instance_id", "repo", "pr_number", "category",
-                  "buildable", "status", "has_pred"]
+                  "buildable", "status", "has_pred", "failure_reason", "error"]
     with open(output_csv, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -234,7 +259,12 @@ def render_comparison_table(
         f"no-pred={counts['no-pred']}"
     )
     if counts["errored"]:
-        print(f"  WARNING: {counts['errored']} instance(s) errored (prediction submitted but no usable report).")
+        print(
+            f"  WARNING: {counts['errored']} instance(s) errored "
+            "(evaluation infrastructure failed or no usable report)."
+        )
+    if pipeline_failure:
+        print(f"  PIPELINE FAILURE: {pipeline_failure}")
     if excluded_harness_resolved:
         print(
             f"  NOTE: {excluded_harness_resolved} harness-resolved instance(s) were excluded "
@@ -250,6 +280,7 @@ def render_test_generation_table(
     build_validation: dict[str, dict] | None = None,
     predictions_path: str | None = None,
     run_config: dict | None = None,
+    pipeline_failure: str | None = None,
 ) -> None:
     """Write a CSV and print test-generation success results."""
     meta = {inst["instance_id"]: inst for inst in instances}
@@ -265,6 +296,8 @@ def render_test_generation_table(
         status = info.get("status")
         if not status:
             status = "errored" if instance_id in nonempty else "no-pred"
+        if pipeline_failure and not info:
+            status = "errored"
         validation = build_validation.get(instance_id, {})
         buildable = validation.get("buildable", True)
         # A later successful evaluation is stronger evidence than an earlier
@@ -296,8 +329,11 @@ def render_test_generation_table(
             "failure_reason": (
                 "base_image_not_buildable"
                 if infrastructure_failure
-                else info.get("failure_reason", "")
+                else info.get("failure_reason", "") or (
+                    "docker_infrastructure_failure" if pipeline_failure else ""
+                )
             ),
+            "evaluation_error": info.get("error", "") or (pipeline_failure or ""),
             "build_validation_error": validation.get("error", ""),
             "inference_error": prediction.get("error", ""),
             "inference_usage_incomplete": (
@@ -331,6 +367,7 @@ def render_test_generation_table(
         "base_failed_tests",
         "gold_passed_tests",
         "failure_reason",
+        "evaluation_error",
         "build_validation_error",
         "inference_error",
         "inference_usage_incomplete",
@@ -380,6 +417,8 @@ def render_test_generation_table(
         f"TEST-GENERATION SUCCESS RATE {rate:6.1%}  "
         f"({counts['resolved']}/{scorable} scorable; {total} total)"
     )
+    if pipeline_failure:
+        print(f"  PIPELINE FAILURE: {pipeline_failure}")
     print(
         f"  resolved={counts['resolved']}  unresolved={counts['unresolved']}  "
         f"excluded={counts['excluded']}  not_exercised={counts['not_exercised']}  "
@@ -408,6 +447,7 @@ def render_coverage_generation_table(
     output_csv: str,
     predictions_path: str | None = None,
     run_config: dict | None = None,
+    pipeline_failure: str | None = None,
 ) -> None:
     """Write coverage/mutation deltas and test-patch integrity metrics."""
     meta = {inst["instance_id"]: inst for inst in instances}
@@ -418,6 +458,8 @@ def render_coverage_generation_table(
         inst = meta[instance_id]
         info = results.get(instance_id) or {}
         status = info.get("status") or ("errored" if instance_id in nonempty else "no-pred")
+        if pipeline_failure and not info:
+            status = "errored"
         before_cov = info.get("coverage_before") or {}
         after_cov = info.get("coverage_after") or {}
         before_mut = info.get("mutation_before") or {}
@@ -444,7 +486,10 @@ def render_coverage_generation_table(
             ),
             "base_commit": info.get("base_commit", inst.get("base_commit", "")),
             "status": status,
-            "failure_reason": info.get("failure_reason") or prediction.get("error", ""),
+            "failure_reason": info.get("failure_reason") or prediction.get("error", "") or (
+                "docker_infrastructure_failure" if pipeline_failure else ""
+            ),
+            "evaluation_error": info.get("error", "") or (pipeline_failure or ""),
             "inference_completed": (
                 "yes" if info.get("inference_completed", not prediction.get("error")) else "no"
             ),
@@ -574,6 +619,8 @@ def render_coverage_generation_table(
         )
     print("=" * 92)
     print("  " + "  ".join(f"{name}={count}" for name, count in sorted(counts.items())))
+    if pipeline_failure:
+        print(f"  PIPELINE FAILURE: {pipeline_failure}")
     print("=" * 92 + "\n")
 
 

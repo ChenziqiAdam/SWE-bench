@@ -118,6 +118,35 @@ def _write_prompts_preserving_unselected(
     return len(merged)
 
 
+def _docker_unavailable_reason() -> str | None:
+    """Return a diagnostic when the Docker daemon cannot service requests."""
+    import docker
+
+    client = None
+    try:
+        client = docker.from_env()
+        client.ping()
+    except Exception as exc:
+        return f"Docker daemon unavailable: {type(exc).__name__}: {exc}"
+    finally:
+        if client is not None:
+            try:
+                client.close()
+            except Exception:
+                pass
+    return None
+
+
+def _write_evaluation_failure(
+    path: Path, reason: str, stage: str = "docker_preflight"
+) -> None:
+    """Persist a run-level infrastructure failure for automation and audits."""
+    path.write_text(
+        json.dumps({"status": "errored", "stage": stage, "error": reason}, indent=2)
+    )
+    logger.error("%s. Evaluation skipped; failure record written to %s", reason, path)
+
+
 def parse_args():
     p = argparse.ArgumentParser(
         description="Evaluate an agent's issue-resolution rate on scientific-software PRs"
@@ -664,6 +693,23 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
     output_dir.mkdir(parents=True, exist_ok=True)
     instance = _standalone_coverage_instance(args)
     eval_run_id = f"{args.run_id}_coveragegen"
+    if not args.skip_inference or not args.skip_eval:
+        evaluation_failure = _docker_unavailable_reason()
+        if evaluation_failure:
+            failure_path = output_dir / f"{args.run_id}_evaluation_failure.json"
+            _write_evaluation_failure(failure_path, evaluation_failure)
+            render_coverage_generation_table(
+                results={},
+                instances=[instance],
+                output_csv=str(output_dir / f"{args.run_id}_results.csv"),
+                pipeline_failure=evaluation_failure,
+                run_config={
+                    "mode": "standalone repository",
+                    "repo_url": args.repo_url,
+                    "run_id": args.run_id,
+                },
+            )
+            return
     baseline = None
     if not args.skip_inference or not args.skip_eval:
         logger.info("=== Standalone coverage generation: whole-repository baseline ===")
@@ -1007,9 +1053,18 @@ def main():
         instances = [{**instance, "coverage_targets": targets} for instance in instances]
         logger.info("Coverage targets overridden for %s instance(s): %s", len(instances), targets)
 
+    evaluation_failure = None
+    evaluation_failure_path = output_dir / f"{args.run_id}_evaluation_failure.json"
+    if not args.skip_eval:
+        evaluation_failure = _docker_unavailable_reason()
+        if evaluation_failure:
+            _write_evaluation_failure(evaluation_failure_path, evaluation_failure)
+        elif evaluation_failure_path.exists():
+            evaluation_failure_path.unlink()
+
     # ── Stage 2.5: Base-commit Build Validation ──────────────────────────────
     build_validation: dict[str, dict] = {}
-    if not args.skip_validation:
+    if not args.skip_validation and not evaluation_failure:
         logger.info("=== Stage 2.5: Validating base_commit builds ===")
         from swebench.eval_pipeline.validate_base import validate_buildable
         build_validation = validate_buildable(
@@ -1025,7 +1080,7 @@ def main():
                         f"they will still run but be marked in the report.")
 
     # ── Stage 2.6: FAIL_TO_PASS / PASS_TO_PASS Mining ────────────────────────
-    if not args.skip_mining and args.eval_mode == "fix":
+    if not args.skip_mining and args.eval_mode == "fix" and not evaluation_failure:
         logger.info("=== Stage 2.6: Mining FAIL_TO_PASS / PASS_TO_PASS ===")
         from swebench.eval_pipeline.mine_tests import mine_fail_to_pass, apply_mined_to_instances
         mining = mine_fail_to_pass(
@@ -1114,7 +1169,7 @@ def main():
     logger.info(f"Wrote {prompt_count} agent prompts → {prompts_path}")
 
     # ── Stage 4: Inference (agent-only) ───────────────────────────────────────
-    if not args.skip_inference:
+    if not args.skip_inference and not evaluation_failure:
         logger.info("=== Stage 4: Running inference ===")
 
         agent_predictions_file = str(output_dir / "agent_predictions.jsonl")
@@ -1147,7 +1202,11 @@ def main():
         "test_generation": f"{args.run_id}_testgen",
         "coverage_generation": f"{args.run_id}_coveragegen",
     }.get(args.eval_mode, f"{args.run_id}_agent")
-    if not args.skip_eval:
+    if not args.skip_eval and not evaluation_failure:
+        evaluation_failure = _docker_unavailable_reason()
+        if evaluation_failure:
+            _write_evaluation_failure(evaluation_failure_path, evaluation_failure)
+    if not args.skip_eval and not evaluation_failure:
         logger.info("=== Stage 5: Running Docker evaluation ===")
 
         if not Path(agent_predictions_path).exists():
@@ -1320,6 +1379,7 @@ def main():
             build_validation=build_validation,
             predictions_path=report_predictions_path,
             run_config=run_config,
+            pipeline_failure=evaluation_failure,
         )
     elif args.eval_mode == "coverage_generation":
         results = collect_test_generation_results(
@@ -1334,6 +1394,7 @@ def main():
             output_csv=output_csv,
             predictions_path=agent_predictions_path,
             run_config=run_config,
+            pipeline_failure=evaluation_failure,
         )
     else:
         results = collect_results(
@@ -1348,6 +1409,7 @@ def main():
             build_validation=build_validation,
             predictions_path=agent_predictions_path,
             run_config=run_config,
+            pipeline_failure=evaluation_failure,
         )
     logger.info(f"Done. Results saved to {output_csv}")
 

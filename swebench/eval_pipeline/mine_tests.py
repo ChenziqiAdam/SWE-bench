@@ -276,9 +276,13 @@ def mine_fail_to_pass(
     logger.info(f"Mining FAIL_TO_PASS for {len(todo)} instance(s) with {max_workers} workers...")
     # Share one Docker client across all threads — avoids opening a new Unix socket
     # per worker, which is wasteful and can hit connection limits on large runs.
+    shared_client = None
     try:
         shared_client = docker.from_env()
+        shared_client.ping()
     except docker.errors.DockerException as e:
+        if shared_client is not None:
+            shared_client.close()
         error = f"Docker daemon unavailable: {e}"
         logger.error(error)
         for inst in todo:
@@ -298,7 +302,8 @@ def mine_fail_to_pass(
                 # Persist incrementally so a crash mid-run doesn't lose progress.
                 cache_path.write_text(json.dumps(cache, indent=2))
     finally:
-        shared_client.close()
+        if shared_client is not None:
+            shared_client.close()
 
     n_ok = sum(1 for v in cache.values() if v.get("ok"))
     n_f2p = sum(len(v.get("FAIL_TO_PASS", [])) for v in cache.values() if v.get("ok"))

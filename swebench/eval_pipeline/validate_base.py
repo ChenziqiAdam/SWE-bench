@@ -110,9 +110,13 @@ def validate_buildable(
         return cache
 
     logger.info(f"Building images at base_commit for {len(buildable_todo)} instance(s)...")
+    client = None
     try:
         client = docker.from_env()
+        client.ping()
     except docker.errors.DockerException as e:
+        if client is not None:
+            client.close()
         error = f"Docker daemon unavailable: {e}"
         logger.error(error)
         for inst in buildable_todo:
@@ -177,7 +181,10 @@ def validate_buildable(
                 f"Phase 2: building {len(instance_todo_p2)} instance image(s) "
                 f"using {max_workers} workers..."
             )
-            # Env images are already built; build_instance_images will skip them.
+            # Phase 1 already rebuilt the shared base/environment images when
+            # requested. Force only the per-instance images here; rebuilding
+            # the shared ancestry a second time can invalidate Docker's cached
+            # parents while parallel instance builds start.
             successful, _ = build_instance_images(
                 client=client,
                 dataset=instance_todo_p2,
@@ -185,6 +192,8 @@ def validate_buildable(
                 max_workers=max_workers,
                 tag="latest",
                 env_image_tag="latest",
+                force_rebuild_env=False,
+                nocache=force,
             )
             ok_ids = {s[0].instance_id for s in successful}
 
@@ -201,7 +210,8 @@ def validate_buildable(
         logger.info(f"Build validation: {n_ok}/{len(cache)} buildable. Cache → {cache_path}")
         return cache
     finally:
-        client.close()
+        if client is not None:
+            client.close()
 
 
 def _write_cache(cache: dict, path: Path) -> None:

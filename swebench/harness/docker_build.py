@@ -388,6 +388,8 @@ def build_instance_images(
     namespace: str = None,
     tag: str = None,
     env_image_tag: str = None,
+    force_rebuild_env: bool | None = None,
+    nocache: bool = False,
 ):
     """
     Builds the instance images required for the dataset if they do not already exist.
@@ -397,6 +399,11 @@ def build_instance_images(
         client (docker.DockerClient): Docker client to use for building the images
         force_rebuild (bool): Whether to force rebuild the images even if they already exist
         max_workers (int): Maximum number of workers to use for building images
+        force_rebuild_env (bool | None): Override whether base/environment
+            images are also force rebuilt. By default this follows
+            ``force_rebuild`` for backward compatibility.
+        nocache (bool): Disable Docker's intermediate build cache for instance
+            images.
     """
     # Build environment images (and base images as needed) first
     test_specs = list(
@@ -413,15 +420,20 @@ def build_instance_images(
     if force_rebuild:
         for spec in test_specs:
             remove_image(client, spec.instance_image_key, "quiet")
-    _, env_failed = build_env_images(client, test_specs, force_rebuild, max_workers)
+    rebuild_env = force_rebuild if force_rebuild_env is None else force_rebuild_env
+    _, env_failed = build_env_images(client, test_specs, rebuild_env, max_workers)
 
-    if len(env_failed) > 0:
+    failed_env_keys = {
+        failure[0] if isinstance(failure, tuple) else failure
+        for failure in env_failed
+    }
+    if failed_env_keys:
         # Don't build images for instances that depend on failed-to-build env images
         dont_run_specs = [
-            spec for spec in test_specs if spec.env_image_key in env_failed
+            spec for spec in test_specs if spec.env_image_key in failed_env_keys
         ]
         test_specs = [
-            spec for spec in test_specs if spec.env_image_key not in env_failed
+            spec for spec in test_specs if spec.env_image_key not in failed_env_keys
         ]
         print(
             f"Skipping {len(dont_run_specs)} instances - due to failed env image builds"
@@ -430,7 +442,7 @@ def build_instance_images(
     successful, failed = list(), list()
 
     # `logger` is set to None b/c logger is created in build-instage_image
-    payloads = [(spec, client, None, False) for spec in test_specs]
+    payloads = [(spec, client, None, nocache) for spec in test_specs]
     # Build the instance images
     successful, failed = run_threadpool(build_instance_image, payloads, max_workers)
     # Show how many images failed to build

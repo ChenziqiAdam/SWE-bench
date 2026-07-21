@@ -52,6 +52,44 @@ def test_report_notes_excluded_harness_resolved_instances(tmp_path, capsys):
     assert "harness-resolved instance(s) were excluded" in output
 
 
+def test_fix_report_exports_pipeline_docker_failure(tmp_path, capsys):
+    output_csv = tmp_path / "results.csv"
+    render_comparison_table(
+        results={},
+        instances=[{
+            "instance_id": "demo__repo-1",
+            "repo": "demo/repo",
+            "FAIL_TO_PASS": ["test_bug"],
+        }],
+        output_csv=str(output_csv),
+        pipeline_failure="Docker daemon unavailable: connection refused",
+    )
+
+    with output_csv.open(newline="") as handle:
+        row = next(csv.DictReader(handle))
+    assert row["status"] == "errored"
+    assert row["failure_reason"] == "docker_infrastructure_failure"
+    assert "connection refused" in row["error"]
+    assert "PIPELINE FAILURE" in capsys.readouterr().out
+
+
+def test_collect_fix_result_reads_structured_evaluation_error(tmp_path):
+    error_dir = tmp_path / "run_agent" / "model" / "demo__repo-1"
+    error_dir.mkdir(parents=True)
+    (error_dir / "error.json").write_text(json.dumps({
+        "demo__repo-1": {
+            "status": "errored",
+            "failure_reason": "container_build_or_start",
+            "error": "APIError: container start failed",
+        }
+    }))
+
+    results = collect_results({"agent": "run_agent"}, log_dir=str(tmp_path))
+
+    assert results["demo__repo-1"]["failure_reason"] == "container_build_or_start"
+    assert "container start failed" in results["demo__repo-1"]["error"]
+
+
 def test_collect_test_generation_results_filters_model_dir(tmp_path):
     run_id = "run_testgen"
     current = tmp_path / run_id / "deepseek-v4-flash" / "demo__repo-1"
