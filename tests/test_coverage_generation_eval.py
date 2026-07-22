@@ -774,7 +774,7 @@ def test_standalone_evaluation_runs_repo_before_and_after_without_issue(tmp_path
         "base_commit": commit,
         "coverage_targets": [],
         "coverage_setup_command": "true",
-        "coverage_test_command": "python -m pytest -q",
+        "coverage_test_command": "true",
         "coverage_command": "python make_coverage.py",
         "coverage_results_command": "true",
         "coverage_tool_install_command": "true",

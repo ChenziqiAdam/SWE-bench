@@ -101,7 +101,7 @@ def test_pynguin_cache_is_matched_and_replaced_by_instance(monkeypatch):
         "total_budget_seconds": args.pynguin_total_budget,
         "module_slice_seconds": args.pynguin_module_slice,
         "assertion_mode": args.pynguin_assertion_mode,
-        "postprocessing_version": 4,
+        "postprocessing_version": 5,
     }
     rows = [
         {"instance_id": "repo-a", "model_patch": "a", "metrics": matching_metrics},
@@ -286,7 +286,7 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
     assert result["model_patch"].startswith("diff --git")
     assert result["metrics"]["successful_modules"] == ["pkg.core"]
     assert result["metrics"]["module_attempts"][0]["exit_code"] == 0
-    assert result["metrics"]["postprocessing_version"] == 4
+    assert result["metrics"]["postprocessing_version"] == 5
     assert result["metrics"]["network_guard_injected_count"] == 1
     finalization_calls = [call for call in calls if call[0][:2] == ["git", "add"]]
     assert finalization_calls[0][1] >= 1
@@ -387,6 +387,29 @@ def test_scheduler_reports_install_failure(tmp_path, monkeypatch):
     assert result["error"] == "installation_failed"
     assert result["metrics"]["exit_code"] == 2
     assert result["metrics"]["diagnostic_output_tail"] == "offline"
+
+
+def test_scheduler_pins_pynguin_before_repository_setup(tmp_path, monkeypatch):
+    calls = []
+
+    def fake_run(command, repo_dir, timeout, env):
+        calls.append((command, env.copy()))
+        return subprocess.CompletedProcess(command, 0, stdout="")
+
+    monkeypatch.setattr("swebench.eval_pipeline.pynguin_generation._run", fake_run)
+    run_pynguin_generation(
+        tmp_path,
+        {"files": {}},
+        setup_command="python -m pip install -e . pytest",
+        total_budget=10,
+        base_environment={"PATH": "/isolated/bin", "MARKER": "isolated"},
+    )
+
+    assert calls[0][0][:4] == ["python", "-m", "pip", "install"]
+    assert calls[1][0] == [
+        "/bin/bash", "-c", "python -m pip install -e . pytest",
+    ]
+    assert all(environment["MARKER"] == "isolated" for _, environment in calls)
 
 
 def test_scheduler_preserves_failed_module_diagnostics(tmp_path, monkeypatch):

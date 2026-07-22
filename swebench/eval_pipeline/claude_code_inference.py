@@ -10,12 +10,14 @@ import threading
 import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Optional
 
 from tqdm.auto import tqdm
 
 from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
+from swebench.eval_pipeline.host_environment import isolated_python_environment
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
 from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json, with_wall_time
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
@@ -363,6 +365,7 @@ def run_claude_code_inference(
     def _process_one(inst: dict) -> None:
         instance_id = inst["instance_id"]
         repo_dir = None
+        environment_context = None
         started = time.perf_counter()
         try:
             repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token, tmp_root=tmp_root)
@@ -384,7 +387,16 @@ def run_claude_code_inference(
                 # alone otherwise denies every Bash invocation.
                 cmd += ["--allowedTools", "Bash"]
 
-            env = dict(os.environ)
+            environment_context = (
+                isolated_python_environment(tmp_root / "environments")
+                if inst.get("standalone") and eval_mode == "coverage_generation"
+                else nullcontext(dict(os.environ))
+            )
+            try:
+                env = environment_context.__enter__()
+            except Exception:
+                environment_context = None
+                raise
             if api_base:
                 env["ANTHROPIC_BASE_URL"] = api_base.rstrip("/")
             if api_key:
@@ -558,6 +570,8 @@ def run_claude_code_inference(
                 "metrics": with_wall_time({}, time.perf_counter() - started),
             }
         finally:
+            if environment_context is not None:
+                environment_context.__exit__(None, None, None)
             if repo_dir:
                 shutil.rmtree(repo_dir, ignore_errors=True)
 

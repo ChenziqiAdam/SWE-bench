@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 
 
-PYNGUIN_POSTPROCESSING_VERSION = 4
+PYNGUIN_POSTPROCESSING_VERSION = 5
 PYNGUIN_MODULE_SHUTDOWN_GRACE_SECONDS = 10
 
 
@@ -235,13 +235,14 @@ def run_pynguin_generation(
     setup_command: str | None = None,
     warning_filters: list[str] | None = None,
     ignore_noncallable_signatures: bool = False,
+    base_environment: dict[str, str] | None = None,
 ) -> dict:
     """Install and schedule Pynguin under one end-to-end deadline."""
     started = time.monotonic()
     deadline = started + total_budget
     finalization_reserve = min(10.0, max(1.0, total_budget * 0.1))
     env = {
-        **os.environ,
+        **(base_environment or os.environ),
         "PYTHONHASHSEED": str(seed),
         # Pynguin refuses to execute the subject under test unless callers
         # explicitly acknowledge that generated inputs may invoke unsafe code.
@@ -300,11 +301,10 @@ def run_pynguin_generation(
         }
 
     try:
-        if setup_command:
-            setup = _run(["/bin/bash", "-c", setup_command], repo_dir, remaining(), env)
-            output_chunks.append(setup.stdout or "")
-            if setup.returncode:
-                return _result("setup_failed", setup.returncode)
+        # Install the generator first so its pytest<9 constraint is established
+        # before repository setup commands that request an otherwise unbounded
+        # pytest. This also avoids trying to downgrade a concurrently modified
+        # shared environment.
         install = _run(
             ["python", "-m", "pip", "install", "--disable-pip-version-check", f"pynguin=={version}"],
             repo_dir, remaining(), env,
@@ -312,6 +312,11 @@ def run_pynguin_generation(
         output_chunks.append(install.stdout or "")
         if install.returncode:
             return _result("installation_failed", install.returncode)
+        if setup_command:
+            setup = _run(["/bin/bash", "-c", setup_command], repo_dir, remaining(), env)
+            output_chunks.append(setup.stdout or "")
+            if setup.returncode:
+                return _result("setup_failed", setup.returncode)
         version_check = _run(
             ["python", "-c", "import importlib.metadata; print(importlib.metadata.version('pynguin'))"],
             repo_dir, remaining(), env,
@@ -433,6 +438,7 @@ def generate_pynguin_prediction(
 ) -> dict:
     """Generate the standard prediction contract in a clean fixed-commit clone."""
     from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
+    from swebench.eval_pipeline.host_environment import isolated_python_environment
 
     out_dir.mkdir(parents=True, exist_ok=True)
     repo_dir = None
@@ -441,10 +447,14 @@ def generate_pynguin_prediction(
             instance.get("repo_url") or instance["repo"], instance["base_commit"],
             github_token, tmp_root=out_dir / "worktrees",
         )
-        prediction = run_pynguin_generation(
-            repo_dir, baseline_coverage,
-            setup_command=instance.get("coverage_setup_command"), **options,
-        )
+        with isolated_python_environment(out_dir / "environments") as environment:
+            prediction = run_pynguin_generation(
+                repo_dir,
+                baseline_coverage,
+                setup_command=instance.get("coverage_setup_command"),
+                base_environment=environment,
+                **options,
+            )
     except Exception as exc:
         prediction = {
             "model_name_or_path": "pynguin", "model_patch": "",

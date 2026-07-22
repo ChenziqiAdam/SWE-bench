@@ -35,7 +35,8 @@ def test_claude_code_inference_writes_backend_tagged_prediction(tmp_path, monkey
     claude = fake_bin / "claude"
     claude.write_text(
         "#!/usr/bin/env python3\n"
-        "import json, pathlib, sys\n"
+        "import json, os, pathlib, sys\n"
+        "assert os.environ['VIRTUAL_ENV'] in os.environ['PATH']\n"
         "prompt = sys.stdin.read()\n"
         "assert 'Change value to 2.' in prompt\n"
         "assert '-p' in sys.argv\n"
@@ -68,6 +69,7 @@ def test_claude_code_inference_writes_backend_tagged_prediction(tmp_path, monkey
                 "base_commit": "HEAD",
                 "problem_statement": "Change value to 2.",
                 "FAIL_TO_PASS": ["tests/test_module.py::test_value"],
+                "standalone": True,
             }
         ],
         output_file=str(out),

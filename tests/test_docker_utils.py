@@ -1,6 +1,18 @@
+from types import SimpleNamespace
+from unittest.mock import Mock
+
+import docker
 import urllib3.response
 
-from swebench.harness.docker_utils import exec_run_with_timeout
+from swebench.harness.docker_utils import exec_run_with_timeout, remove_image
+
+
+def test_remove_image_ignores_generic_not_found_from_podman():
+    images = SimpleNamespace(remove=Mock(side_effect=docker.errors.NotFound("missing")))
+
+    remove_image(SimpleNamespace(images=images), "missing:latest", "quiet")
+
+    images.remove.assert_called_once_with("missing:latest", force=True)
 
 
 def test_urllib3_closed_file_close_error_is_suppressed():

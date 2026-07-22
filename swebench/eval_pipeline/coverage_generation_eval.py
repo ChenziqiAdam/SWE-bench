@@ -13,6 +13,7 @@ from pathlib import Path, PurePosixPath
 
 import docker
 
+from swebench.eval_pipeline.host_environment import isolated_python_environment
 from swebench.eval_pipeline.prediction_utils import read_prediction_rows
 from swebench.harness.constants import MAP_REPO_VERSION_TO_SPECS
 from swebench.harness.docker_build import build_container, close_logger, setup_logger
@@ -547,9 +548,18 @@ def _standalone_phase_script(
     else:
         lines.append("SETUP_EXIT=0")
     lines += _tool_install_lines({**instance, "mutation_command": "coverage-phase"})
-    tools_check = "python -c 'import pytest'"
-    if not instance.get("coverage_command"):
-        tools_check += " && python -m coverage --version"
+    phase_commands = [pytest_command, coverage_command]
+    if supplemental_pytest_files:
+        phase_commands.extend([supplemental_pytest, supplemental_coverage or ""])
+    tool_checks = []
+    if any("pytest" in command for command in phase_commands):
+        tool_checks.append("python -c 'import pytest'")
+    if any(
+        "python -m coverage" in command or command.lstrip().startswith("coverage ")
+        for command in phase_commands
+    ):
+        tool_checks.append("python -m coverage --version")
+    tools_check = " && ".join(tool_checks) or "true"
     primary_test_command = (
         f"run_without_generated_pytests {shlex.quote(pytest_command)}"
         if supplemental_pytest_files else pytest_command
@@ -741,14 +751,16 @@ def _run_standalone_phase(
             tmp_root=out_dir / "worktrees",
         )
         try:
-            completed = subprocess.run(
-                ["/bin/bash", str(script_path.resolve())],
-                cwd=repo_dir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                timeout=timeout,
-            )
+            with isolated_python_environment(out_dir / "environments") as environment:
+                completed = subprocess.run(
+                    ["/bin/bash", str(script_path.resolve())],
+                    cwd=repo_dir,
+                    env=environment,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    timeout=timeout,
+                )
             output, timed_out = completed.stdout or "", False
         except subprocess.TimeoutExpired as exc:
             raw = exc.stdout or ""
@@ -788,14 +800,16 @@ def _run_standalone_mutation_phase(
             tmp_root=out_dir / "worktrees",
         )
         try:
-            completed = subprocess.run(
-                ["/bin/bash", str(script_path.resolve())],
-                cwd=repo_dir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                timeout=timeout,
-            )
+            with isolated_python_environment(out_dir / "environments") as environment:
+                completed = subprocess.run(
+                    ["/bin/bash", str(script_path.resolve())],
+                    cwd=repo_dir,
+                    env=environment,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    timeout=timeout,
+                )
             output, timed_out = completed.stdout or "", False
         except subprocess.TimeoutExpired as exc:
             raw = exc.stdout or ""
