@@ -531,6 +531,52 @@ def _safe_model_dir(prediction: dict) -> str:
     return (prediction.get("model_name_or_path") or "unknown").replace("/", "__")
 
 
+def _write_report_and_cleanup_instance_image(
+    report_path: Path,
+    report: dict,
+    instance: dict,
+    client: docker.DockerClient,
+    clean_images: bool,
+) -> None:
+    """Persist the report before optionally reclaiming its instance image."""
+    report_path.write_text(json.dumps(report, indent=2))
+    if not clean_images:
+        return
+
+    instance_id = instance["instance_id"]
+    try:
+        image_name = make_test_spec(instance).instance_image_key
+    except Exception as exc:
+        logger.warning(
+            "Report saved for %s, but its instance image could not be identified: %s",
+            instance_id,
+            exc,
+        )
+        return
+
+    try:
+        client.images.remove(image_name, force=True)
+        logger.info(
+            "Report saved for %s; removed instance image %s",
+            instance_id,
+            image_name,
+        )
+    except docker.errors.NotFound:
+        logger.info(
+            "Report saved for %s; instance image %s was already absent",
+            instance_id,
+            image_name,
+        )
+    except Exception as exc:
+        # A cleanup failure must not discard or relabel a valid scientific result.
+        logger.warning(
+            "Report saved for %s, but instance image %s could not be removed: %s",
+            instance_id,
+            image_name,
+            exc,
+        )
+
+
 def _evaluate_one(
     instance: dict,
     prediction: dict | None,
@@ -538,6 +584,7 @@ def _evaluate_one(
     client: docker.DockerClient,
     log_dir: str,
     timeout: int,
+    clean_images: bool = False,
 ) -> dict:
     evaluation_started = time.perf_counter()
     instance_id = instance["instance_id"]
@@ -561,7 +608,9 @@ def _evaluate_one(
                 ),
             }
         }
-        report_path.write_text(json.dumps(report, indent=2))
+        _write_report_and_cleanup_instance_image(
+            report_path, report, instance, client, clean_images
+        )
         close_logger(inst_logger)
         return report[instance_id]
 
@@ -682,7 +731,9 @@ def _evaluate_one(
     report[instance_id]["evaluation_wall_time_seconds"] = round(
         time.perf_counter() - evaluation_started, 6
     )
-    report_path.write_text(json.dumps(report, indent=2))
+    _write_report_and_cleanup_instance_image(
+        report_path, report, instance, client, clean_images
+    )
     return report[instance_id]
 
 
@@ -693,6 +744,7 @@ def run_test_generation_evaluation(
     log_dir: str = "logs/run_evaluation",
     max_workers: int = 2,
     timeout: int = 1800,
+    clean_images: bool = False,
 ) -> dict[str, dict]:
     """Run strict generated-test evaluation for selected instances."""
     predictions = _prediction_map(predictions_path)
@@ -709,6 +761,7 @@ def run_test_generation_evaluation(
                     client,
                     log_dir,
                     timeout,
+                    clean_images,
                 ): inst
                 for inst in instances
             }

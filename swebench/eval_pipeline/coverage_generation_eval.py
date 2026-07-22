@@ -1345,6 +1345,58 @@ def common_improved_modules(
     return sorted(targets)
 
 
+def limit_mutation_targets(
+    targets: list[str],
+    baseline_coverage: dict | None,
+    arm_results: list[dict],
+    statement_budget: int,
+) -> tuple[list[str], list[str]]:
+    """Keep the highest-value modules within a deterministic statement budget."""
+    if statement_budget <= 0:
+        return sorted(set(targets)), []
+    baseline_files = (baseline_coverage or {}).get("files") or {}
+
+    def priority(path: str) -> tuple[int, int, str]:
+        before = baseline_files.get(path) or {}
+        gain = 0
+        for result in arm_results:
+            after = ((result.get("coverage_after") or {}).get("files") or {}).get(path)
+            if after:
+                gain += max(0, after.get("covered_lines", 0) - before.get("covered_lines", 0))
+                gain += max(
+                    0,
+                    after.get("covered_branches", 0)
+                    - before.get("covered_branches", 0),
+                )
+        statements = int(before.get("num_statements", 0))
+        return -gain, statements, path
+
+    ranked_targets = sorted(set(targets), key=priority)
+    selected: list[str] = []
+    used = 0
+    for path in ranked_targets:
+        statements = int((baseline_files.get(path) or {}).get("num_statements", 0))
+        if statements and used + statements > statement_budget:
+            continue
+        selected.append(path)
+        used += statements
+    # A budget smaller than every candidate should still produce a mutation
+    # measurement rather than silently disabling the phase.
+    if not selected and ranked_targets:
+        selected.append(ranked_targets[0])
+    excluded = sorted(set(targets) - set(selected))
+    return sorted(selected), excluded
+
+
+def _eligible_for_mutation(result: dict) -> bool:
+    """Mutation is meaningful only for a valid patch whose tests pass."""
+    return (
+        result.get("after_tests_passed") is not False
+        and result.get("tests_only_patch") is not False
+        and result.get("no_existing_test_lines_removed") is not False
+    )
+
+
 def evaluate_common_mutation_targets(
     instance: dict,
     predictions: dict[str, dict],
@@ -1360,21 +1412,33 @@ def evaluate_common_mutation_targets(
     Under generated-test profiles, each arm uses only that arm's touched test
     modules; this is explicitly reported as marginal mutation effectiveness.
     """
+    eligible_results = [
+        result for result in arm_results.values() if _eligible_for_mutation(result)
+    ]
     selected_targets = common_improved_modules(
-        baseline.get("coverage"), list(arm_results.values()),
+        baseline.get("coverage"), eligible_results,
         infer_coverage_targets(instance),
     )
-    targets, excluded_targets = exclude_mutation_targets(
+    compatible_targets, compatibility_excluded_targets = exclude_mutation_targets(
         selected_targets, instance.get("mutation_excluded_targets")
+    )
+    targets, budget_excluded_targets = limit_mutation_targets(
+        compatible_targets,
+        baseline.get("coverage"),
+        eligible_results,
+        int(instance.get("mutation_target_statement_budget", 500)),
+    )
+    excluded_targets = sorted(
+        set(compatibility_excluded_targets) | set(budget_excluded_targets)
     )
     root = Path(log_dir) / run_id / "comparison" / instance["instance_id"]
     root.mkdir(parents=True, exist_ok=True)
-    def run_arm(name: str, patch: str, apply_patch: bool) -> dict:
+    def run_arm(name: str, patch: str, apply_patch: bool, eligible: bool = True) -> dict:
         arm_dir = root / name
         arm_dir.mkdir(parents=True, exist_ok=True)
         patch_path = arm_dir / "generated_test.patch"
         patch_path.write_text(patch)
-        if not targets:
+        if not targets or not eligible:
             return {
                 "mutation": None, "exit_code": 125, "timed_out": False,
                 "setup_exit_code": None, "runtime": 0.0,
@@ -1408,6 +1472,8 @@ def evaluate_common_mutation_targets(
         "coverage_line_delta": 0.0, "coverage_branch_delta": 0.0,
         "mutation_targets": targets,
         "mutation_excluded_targets": excluded_targets,
+        "mutation_budget_excluded_targets": budget_excluded_targets,
+        "mutation_skipped_ineligible": False,
         "mutation_after": original_mutation["mutation"],
         "mutation_after_partial": original_mutation["partial"],
         "mutation_after_exit_code": original_mutation["exit_code"],
@@ -1428,14 +1494,18 @@ def evaluate_common_mutation_targets(
     for name, result in arm_results.items():
         prediction = predictions.get(name) or {}
         patch = prediction.get("model_patch") or ""
-        arm_mutation = run_arm(name, patch, bool(patch.strip()))
+        arm_mutation = run_arm(
+            name, patch, bool(patch.strip()), _eligible_for_mutation(result)
+        )
         result.update({
             "method": name,
             "method_version": (prediction.get("metrics") or {}).get("version", ""),
             "seed": (prediction.get("metrics") or {}).get("seed", ""),
             "mutation_targets": targets,
             "mutation_excluded_targets": excluded_targets,
+            "mutation_budget_excluded_targets": budget_excluded_targets,
             "mutation_skipped_no_selected_modules": not targets,
+            "mutation_skipped_ineligible": not _eligible_for_mutation(result),
             "mutation_before": original_mutation["mutation"],
             "mutation_after": arm_mutation["mutation"],
             "mutation_before_partial": original_mutation["partial"],

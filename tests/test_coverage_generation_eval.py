@@ -18,6 +18,7 @@ from swebench.eval_pipeline.coverage_generation_eval import (
     format_baseline_coverage_report,
     infer_coverage_targets,
     inspect_test_patch,
+    limit_mutation_targets,
     parse_coverage_json,
     parse_mutation_results,
     parse_mutation_progress,
@@ -43,6 +44,52 @@ def test_common_mutation_gain_refreshes_deferred_no_gain_status():
     }
     _refresh_status_after_common_mutation(result, 0.0, 14.8, False)
     assert result == {"status": "resolved", "failure_reason": ""}
+
+
+def test_mutation_target_budget_prioritizes_coverage_gain():
+    baseline = {
+        "files": {
+            "pkg/large.py": {"covered_lines": 10, "covered_branches": 2, "num_statements": 450},
+            "pkg/high_gain.py": {"covered_lines": 1, "covered_branches": 0, "num_statements": 300},
+            "pkg/small.py": {"covered_lines": 1, "covered_branches": 0, "num_statements": 100},
+        }
+    }
+    arm = {
+        "coverage_after": {
+            "files": {
+                "pkg/large.py": {"covered_lines": 11, "covered_branches": 2},
+                "pkg/high_gain.py": {"covered_lines": 21, "covered_branches": 5},
+                "pkg/small.py": {"covered_lines": 6, "covered_branches": 1},
+            }
+        }
+    }
+    selected, excluded = limit_mutation_targets(
+        list(baseline["files"]), baseline, [arm], 500
+    )
+    assert selected == ["pkg/high_gain.py", "pkg/small.py"]
+    assert excluded == ["pkg/large.py"]
+
+
+def test_mutation_target_budget_skips_oversized_top_candidate():
+    baseline = {
+        "files": {
+            "pkg/huge.py": {"covered_lines": 0, "num_statements": 900},
+            "pkg/small.py": {"covered_lines": 0, "num_statements": 100},
+        }
+    }
+    arm = {
+        "coverage_after": {
+            "files": {
+                "pkg/huge.py": {"covered_lines": 20},
+                "pkg/small.py": {"covered_lines": 5},
+            }
+        }
+    }
+    selected, excluded = limit_mutation_targets(
+        list(baseline["files"]), baseline, [arm], 500
+    )
+    assert selected == ["pkg/small.py"]
+    assert excluded == ["pkg/huge.py"]
 
 
 def test_common_mutation_does_not_override_test_failure():

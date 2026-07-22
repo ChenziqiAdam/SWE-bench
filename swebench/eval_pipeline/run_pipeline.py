@@ -276,6 +276,12 @@ def parse_args():
         help="Standalone command that prints the mutation summary.",
     )
     p.add_argument(
+        "--mutation_target_statement_budget", type=int, default=500,
+        help="Maximum baseline executable statements selected for standalone mutation "
+             "testing (default 500; 0 disables the limit). Explicit --coverage_target "
+             "values are still subject to this safety budget.",
+    )
+    p.add_argument(
         "--coverage_tool_install_command", default=None,
         help="Optional standalone coverage/mutation tool installation command.",
     )
@@ -404,9 +410,10 @@ def parse_args():
                    help="Optional model override for Claude Code CLI. Defaults to --model. Only "
                         "used with --agent_backend claude_code.")
     p.add_argument("--clean_images", action="store_true",
-                   help="Delete per-instance Docker images after eval (cache_level=instance). "
-                        "Saves disk space on large runs at the cost of slower re-runs. "
-                        "Env-level images (sweb.env.*) are always kept for reuse.")
+                   help="Delete per-instance Docker images after eval. In test-generation "
+                        "mode deletion occurs only after report.json is saved. Saves disk "
+                        "space on large runs at the cost of slower re-runs; shared "
+                        "sweb.base.* and sweb.env.* images are kept.")
     p.add_argument("--no_ingest_cache", action="store_true",
                    help="Ignore the ingest row cache and re-fetch all GitHub data from scratch.")
     return p.parse_args()
@@ -608,6 +615,7 @@ def _standalone_coverage_instance(args) -> dict:
         "mutation_test_style": profile.get("mutation_test_style"),
         "mutation_tests_dir": profile.get("mutation_tests_dir"),
         "mutation_excluded_targets": profile.get("mutation_excluded_targets", []),
+        "mutation_target_statement_budget": args.mutation_target_statement_budget,
         "coverage_phase_timeout": profile.get("coverage_phase_timeout", 0),
         "pynguin_warning_filters": profile.get("pynguin_warning_filters", []),
         "pynguin_ignore_noncallable_signatures": profile.get(
@@ -884,6 +892,12 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                 {instance["instance_id"]: arm_results["pynguin"]}, instances,
                 str(output_dir / f"{args.run_id}_pynguin_results.csv"),
                 predictions_path=str(output_dir / "pynguin_predictions.jsonl"),
+                run_config={
+                    "method": "pynguin",
+                    "version": args.pynguin_version,
+                    "seed": args.pynguin_seed,
+                    "run_id": args.run_id,
+                },
             )
     else:
         results = collect_test_generation_results(
@@ -1248,6 +1262,7 @@ def main():
                     log_dir=args.log_dir,
                     max_workers=args.docker_workers,
                     timeout=1800,
+                    clean_images=args.clean_images,
                 )
             elif args.eval_mode == "coverage_generation":
                 from swebench.eval_pipeline.coverage_generation_eval import (
@@ -1338,6 +1353,7 @@ def main():
         "revalidate": args.revalidate,
         "remine": args.remine,
         "mine_workers": args.mine_workers,
+        "clean_images": args.clean_images,
         "sweagent_max_input_tokens": args.sweagent_max_input_tokens,
         "codex_timeout": args.codex_timeout,
         "codex_sandbox": args.codex_sandbox,

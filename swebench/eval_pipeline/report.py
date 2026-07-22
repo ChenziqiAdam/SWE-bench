@@ -481,8 +481,14 @@ def render_coverage_generation_table(
             "mutation_excluded_targets": ";".join(
                 info.get("mutation_excluded_targets") or []
             ),
+            "mutation_budget_excluded_targets": ";".join(
+                info.get("mutation_budget_excluded_targets") or []
+            ),
             "mutation_skipped_no_selected_modules": (
                 "yes" if info.get("mutation_skipped_no_selected_modules") else "no"
+            ),
+            "mutation_skipped_ineligible": (
+                "yes" if info.get("mutation_skipped_ineligible") else "no"
             ),
             "base_commit": info.get("base_commit", inst.get("base_commit", "")),
             "status": status,
@@ -645,6 +651,12 @@ def render_coverage_comparison_table(rows: list[dict], output_csv: str) -> None:
             "mutation_targets": ";".join(info.get("mutation_targets") or []),
             "mutation_excluded_targets": ";".join(
                 info.get("mutation_excluded_targets") or []
+            ),
+            "mutation_budget_excluded_targets": ";".join(
+                info.get("mutation_budget_excluded_targets") or []
+            ),
+            "mutation_skipped_ineligible": (
+                "yes" if info.get("mutation_skipped_ineligible") else "no"
             ),
             "mutation_score": mutation.get("score", ""),
             "mutation_score_delta": info.get("mutation_score_delta", ""),

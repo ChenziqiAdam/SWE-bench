@@ -1,4 +1,5 @@
 import json
+import sys
 
 from swebench.eval_pipeline.prompt_builder import build_agent_prompt
 from swebench.eval_pipeline.test_generation_eval import (
@@ -17,8 +18,11 @@ from swebench.eval_pipeline.test_generation_eval import (
     _test_execution_failed,
     _openmm_generated_pytest_targets,
     _test_command,
+    _write_report_and_cleanup_instance_image,
     classify_test_generation_result,
+    run_test_generation_evaluation,
 )
+from swebench.eval_pipeline.run_pipeline import parse_args
 
 
 def test_test_generation_prompt_requests_tests_only():
@@ -34,6 +38,92 @@ def test_test_generation_prompt_requests_tests_only():
     assert "regression test" in prompt
     assert "Do not fix the bug" in prompt
     assert "Return only a valid unified git diff" in prompt
+
+
+def test_clean_images_cli_is_opt_in(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["run_pipeline"])
+    assert parse_args().clean_images is False
+
+    monkeypatch.setattr(sys, "argv", ["run_pipeline", "--clean_images"])
+    assert parse_args().clean_images is True
+
+
+def test_report_is_saved_before_instance_image_cleanup(monkeypatch, tmp_path):
+    report_path = tmp_path / "report.json"
+    events = []
+
+    class FakeImages:
+        def remove(self, image_name, force):
+            assert json.loads(report_path.read_text()) == {"demo__repo-1": {"status": "resolved"}}
+            events.append((image_name, force))
+
+    class FakeSpec:
+        instance_image_key = "sweb.eval.x86_64.demo__repo-1:latest"
+
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.make_test_spec",
+        lambda _instance: FakeSpec(),
+    )
+    _write_report_and_cleanup_instance_image(
+        report_path,
+        {"demo__repo-1": {"status": "resolved"}},
+        {"instance_id": "demo__repo-1"},
+        type("FakeClient", (), {"images": FakeImages()})(),
+        clean_images=True,
+    )
+
+    assert events == [("sweb.eval.x86_64.demo__repo-1:latest", True)]
+
+
+def test_report_cleanup_is_disabled_by_default(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.make_test_spec",
+        lambda _instance: (_ for _ in ()).throw(AssertionError("unexpected cleanup")),
+    )
+    report_path = tmp_path / "report.json"
+    _write_report_and_cleanup_instance_image(
+        report_path,
+        {"demo__repo-1": {"status": "resolved"}},
+        {"instance_id": "demo__repo-1"},
+        object(),
+        clean_images=False,
+    )
+
+    assert report_path.exists()
+
+
+def test_evaluation_runner_propagates_clean_images(monkeypatch, tmp_path):
+    calls = []
+
+    class FakeClient:
+        def close(self):
+            pass
+
+    def fake_evaluate(*args):
+        calls.append(args[-1])
+        return {"status": "resolved"}
+
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.docker.from_env",
+        lambda: FakeClient(),
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval._prediction_map",
+        lambda _path: {"demo__repo-1": {"model_patch": "patch"}},
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval._evaluate_one", fake_evaluate
+    )
+
+    run_test_generation_evaluation(
+        [{"instance_id": "demo__repo-1"}],
+        tmp_path / "predictions.jsonl",
+        "run",
+        max_workers=1,
+        clean_images=True,
+    )
+
+    assert calls == [True]
 
 
 def test_test_generation_classifies_strict_fail_then_pass():
