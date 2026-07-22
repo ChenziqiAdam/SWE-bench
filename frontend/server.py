@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import csv
 import json
+from collections import Counter
 from glob import glob
 from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
@@ -19,7 +21,9 @@ from swebench.eval_pipeline.prompt_builder import (
 app = FastAPI(title="SWE-bench Eval Viewer")
 
 OUTPUTS_DIR = Path(__file__).parent.parent / "outputs"
+LOGS_DIR = Path(__file__).parent.parent / "logs" / "run_evaluation"
 FRONTEND_DIR = Path(__file__).parent
+TRAJECTORY_VALUE_LIMIT = 20_000
 
 
 # ── data loaders ──────────────────────────────────────────────────────────────
@@ -73,7 +77,8 @@ def _load_agent_predictions(run_dir: Path) -> dict[str, dict]:
 
 
 def _load_eval_results(run_dir: Path) -> dict[str, dict]:
-    csvs = glob(str(run_dir / "*.csv"))
+    preferred = run_dir / f"{run_dir.name}_results.csv"
+    csvs = [str(preferred)] if preferred.is_file() else sorted(glob(str(run_dir / "*.csv")))
     if not csvs:
         return {}
     with open(csvs[0], newline="") as f:
@@ -81,11 +86,197 @@ def _load_eval_results(run_dir: Path) -> dict[str, dict]:
         return {row["instance_id"]: row for row in reader}
 
 
+def _clip(value: Any, limit: int = TRAJECTORY_VALUE_LIMIT) -> tuple[Any, bool]:
+    """Bound large tool payloads while preserving their JSON shape when possible."""
+    if isinstance(value, str):
+        if len(value) <= limit:
+            return value, False
+        return value[:limit] + f"\n… truncated {len(value) - limit:,} characters", True
+    encoded = json.dumps(value, ensure_ascii=False)
+    if len(encoded) <= limit:
+        return value, False
+    return encoded[:limit] + f"\n… truncated {len(encoded) - limit:,} characters", True
+
+
+def _trajectory_files(run_dir: Path, instance_id: str) -> list[Path]:
+    log_dir = run_dir / "claude_code_logs"
+    if not log_dir.is_dir():
+        return []
+    base = log_dir / f"{instance_id}.jsonl"
+    attempts = sorted(log_dir.glob(f"{instance_id}.attempt-*.jsonl"))
+    return ([base] if base.is_file() else []) + attempts
+
+
+def _load_trajectory(path: Path) -> dict:
+    """Normalize Claude Code JSONL into a compact, browser-friendly timeline."""
+    events: list[dict] = []
+    tool_events: dict[str, dict] = {}
+    counts: Counter[str] = Counter()
+    tool_counts: Counter[str] = Counter()
+    ignored_thinking_tokens = 0
+    malformed_lines = 0
+    raw_line_count = 0
+    init: dict = {}
+    result: dict | None = None
+
+    with path.open(errors="replace") as handle:
+        for raw_line_count, line in enumerate(handle, 1):
+            try:
+                raw = json.loads(line)
+            except json.JSONDecodeError:
+                malformed_lines += 1
+                continue
+
+            event_type = raw.get("type", "unknown")
+            subtype = raw.get("subtype")
+            if event_type == "system" and subtype == "thinking_tokens":
+                ignored_thinking_tokens += 1
+                continue
+            if event_type == "system" and subtype == "init":
+                init = {
+                    key: raw.get(key)
+                    for key in ("session_id", "model", "cwd", "claude_code_version", "permissionMode")
+                }
+                events.append({"seq": raw_line_count, "kind": "system", "subtype": "init", "data": init})
+                counts["system"] += 1
+                continue
+            if event_type == "assistant":
+                for block in raw.get("message", {}).get("content", []):
+                    kind = block.get("type", "assistant")
+                    if kind in {"text", "thinking"}:
+                        text, truncated = _clip(block.get(kind, ""))
+                        events.append({
+                            "seq": raw_line_count,
+                            "kind": kind,
+                            "text": text,
+                            "truncated": truncated,
+                        })
+                        counts[kind] += 1
+                    elif kind == "tool_use":
+                        tool_id = block.get("id", "")
+                        payload, truncated = _clip(block.get("input", {}))
+                        event = {
+                            "seq": raw_line_count,
+                            "kind": "tool",
+                            "tool_id": tool_id,
+                            "name": block.get("name", "Tool"),
+                            "input": payload,
+                            "input_truncated": truncated,
+                            "result": None,
+                        }
+                        events.append(event)
+                        if tool_id:
+                            tool_events[tool_id] = event
+                        counts["tool"] += 1
+                        tool_counts[event["name"]] += 1
+                continue
+            if event_type == "user":
+                for block in raw.get("message", {}).get("content", []):
+                    if block.get("type") == "tool_result":
+                        content, truncated = _clip(block.get("content", ""))
+                        tool_id = block.get("tool_use_id", "")
+                        tool_result = {
+                            "content": content,
+                            "is_error": bool(block.get("is_error")),
+                            "truncated": truncated,
+                            "seq": raw_line_count,
+                        }
+                        if tool_id in tool_events:
+                            tool_events[tool_id]["result"] = tool_result
+                        else:
+                            events.append({
+                                "seq": raw_line_count,
+                                "kind": "orphan_result",
+                                "tool_id": tool_id,
+                                **tool_result,
+                            })
+                            counts["orphan_result"] += 1
+                    elif block.get("type") == "text":
+                        text, truncated = _clip(block.get("text", ""))
+                        events.append({
+                            "seq": raw_line_count,
+                            "kind": "user",
+                            "text": text,
+                            "truncated": truncated,
+                        })
+                        counts["user"] += 1
+                continue
+            if event_type == "result":
+                result = {
+                    key: raw.get(key)
+                    for key in (
+                        "subtype", "is_error", "duration_ms", "duration_api_ms",
+                        "num_turns", "result", "total_cost_usd", "usage",
+                    )
+                    if key in raw
+                }
+                events.append({"seq": raw_line_count, "kind": "result", "data": result})
+                counts["result"] += 1
+                continue
+
+            data, truncated = _clip({
+                key: value for key, value in raw.items()
+                if key not in {"message", "uuid", "session_id"}
+            })
+            events.append({
+                "seq": raw_line_count,
+                "kind": "system",
+                "subtype": subtype or event_type,
+                "data": data,
+                "truncated": truncated,
+            })
+            counts["system"] += 1
+
+    events.sort(key=lambda event: event["seq"])
+    return {
+        "summary": {
+            "source": path.name,
+            "size_bytes": path.stat().st_size,
+            "raw_line_count": raw_line_count,
+            "visible_event_count": len(events),
+            "ignored_thinking_token_events": ignored_thinking_tokens,
+            "malformed_lines": malformed_lines,
+            "terminal_result_seen": result is not None,
+            "completion": "completed" if result is not None else "interrupted",
+            "counts": dict(counts),
+            "tool_counts": dict(tool_counts.most_common()),
+            **init,
+        },
+        "events": events,
+        "result": result,
+    }
+
+
 def _run_dir(run: str) -> Path:
     d = OUTPUTS_DIR / run
     if not d.is_dir() or not (d / "instances.jsonl").exists():
         raise HTTPException(status_code=404, detail=f"Run '{run}' not found")
     return d
+
+
+def _load_instance_report(run: str, instance_id: str) -> dict:
+    """Load the compact scalar portion of the newest per-instance report."""
+    candidates = sorted(
+        LOGS_DIR.glob(f"{run}_*/*/{instance_id}/report.json"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    if not candidates:
+        return {}
+    try:
+        raw = json.loads(candidates[0].read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    report = raw.get(instance_id, raw)
+    if not isinstance(report, dict):
+        return {}
+    excluded = {"coverage_before", "coverage_after", "inference_metrics"}
+    compact = {
+        key: value for key, value in report.items()
+        if key not in excluded and not isinstance(value, dict)
+    }
+    compact["report_path"] = str(candidates[0].relative_to(LOGS_DIR.parent.parent))
+    return compact
 
 
 SCIENCE_CASES = {
@@ -173,6 +364,7 @@ def overview(run: str) -> list[dict]:
             "is_science_case": science is not None,
             "science_domain": science["domain"] if science else "",
             "science_challenge": science["challenge"] if science else "",
+            "has_trajectory": bool(_trajectory_files(run_dir, iid)),
         })
     return rows
 
@@ -230,7 +422,35 @@ def instance_detail(run: str, instance_id: str) -> dict:
             "gold_passed_tests": ev.get("gold_passed_tests", ""),
         },
         "science_analysis": SCIENCE_CASES.get(instance_id),
+        "evaluation": {
+            "csv": ev,
+            "report": _load_instance_report(run, instance_id),
+            "inference_metrics": agent_pred.get("metrics", {}),
+        },
     }
+
+
+@app.get("/api/runs/{run}/instance/{instance_id}/trajectory")
+def instance_trajectory(run: str, instance_id: str, source: str | None = None) -> dict:
+    """Return a normalized agent event timeline with tool results paired."""
+    run_dir = _run_dir(run)
+    if instance_id not in _load_instances(run_dir):
+        raise HTTPException(status_code=404, detail=f"Instance '{instance_id}' not found")
+    files = _trajectory_files(run_dir, instance_id)
+    if not files:
+        raise HTTPException(status_code=404, detail="No trajectory found for this instance")
+    if source is not None:
+        if Path(source).name != source:
+            raise HTTPException(status_code=400, detail="Invalid trajectory source")
+        matches = [path for path in files if path.name == source]
+        if not matches:
+            raise HTTPException(status_code=404, detail=f"Trajectory source '{source}' not found")
+        selected = matches[0]
+    else:
+        selected = files[0]
+    payload = _load_trajectory(selected)
+    payload["sources"] = [path.name for path in files]
+    return payload
 
 
 # ── static files (serves index.html at /) ────────────────────────────────────

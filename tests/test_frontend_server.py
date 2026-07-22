@@ -1,7 +1,6 @@
 """Tests for frontend/server.py API endpoints."""
 import json
 import pytest
-from pathlib import Path
 from fastapi.testclient import TestClient
 
 
@@ -80,6 +79,22 @@ def client(tmp_path):
             "eval_mode": "test_generation",
         }) + "\n")
 
+    trajectory_dir = run_dir / "claude_code_logs"
+    trajectory_dir.mkdir()
+    trajectory = [
+        {"type": "system", "subtype": "init", "session_id": "session-1", "model": "test-model", "cwd": "/work"},
+        {"type": "system", "subtype": "thinking_tokens", "token_count": 4},
+        {"type": "assistant", "message": {"content": [{"type": "text", "text": "I will inspect the tests."}]}},
+        {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "tool-1", "name": "Bash", "input": {"command": "pytest -q"}}]}},
+        {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "tool-1", "content": "2 passed", "is_error": False}]}},
+        {"type": "result", "subtype": "success", "num_turns": 2},
+    ]
+    with open(trajectory_dir / "scipy__scipy-100.jsonl", "w") as f:
+        for event in trajectory:
+            f.write(json.dumps(event) + "\n")
+    with open(trajectory_dir / "scipy__scipy-100.attempt-1.jsonl", "w") as f:
+        f.write(json.dumps({"type": "assistant", "message": {"content": [{"type": "text", "text": "attempt one"}]}}) + "\n")
+
     # level3 absent (no file) — tests graceful handling
 
     # CSV eval results
@@ -97,9 +112,12 @@ def client(tmp_path):
     # Import server with patched OUTPUTS_DIR
     import frontend.server as srv
     original_outputs = srv.OUTPUTS_DIR
+    original_logs = srv.LOGS_DIR
     srv.OUTPUTS_DIR = tmp_path
+    srv.LOGS_DIR = tmp_path / "evaluation_logs"
     yield TestClient(srv.app)
     srv.OUTPUTS_DIR = original_outputs
+    srv.LOGS_DIR = original_logs
 
 
 # ── /api/runs ─────────────────────────────────────────────────────────────────
@@ -137,6 +155,14 @@ def test_overview_merges_eval_results(client):
     assert row["buildable"] == "yes"
     assert row["level1_resolved"] == "PASS"
     assert row["level2_resolved"] == "FAIL"
+
+
+def test_overview_reports_trajectory_availability(client):
+    rows = client.get("/api/runs/my_run/overview").json()
+    scipy = next(r for r in rows if r["instance_id"] == "scipy__scipy-100")
+    numpy = next(r for r in rows if r["instance_id"] == "numpy__numpy-200")
+    assert scipy["has_trajectory"] is True
+    assert numpy["has_trajectory"] is False
 
 
 def test_overview_unknown_run_returns_404(client):
@@ -218,3 +244,43 @@ def test_instance_detail_unknown_id_returns_404(client):
 def test_instance_detail_unknown_run_returns_404(client):
     resp = client.get("/api/runs/nonexistent/instance/scipy__scipy-100")
     assert resp.status_code == 404
+
+
+# ── /api/runs/{run}/instance/{id}/trajectory ─────────────────────────────────
+
+def test_trajectory_filters_token_events_and_pairs_tool_results(client):
+    resp = client.get("/api/runs/my_run/instance/scipy__scipy-100/trajectory")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["summary"]["raw_line_count"] == 6
+    assert data["summary"]["ignored_thinking_token_events"] == 1
+    assert data["summary"]["terminal_result_seen"] is True
+    assert data["summary"]["completion"] == "completed"
+    tool = next(event for event in data["events"] if event["kind"] == "tool")
+    assert tool["name"] == "Bash"
+    assert tool["input"]["command"] == "pytest -q"
+    assert tool["result"]["content"] == "2 passed"
+
+
+def test_trajectory_lists_and_selects_attempt_sources(client):
+    base = client.get("/api/runs/my_run/instance/scipy__scipy-100/trajectory").json()
+    assert base["sources"] == [
+        "scipy__scipy-100.jsonl",
+        "scipy__scipy-100.attempt-1.jsonl",
+    ]
+    attempt = client.get(
+        "/api/runs/my_run/instance/scipy__scipy-100/trajectory",
+        params={"source": "scipy__scipy-100.attempt-1.jsonl"},
+    ).json()
+    assert attempt["summary"]["completion"] == "interrupted"
+    assert attempt["events"][0]["text"] == "attempt one"
+
+
+def test_trajectory_missing_and_invalid_sources(client):
+    missing = client.get("/api/runs/my_run/instance/numpy__numpy-200/trajectory")
+    assert missing.status_code == 404
+    invalid = client.get(
+        "/api/runs/my_run/instance/scipy__scipy-100/trajectory",
+        params={"source": "../secret.jsonl"},
+    )
+    assert invalid.status_code == 400
