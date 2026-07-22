@@ -64,6 +64,8 @@ def test_biopython_profile_builds_extensions_and_uses_offline_runner(monkeypatch
         ],
     )
     instance = _standalone_coverage_instance(parse_args())
+    assert "setuptools" in instance["coverage_setup_command"]
+    assert "'pytest<9'" in instance["coverage_setup_command"]
     assert "build_ext --inplace" in instance["coverage_setup_command"]
     assert instance["coverage_test_command"] == "python Tests/run_tests.py --offline"
     assert "--source=Bio" in instance["coverage_command"]

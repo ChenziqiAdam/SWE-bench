@@ -26,7 +26,7 @@ DEFAULT_COVERAGE_TEST_COMMAND = "python -m pytest"
 STANDALONE_COVERAGE_REPO_PROFILES = {
     "biopython/biopython": {
         "coverage_setup_command": (
-            "python -m pip install -e . pytest && "
+            "python -m pip install -e . setuptools 'pytest<9' && "
             "python setup.py build_ext --inplace"
         ),
         "coverage_test_command": "python Tests/run_tests.py --offline",
