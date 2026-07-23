@@ -2,11 +2,15 @@ import csv
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
+
+import pytest
 
 from swebench.eval_pipeline.coverage_generation_eval import common_improved_modules
 from swebench.eval_pipeline.pynguin_generation import (
     _NONCALLABLE_SIGNATURE_COMPAT_SOURCE,
+    _run,
     conventional_test_directory,
     module_name_from_path,
     prune_failing_pynguin_tests,
@@ -102,7 +106,7 @@ def test_pynguin_cache_is_matched_and_replaced_by_instance(monkeypatch):
         "total_budget_seconds": args.pynguin_total_budget,
         "module_slice_seconds": args.pynguin_module_slice,
         "assertion_mode": args.pynguin_assertion_mode,
-        "postprocessing_version": 6,
+        "postprocessing_version": 7,
     }
     rows = [
         {"instance_id": "repo-a", "model_patch": "a", "metrics": matching_metrics},
@@ -180,6 +184,7 @@ def test_pynguin_postprocessing_repairs_shadowed_imports_and_checkout_assertions
     assert metrics == {
         "rewritten_import_count": 2,
         "removed_nonportable_assertion_count": 1,
+        "removed_strict_xfail_test_count": 0,
         "network_guard_injected_count": 1,
         "warning_filter_count": 0,
     }
@@ -198,6 +203,26 @@ def test_pynguin_postprocessing_adds_only_configured_warning_filters(tmp_path):
     assert "filterwarnings('ignore')" not in sanitized
     assert metrics["warning_filter_count"] == 1
     compile(sanitized, "<generated>", "exec")
+
+
+def test_pynguin_postprocessing_removes_strict_xfail_tests(tmp_path):
+    sanitized, metrics = sanitize_pynguin_test(
+        "import pytest\n\n"
+        "@pytest.mark.xfail(strict=True)\n"
+        "def test_unstable_expected_failure():\n"
+        "    raise ValueError\n\n"
+        "@pytest.mark.xfail\n"
+        "def test_non_strict_xfail():\n"
+        "    raise ValueError\n\n"
+        "def test_passes():\n"
+        "    assert True\n",
+        tmp_path,
+    )
+
+    assert "test_unstable_expected_failure" not in sanitized
+    assert "test_non_strict_xfail" in sanitized
+    assert "test_passes" in sanitized
+    assert metrics["removed_strict_xfail_test_count"] == 1
 
 
 def test_pynguin_network_guard_xfails_network_calls(tmp_path):
@@ -287,7 +312,10 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
         if command[:3] == ["python", "-m", "pynguin"]:
             output = Path(command[command.index("--output-path") + 1])
             output.mkdir(parents=True, exist_ok=True)
-            (output / "test_generated.py").write_text("def test_x():\n    assert 1\n")
+            (output / "test_generated.py").write_text(
+                "import pkg.core as module_0\n\n"
+                "def test_x():\n    assert 1\n"
+            )
         stdout = (
             "diff --git a/tests/test_pynguin_pkg_core.py b/tests/test_pynguin_pkg_core.py\n"
             if command[:2] == ["git", "diff"] else ""
@@ -311,7 +339,7 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
     assert result["model_patch"].startswith("diff --git")
     assert result["metrics"]["successful_modules"] == ["pkg.core"]
     assert result["metrics"]["module_attempts"][0]["exit_code"] == 0
-    assert result["metrics"]["postprocessing_version"] == 6
+    assert result["metrics"]["postprocessing_version"] == 7
     assert result["metrics"]["network_guard_injected_count"] == 1
     finalization_calls = [call for call in calls if call[0][:2] == ["git", "add"]]
     assert finalization_calls[0][1] >= 1
@@ -329,6 +357,7 @@ def test_scheduler_revalidates_after_pruning_failed_generated_test(
             output = Path(command[command.index("--output-path") + 1])
             output.mkdir(parents=True, exist_ok=True)
             (output / "test_generated.py").write_text(
+                "import pkg.core as module_0\n\n"
                 "def test_good():\n    assert True\n\n"
                 "def test_bad():\n    raise RuntimeWarning('warning-as-error')\n"
             )
@@ -369,6 +398,75 @@ def test_scheduler_revalidates_after_pruning_failed_generated_test(
     assert result["metrics"]["validation_exit_code"] == 0
 
 
+def test_scheduler_isolates_modules_and_rejects_mismatched_export(
+    tmp_path, monkeypatch
+):
+    (tmp_path / "tests").mkdir()
+    output_paths = []
+
+    def fake_run(command, repo_dir, timeout, env):
+        if command[:3] == ["python", "-m", "pynguin"]:
+            module = command[command.index("--module-name") + 1]
+            output = Path(command[command.index("--output-path") + 1])
+            output_paths.append(output)
+            output.mkdir(parents=True, exist_ok=True)
+            imported_module = module if module == "pkg.a" else "pkg.a"
+            (output / "test_generated.py").write_text(
+                f"import {imported_module} as module_0\n\n"
+                "def test_x():\n    assert True\n"
+            )
+        stdout = (
+            "diff --git a/tests/test_pynguin_pkg_a.py "
+            "b/tests/test_pynguin_pkg_a.py\n"
+            if command[:2] == ["git", "diff"] else ""
+        )
+        return subprocess.CompletedProcess(command, 0, stdout=stdout)
+
+    monkeypatch.setattr("swebench.eval_pipeline.pynguin_generation._run", fake_run)
+    result = run_pynguin_generation(
+        tmp_path,
+        {"files": {
+            "pkg/a.py": {
+                "covered_lines": 0, "num_statements": 1,
+                "covered_branches": 0, "num_branches": 0,
+            },
+            "pkg/b.py": {
+                "covered_lines": 0, "num_statements": 1,
+                "covered_branches": 0, "num_branches": 0,
+            },
+        }},
+        total_budget=20,
+    )
+
+    assert len(output_paths) == 2
+    assert output_paths[0] != output_paths[1]
+    assert output_paths[0].parent == output_paths[1].parent
+    assert result["metrics"]["successful_modules"] == ["pkg.a"]
+    assert result["metrics"]["rejected_mismatched_module_count"] == 1
+    assert result["metrics"]["module_attempts"][1]["status"] == "no_tests_generated"
+
+
+def test_run_kills_child_process_group_on_timeout(tmp_path):
+    leaked = tmp_path / "orphan-worker-output"
+    child = (
+        "import time\n"
+        "from pathlib import Path\n"
+        "time.sleep(0.5)\n"
+        f"Path({str(leaked)!r}).write_text('leaked')\n"
+    )
+    parent = (
+        "import subprocess, sys, time\n"
+        f"subprocess.Popen([sys.executable, '-c', {child!r}])\n"
+        "time.sleep(5)\n"
+    )
+
+    with pytest.raises(subprocess.TimeoutExpired):
+        _run([sys.executable, "-c", parent], tmp_path, 0.1, os.environ.copy())
+    time.sleep(0.7)
+
+    assert not leaked.exists()
+
+
 def test_scheduler_scopes_noncallable_signature_compatibility(tmp_path, monkeypatch):
     (tmp_path / "tests").mkdir()
     generation_environments = []
@@ -378,7 +476,10 @@ def test_scheduler_scopes_noncallable_signature_compatibility(tmp_path, monkeypa
             generation_environments.append(env.copy())
             output = Path(command[command.index("--output-path") + 1])
             output.mkdir(parents=True, exist_ok=True)
-            (output / "test_generated.py").write_text("def test_x():\n    assert 1\n")
+            (output / "test_generated.py").write_text(
+                "import pkg.core as module_0\n\n"
+                "def test_x():\n    assert 1\n"
+            )
         stdout = (
             "diff --git a/tests/test.py b/tests/test.py\n"
             if command[:2] == ["git", "diff"]
@@ -431,7 +532,10 @@ def test_scheduler_collects_tests_after_module_timeout(tmp_path, monkeypatch):
         if command[:3] == ["python", "-m", "pynguin"]:
             output = Path(command[command.index("--output-path") + 1])
             output.mkdir(parents=True, exist_ok=True)
-            (output / "test_generated.py").write_text("def test_x():\n    assert 1\n")
+            (output / "test_generated.py").write_text(
+                "import pkg.core as module_0\n\n"
+                "def test_x():\n    assert 1\n"
+            )
             raise subprocess.TimeoutExpired(command, timeout, output="partial output")
         stdout = (
             "diff --git a/tests/test_pynguin_pkg_core.py "

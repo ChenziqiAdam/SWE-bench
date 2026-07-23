@@ -102,7 +102,7 @@ def test_newer_rdkit_specs_install_required_new_boost():
 
 
 def test_legacy_rdkit_catch_specs_disable_posix_signals():
-    for pr in ("3412", "3615", "3930", "4414", "5063"):
+    for pr in ("3018", "3412", "3615", "3930", "4414", "4806", "5063"):
         cmake = SPECS_RDKIT[pr]["build"][1]
 
         assert "-DCMAKE_CXX_FLAGS=-DCATCH_CONFIG_NO_POSIX_SIGNALS" in cmake
@@ -135,10 +135,24 @@ def test_rdkit_ctest_selectors_do_not_match_prefixed_targets():
 
 
 def test_qgis_ctest_runs_from_build_directory_for_legacy_cmake():
-    command = SPECS_QGIS["40837"]["test_cmd"][0]
+    spec = SPECS_QGIS["40837"]
+    command = spec["test_cmd"][0]
 
     assert command.startswith("cd build && ")
     assert "ctest --test-dir" not in command
+    assert spec["build"][-1] == "cmake --build build --parallel 8"
+
+
+def test_qgis_60631_uses_modern_cmake_build_image():
+    assert (
+        SPECS_QGIS["60631"]["docker_specs"]["c_base_image"]
+        == SPECS_QGIS["63639"]["docker_specs"]["c_base_image"]
+    )
+
+
+def test_openmm_opencl_specs_install_gl_headers():
+    for pr in ("2257", "2318", "2322", "3872", "4618", "5302"):
+        assert "libgl1-mesa-dev" in "\n".join(SPECS_OPENMM[pr]["pre_install"])
 
 
 def test_rdkit_9331_enables_chemdraw_with_include_compatibility():

@@ -171,7 +171,10 @@ def parse_log_catch2(log: str, test_spec: TestSpec) -> dict[str, str]:
     # and Python tests, and test-generation evaluation must retain both.
     unittest_name = None
     for line in log.splitlines():
-        match = re.match(r"^\+\s+(?:\S+=\S+\s+)*python3?\s+(\S+\.py)\s*$", line.strip())
+        match = re.match(
+            r"^\+\s+(?:\S+=\S+\s+)*python3?\s+(\S+\.py)(?:\s+\S+)*\s*$",
+            line.strip(),
+        )
         if match:
             unittest_name = match.group(1)
         elif unittest_name and re.match(r"^OK(?:\s+\(.+\))?$", line.strip()):

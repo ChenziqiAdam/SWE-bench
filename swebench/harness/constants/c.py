@@ -343,7 +343,7 @@ def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False) -> dict:
         "pre_install": [
             "apt-get update -q",
             "apt-get install -y --no-install-recommends "
-            "cmake g++ make ocl-icd-opencl-dev pocl-opencl-icd",
+            "cmake g++ make libgl1-mesa-dev ocl-icd-opencl-dev pocl-opencl-icd",
         ],
         "build_after_test_patch": [
             "cmake -B build -S . "
@@ -953,6 +953,7 @@ _QGIS_QT6_BUILD_IMAGE = (
     "qgis/qgis3-build-deps-ubuntu-qt6@"
     "sha256:81b4d845b8704c068e2cc94238d45fee4fcd8d603744d635edea8a2966202005"
 )
+_QGIS_BUILD_JOBS = 8
 
 
 def _qgis_spec(
@@ -987,9 +988,10 @@ def _qgis_spec(
     if grass:
         cmake_flags.append("-DGRASS_PREFIX7=$(grass --config path)")
     build_target = (
-        "cmake --build build --parallel $(nproc)"
+        f"cmake --build build --parallel {_QGIS_BUILD_JOBS}"
         if bindings
-        else "cmake --build build --parallel $(nproc) --target " + " ".join(targets)
+        else f"cmake --build build --parallel {_QGIS_BUILD_JOBS} --target "
+        + " ".join(targets)
     )
     spec = {
         "docker_specs": {"c_base_image": base_image},
@@ -1026,7 +1028,7 @@ SPECS_QGIS = {
     "60631": _qgis_spec(
         ("test_analysis_processingalgspt1",),
         ctest_regex="^test_analysis_processingalgspt1$",
-        base_image=_QGIS_316_BUILD_IMAGE,
+        base_image=_QGIS_QT6_BUILD_IMAGE,
     ),
     "35852": _qgis_spec(
         ("PyQgsRasterColorRampShader",),
@@ -1192,14 +1194,18 @@ SPECS_RDKIT = _RDKitSpecs({
         "molopsTestsCatch", "fileParsersCatchTest", new_boost=True
     ),
     "8257": _rdkit_cpp_targets_spec("graphmolAdjustQueryCatch", new_boost=True),
-    "3018": _rdkit_cpp_targets_spec("graphmolTestsCatch"),
+    "3018": _rdkit_cpp_targets_spec(
+        "graphmolTestsCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
+    ),
     "7990": _rdkit_cpp_targets_spec("deprotectTest", new_boost=True),
     "7347": _rdkit_cpp_targets_spec("chiralityTestsCatch"),
     "5560": _rdkit_cpp_targets_spec("chiralityTestsCatch"),
     "6240": _rdkit_cpp_targets_spec("chiralityTestsCatch"),
     "6892": _rdkit_cpp_targets_spec("cdxmlParserCatchTest"),
     "4806": _rdkit_cpp_targets_spec(
-        "graphmolTestsCatch", "fileParsersCatchTest"
+        "graphmolTestsCatch",
+        "fileParsersCatchTest",
+        extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE,
     ),
     "5407": _rdkit_cpp_targets_spec("chiralityTestsCatch"),
     # Scientific Issues sheet: concrete targets from each PR's base CMake files.

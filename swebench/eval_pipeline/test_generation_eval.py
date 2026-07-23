@@ -65,6 +65,7 @@ def classify_test_generation_result(
     no_tests_selected: bool = False,
     collection_failed: bool = False,
     non_evaluable: bool = False,
+    infrastructure_failed: bool = False,
     build_failed: bool = False,
     base_build_failed: bool = False,
     gold_build_failed: bool = False,
@@ -74,6 +75,9 @@ def classify_test_generation_result(
     if non_evaluable:
         status = "excluded"
         failure_reason = "non_evaluable_spec"
+    elif infrastructure_failed:
+        status = "excluded"
+        failure_reason = "infrastructure_failure"
     elif not test_patch_applied or had_runtime_error:
         status = "errored"
         failure_reason = "test_patch_failed_or_timeout"
@@ -156,7 +160,30 @@ def classify_test_generation_result(
 
 
 def _non_evaluable_output(output: str) -> bool:
-    return "not evaluable:" in output
+    return any(
+        marker in output
+        for marker in (
+            "not evaluable:",
+            "has no curated generated pytest target",
+        )
+    )
+
+
+def _infrastructure_failure_output(output: str) -> bool:
+    """Recognize host/toolchain failures unrelated to a generated test oracle."""
+    return any(
+        marker in output
+        for marker in (
+            "fatal error: GL/gl.h: No such file or directory",
+            "error: unknown target CPU 'generic'",
+            "ninja: fatal: posix_spawn: Operation not permitted",
+            "This test is stochastic and may occasionally fail",
+            "CL_KHR_COMMAND_BUFFER_EXTENSION_VERSION > CL_MAKE_VERSION",
+            "size of array 'altStackMem' is not an integral constant-expression",
+            "call to non-'constexpr' function 'long int sysconf(int)'",
+            "CMake 3.23.0 or higher is required",
+        )
+    )
 
 
 def _no_tests_selected(output: str) -> bool:
@@ -685,6 +712,8 @@ def _evaluate_one(
             collection_failed=_test_collection_failed(base_output)
             or _test_collection_failed(gold_output),
             non_evaluable=_non_evaluable_output(base_output) or _non_evaluable_output(gold_output),
+            infrastructure_failed=_infrastructure_failure_output(base_output)
+            or _infrastructure_failure_output(gold_output),
             base_build_failed=BUILD_FAIL in base_output,
             gold_build_failed=BUILD_FAIL in gold_output,
         )

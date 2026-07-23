@@ -4,13 +4,14 @@ from __future__ import annotations
 import ast
 import os
 import re
+import signal
 import shutil
 import subprocess
 import time
 from pathlib import Path
 
 
-PYNGUIN_POSTPROCESSING_VERSION = 6
+PYNGUIN_POSTPROCESSING_VERSION = 7
 PYNGUIN_MODULE_SHUTDOWN_GRACE_SECONDS = 10
 
 
@@ -62,6 +63,7 @@ class _PortablePynguinTransformer(ast.NodeTransformer):
         self.checkout_path = checkout_path
         self.rewritten_imports = 0
         self.removed_assertions = 0
+        self.removed_strict_xfail_tests = 0
 
     def visit_Import(self, node: ast.Import):  # noqa: N802
         replacements: list[ast.stmt] = []
@@ -99,6 +101,57 @@ class _PortablePynguinTransformer(ast.NodeTransformer):
             self.removed_assertions += 1
             return None
         return self.generic_visit(node)
+
+    def visit_FunctionDef(self, node: ast.FunctionDef):  # noqa: N802
+        if _has_strict_xfail(node):
+            self.removed_strict_xfail_tests += 1
+            return None
+        return self.generic_visit(node)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):  # noqa: N802
+        if _has_strict_xfail(node):
+            self.removed_strict_xfail_tests += 1
+            return None
+        return self.generic_visit(node)
+
+
+def _has_strict_xfail(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    """Return whether a test is decorated with ``xfail(strict=True)``."""
+    for decorator in node.decorator_list:
+        if not (
+            isinstance(decorator, ast.Call)
+            and isinstance(decorator.func, ast.Attribute)
+            and decorator.func.attr == "xfail"
+        ):
+            continue
+        for keyword in decorator.keywords:
+            if (
+                keyword.arg == "strict"
+                and isinstance(keyword.value, ast.Constant)
+                and keyword.value.value is True
+            ):
+                return True
+    return False
+
+
+def _imports_scheduled_module(source: str, module: str) -> bool:
+    """Reject exporter output that does not import its scheduled SUT module."""
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Import) and any(
+            alias.name == module for alias in node.names
+        ):
+            return True
+        if isinstance(node, ast.ImportFrom) and node.module == module:
+            return True
+    return False
+
+
+def _contains_test_function(source: str) -> bool:
+    return any(
+        isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and node.name.startswith("test")
+        for node in ast.parse(source).body
+    )
 
 
 def sanitize_pynguin_test(
@@ -149,6 +202,7 @@ def sanitize_pynguin_test(
     return ast.unparse(tree) + "\n", {
         "rewritten_import_count": transformer.rewritten_imports,
         "removed_nonportable_assertion_count": transformer.removed_assertions,
+        "removed_strict_xfail_test_count": transformer.removed_strict_xfail_tests,
         "network_guard_injected_count": 1,
         "warning_filter_count": len(filters),
     }
@@ -264,10 +318,29 @@ def conventional_test_directory(repo_dir: Path) -> Path:
 
 
 def _run(command: list[str], repo_dir: Path, timeout: float, env: dict) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        command, cwd=repo_dir, env=env, stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT, text=True, timeout=max(0.01, timeout),
+    """Run a command and kill its whole process group on timeout."""
+    effective_timeout = max(0.01, timeout)
+    process = subprocess.Popen(
+        command,
+        cwd=repo_dir,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        start_new_session=True,
     )
+    try:
+        stdout, _ = process.communicate(timeout=effective_timeout)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except (AttributeError, ProcessLookupError):
+            process.kill()
+        stdout, _ = process.communicate()
+        raise subprocess.TimeoutExpired(
+            command, effective_timeout, output=stdout
+        ) from None
+    return subprocess.CompletedProcess(command, process.returncode, stdout=stdout)
 
 
 def run_pynguin_generation(
@@ -301,7 +374,9 @@ def run_pynguin_generation(
     output_chunks: list[str] = []
     rewritten_import_count = 0
     removed_nonportable_assertion_count = 0
+    removed_strict_xfail_test_count = 0
     removed_failing_test_count = 0
+    rejected_mismatched_module_count = 0
     network_guard_injected_count = 0
     validation_runs = 0
     validation_exit_code: int | None = None
@@ -347,7 +422,13 @@ def run_pynguin_generation(
                 "removed_nonportable_assertion_count": (
                     removed_nonportable_assertion_count
                 ),
+                "removed_strict_xfail_test_count": (
+                    removed_strict_xfail_test_count
+                ),
                 "removed_failing_test_count": removed_failing_test_count,
+                "rejected_mismatched_module_count": (
+                    rejected_mismatched_module_count
+                ),
                 "network_guard_injected_count": network_guard_injected_count,
                 "validation_runs": validation_runs,
                 "validation_exit_code": validation_exit_code,
@@ -397,7 +478,11 @@ def run_pynguin_generation(
                 + (os.pathsep + existing_pythonpath if existing_pythonpath else ""),
             }
 
-        for module, path in rank_pynguin_modules(baseline_coverage, explicit_modules):
+        shutil.rmtree(scratch, ignore_errors=True)
+        scratch.mkdir(parents=True)
+        for attempt_index, (module, path) in enumerate(
+            rank_pynguin_modules(baseline_coverage, explicit_modules)
+        ):
             if generation_remaining() <= 0:
                 break
             import_check = _run(
@@ -408,12 +493,15 @@ def run_pynguin_generation(
                 attempts.append({"module": module, "path": path, "exit_code": import_check.returncode,
                                  "status": "not_importable"})
                 continue
-            shutil.rmtree(scratch, ignore_errors=True)
-            scratch.mkdir(parents=True)
+            module_scratch = scratch / (
+                f"{attempt_index:04d}-"
+                + re.sub(r"[^A-Za-z0-9_.-]", "_", module)
+            )
+            module_scratch.mkdir()
             slice_seconds = max(1, min(module_slice, int(generation_remaining())))
             command = [
                 "python", "-m", "pynguin", "--project-path", str(repo_dir),
-                "--module-name", module, "--output-path", str(scratch),
+                "--module-name", module, "--output-path", str(module_scratch),
                 "--algorithm", "DYNAMOSA", "--assertion-generation", assertion_mode,
                 "--seed", str(seed), "--maximum-search-time", str(slice_seconds),
             ]
@@ -435,37 +523,55 @@ def run_pynguin_generation(
                 raw = exc.stdout or ""
                 module_output = raw if isinstance(raw, str) else raw.decode(errors="replace")
                 output_chunks.append(module_output)
-            generated = sorted(scratch.rglob("test_*.py"))
+            generated = sorted(module_scratch.rglob("test_*.py"))
             attempt_rewritten_imports = 0
             attempt_removed_assertions = 0
+            attempt_removed_strict_xfails = 0
             attempt_network_guards = 0
+            attempt_rejected_mismatches = 0
+            attempt_accepted_files = 0
             for index, source in enumerate(generated):
+                raw_source = source.read_text()
+                if not _imports_scheduled_module(raw_source, module):
+                    attempt_rejected_mismatches += 1
+                    continue
                 test_dir.mkdir(parents=True, exist_ok=True)
                 stem = "test_pynguin_" + module.replace(".", "_")
                 suffix = f"_{index + 1}" if len(generated) > 1 else ""
                 destination = test_dir / f"{stem}{suffix}.py"
                 sanitized, sanitation = sanitize_pynguin_test(
-                    source.read_text(), repo_dir, warning_filters
+                    raw_source, repo_dir, warning_filters
                 )
-                destination.write_text(sanitized)
-                exported_test_files.append(destination)
                 attempt_rewritten_imports += sanitation["rewritten_import_count"]
                 attempt_removed_assertions += sanitation[
                     "removed_nonportable_assertion_count"
                 ]
+                attempt_removed_strict_xfails += sanitation[
+                    "removed_strict_xfail_test_count"
+                ]
                 attempt_network_guards += sanitation["network_guard_injected_count"]
+                if not _contains_test_function(sanitized):
+                    continue
+                destination.write_text(sanitized)
+                exported_test_files.append(destination)
+                attempt_accepted_files += 1
             rewritten_import_count += attempt_rewritten_imports
             removed_nonportable_assertion_count += attempt_removed_assertions
+            removed_strict_xfail_test_count += attempt_removed_strict_xfails
+            rejected_mismatched_module_count += attempt_rejected_mismatches
             network_guard_injected_count += attempt_network_guards
-            if generated:
+            accepted_files = attempt_accepted_files
+            if accepted_files:
                 successful.append(module)
             attempts.append({
                 "module": module, "path": path, "exit_code": code,
                 "timed_out": timed_out, "generated_files": len(generated),
                 "runtime_seconds": round(time.monotonic() - module_started, 6),
-                "status": "generated" if generated else "no_tests_generated",
+                "status": "generated" if accepted_files else "no_tests_generated",
                 "rewritten_import_count": attempt_rewritten_imports,
                 "removed_nonportable_assertion_count": attempt_removed_assertions,
+                "removed_strict_xfail_test_count": attempt_removed_strict_xfails,
+                "rejected_mismatched_module_count": attempt_rejected_mismatches,
                 "network_guard_injected_count": attempt_network_guards,
                 "output_tail": module_output[-2000:] if code else "",
             })

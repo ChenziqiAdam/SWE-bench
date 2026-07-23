@@ -10,6 +10,7 @@ from swebench.eval_pipeline.test_generation_eval import (
     _build_script,
     _exclude_gold_test_files,
     _evaluate_one,
+    _infrastructure_failure_output,
     _no_tests_selected,
     _prepare_gold_patch,
     _rdkit_generated_unittest_targets,
@@ -38,6 +39,8 @@ def test_test_generation_prompt_requests_tests_only():
     assert "regression test" in prompt
     assert "Do not fix the bug" in prompt
     assert "Return only a valid unified git diff" in prompt
+    assert "must add a new focused assertion" in prompt
+    assert "non-empty patch" in prompt
 
 
 def test_clean_images_cli_is_opt_in(monkeypatch):
@@ -172,6 +175,36 @@ def test_test_generation_marks_placeholder_specs_excluded():
 
     assert result["status"] == "excluded"
     assert result["failure_reason"] == "non_evaluable_spec"
+
+
+def test_test_generation_marks_infrastructure_failures_excluded():
+    result = classify_test_generation_result(
+        {},
+        {},
+        test_patch_applied=True,
+        gold_patch_applied=True,
+        infrastructure_failed=True,
+        gold_build_failed=True,
+    )
+
+    assert result["status"] == "excluded"
+    assert result["failure_reason"] == "infrastructure_failure"
+
+
+def test_scientific_infrastructure_failure_markers_are_narrow():
+    for output in (
+        "fatal error: GL/gl.h: No such file or directory",
+        "error: unknown target CPU 'generic'",
+        "ninja: fatal: posix_spawn: Operation not permitted",
+        "Assertion failure (This test is stochastic and may occasionally fail)",
+        "#if CL_KHR_COMMAND_BUFFER_EXTENSION_VERSION > CL_MAKE_VERSION(0, 9, 5)",
+        "size of array 'altStackMem' is not an integral constant-expression",
+        "call to non-'constexpr' function 'long int sysconf(int)'",
+        "CMake 3.23.0 or higher is required",
+    ):
+        assert _infrastructure_failure_output(output)
+
+    assert not _infrastructure_failure_output("AssertionError: expected 3, found 2")
 
 
 def test_test_generation_marks_zero_selected_not_exercised():

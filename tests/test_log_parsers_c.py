@@ -100,6 +100,36 @@ FAILED (failures=1, skipped=10)
     }
 
 
+def test_parse_log_catch2_reads_selected_python_unittest_method():
+    base_log = """
++ python3 rdkit/Chem/UnitTestInchi.py RegressionTest.testChiralPhosphateInchi
+F
+======================================================================
+FAIL: testChiralPhosphateInchi (__main__.RegressionTest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+AssertionError: values unexpectedly equal
+
+FAILED (failures=1)
+"""
+    gold_log = """
++ python3 rdkit/Chem/UnitTestInchi.py RegressionTest.testChiralPhosphateInchi
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.004s
+
+OK
+"""
+
+    expected_name = "rdkit/Chem/UnitTestInchi.py"
+    assert parse_log_catch2(base_log, None) == {
+        expected_name: TestStatus.FAILED.value
+    }
+    assert parse_log_catch2(gold_log, None) == {
+        expected_name: TestStatus.PASSED.value
+    }
+
+
 def test_parse_log_catch2_merges_ctest_and_python_results():
     log = """
 1/1 Test #3: rxnTestCatch ......................   Passed    0.10 sec

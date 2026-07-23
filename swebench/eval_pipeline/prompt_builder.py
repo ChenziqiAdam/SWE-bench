@@ -75,6 +75,8 @@ def _test_generation_instruction() -> str:
         "Compile or run the focused generated test on the original checkout before returning it.\n"
         "The generated tests should fail on the original pre-fix codebase and pass "
         "after the golden fix patch is applied.\n"
+        "Even if a related test already exists, you must add a new focused assertion "
+        "or test case and return a non-empty patch that reproduces this issue.\n"
         "Return only a valid unified git diff."
     )
 
