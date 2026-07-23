@@ -14,6 +14,7 @@ from swebench.eval_pipeline.test_generation_eval import (
     _no_tests_selected,
     _prepare_gold_patch,
     _qgis_isolated_python_command,
+    _rdkit_isolated_cpp_commands,
     _rdkit_generated_unittest_targets,
     _rdkit_isolated_python_commands,
     _test_collection_failed,
@@ -372,6 +373,27 @@ diff --git a/Code/GraphMol/catch_graphmol.cpp b/Code/GraphMol/catch_graphmol.cpp
     assert excluded == ["Code/GraphMol/catch_graphmol.cpp"]
 
 
+def test_gold_patch_excludes_rdkit_test_source_ending_in_catch():
+    gold = """diff --git a/Code/GraphMol/Atom.cpp b/Code/GraphMol/Atom.cpp
+--- a/Code/GraphMol/Atom.cpp
++++ b/Code/GraphMol/Atom.cpp
+@@ -1 +1 @@
+-old
++fixed
+diff --git a/Code/GraphMol/FileParsers/file_parsers_catch.cpp b/Code/GraphMol/FileParsers/file_parsers_catch.cpp
+--- a/Code/GraphMol/FileParsers/file_parsers_catch.cpp
++++ b/Code/GraphMol/FileParsers/file_parsers_catch.cpp
+@@ -1 +1 @@
+-old test
++gold test
+"""
+    filtered, excluded = _exclude_gold_test_files(gold)
+
+    assert "Code/GraphMol/Atom.cpp" in filtered
+    assert "file_parsers_catch.cpp" not in filtered
+    assert excluded == ["Code/GraphMol/FileParsers/file_parsers_catch.cpp"]
+
+
 def test_gold_patch_excludes_unavailable_binary_placeholders():
     gold = """diff --git a/src/fix.cpp b/src/fix.cpp
 --- a/src/fix.cpp
@@ -468,6 +490,33 @@ def test_rdkit_test_generation_isolates_added_unittest_method(monkeypatch):
         "python3 Code/GraphMol/FMCS/Wrap/testFMCS.py "
         "TestCase.testGithubCompleteRingsOnlyMemory"
     )
+
+
+def test_rdkit_test_generation_isolates_touched_cpp_target(monkeypatch):
+    commands = [
+        "ctest --test-dir build -V -R '^graphmolTestsCatch$'",
+        "ctest --test-dir build -V -R '^fileParsersCatchTest$'",
+    ]
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.get_test_cmds",
+        lambda _instance: commands,
+    )
+    patch = """diff --git a/Code/GraphMol/FileParsers/file_parsers_catch.cpp b/Code/GraphMol/FileParsers/file_parsers_catch.cpp
+--- a/Code/GraphMol/FileParsers/file_parsers_catch.cpp
++++ b/Code/GraphMol/FileParsers/file_parsers_catch.cpp
+@@ -4253,3 +4253,6 @@ M  END
++TEST_CASE("generated regression") {
++  CHECK(true);
++}
+"""
+
+    isolated = _rdkit_isolated_cpp_commands(commands, patch)
+    selected = _test_command(
+        {"repo": "rdkit/rdkit", "version": "4806", "test_patch": ""}, patch
+    )
+
+    assert isolated == [commands[1]]
+    assert selected == commands[1]
 
 
 def test_openmm_test_generation_can_force_native_spec_command(monkeypatch):
@@ -634,6 +683,23 @@ def test_openmm_test_generation_falls_back_when_method_class_unknown():
 @@ -1019,6 +1019,10 @@ END"""))
 +    def test_CharmmPolar(self):
 +        pass
+'''
+
+    assert _openmm_generated_pytest_targets(patch) == (
+        ["TestForceField.py"],
+        "test_CharmmPolar",
+    )
+
+
+def test_openmm_test_generation_isolates_edited_existing_method():
+    patch = '''diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py
+--- a/wrappers/python/tests/TestForceField.py
++++ b/wrappers/python/tests/TestForceField.py
+@@ -1115,9 +1115,11 @@ END"""))
+     def test_CharmmPolar(self):
++        modeller = Modeller(pdb.topology, pdb.positions)
++        modeller.addExtraParticles(ff)
+         pdb = PDBFile('systems/ala_ala_ala_drude.pdb')
 '''
 
     assert _openmm_generated_pytest_targets(patch) == (

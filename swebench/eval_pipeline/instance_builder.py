@@ -46,6 +46,7 @@ def _is_test_path(path: str) -> bool:
         stem.startswith(("test", "unittest"))
         or stem.endswith(("test", "tests", "unittest", "_test", "_tests"))
         or stem.startswith("catch_")
+        or stem.endswith("_catch")
         or "catch_test" in stem
     )
 

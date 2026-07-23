@@ -330,11 +330,13 @@ def _openmm_generated_pytest_targets(
     unknown_class_files: set[str] = set()
     current_file = None
     current_class = None
+    current_test = None
     for raw in generated_patch.splitlines():
         diff_match = re.match(r"^diff --git a/(\S+) b/\S+", raw)
         if diff_match:
             current_file = diff_match.group(1)
             current_class = None
+            current_test = None
             if (
                 current_file.startswith(prefix)
                 and current_file.endswith(".py")
@@ -347,20 +349,27 @@ def _openmm_generated_pytest_targets(
         hunk_match = re.match(r"^@@.*@@\s*(?:class\s+([A-Za-z_]\w*)\b.*)?$", raw)
         if hunk_match:
             current_class = hunk_match.group(1)
+            current_test = None
             continue
         content = raw[1:] if raw.startswith(("+", " ")) else raw
         class_match = re.match(r"^\s*class\s+([A-Za-z_]\w*)\b", content)
         if class_match:
             current_class = class_match.group(1)
-            continue
-        if not raw.startswith("+") or raw.startswith("+++"):
+            current_test = None
             continue
         test_match = re.match(r"^(\s*)def\s+(test_[A-Za-z_]\w*)\s*\(", content)
-        if not test_match:
+        if test_match:
+            current_test = test_match.group(2)
+            if not raw.startswith("+"):
+                continue
+        if not raw.startswith("+") or raw.startswith("+++"):
+            continue
+        test_name = test_match.group(2) if test_match else current_test
+        if not test_name:
             continue
         file_name = current_file[len(prefix):]
-        test_name = test_match.group(2)
-        if not test_match.group(1):
+        indentation = test_match.group(1) if test_match else content[: len(content) - len(content.lstrip())]
+        if not indentation:
             nodeids.add(f"{file_name}::{test_name}")
         elif current_class:
             nodeids.add(f"{file_name}::{current_class}::{test_name}")
@@ -404,6 +413,42 @@ def _rdkit_generated_unittest_targets(generated_patch: str) -> dict[str, list[st
                 f"{current_class}.{test_match.group(1)}"
             )
     return {path: sorted(names) for path, names in sorted(targets.items())}
+
+
+def _rdkit_test_name_tokens(name: str) -> frozenset[str]:
+    """Normalize RDKit Catch source and CTest target names for comparison."""
+    words: list[str] = []
+    for part in re.split(r"[^A-Za-z0-9]+", name):
+        words.extend(
+            re.findall(r"[A-Z]+(?=[A-Z][a-z]|\d|\b)|[A-Z]?[a-z]+|\d+", part)
+        )
+    return frozenset(
+        word.lower() for word in words if word.lower() not in {"test", "tests"}
+    )
+
+
+def _rdkit_isolated_cpp_commands(
+    commands: list[str], generated_patch: str
+) -> list[str] | None:
+    """Run only configured CTest targets matching generated RDKit test sources."""
+    source_tokens: set[frozenset[str]] = set()
+    for path in re.findall(r"^diff --git a/(\S+) b/\S+", generated_patch, re.MULTILINE):
+        if Path(path).suffix.lower() in {".cc", ".cpp", ".cxx"} and _is_test_path(path):
+            tokens = _rdkit_test_name_tokens(PurePosixPath(path).stem)
+            if tokens:
+                source_tokens.add(tokens)
+    if not source_tokens:
+        return None
+
+    isolated: list[str] = []
+    for command in commands:
+        match = re.search(r"-R\s+['\"]?\^([^$'\"]+)\$['\"]?", command)
+        if not match:
+            continue
+        target = match.group(1).replace("\\", "")
+        if _rdkit_test_name_tokens(target) in source_tokens:
+            isolated.append(command)
+    return isolated or None
 
 
 def _rdkit_isolated_python_commands(
@@ -459,9 +504,17 @@ def _test_command(instance: dict, generated_patch: str) -> str:
     directives = get_test_directives(generated_instance)
 
     if instance["repo"] == "rdkit/rdkit":
-        isolated_commands = _rdkit_isolated_python_commands(commands, generated_patch)
-        if isolated_commands:
-            return " && ".join(isolated_commands)
+        isolated_python = _rdkit_isolated_python_commands(commands, generated_patch)
+        isolated_cpp = _rdkit_isolated_cpp_commands(commands, generated_patch)
+        if isolated_python and isolated_cpp:
+            selected_python = [
+                command for command in isolated_python if re.search(r"\bpython3?\s+", command)
+            ]
+            return " && ".join([*isolated_cpp, *selected_python])
+        if isolated_python:
+            return " && ".join(isolated_python)
+        if isolated_cpp:
+            return " && ".join(isolated_cpp)
 
     # Scientific OpenMM specs normally contain a fixed selector for the
     # original PR test.  In test-generation mode that selector can silently
