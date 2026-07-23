@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import ast
 import os
+import re
 import shutil
 import subprocess
 import time
 from pathlib import Path
 
 
-PYNGUIN_POSTPROCESSING_VERSION = 5
+PYNGUIN_POSTPROCESSING_VERSION = 6
 PYNGUIN_MODULE_SHUTDOWN_GRACE_SECONDS = 10
 
 
@@ -153,6 +154,53 @@ def sanitize_pynguin_test(
     }
 
 
+def prune_failing_pynguin_tests(
+    test_files: list[Path],
+    repo_dir: Path,
+    pytest_output: str,
+) -> int:
+    """Remove exported test functions reported as failed by repository pytest."""
+    failed_by_file: dict[str, set[str]] = {}
+    for match in re.finditer(r"(?m)^FAILED\s+(.+?)(?:\s+-\s+.*)?$", pytest_output):
+        nodeid = match.group(1).strip()
+        parts = nodeid.split("::")
+        if len(parts) < 2:
+            continue
+        path = parts[0].replace("\\", "/")
+        function = parts[1].split("[", 1)[0]
+        failed_by_file.setdefault(path.casefold(), set()).add(function)
+
+    removed = 0
+    for test_file in test_files:
+        relative = test_file.relative_to(repo_dir).as_posix()
+        failed_names = failed_by_file.get(relative.casefold()) or failed_by_file.get(
+            str(test_file).casefold()
+        )
+        if not failed_names or not test_file.exists():
+            continue
+        tree = ast.parse(test_file.read_text())
+        retained = []
+        for node in tree.body:
+            if (
+                isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and node.name in failed_names
+            ):
+                removed += 1
+            else:
+                retained.append(node)
+        tree.body = retained
+        if not any(
+            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name.startswith("test")
+            for node in tree.body
+        ):
+            test_file.unlink()
+            continue
+        ast.fix_missing_locations(tree)
+        test_file.write_text(ast.unparse(tree) + "\n")
+    return removed
+
+
 def module_name_from_path(path: str) -> str | None:
     """Translate a production Python path into an import name."""
     normalized = path.replace("\\", "/").lstrip("./")
@@ -253,7 +301,13 @@ def run_pynguin_generation(
     output_chunks: list[str] = []
     rewritten_import_count = 0
     removed_nonportable_assertion_count = 0
+    removed_failing_test_count = 0
     network_guard_injected_count = 0
+    validation_runs = 0
+    validation_exit_code: int | None = None
+    validation_timed_out = False
+    validation_output_tail = ""
+    exported_test_files: list[Path] = []
     test_dir = conventional_test_directory(repo_dir)
     scratch = repo_dir / ".pynguin-generation"
     compatibility_dir = repo_dir / ".pynguin-compatibility"
@@ -293,7 +347,12 @@ def run_pynguin_generation(
                 "removed_nonportable_assertion_count": (
                     removed_nonportable_assertion_count
                 ),
+                "removed_failing_test_count": removed_failing_test_count,
                 "network_guard_injected_count": network_guard_injected_count,
+                "validation_runs": validation_runs,
+                "validation_exit_code": validation_exit_code,
+                "validation_timed_out": validation_timed_out,
+                "validation_output_tail": validation_output_tail,
                 "warning_filters": warning_filters or [],
                 "ignore_noncallable_signatures": ignore_noncallable_signatures,
                 "diagnostic_output_tail": "".join(output_chunks)[-8000:],
@@ -389,6 +448,7 @@ def run_pynguin_generation(
                     source.read_text(), repo_dir, warning_filters
                 )
                 destination.write_text(sanitized)
+                exported_test_files.append(destination)
                 attempt_rewritten_imports += sanitation["rewritten_import_count"]
                 attempt_removed_assertions += sanitation[
                     "removed_nonportable_assertion_count"
@@ -409,6 +469,46 @@ def run_pynguin_generation(
                 "network_guard_injected_count": attempt_network_guards,
                 "output_tail": module_output[-2000:] if code else "",
             })
+        # Validate exported tests under the repository's own pytest settings.
+        # Remove only explicitly failed test functions; collection/tool failures
+        # remain visible to the independent evaluator instead of being hidden.
+        for _ in range(3):
+            current_files = sorted(path for path in exported_test_files if path.exists())
+            if not current_files or remaining() <= 1:
+                break
+            validation_runs += 1
+            try:
+                validation = _run(
+                    [
+                        "python", "-m", "pytest", "-q", "--tb=short", "--color=no",
+                        *[str(path.relative_to(repo_dir)) for path in current_files],
+                    ],
+                    repo_dir,
+                    min(remaining() - 0.5, max(1.0, finalization_reserve / 2)),
+                    env,
+                )
+            except subprocess.TimeoutExpired as exc:
+                validation_timed_out = True
+                raw = exc.stdout or ""
+                validation_output = (
+                    raw if isinstance(raw, str) else raw.decode(errors="replace")
+                )
+                validation_output_tail = validation_output[-8000:]
+                output_chunks.append(validation_output)
+                break
+            validation_exit_code = validation.returncode
+            validation_output = validation.stdout or ""
+            validation_output_tail = validation_output[-8000:]
+            output_chunks.append(validation_output)
+            if validation.returncode == 0:
+                break
+            pruned = prune_failing_pynguin_tests(
+                current_files, repo_dir, validation_output
+            )
+            removed_failing_test_count += pruned
+            if not pruned:
+                break
+
         # Finalization must not discard tests already copied from completed
         # modules merely because the search phase consumed its deadline.
         finalize_timeout = max(1.0, finalization_reserve / 2)

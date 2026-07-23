@@ -9,6 +9,7 @@ from swebench.eval_pipeline.pynguin_generation import (
     _NONCALLABLE_SIGNATURE_COMPAT_SOURCE,
     conventional_test_directory,
     module_name_from_path,
+    prune_failing_pynguin_tests,
     rank_pynguin_modules,
     run_pynguin_generation,
     sanitize_pynguin_test,
@@ -101,7 +102,7 @@ def test_pynguin_cache_is_matched_and_replaced_by_instance(monkeypatch):
         "total_budget_seconds": args.pynguin_total_budget,
         "module_slice_seconds": args.pynguin_module_slice,
         "assertion_mode": args.pynguin_assertion_mode,
-        "postprocessing_version": 5,
+        "postprocessing_version": 6,
     }
     rows = [
         {"instance_id": "repo-a", "model_patch": "a", "metrics": matching_metrics},
@@ -218,6 +219,30 @@ def test_pynguin_network_guard_xfails_network_calls(tmp_path):
     assert "1 xfailed" in completed.stdout
 
 
+def test_pynguin_postprocessing_prunes_repository_pytest_failures(tmp_path):
+    test_dir = tmp_path / "tests"
+    test_dir.mkdir()
+    test_file = test_dir / "test_generated.py"
+    test_file.write_text(
+        "def test_passes():\n"
+        "    assert True\n\n"
+        "def test_warning_error():\n"
+        "    raise RuntimeWarning('promoted by project pytest config')\n"
+    )
+
+    removed = prune_failing_pynguin_tests(
+        [test_file],
+        tmp_path,
+        "FAILED tests/test_generated.py::test_warning_error - RuntimeWarning\n",
+    )
+
+    assert removed == 1
+    sanitized = test_file.read_text()
+    assert "test_passes" in sanitized
+    assert "test_warning_error" not in sanitized
+    compile(sanitized, "<generated>", "exec")
+
+
 def test_common_mutation_union_and_no_gain_case():
     baseline = {"files": {
         "pkg/a.py": {"covered_lines": 1, "covered_branches": 0},
@@ -286,10 +311,62 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
     assert result["model_patch"].startswith("diff --git")
     assert result["metrics"]["successful_modules"] == ["pkg.core"]
     assert result["metrics"]["module_attempts"][0]["exit_code"] == 0
-    assert result["metrics"]["postprocessing_version"] == 5
+    assert result["metrics"]["postprocessing_version"] == 6
     assert result["metrics"]["network_guard_injected_count"] == 1
     finalization_calls = [call for call in calls if call[0][:2] == ["git", "add"]]
     assert finalization_calls[0][1] >= 1
+
+
+def test_scheduler_revalidates_after_pruning_failed_generated_test(
+    tmp_path, monkeypatch
+):
+    (tmp_path / "tests").mkdir()
+    validation_calls = 0
+
+    def fake_run(command, repo_dir, timeout, env):
+        nonlocal validation_calls
+        if command[:3] == ["python", "-m", "pynguin"]:
+            output = Path(command[command.index("--output-path") + 1])
+            output.mkdir(parents=True, exist_ok=True)
+            (output / "test_generated.py").write_text(
+                "def test_good():\n    assert True\n\n"
+                "def test_bad():\n    raise RuntimeWarning('warning-as-error')\n"
+            )
+        if command[:3] == ["python", "-m", "pytest"]:
+            validation_calls += 1
+            generated = tmp_path / "tests" / "test_pynguin_pkg_core.py"
+            if validation_calls == 1:
+                return subprocess.CompletedProcess(
+                    command,
+                    1,
+                    stdout=(
+                        "FAILED tests/test_pynguin_pkg_core.py::test_bad "
+                        "- RuntimeWarning\n"
+                    ),
+                )
+            assert "test_bad" not in generated.read_text()
+            return subprocess.CompletedProcess(command, 0, stdout="1 passed\n")
+        stdout = (
+            "diff --git a/tests/test_pynguin_pkg_core.py "
+            "b/tests/test_pynguin_pkg_core.py\n"
+            if command[:2] == ["git", "diff"] else ""
+        )
+        return subprocess.CompletedProcess(command, 0, stdout=stdout)
+
+    monkeypatch.setattr("swebench.eval_pipeline.pynguin_generation._run", fake_run)
+    result = run_pynguin_generation(
+        tmp_path,
+        {"files": {"pkg/core.py": {
+            "covered_lines": 0, "num_statements": 1,
+            "covered_branches": 0, "num_branches": 0,
+        }}},
+        total_budget=20,
+    )
+
+    assert validation_calls == 2
+    assert result["metrics"]["removed_failing_test_count"] == 1
+    assert result["metrics"]["validation_runs"] == 2
+    assert result["metrics"]["validation_exit_code"] == 0
 
 
 def test_scheduler_scopes_noncallable_signature_compatibility(tmp_path, monkeypatch):
