@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 
 
-PYNGUIN_POSTPROCESSING_VERSION = 7
+PYNGUIN_POSTPROCESSING_VERSION = 8
 PYNGUIN_MODULE_SHUTDOWN_GRACE_SECONDS = 10
 
 
@@ -357,10 +357,15 @@ def run_pynguin_generation(
     warning_filters: list[str] | None = None,
     ignore_noncallable_signatures: bool = False,
     base_environment: dict[str, str] | None = None,
+    budget_strategy: str = "sequential_slice",
+    setup_timeout: int = 3600,
+    setup_profile_fingerprint: str = "",
 ) -> dict:
-    """Install and schedule Pynguin under one end-to-end deadline."""
-    started = time.monotonic()
-    deadline = started + total_budget
+    """Install/setup first, then schedule Pynguin under a generation-only budget."""
+    wall_started = time.monotonic()
+    setup_started = wall_started
+    generation_started: float | None = None
+    deadline: float | None = None
     finalization_reserve = min(10.0, max(1.0, total_budget * 0.1))
     env = {
         **(base_environment or os.environ),
@@ -383,11 +388,19 @@ def run_pynguin_generation(
     validation_timed_out = False
     validation_output_tail = ""
     exported_test_files: list[Path] = []
+    requested_modules = sorted({
+        module for module, _ in rank_pynguin_modules(
+            baseline_coverage, explicit_modules
+        )
+    })
+    python_version = ""
     test_dir = conventional_test_directory(repo_dir)
     scratch = repo_dir / ".pynguin-generation"
     compatibility_dir = repo_dir / ".pynguin-compatibility"
 
     def remaining() -> float:
+        if deadline is None:
+            return float(setup_timeout)
         return max(0.0, deadline - time.monotonic())
 
     def generation_remaining() -> float:
@@ -406,11 +419,21 @@ def run_pynguin_generation(
                 "assertion_mode": assertion_mode,
                 "total_budget_seconds": total_budget,
                 "module_slice_seconds": module_slice,
+                "budget_strategy": budget_strategy,
+                "requested_modules": requested_modules,
+                "python_version": python_version,
+                "setup_profile_fingerprint": setup_profile_fingerprint,
                 "attempted_modules": [item["module"] for item in attempts],
                 "successful_modules": successful,
                 "module_attempts": attempts,
                 "exit_code": exit_code,
-                "wall_time_seconds": round(time.monotonic() - started, 6),
+                "setup_wall_time_seconds": round(
+                    (generation_started or time.monotonic()) - setup_started, 6
+                ),
+                "generation_wall_time_seconds": round(
+                    time.monotonic() - generation_started, 6
+                ) if generation_started is not None else 0.0,
+                "wall_time_seconds": round(time.monotonic() - wall_started, 6),
                 "timed_out": (
                     status == "timeout"
                     or generation_remaining() <= 0
@@ -447,23 +470,34 @@ def run_pynguin_generation(
         # shared environment.
         install = _run(
             ["python", "-m", "pip", "install", "--disable-pip-version-check", f"pynguin=={version}"],
-            repo_dir, remaining(), env,
+            repo_dir, setup_timeout, env,
         )
         output_chunks.append(install.stdout or "")
         if install.returncode:
             return _result("installation_failed", install.returncode)
         if setup_command:
-            setup = _run(["/bin/bash", "-c", setup_command], repo_dir, remaining(), env)
+            setup = _run(
+                ["/bin/bash", "-c", setup_command], repo_dir, setup_timeout, env
+            )
             output_chunks.append(setup.stdout or "")
             if setup.returncode:
                 return _result("setup_failed", setup.returncode)
         version_check = _run(
-            ["python", "-c", "import importlib.metadata; print(importlib.metadata.version('pynguin'))"],
-            repo_dir, remaining(), env,
+            [
+                "python", "-c",
+                "import importlib.metadata,platform;"
+                "print(importlib.metadata.version('pynguin'));"
+                "print(platform.python_version())",
+            ],
+            repo_dir, setup_timeout, env,
         )
         output_chunks.append(version_check.stdout or "")
         if version_check.returncode:
             return _result("import_failed", version_check.returncode)
+        version_lines = (version_check.stdout or "").splitlines()
+        python_version = version_lines[-1] if len(version_lines) > 1 else ""
+        generation_started = time.monotonic()
+        deadline = generation_started + total_budget
 
         generation_env = env
         if ignore_noncallable_signatures:
@@ -480,9 +514,8 @@ def run_pynguin_generation(
 
         shutil.rmtree(scratch, ignore_errors=True)
         scratch.mkdir(parents=True)
-        for attempt_index, (module, path) in enumerate(
-            rank_pynguin_modules(baseline_coverage, explicit_modules)
-        ):
+        ranked_modules = rank_pynguin_modules(baseline_coverage, explicit_modules)
+        for attempt_index, (module, path) in enumerate(ranked_modules):
             if generation_remaining() <= 0:
                 break
             import_check = _run(
@@ -490,15 +523,37 @@ def run_pynguin_generation(
                 min(generation_remaining(), 30), generation_env,
             )
             if import_check.returncode:
-                attempts.append({"module": module, "path": path, "exit_code": import_check.returncode,
-                                 "status": "not_importable"})
+                attempts.append({
+                    "module": module,
+                    "path": path,
+                    "exit_code": import_check.returncode,
+                    "timed_out": False,
+                    "search_budget_seconds": 0,
+                    "search_runtime_seconds": 0.0,
+                    "runtime_seconds": 0.0,
+                    "status": "not_importable",
+                    "export_status": "not_attempted",
+                })
                 continue
             module_scratch = scratch / (
                 f"{attempt_index:04d}-"
                 + re.sub(r"[^A-Za-z0-9_.-]", "_", module)
             )
             module_scratch.mkdir()
-            slice_seconds = max(1, min(module_slice, int(generation_remaining())))
+            if budget_strategy == "equal_shared_targets":
+                modules_left = max(1, len(ranked_modules) - attempt_index)
+                fair_share = generation_remaining() / modules_left
+                slice_seconds = max(
+                    1,
+                    min(
+                        module_slice,
+                        int(max(1.0, fair_share - PYNGUIN_MODULE_SHUTDOWN_GRACE_SECONDS)),
+                    ),
+                )
+            else:
+                slice_seconds = max(
+                    1, min(module_slice, int(generation_remaining()))
+                )
             command = [
                 "python", "-m", "pynguin", "--project-path", str(repo_dir),
                 "--module-name", module, "--output-path", str(module_scratch),
@@ -523,6 +578,9 @@ def run_pynguin_generation(
                 raw = exc.stdout or ""
                 module_output = raw if isinstance(raw, str) else raw.decode(errors="replace")
                 output_chunks.append(module_output)
+            search_runtime_seconds = round(
+                time.monotonic() - module_started, 6
+            )
             generated = sorted(module_scratch.rglob("test_*.py"))
             attempt_rewritten_imports = 0
             attempt_removed_assertions = 0
@@ -567,7 +625,16 @@ def run_pynguin_generation(
                 "module": module, "path": path, "exit_code": code,
                 "timed_out": timed_out, "generated_files": len(generated),
                 "runtime_seconds": round(time.monotonic() - module_started, 6),
+                "search_runtime_seconds": search_runtime_seconds,
+                "search_budget_seconds": slice_seconds,
                 "status": "generated" if accepted_files else "no_tests_generated",
+                "export_status": (
+                    "exported" if accepted_files
+                    else (
+                        "rejected_module_mismatch"
+                        if attempt_rejected_mismatches else "no_export"
+                    )
+                ),
                 "rewritten_import_count": attempt_rewritten_imports,
                 "removed_nonportable_assertion_count": attempt_removed_assertions,
                 "removed_strict_xfail_test_count": attempt_removed_strict_xfails,

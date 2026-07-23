@@ -7,7 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from swebench.eval_pipeline.coverage_generation_eval import common_improved_modules
+from swebench.eval_pipeline.coverage_generation_eval import (
+    apply_target_importability_results,
+    common_improved_modules,
+    freeze_agent_selected_targets,
+)
 from swebench.eval_pipeline.pynguin_generation import (
     _NONCALLABLE_SIGNATURE_COMPAT_SOURCE,
     _run,
@@ -106,7 +110,7 @@ def test_pynguin_cache_is_matched_and_replaced_by_instance(monkeypatch):
         "total_budget_seconds": args.pynguin_total_budget,
         "module_slice_seconds": args.pynguin_module_slice,
         "assertion_mode": args.pynguin_assertion_mode,
-        "postprocessing_version": 7,
+        "postprocessing_version": 8,
     }
     rows = [
         {"instance_id": "repo-a", "model_patch": "a", "metrics": matching_metrics},
@@ -123,6 +127,41 @@ def test_pynguin_cache_is_matched_and_replaced_by_instance(monkeypatch):
         ("repo-b", "b"),
         ("repo-a", "new-a"),
     ]
+
+
+def test_shared_target_cache_fingerprints_modules_python_budget_and_setup(monkeypatch):
+    monkeypatch.setattr(sys, "argv", [
+        "run_pipeline",
+        "--comparison_protocol", "agent_led_shared_targets",
+        "--shared_generation_budget", "123",
+    ])
+    args = parse_args()
+    metrics = {
+        "version": args.pynguin_version,
+        "seed": args.pynguin_seed,
+        "total_budget_seconds": 123,
+        "module_slice_seconds": args.pynguin_module_slice,
+        "assertion_mode": args.pynguin_assertion_mode,
+        "postprocessing_version": 8,
+        "requested_modules": ["pkg.a"],
+        "python_version": ".".join(map(str, sys.version_info[:3])),
+        "budget_strategy": "equal_shared_targets",
+        "setup_profile_fingerprint": "setup-a",
+    }
+    rows = [{"instance_id": "repo-a", "metrics": metrics}]
+    assert _matching_cached_pynguin_prediction(
+        rows, "repo-a", args, ["pkg.a"], "setup-a"
+    )
+    assert _matching_cached_pynguin_prediction(
+        rows, "repo-a", args, ["pkg.b"], "setup-a"
+    ) is None
+    assert _matching_cached_pynguin_prediction(
+        rows, "repo-a", args, ["pkg.a"], "setup-b"
+    ) is None
+    args.shared_generation_budget = 124
+    assert _matching_cached_pynguin_prediction(
+        rows, "repo-a", args, ["pkg.a"], "setup-a"
+    ) is None
 
 
 def test_module_resolution_and_uncovered_ranking_are_deterministic():
@@ -288,6 +327,91 @@ def test_common_mutation_union_and_no_gain_case():
     assert common_improved_modules(baseline, [], ["pkg/fixed.py"]) == ["pkg/fixed.py"]
 
 
+def test_agent_led_targets_depend_only_on_valid_agent_coverage_gain():
+    baseline = {"files": {
+        "pkg/a.py": {
+            "covered_lines": 1, "covered_branches": 0, "num_statements": 200,
+        },
+        "pkg/b.py": {
+            "covered_lines": 1, "covered_branches": 0, "num_statements": 20,
+        },
+        "pkg/c.py": {
+            "covered_lines": 0, "covered_branches": 0, "num_statements": 400,
+        },
+    }}
+    agent = {
+        "changed_files": ["tests/test_generated.py"],
+        "tests_only_patch": True,
+        "no_existing_test_lines_removed": True,
+        "test_patch_applied": True,
+        "after_tests_passed": True,
+        "after_coverage_tests_passed": True,
+        "flaky": False,
+        "added_test_count": 999,
+        "coverage_after": {"files": {
+            "pkg/a.py": {"covered_lines": 3, "covered_branches": 1},
+            "pkg/b.py": {"covered_lines": 3, "covered_branches": 1},
+            "pkg/c.py": {"covered_lines": 1, "covered_branches": 0},
+        }},
+    }
+    manifest = freeze_agent_selected_targets(
+        baseline, agent, statement_budget=250
+    )
+    assert manifest["target_paths"] == ["pkg/b.py", "pkg/a.py"]
+    assert manifest["import_modules"] == ["pkg.b", "pkg.a"]
+    assert manifest["targets"][2]["exclusion_reason"] == "statement_budget"
+    agent["added_test_count"] = 0
+    assert freeze_agent_selected_targets(
+        baseline, agent, statement_budget=250
+    )["target_paths"] == manifest["target_paths"]
+
+
+def test_agent_led_targets_reject_invalid_or_no_gain_agent():
+    baseline = {"files": {
+        "pkg/a.py": {
+            "covered_lines": 1, "covered_branches": 0, "num_statements": 2,
+        },
+    }}
+    invalid = {
+        "changed_files": ["pkg/a.py"],
+        "tests_only_patch": False,
+        "no_existing_test_lines_removed": True,
+        "test_patch_applied": True,
+        "after_tests_passed": True,
+        "after_coverage_tests_passed": True,
+        "flaky": False,
+        "coverage_after": {"files": {
+            "pkg/a.py": {"covered_lines": 2, "covered_branches": 0},
+        }},
+    }
+    manifest = freeze_agent_selected_targets(baseline, invalid)
+    assert manifest["target_paths"] == []
+    assert manifest["failure_reason"] == "invalid_agent_patch"
+
+
+def test_agent_led_target_manifest_applies_pristine_import_preflight():
+    manifest = {
+        "valid_agent_patch": True,
+        "failure_reason": "",
+        "targets": [{
+            "path": "pkg/a.py",
+            "module": "pkg.a",
+            "baseline_statements": 3,
+            "selected": True,
+            "exclusion_reason": "",
+        }],
+        "target_paths": ["pkg/a.py"],
+        "import_modules": ["pkg.a"],
+        "selected_statement_count": 3,
+    }
+    apply_target_importability_results(
+        manifest, [{"module": "pkg.a", "status": "not_importable"}]
+    )
+    assert manifest["target_paths"] == []
+    assert manifest["targets"][0]["exclusion_reason"] == "not_importable"
+    assert manifest["failure_reason"] == "no_agent_selected_targets"
+
+
 def test_comparison_csv_has_one_row_per_arm(tmp_path):
     output = tmp_path / "comparison.csv"
     targets = ["pkg/a.py"]
@@ -339,7 +463,7 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
     assert result["model_patch"].startswith("diff --git")
     assert result["metrics"]["successful_modules"] == ["pkg.core"]
     assert result["metrics"]["module_attempts"][0]["exit_code"] == 0
-    assert result["metrics"]["postprocessing_version"] == 7
+    assert result["metrics"]["postprocessing_version"] == 8
     assert result["metrics"]["network_guard_injected_count"] == 1
     finalization_calls = [call for call in calls if call[0][:2] == ["git", "add"]]
     assert finalization_calls[0][1] >= 1

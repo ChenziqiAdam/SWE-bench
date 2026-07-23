@@ -8,6 +8,7 @@ import logging
 import os
 import re
 import shutil
+import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -297,6 +298,16 @@ def parse_args():
     p.add_argument(
         "--traditional_test_generator", choices=["pynguin"], default=None,
         help="Optional conventional control arm for standalone coverage generation.",
+    )
+    p.add_argument(
+        "--comparison_protocol",
+        choices=["independent", "agent_led_shared_targets"],
+        default="independent",
+        help="Comparison target-selection protocol (default: legacy independent).",
+    )
+    p.add_argument(
+        "--shared_generation_budget", type=int, default=900,
+        help="Generation-only wall-time seconds per arm in shared-target mode.",
     )
     p.add_argument("--pynguin_version", default="0.45.0")
     p.add_argument("--pynguin_seed", type=int, default=0)
@@ -727,7 +738,9 @@ def _retain_cached_pynguin_prediction(cached: dict | None, generated: dict) -> d
 
 
 def _matching_cached_pynguin_prediction(
-    rows: list[dict], instance_id: str, args
+    rows: list[dict], instance_id: str, args,
+    requested_modules: list[str] | None = None,
+    setup_profile_fingerprint: str = "",
 ) -> dict | None:
     """Return the latest control cache matching this repository and policy."""
     matched = None
@@ -737,11 +750,28 @@ def _matching_cached_pynguin_prediction(
             candidate.get("instance_id") == instance_id
             and metrics.get("version") == args.pynguin_version
             and metrics.get("seed") == args.pynguin_seed
-            and metrics.get("total_budget_seconds") == args.pynguin_total_budget
+            and metrics.get("total_budget_seconds") == (
+                args.shared_generation_budget
+                if args.comparison_protocol == "agent_led_shared_targets"
+                else args.pynguin_total_budget
+            )
             and metrics.get("module_slice_seconds") == args.pynguin_module_slice
             and metrics.get("assertion_mode") == args.pynguin_assertion_mode
             and metrics.get("postprocessing_version")
             == PYNGUIN_POSTPROCESSING_VERSION
+            and (
+                args.comparison_protocol != "agent_led_shared_targets"
+                or (
+                    metrics.get("requested_modules")
+                    == sorted(set(requested_modules or []))
+                    and metrics.get("python_version")
+                    == ".".join(map(str, sys.version_info[:3]))
+                    and metrics.get("budget_strategy")
+                    == "equal_shared_targets"
+                    and metrics.get("setup_profile_fingerprint")
+                    == setup_profile_fingerprint
+                )
+            )
         ):
             matched = candidate
     return matched
@@ -756,9 +786,29 @@ def _upsert_prediction_by_instance(rows: list[dict], prediction: dict) -> list[d
     ]
 
 
+def _setup_profile_fingerprint(instance: dict) -> str:
+    """Identify repository setup/tool policy used by a generated-test arm."""
+    fields = {
+        key: instance.get(key)
+        for key in (
+            "coverage_setup_command",
+            "coverage_tool_install_command",
+            "coverage_test_command",
+            "coverage_command",
+            "pynguin_warning_filters",
+            "pynguin_ignore_noncallable_signatures",
+        )
+    }
+    return hashlib.sha256(
+        json.dumps(fields, sort_keys=True).encode()
+    ).hexdigest()[:16]
+
+
 def _run_standalone_coverage(args, inference_model: str, github_token: str | None) -> None:
     from swebench.eval_pipeline.coverage_generation_eval import (
+        apply_target_importability_results,
         evaluate_common_mutation_targets,
+        freeze_agent_selected_targets,
         format_baseline_coverage_report,
         prepare_standalone_coverage_baseline,
         run_standalone_coverage_evaluation,
@@ -839,6 +889,17 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
         ]
         from swebench.eval_pipeline.prediction_utils import write_prediction_rows
         write_prediction_rows(predictions_master, retained)
+    shared_protocol = args.comparison_protocol == "agent_led_shared_targets"
+    if shared_protocol:
+        if args.pynguin_module:
+            raise SystemExit(
+                "--pynguin_module conflicts with agent_led_shared_targets; "
+                "targets are frozen from the agent coverage delta"
+            )
+        if args.agent_backend == "codex":
+            args.codex_timeout = args.shared_generation_budget
+        elif args.agent_backend == "claude_code":
+            args.claude_code_timeout = args.shared_generation_budget
     if not args.skip_inference:
         logger.info("=== Standalone coverage generation: agent inference ===")
         _run_agent_backend(
@@ -860,6 +921,38 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
         "model_patch": "",
         "metrics": {},
     }
+    setup_fingerprint = _setup_profile_fingerprint(instance)
+    frozen_target_manifest = None
+    manifest_path = output_dir / f"{args.run_id}_target_manifest.json"
+    early_agent_result = None
+    if shared_protocol and not args.skip_eval:
+        logger.info(
+            "=== Agent-led shared targets: agent coverage-only evaluation ==="
+        )
+        early_agent_result = run_standalone_coverage_evaluation(
+            instance=instance,
+            prediction=prediction,
+            run_id=eval_run_id,
+            log_dir=args.log_dir,
+            timeout=args.coverage_eval_timeout,
+            flaky_runs=args.coverage_flaky_runs,
+            github_token=github_token,
+            baseline=baseline,
+            run_mutation=False,
+        )
+        frozen_target_manifest = freeze_agent_selected_targets(
+            (baseline or {}).get("coverage"),
+            early_agent_result,
+            statement_budget=args.mutation_target_statement_budget,
+            excluded_targets=instance.get("mutation_excluded_targets"),
+        )
+        manifest_path.write_text(json.dumps(frozen_target_manifest, indent=2))
+        logger.info("Frozen target manifest written to %s", manifest_path)
+
+    frozen_modules = (
+        (frozen_target_manifest or {}).get("import_modules") or []
+        if shared_protocol else None
+    )
     pynguin_prediction = None
     if args.traditional_test_generator == "pynguin":
         pynguin_path = output_dir / "pynguin_predictions.jsonl"
@@ -868,7 +961,9 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
         if pynguin_path.exists():
             pynguin_rows = read_prediction_rows(pynguin_path)
             cached_pynguin_prediction = _matching_cached_pynguin_prediction(
-                pynguin_rows, instance["instance_id"], args
+                pynguin_rows, instance["instance_id"], args,
+                requested_modules=frozen_modules,
+                setup_profile_fingerprint=setup_fingerprint,
             )
         if cached_pynguin_prediction and _reuse_cached_pynguin_prediction(args):
             pynguin_prediction = cached_pynguin_prediction
@@ -876,6 +971,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
         if (
             pynguin_prediction is None
             and baseline is not None
+            and (not shared_protocol or bool(frozen_modules))
             and not args.skip_pynguin
         ):
             logger.info("=== Standalone coverage generation: Pynguin control ===")
@@ -888,17 +984,31 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                 github_token=github_token,
                 version=args.pynguin_version,
                 seed=args.pynguin_seed,
-                total_budget=args.pynguin_total_budget,
+                total_budget=(
+                    args.shared_generation_budget
+                    if shared_protocol else args.pynguin_total_budget
+                ),
                 module_slice=args.pynguin_module_slice,
                 assertion_mode=args.pynguin_assertion_mode,
-                explicit_modules=args.pynguin_module,
+                explicit_modules=(
+                    frozen_modules if shared_protocol else args.pynguin_module
+                ),
+                budget_strategy=(
+                    "equal_shared_targets"
+                    if shared_protocol else "sequential_slice"
+                ),
+                setup_profile_fingerprint=setup_fingerprint,
                 warning_filters=instance.get("pynguin_warning_filters"),
                 ignore_noncallable_signatures=instance.get(
                     "pynguin_ignore_noncallable_signatures", False
                 ),
             )
-            pynguin_prediction = _retain_cached_pynguin_prediction(
-                cached_pynguin_prediction, generated_pynguin_prediction
+            pynguin_prediction = (
+                generated_pynguin_prediction
+                if shared_protocol
+                else _retain_cached_pynguin_prediction(
+                    cached_pynguin_prediction, generated_pynguin_prediction
+                )
             )
             if pynguin_prediction is not generated_pynguin_prediction:
                 logger.warning(
@@ -910,30 +1020,43 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                 _upsert_prediction_by_instance(pynguin_rows, pynguin_prediction),
             )
         elif pynguin_prediction is None:
+            error = (
+                "no_agent_selected_targets"
+                if shared_protocol and not frozen_modules
+                else "missing_cached_prediction"
+            )
             pynguin_prediction = {
                 "instance_id": instance["instance_id"],
                 "model_name_or_path": "pynguin", "model_patch": "",
-                "error": "missing_cached_prediction", "metrics": {
+                "error": error, "metrics": {
                     "method": "pynguin", "version": args.pynguin_version,
                     "seed": args.pynguin_seed,
+                    "requested_modules": frozen_modules or [],
+                    "budget_strategy": (
+                        "equal_shared_targets"
+                        if shared_protocol else "sequential_slice"
+                    ),
                 },
             }
+    if shared_protocol and frozen_target_manifest is not None:
+        apply_target_importability_results(
+            frozen_target_manifest,
+            ((pynguin_prediction or {}).get("metrics") or {}).get(
+                "module_attempts"
+            ) or [],
+        )
+        manifest_path.write_text(json.dumps(frozen_target_manifest, indent=2))
     model_dir = inference_model.replace("/", "__")
     report_dir = Path(args.log_dir) / eval_run_id / model_dir / instance["instance_id"]
     if args.force_eval and report_dir.exists():
         shutil.rmtree(report_dir)
     if not args.skip_eval:
         logger.info("=== Standalone coverage generation: independent coverage evaluation ===")
-        result = run_standalone_coverage_evaluation(
-            instance=instance,
-            prediction=prediction,
-            run_id=eval_run_id,
-            log_dir=args.log_dir,
-            timeout=args.coverage_eval_timeout,
-            flaky_runs=args.coverage_flaky_runs,
-            github_token=github_token,
-            baseline=baseline,
-            run_mutation=False,
+        result = early_agent_result or run_standalone_coverage_evaluation(
+            instance=instance, prediction=prediction, run_id=eval_run_id,
+            log_dir=args.log_dir, timeout=args.coverage_eval_timeout,
+            flaky_runs=args.coverage_flaky_runs, github_token=github_token,
+            baseline=baseline, run_mutation=False,
         )
         arm_predictions = {"agent": prediction}
         arm_results = {"agent": result}
@@ -955,6 +1078,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
             instance, arm_predictions, arm_results, baseline, eval_run_id,
             log_dir=args.log_dir, timeout=args.coverage_eval_timeout,
             github_token=github_token,
+            frozen_target_manifest=frozen_target_manifest,
         )
         result = arm_results["agent"]
         result["method_version"] = inference_model
@@ -1006,6 +1130,16 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
 
 def main():
     args = parse_args()
+    if (
+        args.comparison_protocol == "agent_led_shared_targets"
+        and args.pynguin_module
+    ):
+        raise SystemExit(
+            "--pynguin_module conflicts with agent_led_shared_targets; "
+            "targets are frozen from the agent coverage delta"
+        )
+    if args.shared_generation_budget <= 0:
+        raise SystemExit("--shared_generation_budget must be positive")
     inference_model = args.model
     if args.agent_backend == "codex" and args.codex_model:
         inference_model = args.codex_model

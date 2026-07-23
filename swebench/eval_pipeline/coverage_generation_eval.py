@@ -1388,6 +1388,145 @@ def limit_mutation_targets(
     return sorted(selected), excluded
 
 
+def freeze_agent_selected_targets(
+    baseline_coverage: dict | None,
+    agent_result: dict,
+    statement_budget: int = 500,
+    excluded_targets: list[str] | None = None,
+    importable_modules: set[str] | None = None,
+) -> dict:
+    """Freeze shared targets using only a valid agent arm's coverage gains.
+
+    The returned manifest is deliberately self-contained so later Pynguin and
+    mutation stages never need to inspect either arm while choosing targets.
+    """
+    from swebench.eval_pipeline.pynguin_generation import module_name_from_path
+
+    validity_checks = {
+        "patch_present": bool(agent_result.get("changed_files")),
+        "tests_only_patch": agent_result.get("tests_only_patch") is True,
+        "no_existing_test_lines_removed": (
+            agent_result.get("no_existing_test_lines_removed") is True
+        ),
+        "patch_applied": agent_result.get("test_patch_applied") is True,
+        "tests_passed": agent_result.get("after_tests_passed") is True,
+        "coverage_tests_passed": (
+            agent_result.get("after_coverage_tests_passed") is True
+        ),
+        "non_flaky": not bool(agent_result.get("flaky")),
+    }
+    valid_agent_patch = all(validity_checks.values())
+    before_files = (baseline_coverage or {}).get("files") or {}
+    after_files = ((agent_result.get("coverage_after") or {}).get("files") or {})
+    compatibility_exclusions = set(excluded_targets or [])
+    candidates: list[dict] = []
+
+    if valid_agent_patch:
+        for path, after in after_files.items():
+            before = before_files.get(path)
+            if before is None:
+                continue
+            line_gain = max(
+                0, int(after.get("covered_lines", 0))
+                - int(before.get("covered_lines", 0))
+            )
+            branch_gain = max(
+                0, int(after.get("covered_branches", 0))
+                - int(before.get("covered_branches", 0))
+            )
+            if line_gain + branch_gain <= 0:
+                continue
+            module = module_name_from_path(path)
+            reason = ""
+            if module is None:
+                reason = "not_importable_path"
+            elif path in compatibility_exclusions:
+                reason = "mutmut_incompatible"
+            elif importable_modules is not None and module not in importable_modules:
+                reason = "not_importable"
+            candidates.append({
+                "path": path,
+                "module": module or "",
+                "covered_line_gain": line_gain,
+                "covered_branch_gain": branch_gain,
+                "total_gain": line_gain + branch_gain,
+                "baseline_statements": int(before.get("num_statements", 0)),
+                "selected": False,
+                "exclusion_reason": reason,
+            })
+
+    candidates.sort(
+        key=lambda item: (
+            -item["total_gain"],
+            item["baseline_statements"],
+            item["path"],
+        )
+    )
+    used_statements = 0
+    rank = 0
+    for candidate in candidates:
+        rank += 1
+        candidate["rank"] = rank
+        if candidate["exclusion_reason"]:
+            continue
+        statements = candidate["baseline_statements"]
+        if (
+            statement_budget > 0
+            and statements
+            and used_statements + statements > statement_budget
+        ):
+            candidate["exclusion_reason"] = "statement_budget"
+            continue
+        candidate["selected"] = True
+        used_statements += statements
+
+    selected = [item for item in candidates if item["selected"]]
+    failure_reason = ""
+    if not valid_agent_patch:
+        failure_reason = "invalid_agent_patch"
+    elif not selected:
+        failure_reason = "no_agent_selected_targets"
+    return {
+        "protocol": "agent_led_shared_targets",
+        "selection_source": "agent_coverage_delta_only",
+        "valid_agent_patch": valid_agent_patch,
+        "validity_checks": validity_checks,
+        "statement_budget": statement_budget,
+        "selected_statement_count": used_statements,
+        "target_paths": [item["path"] for item in selected],
+        "import_modules": [item["module"] for item in selected],
+        "targets": candidates,
+        "failure_reason": failure_reason,
+    }
+
+
+def apply_target_importability_results(
+    manifest: dict, module_attempts: list[dict]
+) -> dict:
+    """Finalize generic import exclusions from pristine-checkout preflights."""
+    not_importable = {
+        attempt.get("module")
+        for attempt in module_attempts
+        if attempt.get("status") == "not_importable"
+    }
+    for target in manifest.get("targets") or []:
+        if target.get("selected") and target.get("module") in not_importable:
+            target["selected"] = False
+            target["exclusion_reason"] = "not_importable"
+    selected = [
+        target for target in manifest.get("targets") or []
+        if target.get("selected")
+    ]
+    manifest["target_paths"] = [target["path"] for target in selected]
+    manifest["import_modules"] = [target["module"] for target in selected]
+    manifest["selected_statement_count"] = sum(
+        int(target.get("baseline_statements", 0)) for target in selected
+    )
+    if not selected and manifest.get("valid_agent_patch"):
+        manifest["failure_reason"] = "no_agent_selected_targets"
+    return manifest
+
+
 def _eligible_for_mutation(result: dict) -> bool:
     """Mutation is meaningful only for a valid patch whose tests pass."""
     return (
@@ -1406,6 +1545,7 @@ def evaluate_common_mutation_targets(
     log_dir: str = "logs/run_evaluation",
     timeout: int = 3600,
     github_token: str | None = None,
+    frozen_target_manifest: dict | None = None,
 ) -> tuple[dict, dict[str, dict]]:
     """Evaluate original and every generator against an identical module union.
 
@@ -1415,19 +1555,32 @@ def evaluate_common_mutation_targets(
     eligible_results = [
         result for result in arm_results.values() if _eligible_for_mutation(result)
     ]
-    selected_targets = common_improved_modules(
-        baseline.get("coverage"), eligible_results,
-        infer_coverage_targets(instance),
-    )
-    compatible_targets, compatibility_excluded_targets = exclude_mutation_targets(
-        selected_targets, instance.get("mutation_excluded_targets")
-    )
-    targets, budget_excluded_targets = limit_mutation_targets(
-        compatible_targets,
-        baseline.get("coverage"),
-        eligible_results,
-        int(instance.get("mutation_target_statement_budget", 500)),
-    )
+    if frozen_target_manifest is not None:
+        targets = list(frozen_target_manifest.get("target_paths") or [])
+        compatibility_excluded_targets = [
+            item["path"]
+            for item in frozen_target_manifest.get("targets") or []
+            if item.get("exclusion_reason") == "mutmut_incompatible"
+        ]
+        budget_excluded_targets = [
+            item["path"]
+            for item in frozen_target_manifest.get("targets") or []
+            if item.get("exclusion_reason") == "statement_budget"
+        ]
+    else:
+        selected_targets = common_improved_modules(
+            baseline.get("coverage"), eligible_results,
+            infer_coverage_targets(instance),
+        )
+        compatible_targets, compatibility_excluded_targets = exclude_mutation_targets(
+            selected_targets, instance.get("mutation_excluded_targets")
+        )
+        targets, budget_excluded_targets = limit_mutation_targets(
+            compatible_targets,
+            baseline.get("coverage"),
+            eligible_results,
+            int(instance.get("mutation_target_statement_budget", 500)),
+        )
     excluded_targets = sorted(
         set(compatibility_excluded_targets) | set(budget_excluded_targets)
     )
@@ -1444,18 +1597,74 @@ def evaluate_common_mutation_targets(
                 "setup_exit_code": None, "runtime": 0.0,
                 "tool_error": False, "unsupported": False, "partial": None,
             }
-        output, timed_out, runtime = _run_standalone_mutation_phase(
-            instance, patch_path, apply_patch, targets, arm_dir,
-            "mutation", timeout, github_token,
+        target_groups = (
+            [[target] for target in targets]
+            if frozen_target_manifest is not None else [targets]
         )
-        exit_code = _exit_code(output, "MUTATION_EXIT")
-        return {
-            "mutation": parse_mutation_results(
+        outputs: list[str] = []
+        timed_out = False
+        runtime = 0.0
+        setup_exit_codes: list[int | None] = []
+        exit_codes: list[int | None] = []
+        mutations: list[dict] = []
+        module_scores: dict[str, float | None] = {}
+        per_group_timeout = max(1, timeout // max(1, len(target_groups)))
+        for index, group in enumerate(target_groups):
+            output, group_timed_out, group_runtime = _run_standalone_mutation_phase(
+                instance, patch_path, apply_patch, group, arm_dir,
+                f"mutation_{index:03d}", per_group_timeout, github_token,
+            )
+            outputs.append(output)
+            timed_out = timed_out or group_timed_out
+            runtime += group_runtime
+            exit_codes.append(_exit_code(output, "MUTATION_EXIT"))
+            setup_exit_codes.append(_exit_code(output, "SETUP_EXIT"))
+            parsed = parse_mutation_results(
                 _extract_block(output, _MUTATION_START, _MUTATION_END)
-            ),
+            )
+            if parsed:
+                mutations.append(parsed)
+            if frozen_target_manifest is not None:
+                module_scores[group[0]] = (parsed or {}).get("score")
+        output = "\n".join(outputs)
+        exit_code = next(
+            (code for code in exit_codes if mutation_exit_is_fatal(code)),
+            exit_codes[-1] if exit_codes else 125,
+        )
+        mutation = None
+        if mutations:
+            counts = {
+                key: sum(int(item.get(key, 0)) for item in mutations)
+                for key in ("killed", "survived", "timeout", "suspicious", "skipped")
+            }
+            total = sum(counts[key] for key in (
+                "killed", "survived", "timeout", "suspicious"
+            ))
+            mutation = {
+                **counts,
+                "total": total,
+                "score": 100.0 * counts["killed"] / total if total else None,
+                "score_killed_only": (
+                    100.0 * counts["killed"] / total if total else None
+                ),
+                "score_killed_or_timeout": (
+                    100.0 * (counts["killed"] + counts["timeout"]) / total
+                    if total else None
+                ),
+                "score_definition": (
+                    "100 * killed / "
+                    "(killed + timeout + survived + suspicious)"
+                ),
+            }
+        return {
+            "mutation": mutation,
+            "module_scores": module_scores,
             "exit_code": exit_code,
             "timed_out": timed_out,
-            "setup_exit_code": _exit_code(output, "SETUP_EXIT"),
+            "setup_exit_code": next(
+                (code for code in setup_exit_codes if code not in {None, 0}),
+                setup_exit_codes[-1] if setup_exit_codes else None,
+            ),
             "runtime": runtime,
             "tool_error": mutation_exit_is_fatal(exit_code),
             "unsupported": f"{_MUTATION_UNSUPPORTED}=1" in output,
@@ -1473,8 +1682,21 @@ def evaluate_common_mutation_targets(
         "mutation_targets": targets,
         "mutation_excluded_targets": excluded_targets,
         "mutation_budget_excluded_targets": budget_excluded_targets,
+        "target_provenance": (
+            "agent_coverage_delta_only"
+            if frozen_target_manifest is not None else "cross_arm_coverage_union"
+        ),
+        "target_manifest": frozen_target_manifest or {},
+        "comparison_protocol": (
+            "agent_led_shared_targets"
+            if frozen_target_manifest is not None else "independent"
+        ),
+        "target_selection_failure": (
+            (frozen_target_manifest or {}).get("failure_reason", "")
+        ),
         "mutation_skipped_ineligible": False,
         "mutation_after": original_mutation["mutation"],
+        "mutation_module_scores": original_mutation.get("module_scores") or {},
         "mutation_after_partial": original_mutation["partial"],
         "mutation_after_exit_code": original_mutation["exit_code"],
         "mutation_after_timed_out": original_mutation["timed_out"],
@@ -1504,10 +1726,23 @@ def evaluate_common_mutation_targets(
             "mutation_targets": targets,
             "mutation_excluded_targets": excluded_targets,
             "mutation_budget_excluded_targets": budget_excluded_targets,
+            "target_provenance": (
+                "agent_coverage_delta_only"
+                if frozen_target_manifest is not None else "cross_arm_coverage_union"
+            ),
+            "target_manifest": frozen_target_manifest or {},
+            "comparison_protocol": (
+                "agent_led_shared_targets"
+                if frozen_target_manifest is not None else "independent"
+            ),
+            "target_selection_failure": (
+                (frozen_target_manifest or {}).get("failure_reason", "")
+            ),
             "mutation_skipped_no_selected_modules": not targets,
             "mutation_skipped_ineligible": not _eligible_for_mutation(result),
             "mutation_before": original_mutation["mutation"],
             "mutation_after": arm_mutation["mutation"],
+            "mutation_module_scores": arm_mutation.get("module_scores") or {},
             "mutation_before_partial": original_mutation["partial"],
             "mutation_after_partial": arm_mutation["partial"],
             "mutation_before_exit_code": original_mutation["exit_code"],

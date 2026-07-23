@@ -632,22 +632,47 @@ def render_coverage_generation_table(
 
 def render_coverage_comparison_table(rows: list[dict], output_csv: str) -> None:
     """Write one normalized row per original/generator comparison arm."""
+    def target_coverage(coverage: dict, targets: list[str]) -> tuple[object, object]:
+        files = coverage.get("files") or {}
+        selected = [files[path] for path in targets if path in files]
+        statements = sum(int(item.get("num_statements", 0)) for item in selected)
+        lines = sum(int(item.get("covered_lines", 0)) for item in selected)
+        branches = sum(int(item.get("num_branches", 0)) for item in selected)
+        covered_branches = sum(
+            int(item.get("covered_branches", 0)) for item in selected
+        )
+        return (
+            100.0 * lines / statements if statements else "",
+            100.0 * covered_branches / branches if branches else "",
+        )
+
     normalized = []
     for info in rows:
         after = info.get("coverage_after") or {}
         mutation = info.get("mutation_after") or {}
         partial = info.get("mutation_after_partial") or {}
         metrics = info.get("inference_metrics") or {}
+        targets = info.get("mutation_targets") or []
+        target_line, target_branch = target_coverage(after, targets)
+        module_scores = info.get("mutation_module_scores") or {}
+        numeric_module_scores = [
+            value for value in module_scores.values()
+            if isinstance(value, (int, float))
+        ]
         normalized.append({
             "method": info.get("method", ""),
             "method_version": info.get("method_version", ""),
             "seed": info.get("seed", ""),
             "status": info.get("status", ""),
             "failure_reason": info.get("failure_reason", ""),
+            "comparison_protocol": info.get("comparison_protocol", "independent"),
+            "target_selection_failure": info.get("target_selection_failure", ""),
             "line_coverage": after.get("line_coverage", ""),
             "line_coverage_delta": info.get("coverage_line_delta", ""),
             "branch_coverage": after.get("branch_coverage", ""),
             "branch_coverage_delta": info.get("coverage_branch_delta", ""),
+            "target_line_coverage": target_line,
+            "target_branch_coverage": target_branch,
             "mutation_targets": ";".join(info.get("mutation_targets") or []),
             "mutation_excluded_targets": ";".join(
                 info.get("mutation_excluded_targets") or []
@@ -659,15 +684,27 @@ def render_coverage_comparison_table(rows: list[dict], output_csv: str) -> None:
                 "yes" if info.get("mutation_skipped_ineligible") else "no"
             ),
             "mutation_score": mutation.get("score", ""),
+            "mutation_micro_score": mutation.get("score", ""),
+            "mutation_macro_score": (
+                sum(numeric_module_scores) / len(numeric_module_scores)
+                if numeric_module_scores else ""
+            ),
             "mutation_score_delta": info.get("mutation_score_delta", ""),
             "mutation_partial_processed": partial.get("processed", ""),
             "mutation_partial_expected": partial.get("expected", ""),
             "mutation_partial_killed": partial.get("killed", ""),
             "mutation_policy": info.get("mutation_policy", ""),
+            "target_provenance": info.get("target_provenance", ""),
             "added_test_count": info.get("added_test_count", 0),
             "added_assertion_count": info.get("added_assertion_count", 0),
             "flaky": "yes" if info.get("flaky") else "no",
-            "generation_wall_time_seconds": metrics.get("wall_time_seconds", ""),
+            "setup_wall_time_seconds": metrics.get(
+                "setup_wall_time_seconds", info.get("setup_wall_time_seconds", "")
+            ),
+            "generation_wall_time_seconds": metrics.get(
+                "generation_wall_time_seconds",
+                metrics.get("wall_time_seconds", ""),
+            ),
             "evaluation_wall_time_seconds": info.get("evaluation_wall_time_seconds", ""),
             "input_tokens": metrics.get("input_tokens", ""),
             "output_tokens": metrics.get("output_tokens", ""),
