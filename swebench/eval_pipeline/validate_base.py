@@ -68,9 +68,14 @@ def validate_buildable(
     """
     cache_path = Path(cache_path)
     cache: dict[str, dict] = {}
-    if cache_path.exists() and not force:
+    if cache_path.exists():
         cache = json.loads(cache_path.read_text())
         logger.info(f"Loaded {len(cache)} cached build-validation results from {cache_path}")
+    if force:
+        # Revalidate only the requested cohort while retaining results for
+        # unselected instances in a shared output directory.
+        for inst in instances:
+            cache.pop(inst["instance_id"], None)
 
     # Auto-invalidate cached entries whose spec changed since they were written.
     spec_hashes = {i["instance_id"]: _spec_hash(i) for i in instances}
@@ -89,7 +94,7 @@ def validate_buildable(
             for iid in stale:
                 cache.pop(iid, None)
 
-    todo = [i for i in instances if i["instance_id"] not in cache] if not force else instances
+    todo = [i for i in instances if i["instance_id"] not in cache]
 
     # Filter out instances whose repo/version has no spec — they can't be built.
     buildable_todo = []

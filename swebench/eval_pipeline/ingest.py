@@ -127,6 +127,19 @@ def load_spreadsheet_issues(path: str, sheet: Optional[str] = None) -> list[dict
     return rows
 
 
+def load_spreadsheet_rows(path: str, sheet: Optional[str] = None) -> list[dict]:
+    """Load either the PR-oriented or issue-oriented spreadsheet format."""
+    wb = openpyxl.load_workbook(path, read_only=True)
+    try:
+        ws = wb[sheet] if sheet else wb.active
+        headers = [cell.value for cell in next(ws.iter_rows(max_row=1))]
+    finally:
+        wb.close()
+    if _COL_ISSUE_NUMBER in headers and COL_PR_NUMBER not in headers:
+        return load_spreadsheet_issues(path, sheet=sheet)
+    return load_spreadsheet(path, sheet=sheet)
+
+
 def fetch_pr_data(repo: Repo, pr_number: int) -> Optional[dict]:
     """Fetch PR metadata from GitHub."""
     pull = repo.call_api(
@@ -242,15 +255,7 @@ def fetch_all(
             "Pass --github_token YOUR_TOKEN or set the GITHUB_TOKEN environment variable.\n"
             "Create one at: https://github.com/settings/tokens (no scopes needed for public repos)."
         )
-    # Auto-detect spreadsheet format: Issues_v1 has "Issue Number" column, PRs.xlsx has "PR Number"
-    wb_peek = openpyxl.load_workbook(spreadsheet_path, read_only=True)
-    ws_peek = wb_peek[sheet] if sheet else wb_peek.active
-    peek_headers = [cell.value for cell in next(ws_peek.iter_rows(max_row=1))]
-    wb_peek.close()
-    if _COL_ISSUE_NUMBER in peek_headers and COL_PR_NUMBER not in peek_headers:
-        rows = load_spreadsheet_issues(spreadsheet_path, sheet=sheet)
-    else:
-        rows = load_spreadsheet(spreadsheet_path, sheet=sheet)
+    rows = load_spreadsheet_rows(spreadsheet_path, sheet=sheet)
 
     # Filter rows before hitting the GitHub API
     if repos:

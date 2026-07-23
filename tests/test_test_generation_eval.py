@@ -13,6 +13,7 @@ from swebench.eval_pipeline.test_generation_eval import (
     _infrastructure_failure_output,
     _no_tests_selected,
     _prepare_gold_patch,
+    _qgis_isolated_python_command,
     _rdkit_generated_unittest_targets,
     _rdkit_isolated_python_commands,
     _test_collection_failed,
@@ -557,6 +558,46 @@ def test_qgis_test_generation_keeps_fixed_ctest_command(monkeypatch):
 
     assert command == fixed
     assert "test_qgsrastercolorrampshader.py" not in command
+
+
+def test_qgis_test_generation_isolates_added_unittest_method(monkeypatch):
+    path = "python/plugins/processing/tests/Grass7AlgorithmsVectorTest.py"
+    specs = {
+        "test_cmd": ["ctest -R ProcessingGrass7AlgorithmsVectorTest"],
+        "test_generation_use_spec_cmd": True,
+        "test_generation_python_test": path,
+    }
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.MAP_REPO_VERSION_TO_SPECS",
+        {"qgis/QGIS": {"40837": specs}},
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.get_test_cmds",
+        lambda _instance: specs["test_cmd"],
+    )
+    patch = f"""diff --git a/{path} b/{path}
+--- a/{path}
++++ b/{path}
+@@ -127,6 +127,10 @@ class TestGrass7AlgorithmsVectorTest(unittest.TestCase):
++    def testCrsProjectionUsesWktFormat(self):
++        pass
+"""
+
+    isolated = _qgis_isolated_python_command(specs, patch)
+    selected = _test_command(
+        {"repo": "qgis/QGIS", "version": "40837", "test_patch": ""},
+        patch,
+    )
+
+    assert isolated is not None
+    assert selected == isolated
+    assert "QGIS_PREFIX_PATH=/testbed/build/output" in selected
+    assert "xvfb-run -a python3" in selected
+    assert selected.endswith(
+        f"/testbed/{path} "
+        "TestGrass7AlgorithmsVectorTest.testCrsProjectionUsesWktFormat"
+    )
+    assert "ctest" not in selected
 
 
 def test_openmm_test_generation_runs_added_unittest_method_nodeids():

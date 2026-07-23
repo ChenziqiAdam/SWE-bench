@@ -3,6 +3,7 @@ from swebench.harness.log_parsers.c import (
     parse_log_catch2,
     parse_log_openmm_binary_done,
     parse_log_pytest_nodeid,
+    parse_log_qgis,
 )
 
 
@@ -127,6 +128,25 @@ OK
     }
     assert parse_log_catch2(gold_log, None) == {
         expected_name: TestStatus.PASSED.value
+    }
+
+
+def test_parse_log_qgis_reads_isolated_python_unittest_method():
+    log = """
++ QGIS_PREFIX_PATH=/testbed/build/output LD_LIBRARY_PATH=/testbed/build/output/lib:
++ PYTHONPATH=/testbed/build/output/python QT_QPA_PLATFORM=offscreen
++ xvfb-run -a python3 /testbed/python/plugins/processing/tests/Grass7AlgorithmsVectorTest.py TestGrass.testProjection
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.004s
+
+OK
+"""
+
+    assert parse_log_qgis(log, None) == {
+        "/testbed/python/plugins/processing/tests/Grass7AlgorithmsVectorTest.py": (
+            TestStatus.PASSED.value
+        )
     }
 
 

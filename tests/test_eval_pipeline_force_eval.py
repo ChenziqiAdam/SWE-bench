@@ -1,6 +1,7 @@
 import json
 
 import docker
+from openpyxl import Workbook
 
 from swebench.eval_pipeline import run_pipeline
 
@@ -73,4 +74,39 @@ def test_partial_rerun_preserves_unselected_prompts(tmp_path):
     assert rows == [
         {"instance_id": "keep", "prompt": "old"},
         {"instance_id": "replace", "prompt": "new"},
+    ]
+
+
+def test_targeted_report_scope_uses_sheet_checkpoint_not_current_batch(tmp_path):
+    spreadsheet = tmp_path / "Issues_split.xlsx"
+    workbook = Workbook()
+    sheet1 = workbook.active
+    sheet1.title = "Batch 1"
+    sheet1.append(["Repo", "Issue Number", "Closing PR #", "Type"])
+    sheet1.append(["openmm/openmm", 3647, 4881, 1])
+    sheet1.append(["openmm/openmm", 3740, 4881, 1])
+    sheet1.append(["rdkit/rdkit", 9001, 9012, 1])
+    sheet2 = workbook.create_sheet("Batch 2")
+    sheet2.append(["Repo", "Issue Number", "Closing PR #", "Type"])
+    sheet2.append(["rdkit/rdkit", 8000, 8264, 1])
+    workbook.save(spreadsheet)
+
+    checkpoint = tmp_path / "instances_checkpoint.jsonl"
+    checkpoint.write_text(
+        "\n".join([
+            json.dumps({"instance_id": "rdkit__rdkit-8264", "batch": 2}),
+            json.dumps({"instance_id": "rdkit__rdkit-9012", "batch": 1}),
+            json.dumps({"instance_id": "openmm__openmm-4881", "batch": 1}),
+        ]) + "\n"
+    )
+
+    instances = run_pipeline._load_targeted_report_scope(
+        spreadsheet_path=str(spreadsheet),
+        sheet="Batch 1",
+        checkpoint_path=checkpoint,
+    )
+
+    assert instances == [
+        {"instance_id": "openmm__openmm-4881", "batch": 1},
+        {"instance_id": "rdkit__rdkit-9012", "batch": 1},
     ]

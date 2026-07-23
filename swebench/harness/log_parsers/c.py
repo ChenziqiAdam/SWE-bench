@@ -110,6 +110,25 @@ def parse_log_micropython_test(log: str, test_spec: TestSpec) -> dict[str, str]:
     return test_status_map
 
 
+def _parse_python_unittest_summary(log: str) -> dict[str, str]:
+    """Parse unittest summaries from shell-xtraced Python commands."""
+    test_status_map = {}
+    unittest_name = None
+    command_re = re.compile(
+        r"^\+\s+(?:\S+=\S+\s+)*(?:xvfb-run\s+-a\s+)?"
+        r"(?:\S*/)?python3?\s+(\S+\.py)(?:\s+\S+)*\s*$"
+    )
+    for line in log.splitlines():
+        match = command_re.match(line.strip())
+        if match:
+            unittest_name = match.group(1)
+        elif unittest_name and re.match(r"^OK(?:\s+\(.+\))?$", line.strip()):
+            test_status_map[unittest_name] = TestStatus.PASSED.value
+        elif unittest_name and line.strip().startswith("FAILED"):
+            test_status_map[unittest_name] = TestStatus.FAILED.value
+    return test_status_map
+
+
 def parse_log_catch2(log: str, test_spec: TestSpec) -> dict[str, str]:
     """Parse Catch2 test output (used by rdkit and other CMake+Catch2 repos).
 
@@ -169,18 +188,7 @@ def parse_log_catch2(log: str, test_spec: TestSpec) -> dict[str, str]:
     # "OK" or "FAILED (...)" summaries, so use the xtrace command as the key.
     # Keep parsing after CTest rows because a generated patch can add both C++
     # and Python tests, and test-generation evaluation must retain both.
-    unittest_name = None
-    for line in log.splitlines():
-        match = re.match(
-            r"^\+\s+(?:\S+=\S+\s+)*python3?\s+(\S+\.py)(?:\s+\S+)*\s*$",
-            line.strip(),
-        )
-        if match:
-            unittest_name = match.group(1)
-        elif unittest_name and re.match(r"^OK(?:\s+\(.+\))?$", line.strip()):
-            test_status_map[unittest_name] = TestStatus.PASSED.value
-        elif unittest_name and line.strip().startswith("FAILED"):
-            test_status_map[unittest_name] = TestStatus.FAILED.value
+    test_status_map.update(_parse_python_unittest_summary(log))
     return test_status_map
 
 
@@ -225,6 +233,7 @@ def parse_log_qgis(log: str, test_spec: TestSpec) -> dict[str, str]:
         match = ctest_error_re.match(line)
         if match:
             test_status_map[match.group(1).strip()] = TestStatus.FAILED.value
+    test_status_map.update(_parse_python_unittest_summary(log))
     return test_status_map
 
 

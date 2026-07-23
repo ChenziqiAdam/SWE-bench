@@ -964,6 +964,7 @@ def _qgis_spec(
     bindings: bool = False,
     grass: bool = False,
     postgres: bool = False,
+    python_test_path: str | None = None,
 ) -> dict:
     """Build and run concrete QGIS CTest targets in QGIS's build-deps image."""
     cmake_flags = [
@@ -1020,6 +1021,8 @@ def _qgis_spec(
             "printf '[qgis_test]\\nhost=localhost\\nport=5432\\ndbname=qgis_test\\nuser=docker\\npassword=docker\\n' > /root/.pg_service.conf",
             "PGHOST=localhost PGUSER=docker PGPASSWORD=docker PGDATABASE=qgis_test tests/testdata/provider/testdata_pg.sh",
         ]
+    if python_test_path:
+        spec["test_generation_python_test"] = python_test_path
     return spec
 
 
@@ -1042,6 +1045,9 @@ SPECS_QGIS = {
         base_image=_QGIS_316_BUILD_IMAGE,
         bindings=True,
         grass=True,
+        python_test_path=(
+            "python/plugins/processing/tests/Grass7AlgorithmsVectorTest.py"
+        ),
     ),
     "63639": _qgis_spec(
         (

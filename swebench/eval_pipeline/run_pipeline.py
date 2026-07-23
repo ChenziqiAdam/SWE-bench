@@ -140,6 +140,63 @@ def _write_prompts_preserving_unselected(
     return len(merged)
 
 
+def _load_targeted_report_scope(
+    spreadsheet_path: str,
+    sheet: str | None,
+    checkpoint_path: str | Path,
+    repos: set[str] | None = None,
+    issue_types: set[str] | None = None,
+    limit: int | None = None,
+) -> list[dict]:
+    """Recover the full spreadsheet cohort for a targeted cached-report repair.
+
+    ``instances.jsonl`` may contain a different sheet from the most recent run.
+    Resolve the intended report IDs from the current spreadsheet/sheet and load
+    their metadata from the shared instance checkpoint instead.
+    """
+    from swebench.eval_pipeline.constants import COL_CATEGORY, COL_PR_NUMBER, COL_REPO
+    from swebench.eval_pipeline.ingest import load_spreadsheet_rows, normalize_issue_type
+    from swebench.eval_pipeline.instance_builder import _make_instance_id
+
+    rows = load_spreadsheet_rows(spreadsheet_path, sheet=sheet)
+    if repos:
+        rows = [row for row in rows if row.get(COL_REPO) in repos]
+    if issue_types:
+        rows = [
+            row for row in rows
+            if normalize_issue_type(row.get(COL_CATEGORY)) in issue_types
+        ]
+    if limit:
+        rows = rows[:limit]
+
+    requested_ids = list(dict.fromkeys(
+        _make_instance_id(row[COL_REPO], row[COL_PR_NUMBER])
+        for row in rows
+    ))
+    checkpoint_by_id: dict[str, dict] = {}
+    checkpoint = Path(checkpoint_path)
+    if checkpoint.exists():
+        for line in checkpoint.read_text().splitlines():
+            if not line.strip():
+                continue
+            instance = json.loads(line)
+            checkpoint_by_id[instance["instance_id"]] = instance
+
+    missing = [instance_id for instance_id in requested_ids
+               if instance_id not in checkpoint_by_id]
+    if missing:
+        logger.warning(
+            "Targeted report scope is missing %d checkpoint instance(s): %s",
+            len(missing),
+            missing,
+        )
+    return [
+        checkpoint_by_id[instance_id]
+        for instance_id in requested_ids
+        if instance_id in checkpoint_by_id
+    ]
+
+
 def _docker_unavailable_reason() -> str | None:
     """Return a diagnostic when the Docker daemon cannot service requests."""
     import docker
@@ -1395,14 +1452,16 @@ def main():
         report_predictions_path = agent_predictions_path
         if args.force_eval and args.skip_inference and filter_ids:
             # A targeted harness repair should update the selected cached
-            # reports, then regenerate the complete run CSV from all cached
-            # instances and master predictions.
-            cached_instances = []
-            with open(instances_path) as instance_file:
-                for line in instance_file:
-                    if line.strip():
-                        cached_instances.append(json.loads(line))
-            report_instances = unique_instances_by_id(cached_instances)
+            # reports, then regenerate the complete spreadsheet/sheet cohort.
+            # instances.jsonl may currently hold a different batch.
+            report_instances = _load_targeted_report_scope(
+                spreadsheet_path=args.spreadsheet,
+                sheet=args.sheet,
+                checkpoint_path=instance_checkpoint_path,
+                repos=filter_repos,
+                issue_types=filter_issue_types,
+                limit=args.limit,
+            )
             report_predictions_path = agent_predictions_master_path
         results = collect_test_generation_results(
             run_id=run_id,

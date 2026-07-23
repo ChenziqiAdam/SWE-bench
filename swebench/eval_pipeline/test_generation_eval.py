@@ -426,6 +426,28 @@ def _rdkit_isolated_python_commands(
     return isolated if matched else None
 
 
+def _qgis_isolated_python_command(
+    specs: dict,
+    generated_patch: str,
+) -> str | None:
+    """Run only added QGIS unittest methods under the built Python environment."""
+    path = specs.get("test_generation_python_test")
+    if not path:
+        return None
+    names = _rdkit_generated_unittest_targets(generated_patch).get(path)
+    if not names:
+        return None
+    return (
+        "QGIS_PREFIX_PATH=/testbed/build/output "
+        "LD_LIBRARY_PATH=/testbed/build/output/lib:${LD_LIBRARY_PATH:-} "
+        "PYTHONPATH=/testbed/build/output/python:"
+        "/testbed/build/output/python/plugins:/testbed/tests/src/python:"
+        "${PYTHONPATH:-} "
+        "QT_QPA_PLATFORM=offscreen xvfb-run -a "
+        f"python3 /testbed/{path} {' '.join(names)}"
+    )
+
+
 def _test_command(instance: dict, generated_patch: str) -> str:
     """Choose the command that runs the generated test patch."""
     if isinstance(get_test_cmds(instance), list):
@@ -449,6 +471,10 @@ def _test_command(instance: dict, generated_patch: str) -> str:
     specs = MAP_REPO_VERSION_TO_SPECS.get(instance["repo"], {}).get(
         str(instance.get("version", "")), {}
     )
+    if instance["repo"] == "qgis/QGIS":
+        isolated_command = _qgis_isolated_python_command(specs, generated_patch)
+        if isolated_command:
+            return isolated_command
     if (
         instance["repo"] == "openmm/openmm"
         and not specs.get("test_generation_use_spec_cmd")
