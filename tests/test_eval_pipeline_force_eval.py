@@ -1,5 +1,6 @@
 import json
-import subprocess
+
+import docker
 
 from swebench.eval_pipeline import run_pipeline
 
@@ -14,9 +15,22 @@ def test_force_eval_clears_only_selected_instance_reports(tmp_path, monkeypatch)
     (unrelated / "report.json").write_text("unrelated")
     docker_calls = []
 
-    monkeypatch.setattr(
-        subprocess, "run", lambda command, **kwargs: docker_calls.append(command)
-    )
+    class FakeContainer:
+        def remove(self, force=False):
+            docker_calls.append(("remove", force))
+
+    class FakeContainers:
+        def get(self, name):
+            docker_calls.append(("get", name))
+            return FakeContainer()
+
+    class FakeClient:
+        containers = FakeContainers()
+
+        def close(self):
+            docker_calls.append(("close",))
+
+    monkeypatch.setattr(docker, "from_env", lambda: FakeClient())
 
     removed = run_pipeline._clear_selected_evaluation_cache(
         tmp_path, "run_testgen", ["rdkit__rdkit-2083"]
@@ -26,8 +40,22 @@ def test_force_eval_clears_only_selected_instance_reports(tmp_path, monkeypatch)
     assert not selected.exists()
     assert (unrelated / "report.json").read_text() == "unrelated"
     assert docker_calls == [
-        ["docker", "rm", "-f", "sweb.eval.rdkit__rdkit-2083.run_testgen"]
+        ("get", "sweb.eval.rdkit__rdkit-2083.run_testgen"),
+        ("remove", True),
+        ("close",),
     ]
+
+
+def test_force_eval_container_cleanup_is_best_effort(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        docker,
+        "from_env",
+        lambda: (_ for _ in ()).throw(docker.errors.DockerException("offline")),
+    )
+
+    assert run_pipeline._clear_selected_evaluation_cache(
+        tmp_path, "run_testgen", ["rdkit__rdkit-2083"]
+    ) == 0
 
 
 def test_partial_rerun_preserves_unselected_prompts(tmp_path):

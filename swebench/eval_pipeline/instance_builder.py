@@ -374,7 +374,12 @@ def build_all_instances(
                 f"from {checkpoint_path}"
             )
 
-    instances = list(existing.values())
+    # The checkpoint may contain a superset of the current request (for example,
+    # another worksheet batch sharing the same output directory).  Treat it as
+    # a lookup cache, not as the result set: only return instances requested by
+    # ``enriched_rows``.
+    instances = []
+    selected_ids: set[str] = set()
     skipped = 0
     built = 0
 
@@ -383,13 +388,19 @@ def build_all_instances(
         pr_number = row.get(COL_PR_NUMBER, 0)
         instance_id = _make_instance_id(repo_full, pr_number)
 
+        if instance_id in selected_ids:
+            continue
+
         if instance_id in existing:
+            instances.append(existing[instance_id])
+            selected_ids.add(instance_id)
             skipped += 1
             continue
 
         inst = build_instance(row, github_token=github_token)
         if inst is not None:
             instances.append(inst)
+            selected_ids.add(instance_id)
             built += 1
             if checkpoint_path:
                 Path(checkpoint_path).parent.mkdir(parents=True, exist_ok=True)

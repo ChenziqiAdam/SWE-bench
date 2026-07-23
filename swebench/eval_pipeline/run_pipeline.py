@@ -80,18 +80,40 @@ def _clear_selected_evaluation_cache(
 ) -> int:
     """Clear only selected reports and stale containers for a forced rerun."""
     import shutil
-    import subprocess
+    import docker
 
     removed = 0
     for instance_id in instance_ids:
         for report_dir in Path(log_dir).glob(f"{run_id}/*/{instance_id}"):
             shutil.rmtree(report_dir, ignore_errors=True)
             removed += 1
-        subprocess.run(
-            ["docker", "rm", "-f", f"sweb.eval.{instance_id}.{run_id}"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+
+    # Use the Docker-compatible API rather than a hard-coded ``docker`` CLI.
+    # Rootless Podman exposes this API through DOCKER_HOST but commonly does not
+    # install a binary named ``docker``.
+    client = None
+    try:
+        client = docker.from_env()
+        for instance_id in instance_ids:
+            container_name = f"sweb.eval.{instance_id}.{run_id}"
+            try:
+                client.containers.get(container_name).remove(force=True)
+            except docker.errors.NotFound:
+                pass
+            except docker.errors.DockerException as exc:
+                logger.warning(
+                    "Could not remove stale evaluation container %s: %s",
+                    container_name,
+                    exc,
+                )
+    except docker.errors.DockerException as exc:
+        logger.warning("Could not connect for stale-container cleanup: %s", exc)
+    finally:
+        if client is not None:
+            try:
+                client.close()
+            except Exception:
+                pass
     return removed
 
 
