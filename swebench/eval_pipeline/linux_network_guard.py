@@ -19,6 +19,8 @@ import threading
 from pathlib import Path
 from urllib.parse import urlparse
 
+_MODULE_NAME = "swebench.eval_pipeline.linux_network_guard"
+
 
 class GuardConfigurationError(RuntimeError):
     """Raised when a secure Linux guard cannot be constructed."""
@@ -155,7 +157,13 @@ def _bubblewrap_command(
     command: list[str],
 ) -> list[str]:
     """Construct the namespace wrapper; the relay directory is the only host IPC."""
-    inner = [sys.executable, "-m", __name__, "--_inside", str(relay_dir / "relay")]
+    inner = [
+        sys.executable,
+        "-m",
+        _MODULE_NAME,
+        "--_inside",
+        str(relay_dir / "relay"),
+    ]
     inner += [str(port or 0), "--", *command]
     wrapped = [
         bwrap,
@@ -288,7 +296,7 @@ def main(argv: list[str] | None = None) -> int:
         command = [
             sys.executable,
             "-m",
-            __name__,
+            _MODULE_NAME,
             "--_verify-inside",
             str(port),
         ]

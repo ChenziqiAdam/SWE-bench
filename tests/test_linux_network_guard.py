@@ -57,6 +57,8 @@ def test_bubblewrap_boundary_unshares_network_and_hides_host_sockets(monkeypatch
     assert command[command.index("--tmpfs") + 1] == "/run"
     assert command.count("--tmpfs") == 2
     assert "--unsetenv" in command
+    assert "swebench.eval_pipeline.linux_network_guard" in command
+    assert "__main__" not in command
     assert command[-1] == "agent"
 
 
