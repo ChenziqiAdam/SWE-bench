@@ -688,6 +688,15 @@ def _standalone_mutation_script(
         mutation_compatibility = _mutmut_sqlite_compatibility_lines()
         mutation_command = _with_mutmut_compatibility(mutation_command)
     mutation_results_command = instance.get("mutation_results_command") or "mutmut results"
+    mutation_export_lines = []
+    if not custom_command:
+        exporter = Path(__file__).with_name("mutation_export.py").resolve()
+        mutation_export_lines = [
+            "if [ -f .mutmut-cache ]; then",
+            f"  python {shlex.quote(str(exporter))} "
+            "--cache .mutmut-cache --output .mutation-details.json || true",
+            "fi",
+        ]
     lines = [
         "#!/bin/bash",
         "set -uxo pipefail",
@@ -718,6 +727,7 @@ def _standalone_mutation_script(
         f"  {mutation_results_command} 2>&1 || true",
         "fi",
         f"echo {_MUTATION_END}",
+        *mutation_export_lines,
         "echo SETUP_EXIT=$SETUP_EXIT",
         "echo MUTATION_EXIT=$MUTATION_EXIT",
         "exit 0",
@@ -816,6 +826,9 @@ def _run_standalone_mutation_phase(
             output = raw if isinstance(raw, str) else raw.decode(errors="replace")
             timed_out = True
         (out_dir / f"{name}.log").write_text(output)
+        details_path = repo_dir / ".mutation-details.json"
+        if details_path.is_file():
+            shutil.copy2(details_path, out_dir / f"{name}.mutants.json")
         return output, timed_out, time.perf_counter() - started
     finally:
         if repo_dir:

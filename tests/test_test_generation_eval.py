@@ -665,6 +665,23 @@ def test_openmm_test_generation_runs_added_unittest_method_nodeids():
     )
 
 
+def test_openmm_test_generation_keeps_definition_scope_for_added_body_lines():
+    patch = """diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py
+--- a/wrappers/python/tests/TestForceField.py
++++ b/wrappers/python/tests/TestForceField.py
+@@ -845,5 +845,13 @@ class TestForceField(unittest.TestCase):
++    def test_Disulfides(self):
++        assert True
++
++        assert 1 == 1
+"""
+
+    assert _openmm_generated_pytest_targets(patch) == (
+        ["TestForceField.py::TestForceField::test_Disulfides"],
+        None,
+    )
+
+
 def test_openmm_test_generation_falls_back_to_touched_pytest_file():
     patch = """diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py
 --- a/wrappers/python/tests/TestForceField.py

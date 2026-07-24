@@ -3,63 +3,412 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Agent Trajectory Explorer</title>
+  <title>Test Comparison</title>
   <style>
-    :root{--bg:#f4f1e9;--paper:#fffdf8;--ink:#18231d;--muted:#6b756f;--line:#d9ddd5;--green:#166247;--green-bg:#dff1e7;--blue:#315f91;--blue-bg:#e4edf7;--amber:#965b12;--amber-bg:#f8ead2;--red:#a23d32;--red-bg:#f8e4df;--purple:#6e4a91;--purple-bg:#eee5f7;--code:#17201c;--shadow:0 12px 36px #283a2d12}
-    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:14px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,sans-serif}button,input,select{font:inherit;color:inherit}
-    header{height:62px;position:sticky;top:0;z-index:20;background:#fffdf8ed;border-bottom:1px solid var(--line);backdrop-filter:blur(12px)}.bar{height:100%;max-width:1540px;margin:auto;padding:0 26px;display:flex;align-items:center;gap:16px}.brand{font:700 19px Georgia,serif;white-space:nowrap}.brand i{font-style:normal;color:var(--green)}.tagline{color:var(--muted);font-size:12px}.run-select{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}select,input{border:1px solid var(--line);border-radius:8px;background:white;padding:8px 10px;outline:none}select:focus,input:focus{border-color:#85a998;box-shadow:0 0 0 3px #dcebe3}
-    main{max-width:1540px;margin:auto;padding:30px 26px}.eyebrow{text-transform:uppercase;letter-spacing:.13em;font-size:10px;font-weight:800;color:var(--green)}h1{font:500 39px/1.12 Georgia,serif;margin:8px 0 10px}.lead{color:var(--muted);max-width:720px;margin:0 0 24px}.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:20px 0}.controls input{width:min(390px,100%)}.count{margin-left:auto;color:var(--muted);font-size:12px}
-    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;cursor:pointer;transition:.16s;box-shadow:0 1px 0 #fff}.card:hover{transform:translateY(-2px);border-color:#9db5a8;box-shadow:var(--shadow)}.card-top{display:flex;align-items:center;gap:8px}.iid{font:12px ui-monospace,SFMono-Regular,monospace;color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.card h2{font:600 19px/1.3 Georgia,serif;margin:14px 0 5px}.repo{font-size:12px;color:var(--muted)}.card-foot{display:flex;gap:8px;border-top:1px solid var(--line);margin-top:14px;padding-top:12px;color:var(--muted);font-size:11px}.dot{width:7px;height:7px;border-radius:50%;background:var(--green);align-self:center}.dot.off{background:#b5bbb7}.pill{display:inline-flex;border-radius:99px;padding:3px 8px;font-size:10px;font-weight:800;white-space:nowrap}.pass{background:var(--green-bg);color:var(--green)}.warn{background:var(--amber-bg);color:var(--amber)}.fail{background:var(--red-bg);color:var(--red)}.neutral{background:#e9ece8;color:#58625c}
-    #detail{display:none}.detail-head{display:flex;align-items:flex-start;gap:15px}.back{border:0;background:none;color:var(--green);font-weight:750;cursor:pointer;padding:8px 0}.detail-title{flex:1;min-width:0}.detail-title h1{font-size:26px;margin:3px 0}.detail-meta{font:12px ui-monospace,monospace;color:var(--muted);overflow-wrap:anywhere}.summary-strip{display:grid;grid-template-columns:repeat(5,minmax(100px,1fr));gap:9px;margin:20px 0}.stat{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:11px 13px}.stat b{display:block;font:600 20px Georgia,serif}.stat span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-    .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:15px}.tab{border:0;background:none;padding:10px 14px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent}.tab.active{color:var(--green);border-color:var(--green);font-weight:800}.panel{display:none}.panel.active{display:block}
-    .trajectory-controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:13px}.trajectory-controls input{min-width:260px}.toggle{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}.toggle input{accent-color:var(--green)}.timeline{position:relative;margin-left:14px;padding-left:25px;border-left:1px solid #cbd3cc}.event{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:10px;margin:0 0 10px;padding:12px 14px;box-shadow:0 1px 0 #fff}.event:before{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:#a6b0aa;border:3px solid var(--bg);left:-32px;top:17px}.event.tool:before{background:var(--blue)}.event.text:before{background:var(--green)}.event.thinking:before{background:var(--purple)}.event.error:before{background:var(--red)}.event.result:before{background:var(--amber)}.event-head{display:flex;align-items:center;gap:8px}.seq{font:10px ui-monospace,monospace;color:var(--muted)}.kind{font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:850}.kind.tool{color:var(--blue)}.kind.text{color:var(--green)}.kind.thinking{color:var(--purple)}.event-title{font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.event-body{margin-top:9px;white-space:pre-wrap;overflow-wrap:anywhere}.event details{margin-top:9px}.event summary{cursor:pointer;color:var(--blue);font-size:12px}.event pre,.code{margin:8px 0 0;background:var(--code);color:#dce6df;border-radius:8px;padding:12px;overflow:auto;white-space:pre-wrap;font:11.5px/1.55 ui-monospace,SFMono-Regular,monospace;max-height:420px}.result-box{border-top:1px solid var(--line);margin-top:11px;padding-top:9px}.result-box.error{color:var(--red)}.empty{text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:42px}
-    .patch-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;height:calc(100vh - 235px);min-height:480px}.patch-pane{min-width:0;display:flex;flex-direction:column}.pane-head{background:#e8ebe5;border:1px solid var(--line);padding:8px 11px;border-radius:9px 9px 0 0;font-size:12px;font-weight:800}.patch-pane pre{margin:0;flex:1;overflow:auto;background:var(--code);color:#dae5de;border-radius:0 0 9px 9px;padding:14px;font:11.5px/1.55 ui-monospace,monospace}.add{color:#8ee3b5;background:#214532}.del{color:#f0aaa2;background:#512d2a}.hunk{color:#9fc7ee}
-    .metric-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:18px}.metric{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px}.metric label{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}.metric strong{display:block;font:600 23px Georgia,serif;margin-top:4px}.data-table{width:100%;border-collapse:collapse;background:var(--paper);border:1px solid var(--line)}.data-table th,.data-table td{text-align:left;vertical-align:top;border-bottom:1px solid var(--line);padding:8px 11px}.data-table th{width:280px;color:var(--muted);font:11px ui-monospace,monospace}.data-table td{overflow-wrap:anywhere}.issue-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.box{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px}.box h3{font:600 16px Georgia,serif;margin:0 0 9px}.box p,.box pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;color:#38443d}.loading{padding:50px;text-align:center;color:var(--muted)}
-    @media(max-width:850px){header{height:auto}.bar{padding:12px 15px;flex-wrap:wrap}.tagline{display:none}.run-select{width:100%;margin:0}.run-select select{flex:1}main{padding:20px 14px}h1{font-size:31px}.summary-strip{grid-template-columns:repeat(2,1fr)}.patch-grid,.issue-grid{grid-template-columns:1fr;height:auto}.patch-pane pre{max-height:65vh}.trajectory-controls input{width:100%}.count{margin-left:0}}
+    :root {
+      --bg: #f5f6f3;
+      --paper: #fff;
+      --ink: #17201b;
+      --muted: #68716c;
+      --line: #dce1dc;
+      --green: #176345;
+      --green-soft: #e4f2ea;
+      --blue: #315f91;
+      --code: #17201c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.5 Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+    button, select { font: inherit; color: inherit; }
+    header {
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+      padding: 22px 28px;
+    }
+    header div, main { max-width: 1500px; margin: auto; }
+    h1 { margin: 0; font-size: 23px; letter-spacing: -.02em; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    main { padding: 24px 28px 32px; }
+    .controls {
+      display: grid;
+      grid-template-columns: 230px minmax(220px, 1fr) minmax(280px, 1.5fr);
+      gap: 12px;
+      padding: 16px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    select {
+      width: 100%;
+      min-width: 0;
+      padding: 9px 10px;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      outline: none;
+    }
+    select:focus { border-color: #78a38f; box-shadow: 0 0 0 3px var(--green-soft); }
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 43px;
+      margin: 16px 2px;
+      color: var(--muted);
+    }
+    .meta strong { color: var(--ink); font-size: 16px; }
+    .pill {
+      display: inline-flex;
+      padding: 3px 9px;
+      border-radius: 99px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .patch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      height: calc(100vh - 245px);
+      min-height: 520px;
+    }
+    .pane {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+    .pane-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--line);
+      font-weight: 800;
+    }
+    .pane-head span { color: var(--muted); font-size: 11px; font-weight: 500; }
+    pre {
+      flex: 1;
+      margin: 0;
+      padding: 15px;
+      overflow: auto;
+      background: var(--code);
+      color: #dce6df;
+      font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+      tab-size: 4;
+    }
+    pre span { display: block; min-height: 1.55em; }
+    .add { color: #9be5bb; background: #214532; }
+    .del { color: #f2aaa3; background: #512d2a; }
+    .hunk { color: #9fc7ee; }
+    .empty {
+      display: grid;
+      place-items: center;
+      height: 100%;
+      padding: 30px;
+      color: #aab5ae;
+      text-align: center;
+      white-space: normal;
+    }
+    .loading { padding: 80px; text-align: center; color: var(--muted); }
+    .mutation-section {
+      display: none;
+      margin-top: 22px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .mutation-title { display: flex; align-items: baseline; gap: 10px; }
+    .mutation-title h2 { margin: 0; font-size: 19px; }
+    .mutation-title p { margin: 0; color: var(--muted); }
+    .mutation-controls {
+      display: grid;
+      grid-template-columns: 180px 180px minmax(320px, 1fr);
+      gap: 12px;
+      margin: 14px 0;
+    }
+    .mutation-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--paper);
+    }
+    .mutation-meta {
+      display: flex;
+      gap: 12px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .mutation-meta strong { color: var(--ink); }
+    .mutation-card pre { min-height: 260px; max-height: 560px; }
+    @media (max-width: 900px) {
+      header, main { padding-left: 15px; padding-right: 15px; }
+      .controls { grid-template-columns: 1fr 1fr; }
+      .patch-grid { grid-template-columns: 1fr; height: auto; }
+      .pane { height: 65vh; }
+      .mutation-controls { grid-template-columns: 1fr 1fr; }
+      .mutation-controls label:last-child { grid-column: 1 / -1; }
+    }
+    @media (max-width: 560px) {
+      .controls { grid-template-columns: 1fr; }
+      .meta { align-items: flex-start; flex-direction: column; }
+      .mutation-controls { grid-template-columns: 1fr; }
+      .mutation-controls label:last-child { grid-column: auto; }
+    }
   </style>
 </head>
 <body>
-<header><div class="bar"><div class="brand"><i>Agent</i> Trajectory Explorer</div><span class="tagline">SWE-bench scientific software evaluation</span><label class="run-select">Experiment <select id="run"></select></label></div></header>
+<header>
+  <div>
+    <h1>Test Comparison</h1>
+    <p>Bug reproduction 对比 Agent/人工 PR；Coverage test generation 对比 Agent/Pynguin。</p>
+  </div>
+</header>
 <main>
-  <section id="overview">
-    <div class="eyebrow">Research artifact viewer</div><h1>从决策轨迹到测试结果</h1>
-    <p class="lead">浏览 coding agent 的文字、工具调用与执行结果，并把最终 patch 和独立评估放在同一个上下文中。</p>
-    <div class="controls"><input id="search" placeholder="搜索 instance、仓库或标题"><select id="status"><option value="">全部结果</option><option value="resolved">resolved</option><option value="partial">partial</option><option value="unresolved">unresolved</option><option value="errored">errored</option><option value="not_exercised">not exercised</option></select><select id="trajectoryFilter"><option value="">全部任务</option><option value="yes">有 trajectory</option><option value="no">无 trajectory</option></select><span class="count" id="count"></span></div>
-    <div class="cards" id="cards"></div>
+  <section class="controls">
+    <label>Pipeline
+      <select id="pipeline">
+        <option value="coverage">Coverage test generation</option>
+        <option value="test_generation">Bug-reproduction test generation</option>
+      </select>
+    </label>
+    <label>Experiment
+      <select id="run"></select>
+    </label>
+    <label>Instance
+      <select id="instance"></select>
+    </label>
   </section>
-  <section id="detail">
-    <div class="detail-head"><button class="back" id="back">← 返回</button><div class="detail-title"><div class="eyebrow" id="d-repo"></div><h1 id="d-title"></h1><div class="detail-meta" id="d-id"></div></div><div id="d-status"></div></div>
-    <div class="summary-strip" id="summary"></div>
-    <nav class="tabs"><button class="tab active" data-tab="trajectory">Trajectory</button><button class="tab" data-tab="patch">Patch</button><button class="tab" data-tab="evaluation">Evaluation</button><button class="tab" data-tab="context">Context</button></nav>
-    <section class="panel active" id="panel-trajectory"><div class="trajectory-controls"><select id="source"></select><input id="eventSearch" placeholder="搜索命令、文件或输出"><label class="toggle"><input type="checkbox" id="showThinking">思考</label><label class="toggle"><input type="checkbox" id="showSystem">系统事件</label><span class="count" id="eventCount"></span></div><div id="timeline" class="timeline"></div></section>
-    <section class="panel" id="panel-patch"><div class="patch-grid"><div class="patch-pane"><div class="pane-head">Agent-generated patch</div><pre id="agentPatch"></pre></div><div class="patch-pane"><div class="pane-head">PR gold test patch</div><pre id="goldPatch"></pre></div></div></section>
-    <section class="panel" id="panel-evaluation"><div class="metric-grid" id="metrics"></div><table class="data-table"><tbody id="evalTable"></tbody></table></section>
-    <section class="panel" id="panel-context"><div class="issue-grid"><div class="box"><h3>Problem statement</h3><p id="problem"></p></div><div class="box"><h3>Experiment configuration</h3><pre id="config"></pre></div><div class="box" id="scienceBox"><h3>Science-domain analysis</h3><p id="science"></p></div></div></section>
+
+  <div class="meta" id="meta"><span>Loading…</span></div>
+
+  <section class="patch-grid">
+    <article class="pane">
+      <div class="pane-head"><b id="leftTitle">Model test</b><span id="leftInfo"></span></div>
+      <pre id="leftPatch"><span class="empty">Loading…</span></pre>
+    </article>
+    <article class="pane">
+      <div class="pane-head"><b id="rightTitle">Comparison</b><span id="rightInfo"></span></div>
+      <pre id="rightPatch"><span class="empty">Loading…</span></pre>
+    </article>
+  </section>
+
+  <section class="mutation-section" id="mutationSection">
+    <div class="mutation-title">
+      <h2>Mutation details</h2>
+      <p>查看 mutation 对 production code 的具体修改。</p>
+    </div>
+    <div class="mutation-controls">
+      <label>Evaluated with
+        <select id="mutationArm">
+          <option value="agent">Agent tests</option>
+          <option value="pynguin">Pynguin tests</option>
+        </select>
+      </label>
+      <label>Status
+        <select id="mutationStatus"><option value="">All statuses</option></select>
+      </label>
+      <label>Mutant
+        <select id="mutant"></select>
+      </label>
+    </div>
+    <article class="mutation-card">
+      <div class="mutation-meta" id="mutationMeta"></div>
+      <pre id="mutationDiff"><span class="empty">Loading mutation details…</span></pre>
+    </article>
   </section>
 </main>
+
 <script>
-const state={run:'',rows:[],detail:null,trajectory:null,instanceId:''};
-const $=s=>document.querySelector(s);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function get(url){const r=await fetch(url);if(!r.ok){let m=r.statusText;try{m=(await r.json()).detail||m}catch{}throw Error(m)}return r.json()}
-function pill(s){const v=String(s||'not evaluated').toLowerCase();const c=v==='resolved'||v==='pass'?'pass':v==='errored'||v==='error'?'fail':v==='partial'||v==='not_exercised'?'warn':'neutral';return `<span class="pill ${c}">${esc(v.replaceAll('_',' '))}</span>`}
-function humanBytes(n){if(!n)return '0 B';const u=['B','KB','MB'];let i=0;while(n>=1024&&i<u.length-1){n/=1024;i++}return `${n.toFixed(i?1:0)} ${u[i]}`}
-function formatValue(v){if(v===null||v===undefined||v==='')return '—';if(Array.isArray(v))return v.join(', ')||'—';if(typeof v==='object')return JSON.stringify(v,null,2);return String(v)}
-function diff(s){return esc(s||'No patch available').split('\n').map(x=>`<span class="${x.startsWith('+++')||x.startsWith('---')?'':x.startsWith('+')?'add':x.startsWith('-')?'del':x.startsWith('@@')?'hunk':''}">${x}</span>`).join('\n')}
-async function init(){const runs=await get('/api/runs');$('#run').innerHTML=runs.map(r=>`<option>${esc(r)}</option>`).join('');const preferred=runs.includes('biopython_coverage')?'biopython_coverage':runs.includes('issues_testgen_001')?'issues_testgen_001':runs[0];$('#run').value=preferred;$('#run').onchange=()=>loadRun($('#run').value);await loadRun(preferred)}
-async function loadRun(run){state.run=run;state.rows=await get(`/api/runs/${encodeURIComponent(run)}/overview`);closeDetail();renderCards()}
-function renderCards(){const q=$('#search').value.toLowerCase(),status=$('#status').value,tf=$('#trajectoryFilter').value;const rows=state.rows.filter(r=>(!status||r.status===status)&&(!tf||(tf==='yes')===r.has_trajectory)&&[r.instance_id,r.repo,r.pr_title,r.category].join(' ').toLowerCase().includes(q));$('#count').textContent=`${rows.length} / ${state.rows.length}`;$('#cards').innerHTML=rows.length?rows.map(r=>`<article class="card" data-id="${esc(r.instance_id)}"><div class="card-top"><span class="iid">${esc(r.instance_id)}</span>${pill(r.status)}</div><h2>${esc(r.pr_title||r.algorithm_name||r.instance_id.split('__').pop())}</h2><div class="repo">${esc(r.repo||'standalone repository')}</div><div class="card-foot"><span class="dot ${r.has_trajectory?'':'off'}"></span>${r.has_trajectory?'trajectory available':'no trajectory'}${r.failure_reason?` · ${esc(r.failure_reason.replaceAll('_',' '))}`:''}</div></article>`).join(''):'<div class="empty">没有匹配的任务。</div>';document.querySelectorAll('.card').forEach(card=>card.onclick=()=>openDetail(card.dataset.id))}
-async function openDetail(id){state.instanceId=id;$('#overview').style.display='none';$('#detail').style.display='block';$('#timeline').innerHTML='<div class="loading">Loading trajectory…</div>';state.detail=await get(`/api/runs/${encodeURIComponent(state.run)}/instance/${encodeURIComponent(id)}`);renderDetail();try{state.trajectory=await get(trajectoryUrl());renderTrajectory();renderSummary()}catch(e){state.trajectory=null;$('#timeline').innerHTML=`<div class="empty">${esc(e.message)}</div>`;$('#source').innerHTML='';renderSummary()}scrollTo(0,0)}
-function trajectoryUrl(source=''){const base=`/api/runs/${encodeURIComponent(state.run)}/instance/${encodeURIComponent(state.instanceId)}/trajectory`;return source?`${base}?source=${encodeURIComponent(source)}`:base}
-function renderDetail(){const d=state.detail,i=d.instance,c=d.comparison,e=d.evaluation||{};$('#d-repo').textContent=i.repo||'repository';$('#d-title').textContent=i.pr_title||i.algorithm_name||i.instance_id;$('#d-id').textContent=`${i.instance_id}${i.base_commit?' · '+i.base_commit.slice(0,12):''}${c.model_name?' · '+c.model_name:''}`;$('#d-status').innerHTML=pill(c.status||e.report?.status);$('#agentPatch').innerHTML=diff(c.agent_test_patch);$('#goldPatch').innerHTML=diff(c.gold_test_patch);$('#problem').textContent=i.problem_statement||'No issue statement (standalone coverage experiment).';const config={...i};['problem_statement','pr_body','patch','test_patch','baseline_coverage_report'].forEach(k=>delete config[k]);$('#config').textContent=JSON.stringify(config,null,2);const a=d.science_analysis;$('#scienceBox').style.display=a?'block':'none';$('#science').textContent=a?[a.science_reason,a.agent_miss,a.gold_strength].filter(Boolean).join('\n\n'):'';renderEvaluation();renderSummary()}
-function renderSummary(){const report=state.detail?.evaluation?.report||{},t=state.trajectory?.summary;const stats=[['Completion',t?.completion||report.status||'—'],['Turns',state.detail?.evaluation?.inference_metrics?.turns??'—'],['Tool calls',t?.counts?.tool??'—'],['Tests added',report.added_test_count??'—'],['Line Δ',report.coverage_line_delta!==undefined?`${Number(report.coverage_line_delta).toFixed(3)}%`:'—']];$('#summary').innerHTML=stats.map(([k,v])=>`<div class="stat"><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join('')}
-function toolSummary(e){const x=e.input||{};if(typeof x==='string')return x.split('\n')[0].slice(0,160);return (x.command||x.file_path||x.description||x.subject||'').split('\n')[0].slice(0,180)}
-function eventHaystack(e){return JSON.stringify(e).toLowerCase()}
-function renderTrajectory(){const t=state.trajectory,s=t.summary,q=$('#eventSearch').value.toLowerCase(),thinking=$('#showThinking').checked,system=$('#showSystem').checked;$('#source').innerHTML=t.sources.map(x=>`<option ${x===s.source?'selected':''}>${esc(x)}</option>`).join('');let events=t.events.filter(e=>(thinking||e.kind!=='thinking')&&(system||e.kind!=='system')&&(!q||eventHaystack(e).includes(q)));$('#eventCount').textContent=`${events.length} events · ${s.ignored_thinking_token_events.toLocaleString()} token events hidden`;$('#timeline').innerHTML=events.length?events.map(renderEvent).join(''):'<div class="empty">没有匹配的事件。</div>'}
-function renderEvent(e){if(e.kind==='tool'){const title=toolSummary(e),input=formatValue(e.input),r=e.result;return `<article class="event tool ${r?.is_error?'error':''}"><div class="event-head"><span class="seq">#${e.seq}</span><span class="kind tool">${esc(e.name)}</span><span class="event-title">${esc(title)}</span></div><details><summary>Input</summary><pre>${esc(input)}</pre></details>${r?`<div class="result-box ${r.is_error?'error':''}"><details ${r.is_error?'open':''}><summary>${r.is_error?'Error':'Result'} · line ${r.seq}</summary><pre>${esc(formatValue(r.content))}</pre></details></div>`:'<div class="result-box error">No result recorded</div>'}</article>`}if(e.kind==='text')return `<article class="event text"><div class="event-head"><span class="seq">#${e.seq}</span><span class="kind text">Assistant</span></div><div class="event-body">${esc(e.text)}</div></article>`;if(e.kind==='thinking')return `<article class="event thinking"><div class="event-head"><span class="seq">#${e.seq}</span><span class="kind thinking">Thinking</span></div><details><summary>Show reasoning</summary><div class="event-body">${esc(e.text)}</div></details></article>`;if(e.kind==='result')return `<article class="event result"><div class="event-head"><span class="seq">#${e.seq}</span><span class="kind">Result</span></div><pre>${esc(formatValue(e.data))}</pre></article>`;return `<article class="event"><div class="event-head"><span class="seq">#${e.seq}</span><span class="kind">${esc(e.subtype||e.kind)}</span></div><details><summary>System data</summary><pre>${esc(formatValue(e.data||e.text||e.content))}</pre></details></article>`}
-function renderEvaluation(){const e=state.detail.evaluation||{},r=e.report||{},csv=e.csv||{},m=e.inference_metrics||{};const cards=[['Status',r.status||csv.status],['Tests added',r.added_test_count||csv.added_test_count],['Assertions',r.added_assertion_count||csv.added_assertion_count],['Line coverage Δ',r.coverage_line_delta??csv.line_coverage_delta],['Branch coverage Δ',r.coverage_branch_delta??csv.branch_coverage_delta],['Wall time',r.evaluation_wall_time_seconds?`${r.evaluation_wall_time_seconds}s`:csv.evaluation_wall_time_seconds],['Tokens',m.total_tokens],['Flaky',r.flaky??csv.flaky]];$('#metrics').innerHTML=cards.map(([k,v])=>`<div class="metric"><label>${esc(k)}</label><strong>${esc(formatValue(v))}</strong></div>`).join('');const merged={...csv,...r};$('#evalTable').innerHTML=Object.entries(merged).filter(([,v])=>v!==''&&v!==null&&v!==undefined).map(([k,v])=>`<tr><th>${esc(k)}</th><td>${esc(formatValue(v))}</td></tr>`).join('')}
-function switchTab(name){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===name));document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===`panel-${name}`))}
-function closeDetail(){$('#detail').style.display='none';$('#overview').style.display='block';state.detail=null;state.trajectory=null}
-$('#back').onclick=closeDetail;document.querySelectorAll('.tab').forEach(x=>x.onclick=()=>switchTab(x.dataset.tab));['search','status','trajectoryFilter'].forEach(id=>$(`#${id}`).addEventListener(id==='search'?'input':'change',renderCards));['eventSearch','showThinking','showSystem'].forEach(id=>$(`#${id}`).addEventListener(id==='eventSearch'?'input':'change',()=>state.trajectory&&renderTrajectory()));$('#source').onchange=async()=>{state.trajectory=await get(trajectoryUrl($('#source').value));renderTrajectory();renderSummary()};document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.detail)closeDetail()});init().catch(e=>$('#cards').innerHTML=`<div class="empty">${esc(e.message)}</div>`);
+const state = { runs: [], run: '', rows: [], detail: null, mutants: [], visibleMutants: [] };
+const $ = selector => document.querySelector(selector);
+const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+}[char]));
+
+async function get(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    let message = response.statusText;
+    try { message = (await response.json()).detail || message; } catch {}
+    throw new Error(message);
+  }
+  return response.json();
+}
+
+function patchHtml(patch) {
+  if (!patch) return '<span class="empty">这个实验没有保存该测试 patch。</span>';
+  return esc(patch).split('\n').map(line => {
+    let cls = '';
+    if (line.startsWith('@@')) cls = 'hunk';
+    else if (line.startsWith('+') && !line.startsWith('+++')) cls = 'add';
+    else if (line.startsWith('-') && !line.startsWith('---')) cls = 'del';
+    return `<span class="${cls}">${line || ' '}</span>`;
+  }).join('');
+}
+
+function pipelineLabel(value) {
+  return value === 'coverage'
+    ? 'Coverage test generation'
+    : 'Bug-reproduction test generation';
+}
+
+async function init() {
+  state.runs = await get('/api/runs');
+  $('#pipeline').onchange = renderRuns;
+  $('#run').onchange = loadRun;
+  $('#instance').onchange = loadInstance;
+  $('#mutationArm').onchange = loadMutants;
+  $('#mutationStatus').onchange = renderMutantOptions;
+  $('#mutant').onchange = renderMutant;
+  renderRuns();
+}
+
+function renderRuns() {
+  const pipeline = $('#pipeline').value;
+  const suffix = pipeline === 'coverage' ? '_coverage' : '';
+  const matches = state.runs.filter(run =>
+    pipeline === 'coverage' ? run.includes('coverage') : !run.includes('coverage')
+  );
+  $('#run').innerHTML = matches.map(run => `<option value="${esc(run)}">${esc(run)}</option>`).join('');
+  if (!matches.length) {
+    state.run = '';
+    $('#instance').innerHTML = '';
+    showError(`没有找到 ${pipelineLabel(pipeline)} 的实验。`);
+    return;
+  }
+  const preferred = matches.find(run => run.endsWith(suffix)) || matches[0];
+  $('#run').value = preferred;
+  loadRun();
+}
+
+async function loadRun() {
+  state.run = $('#run').value;
+  state.rows = await get(`/api/runs/${encodeURIComponent(state.run)}/overview`);
+  $('#instance').innerHTML = state.rows.map(row => {
+    const name = row.pr_title || row.algorithm_name || row.instance_id;
+    return `<option value="${esc(row.instance_id)}">${esc(name)} — ${esc(row.instance_id)}</option>`;
+  }).join('');
+  if (state.rows.length) await loadInstance();
+  else showError('这个实验没有实例。');
+}
+
+async function loadInstance() {
+  const instanceId = $('#instance').value;
+  state.detail = await get(`/api/runs/${encodeURIComponent(state.run)}/instance/${encodeURIComponent(instanceId)}`);
+  renderComparison();
+  if (state.detail.comparison.pipeline === 'coverage') {
+    $('#mutationSection').style.display = 'block';
+    await loadMutants();
+  } else {
+    $('#mutationSection').style.display = 'none';
+  }
+}
+
+function renderComparison() {
+  if (!state.detail) return;
+  const instance = state.detail.instance;
+  const comparison = state.detail.comparison;
+  const comparesHuman = comparison.pipeline === 'test_generation';
+  const rightPatch = comparesHuman
+    ? comparison.gold_test_patch
+    : comparison.pynguin_test_patch;
+
+  $('#leftTitle').textContent = 'Agent-generated test';
+  $('#leftInfo').textContent = comparison.model_name || '';
+  $('#rightTitle').textContent = comparesHuman ? 'Human PR test' : 'Pynguin-generated test';
+  $('#rightInfo').textContent = comparesHuman ? 'test_patch' : (comparison.pynguin_model_name || 'pynguin');
+  $('#leftPatch').innerHTML = patchHtml(comparison.agent_test_patch);
+  $('#rightPatch').innerHTML = patchHtml(rightPatch);
+
+  const row = state.rows.find(item => item.instance_id === instance.instance_id) || {};
+  const status = comparison.status || state.detail.evaluation?.report?.status || 'not evaluated';
+  const title = instance.pr_title || instance.algorithm_name || instance.instance_id;
+  $('#meta').innerHTML = `
+    <strong>${esc(title)}</strong>
+    <span>${esc(instance.repo || 'standalone repository')}</span>
+    <span class="pill">${esc(pipelineLabel(comparison.pipeline))}</span>
+    <span class="pill">${esc(String(status).replaceAll('_', ' '))}</span>
+    ${row.failure_reason ? `<span>${esc(row.failure_reason.replaceAll('_', ' '))}</span>` : ''}
+  `;
+}
+
+async function loadMutants() {
+  const instanceId = state.detail?.instance?.instance_id;
+  if (!instanceId) return;
+  const arm = $('#mutationArm').value;
+  const payload = await get(
+    `/api/runs/${encodeURIComponent(state.run)}/instance/${encodeURIComponent(instanceId)}/mutants?arm=${encodeURIComponent(arm)}`
+  );
+  state.mutants = payload.mutants || [];
+  const statuses = [...new Set(state.mutants.map(mutant => mutant.status))].sort();
+  const previous = $('#mutationStatus').value;
+  $('#mutationStatus').innerHTML = '<option value="">All statuses</option>' +
+    statuses.map(status => `<option value="${esc(status)}">${esc(status.replaceAll('_', ' '))}</option>`).join('');
+  if (statuses.includes(previous)) $('#mutationStatus').value = previous;
+  if (!payload.available) {
+    state.visibleMutants = [];
+    $('#mutant').innerHTML = '<option>No saved mutants</option>';
+    $('#mutationMeta').innerHTML = `<span>${esc(payload.message)}</span>`;
+    $('#mutationDiff').innerHTML = '<span class="empty">旧实验只保存了 mutation 汇总结果。重新运行 mutation evaluation 后，这里会显示具体代码 diff。</span>';
+    return;
+  }
+  renderMutantOptions();
+}
+
+function renderMutantOptions() {
+  const status = $('#mutationStatus').value;
+  state.visibleMutants = state.mutants.filter(mutant => !status || mutant.status === status);
+  $('#mutant').innerHTML = state.visibleMutants.map((mutant, index) =>
+    `<option value="${index}">${esc(mutant.file)}:${esc(mutant.line)} · ${esc(mutant.status.replaceAll('_', ' '))} · #${esc(mutant.id)}</option>`
+  ).join('');
+  renderMutant();
+}
+
+function renderMutant() {
+  const mutant = state.visibleMutants[Number($('#mutant').value || 0)];
+  if (!mutant) {
+    $('#mutationMeta').innerHTML = '<span>没有符合筛选条件的 mutant。</span>';
+    $('#mutationDiff').innerHTML = '<span class="empty">无 mutation diff</span>';
+    return;
+  }
+  $('#mutationMeta').innerHTML = `
+    <strong>${esc(mutant.file)}:${esc(mutant.line)}</strong>
+    <span>${esc(mutant.status.replaceAll('_', ' '))}</span>
+    <span>mutant #${esc(mutant.id)} · variant ${esc(mutant.index)}</span>
+  `;
+  const fallback = `Original line ${mutant.line}:\n${mutant.original_line}\n\nMutation diff was not exported.`;
+  $('#mutationDiff').innerHTML = patchHtml(mutant.diff || fallback);
+}
+
+function showError(message) {
+  $('#meta').innerHTML = `<span>${esc(message)}</span>`;
+  $('#leftPatch').innerHTML = '<span class="empty">无数据</span>';
+  $('#rightPatch').innerHTML = '<span class="empty">无数据</span>';
+}
+
+init().catch(error => showError(error.message));
 </script>
 </body>
 </html>

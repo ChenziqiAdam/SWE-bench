@@ -117,11 +117,34 @@ All inference scripts produce outputs in a format compatible with the SWE-bench 
 - For Claude Code runs through LiteLLM, start LiteLLM separately before launching
   the SWE-bench pipeline. Claude Code expects an Anthropic-compatible endpoint,
   so point the pipeline `--endpoint` at the LiteLLM proxy, for example
-  `http://localhost:4000`.
+  `http://127.0.0.1:4000`.
 - Keep provider keys in the proxy environment. For a DeepSeek-backed LiteLLM
   proxy, export `DEEPSEEK_API_KEY` where LiteLLM runs; pass `--api_key` to the
   SWE-bench pipeline only if the proxy itself requires client authentication.
-- If every Claude Code prediction is empty and the per-instance logs show
-  `ConnectionRefused`, verify the proxy is running on the same host/container as
-  Claude Code with `curl http://localhost:4000/health`, then rerun with
-  `--force_inference --retry_empty_predictions` or a fresh output directory.
+- Before processing the first uncached Claude Code instance, the pipeline sends
+  one authenticated, minimal request to the endpoint's `/v1/messages` route
+  through the same network guard. It aborts before inference if the gateway is
+  unreachable, the key/model alias is rejected, or the response is not
+  Anthropic-compatible. A `/health` response alone is not sufficient.
+- On Linux, install Bubblewrap (Ubuntu: `sudo apt-get install bubblewrap`).
+  The default `model-only` policy then automatically runs host agent processes
+  in an isolated network namespace. A fixed Unix-socket relay exposes only the
+  configured loopback model port; `/run`, `/tmp`, proxy variables, and the SSH
+  agent socket are hidden from the agent. Direct public endpoints are rejected.
+  Verify the boundary on the execution host before a formal run:
+
+  ```bash
+  python -m swebench.eval_pipeline.linux_network_guard \
+    --verify \
+    --allow-endpoint http://127.0.0.1:4000
+  ```
+
+  Verification succeeds only when the model port is reachable inside the
+  namespace and a connection to `1.1.1.1:443` is denied. If Bubblewrap or
+  unprivileged namespaces are unavailable, the pipeline remains fail-closed;
+  configure a separately audited `SWE_BENCH_NETWORK_GUARD` rather than using
+  `--inference_network_policy unrestricted` for formal results.
+- If old per-instance logs show `ConnectionRefused`, start/fix the gateway and
+  use a fresh output directory for leak-free results. `--force_inference
+  --retry_empty_predictions` is appropriate only when deliberately repairing
+  the same experiment lineage.

@@ -16,6 +16,7 @@ python -m swebench.eval_pipeline.run_pipeline \
   --repo_url https://github.com/owner/repository.git \
   --base_commit <full-commit-sha> \
   --agent_backend claude_code \
+  --comparison_protocol agent_led_shared_targets \
   --run_id coverage_001
 ```
 
@@ -38,6 +39,13 @@ compared without paying for agent inference again.
 Use `--skip_pynguin` to make the Pynguin arm cache-only as well. A matching
 `pynguin_predictions.jsonl` row is reused; if it is absent, the comparison row
 reports `missing_cached_prediction` instead of running Pynguin.
+
+Formal Agent/Pynguin comparisons should pass
+`--comparison_protocol agent_led_shared_targets`. The pipeline validates the
+agent patch, freezes its positive-gain production targets under the statement
+budget, then gives the same target manifest and generation-only budget to a
+fresh Pynguin checkout. The default `independent` mode is retained for legacy
+result reproduction and should not be mixed with shared-target v8 results.
 
 `--coverage_target` is optional. Without it, modules whose covered lines or
 branches increase after the agent patch become the mutation targets. Repeat the
@@ -89,6 +97,7 @@ python -m swebench.eval_pipeline.run_pipeline \
   --repo_url https://github.com/geopandas/geopandas.git \
   --base_commit 879ca939d490d66f8e6c7ab569a2827ab9bb8d85 \
   --agent_backend claude_code \
+  --comparison_protocol agent_led_shared_targets \
   --model deepseek-v4-flash \
   --claude_code_timeout 900 \
   --traditional_test_generator pynguin \
@@ -106,6 +115,7 @@ python -m swebench.eval_pipeline.run_pipeline \
   --repo_url https://github.com/astropy/astropy.git \
   --base_commit 1c9ff745b3247e9ec290c3492f773188c69db6fa \
   --agent_backend claude_code \
+  --comparison_protocol agent_led_shared_targets \
   --model deepseek-v4-flash \
   --claude_code_timeout 900 \
   --traditional_test_generator pynguin \

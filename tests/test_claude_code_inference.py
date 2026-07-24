@@ -102,6 +102,7 @@ def test_claude_code_inference_maps_endpoint_and_api_key_to_env(tmp_path, monkey
         "import os, pathlib, sys\n"
         "assert os.environ['ANTHROPIC_BASE_URL'] == 'https://anthropic.example/v1'\n"
         "assert os.environ['ANTHROPIC_API_KEY'] == 'secret-key'\n"
+        "assert os.environ['ANTHROPIC_AUTH_TOKEN'] == 'secret-key'\n"
         "assert os.environ['CLAUDE_CODE_MAX_TURNS'] == '7'\n"
         "assert '--verbose' in sys.argv\n"
         "assert sys.argv[sys.argv.index('--model') + 1] == 'provider-claude'\n"
@@ -115,6 +116,11 @@ def test_claude_code_inference_maps_endpoint_and_api_key_to_env(tmp_path, monkey
     monkeypatch.setattr(
         "swebench.eval_pipeline.claude_code_inference._clone_repo_at_commit",
         lambda repo_name, base_commit, github_token, tmp_root=None: repo,
+    )
+    preflights = []
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.claude_code_inference.preflight_anthropic_endpoint",
+        lambda endpoint, **kwargs: preflights.append((endpoint, kwargs)),
     )
 
     out = tmp_path / "predictions.jsonl"
@@ -140,6 +146,16 @@ def test_claude_code_inference_maps_endpoint_and_api_key_to_env(tmp_path, monkey
     assert len(rows) == 1
     assert rows[0]["agent_backend"] == "claude_code"
     assert "value = 3" in rows[0]["model_patch"]
+    assert preflights == [
+        (
+            "https://anthropic.example/v1/",
+            {
+                "model": "provider-claude",
+                "api_key": "secret-key",
+                "policy": "unrestricted",
+            },
+        )
+    ]
 
 
 def test_claude_code_inference_skips_duplicate_instance_rows(tmp_path, monkeypatch):

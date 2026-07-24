@@ -331,12 +331,14 @@ def _openmm_generated_pytest_targets(
     current_file = None
     current_class = None
     current_test = None
+    current_test_indentation = None
     for raw in generated_patch.splitlines():
         diff_match = re.match(r"^diff --git a/(\S+) b/\S+", raw)
         if diff_match:
             current_file = diff_match.group(1)
             current_class = None
             current_test = None
+            current_test_indentation = None
             if (
                 current_file.startswith(prefix)
                 and current_file.endswith(".py")
@@ -350,16 +352,19 @@ def _openmm_generated_pytest_targets(
         if hunk_match:
             current_class = hunk_match.group(1)
             current_test = None
+            current_test_indentation = None
             continue
         content = raw[1:] if raw.startswith(("+", " ")) else raw
         class_match = re.match(r"^\s*class\s+([A-Za-z_]\w*)\b", content)
         if class_match:
             current_class = class_match.group(1)
             current_test = None
+            current_test_indentation = None
             continue
         test_match = re.match(r"^(\s*)def\s+(test_[A-Za-z_]\w*)\s*\(", content)
         if test_match:
             current_test = test_match.group(2)
+            current_test_indentation = test_match.group(1)
             if not raw.startswith("+"):
                 continue
         if not raw.startswith("+") or raw.startswith("+++"):
@@ -368,7 +373,13 @@ def _openmm_generated_pytest_targets(
         if not test_name:
             continue
         file_name = current_file[len(prefix):]
-        indentation = test_match.group(1) if test_match else content[: len(content) - len(content.lstrip())]
+        indentation = (
+            test_match.group(1)
+            if test_match
+            else current_test_indentation
+        )
+        if indentation is None:
+            continue
         if not indentation:
             nodeids.add(f"{file_name}::{test_name}")
         elif current_class:

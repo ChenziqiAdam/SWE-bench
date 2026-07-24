@@ -27,6 +27,10 @@ from swebench.eval_pipeline.constants import MODEL_COST_PER_INPUT, MODEL_COST_PE
 from swebench.eval_pipeline.inference import _calc_cost, _clean_patch, _repair_patch
 from swebench.eval_pipeline.inference_metrics import with_wall_time
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
+from swebench.eval_pipeline.network_isolation import (
+    guard_command,
+    validate_network_policy,
+)
 from swebench.eval_pipeline.prediction_utils import prediction_matches_backend, unique_instances_by_id
 from swebench.eval_pipeline.prompt_builder import (
     _coverage_generation_instruction,
@@ -146,7 +150,13 @@ def _clone_repo_at_commit(
     github_token: Optional[str],
     tmp_root: str | Path | None = None,
 ) -> Path:
-    """Clone repo at base_commit into a temp dir, return the dir path."""
+    """Create a history-isolated checkout containing only ``base_commit``.
+
+    A full clone followed by ``git reset`` is unsafe for benchmark inference:
+    later commits remain readable through remote refs and ``git log --all``.
+    Fetch the exact base commit with depth one and fail closed if the resulting
+    repository contains any reachable parent history.
+    """
     root = Path(tmp_root or os.environ.get("SWE_AGENT_TMPDIR") or tempfile.gettempdir())
     root.mkdir(parents=True, exist_ok=True)
     tmpdir = Path(tempfile.mkdtemp(prefix="sweagent_", dir=str(root)))
@@ -160,13 +170,85 @@ def _clone_repo_at_commit(
         url = f"https://{token_prefix}github.com/{repo_name}.git"
     try:
         subprocess.run(
-            ["git", "clone", "--quiet", url, str(tmpdir)],
-            check=True, capture_output=True,
+            ["git", "init", "--quiet", str(tmpdir)],
+            check=True,
+            capture_output=True,
         )
         subprocess.run(
-            ["git", "reset", "--hard", base_commit],
-            cwd=tmpdir, check=True, capture_output=True,
+            ["git", "remote", "add", "origin", url],
+            cwd=tmpdir,
+            check=True,
+            capture_output=True,
         )
+        subprocess.run(
+            [
+                "git",
+                "fetch",
+                "--quiet",
+                "--depth=1",
+                "--no-tags",
+                "origin",
+                base_commit,
+            ],
+            cwd=tmpdir,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "checkout", "--quiet", "--detach", "FETCH_HEAD"],
+            cwd=tmpdir,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "branch", "benchmark-base", "HEAD"],
+            cwd=tmpdir,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "remote", "remove", "origin"],
+            cwd=tmpdir,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "reflog", "expire", "--expire=now", "--all"],
+            cwd=tmpdir,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "gc", "--quiet", "--prune=now"],
+            cwd=tmpdir,
+            check=True,
+            capture_output=True,
+        )
+        reachable = subprocess.run(
+            ["git", "rev-list", "--count", "--all"],
+            cwd=tmpdir,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        remotes = subprocess.run(
+            ["git", "remote"],
+            cwd=tmpdir,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        if reachable != "1" or remotes:
+            raise RuntimeError(
+                "history isolation failed: expected one reachable commit and no remotes"
+            )
+
+        # FETCH_HEAD can disclose the authenticated source URL. It is not needed
+        # after the detached checkout and should not be visible to the agent.
+        (tmpdir / ".git" / "FETCH_HEAD").unlink(missing_ok=True)
+    except RuntimeError:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+        raise
     except subprocess.CalledProcessError as e:
         shutil.rmtree(tmpdir, ignore_errors=True)
         raw_stderr = e.stderr or ""
@@ -183,7 +265,12 @@ def _clone_repo_at_commit(
     return tmpdir
 
 
-def _execute_tool(tool_name: str, tool_input: dict, repo_dir: Path) -> str:
+def _execute_tool(
+    tool_name: str,
+    tool_input: dict,
+    repo_dir: Path,
+    network_policy: str = "unrestricted",
+) -> str:
     """Execute a tool call and return its string result."""
     if tool_name == "read_file":
         path = repo_dir / tool_input["path"]
@@ -239,8 +326,12 @@ def _execute_tool(tool_name: str, tool_input: dict, repo_dir: Path) -> str:
 
     elif tool_name == "run_command":
         try:
-            result = subprocess.run(
+            command = guard_command(
                 ["/bin/bash", "-lc", tool_input["command"]],
+                policy=network_policy,
+            )
+            result = subprocess.run(
+                command,
                 cwd=repo_dir,
                 capture_output=True,
                 text=True,
@@ -303,6 +394,7 @@ def _run_agentic_loop(
     repo_dir: Path,
     max_turns: int,
     eval_mode: str = "fix",
+    network_policy: str = "unrestricted",
 ) -> tuple[str, dict]:
     """Run multi-turn tool-use loop. Return the patch and API usage metrics."""
     messages = [{"role": "user", "content": _build_issue_prompt(instance, eval_mode=eval_mode)}]
@@ -365,7 +457,12 @@ def _run_agentic_loop(
         for block in assistant_content:
             if block.type != "tool_use":
                 continue
-            result = _execute_tool(block.name, block.input, repo_dir)
+            result = _execute_tool(
+                block.name,
+                block.input,
+                repo_dir,
+                network_policy=network_policy,
+            )
             if result == "SUBMIT":
                 submitted = True
                 tool_results.append({
@@ -407,8 +504,10 @@ def run_agent_inference_for_level(
     max_turns: int = 30,
     max_workers: int = 2,
     eval_mode: str = "fix",
+    network_policy: str = "unrestricted",
 ) -> None:
     """Run agentic inference for all instances. Writes same JSONL format as inference.py."""
+    validate_network_policy(network_policy)
     # Resume: skip already-done instances
     existing_ids: set[str] = set()
     out_path = Path(output_file)
@@ -452,6 +551,7 @@ def run_agent_inference_for_level(
                 repo_dir,
                 max_turns,
                 eval_mode=eval_mode,
+                network_policy=network_policy,
             )
             patch = _clean_patch(patch)
             patch = _repair_patch(patch)

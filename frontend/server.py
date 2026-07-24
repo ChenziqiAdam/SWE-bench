@@ -76,6 +76,29 @@ def _load_agent_predictions(run_dir: Path) -> dict[str, dict]:
     return {}
 
 
+def _load_pynguin_predictions(run_dir: Path) -> dict[str, dict]:
+    """Load Pynguin patches when the run contains that comparison arm."""
+    path = run_dir / "pynguin_predictions.jsonl"
+    if not path.exists():
+        return {}
+    result = {}
+    with path.open() as handle:
+        for line in handle:
+            try:
+                pred = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            result[pred["instance_id"]] = pred
+    return result
+
+
+def _pipeline_kind(run: str, instances: dict[str, dict]) -> str:
+    """Classify the two research pipelines without relying only on run names."""
+    if "coverage" in run.lower() or any(inst.get("standalone") for inst in instances.values()):
+        return "coverage"
+    return "test_generation"
+
+
 def _load_eval_results(run_dir: Path) -> dict[str, dict]:
     preferred = run_dir / f"{run_dir.name}_results.csv"
     csvs = [str(preferred)] if preferred.is_file() else sorted(glob(str(run_dir / "*.csv")))
@@ -279,6 +302,40 @@ def _load_instance_report(run: str, instance_id: str) -> dict:
     return compact
 
 
+def _load_mutants(run: str, instance_id: str, arm: str) -> dict:
+    """Load concrete mutant diffs exported by coverage mutation evaluation."""
+    candidates = sorted(
+        LOGS_DIR.glob(
+            f"{run}_*/comparison/{instance_id}/{arm}/mutation*.mutants.json"
+        )
+    )
+    mutants = []
+    sources = []
+    for path in candidates:
+        try:
+            payload = json.loads(path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        sources.append(str(path.relative_to(LOGS_DIR.parent.parent)))
+        for mutant in payload.get("mutants", []):
+            if not isinstance(mutant, dict):
+                continue
+            mutants.append({**mutant, "catalog": path.name})
+    summary = Counter(str(mutant.get("status", "unknown")) for mutant in mutants)
+    return {
+        "available": bool(mutants),
+        "arm": arm,
+        "summary": dict(summary),
+        "mutants": mutants,
+        "sources": sources,
+        "message": (
+            ""
+            if mutants
+            else "No concrete mutant catalog was saved; rerun mutation evaluation."
+        ),
+    }
+
+
 SCIENCE_CASES = {
     "openmm__openmm-4907": {
         "domain": "Molecular simulation · electrostatics",
@@ -330,6 +387,8 @@ def overview(run: str) -> list[dict]:
     instances = _load_instances(run_dir)
     eval_results = _load_eval_results(run_dir)
     agent_predictions = _load_agent_predictions(run_dir)
+    pynguin_predictions = _load_pynguin_predictions(run_dir)
+    pipeline = _pipeline_kind(run, instances)
 
     preds_by_level = {
         level: _load_predictions(run_dir, level)
@@ -361,6 +420,11 @@ def overview(run: str) -> list[dict]:
             "status": ev.get("status", ""),
             "failure_reason": ev.get("failure_reason", ""),
             "has_agent_test": bool(pred.get("model_patch")),
+            "has_human_test": bool(inst.get("test_patch")),
+            "has_pynguin_test": bool(
+                pynguin_predictions.get(iid, {}).get("model_patch")
+            ),
+            "pipeline": pipeline,
             "is_science_case": science is not None,
             "science_domain": science["domain"] if science else "",
             "science_challenge": science["challenge"] if science else "",
@@ -382,6 +446,7 @@ def instance_detail(run: str, instance_id: str) -> dict:
     eval_results = _load_eval_results(run_dir)
     ev = eval_results.get(instance_id, {})
     agent_pred = _load_agent_predictions(run_dir).get(instance_id, {})
+    pynguin_pred = _load_pynguin_predictions(run_dir).get(instance_id, {})
 
     # Build prompts using the existing prompt_builder functions
     prompts = {
@@ -414,8 +479,11 @@ def instance_detail(run: str, instance_id: str) -> dict:
         "comparison": {
             "agent_test_patch": agent_pred.get("model_patch", ""),
             "gold_test_patch": inst.get("test_patch", ""),
+            "pynguin_test_patch": pynguin_pred.get("model_patch", ""),
             "model_name": agent_pred.get("model_name_or_path", ""),
+            "pynguin_model_name": pynguin_pred.get("model_name_or_path", ""),
             "eval_mode": agent_pred.get("eval_mode", ""),
+            "pipeline": _pipeline_kind(run, instances),
             "status": ev.get("status", ""),
             "failure_reason": ev.get("failure_reason", ""),
             "base_failed_tests": ev.get("base_failed_tests", ""),
@@ -451,6 +519,22 @@ def instance_trajectory(run: str, instance_id: str, source: str | None = None) -
     payload = _load_trajectory(selected)
     payload["sources"] = [path.name for path in files]
     return payload
+
+
+@app.get("/api/runs/{run}/instance/{instance_id}/mutants")
+def instance_mutants(run: str, instance_id: str, arm: str = "agent") -> dict:
+    """Return exact production-code changes made by each saved mutant."""
+    run_dir = _run_dir(run)
+    instances = _load_instances(run_dir)
+    if instance_id not in instances:
+        raise HTTPException(status_code=404, detail=f"Instance '{instance_id}' not found")
+    if _pipeline_kind(run, instances) != "coverage":
+        raise HTTPException(
+            status_code=400, detail="Mutation details are available only for coverage runs"
+        )
+    if arm not in {"agent", "pynguin"}:
+        raise HTTPException(status_code=400, detail="Arm must be 'agent' or 'pynguin'")
+    return _load_mutants(run, instance_id, arm)
 
 
 # ── static files (serves index.html at /) ────────────────────────────────────

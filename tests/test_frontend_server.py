@@ -18,7 +18,7 @@ def client(tmp_path):
             "pull_number": 100,
             "base_commit": "abc123",
             "patch": "diff --git a/foo.py b/foo.py\n--- a/foo.py\n+++ b/foo.py\n@@ -1 +1 @@\n-old\n+new\n",
-            "test_patch": "",
+            "test_patch": "diff human PR test",
             "problem_statement": "Fix the zeta function",
             "hints_text": "",
             "created_at": "2024-01-01T00:00:00",
@@ -79,6 +79,13 @@ def client(tmp_path):
             "eval_mode": "test_generation",
         }) + "\n")
 
+    with open(run_dir / "pynguin_predictions.jsonl", "w") as f:
+        f.write(json.dumps({
+            "instance_id": "scipy__scipy-100",
+            "model_patch": "diff pynguin test",
+            "model_name_or_path": "pynguin",
+        }) + "\n")
+
     trajectory_dir = run_dir / "claude_code_logs"
     trajectory_dir.mkdir()
     trajectory = [
@@ -107,7 +114,30 @@ def client(tmp_path):
     run2_dir = tmp_path / "run2"
     run2_dir.mkdir()
     with open(run2_dir / "instances.jsonl", "w") as f:
-        f.write(json.dumps(instances[0]) + "\n")
+        f.write(json.dumps({**instances[0], "standalone": True}) + "\n")
+
+    mutant_dir = (
+        tmp_path
+        / "evaluation_logs"
+        / "run2_coveragegen"
+        / "comparison"
+        / "scipy__scipy-100"
+        / "agent"
+    )
+    mutant_dir.mkdir(parents=True)
+    (mutant_dir / "mutation_000.mutants.json").write_text(json.dumps({
+        "format_version": 1,
+        "summary": {"ok_killed": 1},
+        "mutants": [{
+            "id": 7,
+            "status": "ok_killed",
+            "index": 0,
+            "file": "scipy/special/zeta.py",
+            "line": 42,
+            "original_line": "return value",
+            "diff": "--- a/scipy/special/zeta.py\n+++ b/scipy/special/zeta.py\n-return value\n+return None",
+        }],
+    }))
 
     # Import server with patched OUTPUTS_DIR
     import frontend.server as srv
@@ -129,6 +159,15 @@ def test_list_runs_returns_dirs_with_instances_jsonl(client):
     assert set(runs) == {"my_run", "run2"}
 
 
+def test_root_is_direct_agent_test_comparison(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "Coverage test generation" in response.text
+    assert "Agent-generated test" in response.text
+    assert "Pynguin-generated test" in response.text
+    assert "Mutation details" in response.text
+
+
 # ── /api/runs/{run}/overview ──────────────────────────────────────────────────
 
 def test_overview_returns_one_row_per_instance(client):
@@ -147,6 +186,10 @@ def test_overview_row_has_required_fields(client):
     assert row["has_level1"] is True
     assert row["has_level2"] is True
     assert row["has_level3"] is False
+    assert row["pipeline"] == "test_generation"
+    assert row["has_agent_test"] is True
+    assert row["has_human_test"] is True
+    assert row["has_pynguin_test"] is True
 
 
 def test_overview_merges_eval_results(client):
@@ -168,6 +211,12 @@ def test_overview_reports_trajectory_availability(client):
 def test_overview_unknown_run_returns_404(client):
     resp = client.get("/api/runs/nonexistent/overview")
     assert resp.status_code == 404
+
+
+def test_overview_classifies_standalone_run_as_coverage(client):
+    row = client.get("/api/runs/run2/overview").json()[0]
+    assert row["pipeline"] == "coverage"
+    assert row["has_pynguin_test"] is False
 
 
 # ── /api/runs/{run}/instance/{id} ─────────────────────────────────────────────
@@ -225,7 +274,9 @@ def test_instance_detail_has_predictions(client):
 def test_instance_detail_compares_agent_and_gold_tests(client):
     data = client.get("/api/runs/my_run/instance/scipy__scipy-100").json()
     assert data["comparison"]["agent_test_patch"] == "diff generated test"
-    assert data["comparison"]["gold_test_patch"] == ""
+    assert data["comparison"]["gold_test_patch"] == "diff human PR test"
+    assert data["comparison"]["pynguin_test_patch"] == "diff pynguin test"
+    assert data["comparison"]["pipeline"] == "test_generation"
     assert data["comparison"]["model_name"] == "test-model"
 
 
@@ -244,6 +295,39 @@ def test_instance_detail_unknown_id_returns_404(client):
 def test_instance_detail_unknown_run_returns_404(client):
     resp = client.get("/api/runs/nonexistent/instance/scipy__scipy-100")
     assert resp.status_code == 404
+
+
+# ── /api/runs/{run}/instance/{id}/mutants ────────────────────────────────────
+
+def test_mutants_returns_concrete_code_diff_for_coverage_run(client):
+    response = client.get(
+        "/api/runs/run2/instance/scipy__scipy-100/mutants",
+        params={"arm": "agent"},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["available"] is True
+    assert payload["summary"] == {"ok_killed": 1}
+    assert payload["mutants"][0]["file"] == "scipy/special/zeta.py"
+    assert "+return None" in payload["mutants"][0]["diff"]
+
+
+def test_mutants_reports_missing_arm_catalog_and_rejects_invalid_requests(client):
+    missing = client.get(
+        "/api/runs/run2/instance/scipy__scipy-100/mutants",
+        params={"arm": "pynguin"},
+    )
+    assert missing.status_code == 200
+    assert missing.json()["available"] is False
+    wrong_pipeline = client.get(
+        "/api/runs/my_run/instance/scipy__scipy-100/mutants"
+    )
+    assert wrong_pipeline.status_code == 400
+    bad_arm = client.get(
+        "/api/runs/run2/instance/scipy__scipy-100/mutants",
+        params={"arm": "../agent"},
+    )
+    assert bad_arm.status_code == 400
 
 
 # ── /api/runs/{run}/instance/{id}/trajectory ─────────────────────────────────

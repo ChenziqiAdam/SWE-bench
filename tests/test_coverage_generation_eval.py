@@ -643,6 +643,8 @@ def test_biopython_mutation_script_uses_touched_test_modules(tmp_path):
     assert "if [ ${#tests[@]} -eq 0 ]; then\n  exit 0" in script
     assert "then\n  exec python -m pytest\nfi" not in script
     assert "mutmut results" not in script
+    assert "mutation_export.py" in script
+    assert "--output .mutation-details.json" in script
     completed = subprocess.run(["bash", "-n"], input=script, text=True)
     assert completed.returncode == 0
 

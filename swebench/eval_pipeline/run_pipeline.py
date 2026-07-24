@@ -273,6 +273,16 @@ def parse_args():
                         "to be installed: uv pip install swe-agent). "
                         "'codex': invoke local Codex CLI via `codex exec`. "
                         "'claude_code': invoke local Claude Code CLI via `claude -p`.")
+    p.add_argument(
+        "--inference_network_policy",
+        choices=["model-only", "unrestricted"],
+        default="model-only",
+        help="Network boundary for inference tools (default: model-only). "
+        "The safe mode permits host agent CLIs to contact only a loopback model "
+        "gateway (for example --endpoint http://localhost:4000) and fails closed "
+        "when no supported OS guard is available. "
+        "Use unrestricted only for explicitly non-benchmark debugging.",
+    )
     p.add_argument("--sweagent_config", default=None,
                    help="Optional path to a custom SWE-agent config YAML. When omitted a "
                         "minimal config is auto-generated per instance. Only used with "
@@ -605,6 +615,7 @@ def _run_agent_backend(args, instances: list[dict], output_file: str,
             sweagent_config=args.sweagent_config, api_base=args.endpoint,
             api_key=args.api_key, retry_empty_predictions=args.retry_empty_predictions,
             max_input_tokens=args.sweagent_max_input_tokens, eval_mode=args.eval_mode,
+            network_policy=args.inference_network_policy,
         )
     elif args.agent_backend == "codex":
         from swebench.eval_pipeline.codex_inference import run_codex_inference
@@ -614,6 +625,7 @@ def _run_agent_backend(args, instances: list[dict], output_file: str,
             timeout=args.codex_timeout, sandbox=args.codex_sandbox,
             profile=args.codex_profile, api_base=args.endpoint, api_key=args.api_key,
             retry_empty_predictions=args.retry_empty_predictions, eval_mode=args.eval_mode,
+            network_policy=args.inference_network_policy,
         )
     elif args.agent_backend == "claude_code":
         from swebench.eval_pipeline.claude_code_inference import run_claude_code_inference
@@ -625,6 +637,7 @@ def _run_agent_backend(args, instances: list[dict], output_file: str,
             api_key=args.api_key, retry_empty_predictions=args.retry_empty_predictions,
             max_turns=args.claude_code_max_turns, eval_mode=args.eval_mode,
             interrupt_retries=args.claude_code_interrupt_retries,
+            network_policy=args.inference_network_policy,
         )
     else:
         from swebench.eval_pipeline.agent_inference import run_agent_inference_for_level
@@ -637,6 +650,7 @@ def _run_agent_backend(args, instances: list[dict], output_file: str,
             anthropic_client=anthropic_client, github_token=github_token,
             max_turns=args.max_turns, max_workers=args.max_workers,
             eval_mode=args.eval_mode,
+            network_policy=args.inference_network_policy,
         )
 
 
@@ -1577,6 +1591,7 @@ def main():
         "claude_code_permission_mode": args.claude_code_permission_mode,
         "claude_code_max_turns": args.claude_code_max_turns,
         "claude_code_model": args.claude_code_model,
+        "inference_network_policy": args.inference_network_policy,
         "coverage_target": args.coverage_target or "(inferred per instance)",
         "coverage_eval_timeout": args.coverage_eval_timeout,
         "coverage_flaky_runs": args.coverage_flaky_runs,

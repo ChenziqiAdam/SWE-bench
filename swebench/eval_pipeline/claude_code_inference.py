@@ -21,6 +21,11 @@ from swebench.eval_pipeline.host_environment import isolated_python_environment
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
 from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json, with_wall_time
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
+from swebench.eval_pipeline.network_isolation import (
+    guard_command,
+    preflight_anthropic_endpoint,
+    validate_network_policy,
+)
 from swebench.eval_pipeline.prediction_utils import (
     prediction_matches_backend,
     read_prediction_rows,
@@ -320,8 +325,13 @@ def run_claude_code_inference(
     max_turns: Optional[int] = None,
     eval_mode: str = "fix",
     interrupt_retries: int = 1,
+    network_policy: str = "unrestricted",
 ) -> None:
     """Run Claude Code inference for all instances. Writes standard prediction JSONL."""
+    validate_network_policy(
+        network_policy,
+        api_base or "https://api.anthropic.com",
+    )
     if api_base:
         logger.info(
             "Using ANTHROPIC_BASE_URL for Claude Code endpoint %s. "
@@ -352,6 +362,13 @@ def run_claude_code_inference(
         logger.info(f"Skipping {skipped_duplicates} duplicate instance row(s) before Claude Code inference")
 
     todo = [i for i in unique_instances if i["instance_id"] not in existing_ids]
+    if todo and api_base:
+        preflight_anthropic_endpoint(
+            api_base,
+            model=model_name,
+            api_key=api_key,
+            policy=network_policy,
+        )
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if retry_empty_predictions and out_path.exists():
         write_prediction_rows(out_path, retained_records)
@@ -386,6 +403,11 @@ def run_claude_code_inference(
                 # disposable clone. In noninteractive print mode acceptEdits
                 # alone otherwise denies every Bash invocation.
                 cmd += ["--allowedTools", "Bash"]
+            cmd = guard_command(
+                cmd,
+                policy=network_policy,
+                endpoint=api_base or "https://api.anthropic.com",
+            )
 
             environment_context = (
                 isolated_python_environment(tmp_root / "environments")
@@ -401,6 +423,7 @@ def run_claude_code_inference(
                 env["ANTHROPIC_BASE_URL"] = api_base.rstrip("/")
             if api_key:
                 env["ANTHROPIC_API_KEY"] = api_key
+                env["ANTHROPIC_AUTH_TOKEN"] = api_key
             if max_turns is not None:
                 env["CLAUDE_CODE_MAX_TURNS"] = str(max_turns)
 

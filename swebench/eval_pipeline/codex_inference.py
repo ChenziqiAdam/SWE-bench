@@ -20,6 +20,10 @@ from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
 from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json, with_wall_time
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
+from swebench.eval_pipeline.network_isolation import (
+    guard_command,
+    validate_network_policy,
+)
 from swebench.eval_pipeline.prediction_utils import (
     prediction_matches_backend,
     read_prediction_rows,
@@ -166,8 +170,13 @@ def run_codex_inference(
     api_key: Optional[str] = None,
     retry_empty_predictions: bool = False,
     eval_mode: str = "fix",
+    network_policy: str = "unrestricted",
 ) -> None:
     """Run Codex inference for all instances. Writes standard prediction JSONL."""
+    validate_network_policy(
+        network_policy,
+        api_base or "https://api.openai.com",
+    )
     codex_home = None
     endpoint_config_path = None
     if api_base:
@@ -240,6 +249,11 @@ def run_codex_inference(
             if profile:
                 cmd.extend(["--profile", profile])
             cmd.append(prompt)
+            cmd = guard_command(
+                cmd,
+                policy=network_policy,
+                endpoint=api_base or "https://api.openai.com",
+            )
 
             env = dict(os.environ)
             if codex_home:

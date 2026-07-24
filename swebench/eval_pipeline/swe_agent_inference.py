@@ -28,6 +28,7 @@ from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
 from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json, with_wall_time
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
+from swebench.eval_pipeline.network_isolation import require_nested_container_guard
 from swebench.eval_pipeline.prediction_utils import prediction_matches_backend
 from swebench.eval_pipeline.prompt_builder import (
     _coverage_generation_instruction,
@@ -252,8 +253,10 @@ def run_sweagent_inference(
     retry_empty_predictions: bool = False,
     max_input_tokens: int = _DEFAULT_MAX_INPUT_TOKENS,
     eval_mode: str = "fix",
+    network_policy: str = "unrestricted",
 ) -> None:
     """Run SWE-agent inference for all instances. Writes same JSONL format as inference.py."""
+    require_nested_container_guard(network_policy, AGENT_BACKEND)
     # Base config: an explicit --sweagent_config wins; otherwise fall back to
     # SWE-agent's bundled config/default.yaml so the agent gets real templates +
     # tools (an empty/minimal config leaves the agent with no task description).
