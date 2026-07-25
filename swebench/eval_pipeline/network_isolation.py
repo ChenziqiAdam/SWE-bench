@@ -15,6 +15,26 @@ class NetworkIsolationError(RuntimeError):
     """Raised when the requested inference network boundary is unavailable."""
 
 
+def _find_bubblewrap() -> str | None:
+    """Find Bubblewrap even when nohup/service launchers provide a minimal PATH."""
+    configured = os.environ.get("SWE_BENCH_BWRAP")
+    if configured:
+        if os.path.isabs(configured) and os.path.isfile(configured) and os.access(
+            configured, os.X_OK
+        ):
+            return configured
+        raise NetworkIsolationError(
+            "SWE_BENCH_BWRAP must name an absolute executable file"
+        )
+    discovered = shutil.which("bwrap")
+    if discovered:
+        return discovered
+    for candidate in ("/usr/bin/bwrap", "/bin/bwrap", "/usr/local/bin/bwrap"):
+        if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+            return candidate
+    return None
+
+
 def _endpoint_addresses(endpoint: str) -> tuple[list[str], int]:
     parsed = urlparse(endpoint)
     if parsed.scheme not in {"http", "https"} or not parsed.hostname:
@@ -98,7 +118,7 @@ def guard_command(
             *command,
         ]
 
-    bwrap = shutil.which("bwrap")
+    bwrap = _find_bubblewrap()
     if sys.platform.startswith("linux") and bwrap:
         if endpoint:
             addresses, _ = _endpoint_addresses(endpoint)
@@ -117,6 +137,13 @@ def guard_command(
             wrapped += ["--allow-endpoint", endpoint]
         return [*wrapped, "--", *command]
 
+    if sys.platform.startswith("linux"):
+        raise NetworkIsolationError(
+            "model-only inference networking requires Bubblewrap, but bwrap was "
+            f"not executable (PATH={os.environ.get('PATH', '')!r}); install "
+            "bubblewrap, set SWE_BENCH_BWRAP to a user-installed executable, "
+            "or configure a trusted SWE_BENCH_NETWORK_GUARD"
+        )
     raise NetworkIsolationError(
         "model-only inference networking is unavailable on this platform; "
         "configure a trusted SWE_BENCH_NETWORK_GUARD or explicitly select "

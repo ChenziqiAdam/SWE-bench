@@ -1,5 +1,6 @@
 import http.server
 import shutil
+import socket
 import subprocess
 import sys
 import threading
@@ -8,10 +9,53 @@ import pytest
 
 from swebench.eval_pipeline.network_isolation import (
     NetworkIsolationError,
+    _find_bubblewrap,
     guard_command,
     preflight_anthropic_endpoint,
     require_nested_container_guard,
 )
+from swebench.eval_pipeline.linux_network_guard import _copy_bidirectionally
+
+
+def test_linux_relay_handles_bidirectional_backpressure():
+    client, relay_left = socket.socketpair()
+    relay_right, server = socket.socketpair()
+    payload_to_server = b"a" * (2 * 1024 * 1024)
+    payload_to_client = b"b" * (2 * 1024 * 1024)
+    received: dict[str, bytes] = {}
+
+    def send_and_close(sock, payload):
+        sock.sendall(payload)
+        sock.shutdown(socket.SHUT_WR)
+
+    def receive_all(name, sock):
+        chunks = []
+        while chunk := sock.recv(65536):
+            chunks.append(chunk)
+        received[name] = b"".join(chunks)
+
+    relay = threading.Thread(
+        target=_copy_bidirectionally,
+        args=(relay_left, relay_right),
+    )
+    workers = [
+        relay,
+        threading.Thread(target=send_and_close, args=(client, payload_to_server)),
+        threading.Thread(target=send_and_close, args=(server, payload_to_client)),
+        threading.Thread(target=receive_all, args=("client", client)),
+        threading.Thread(target=receive_all, args=("server", server)),
+    ]
+    try:
+        for worker in workers:
+            worker.start()
+        for worker in workers:
+            worker.join(timeout=10)
+        assert not any(worker.is_alive() for worker in workers)
+        assert received["server"] == payload_to_server
+        assert received["client"] == payload_to_client
+    finally:
+        client.close()
+        server.close()
 
 
 def test_external_guard_contract(monkeypatch):
@@ -34,7 +78,7 @@ def test_external_guard_contract(monkeypatch):
 def test_guard_fails_closed_without_supported_boundary(monkeypatch):
     monkeypatch.delenv("SWE_BENCH_NETWORK_GUARD", raising=False)
     monkeypatch.setattr(sys, "platform", "linux")
-    with pytest.raises(NetworkIsolationError, match="unavailable"):
+    with pytest.raises(NetworkIsolationError, match="requires Bubblewrap"):
         guard_command(["agent"], policy="model-only")
 
 
@@ -62,6 +106,38 @@ def test_linux_uses_builtin_bubblewrap_guard(monkeypatch):
         "agent",
     ]
     assert "swebench.eval_pipeline.linux_network_guard" in command
+
+
+def test_bubblewrap_discovery_checks_fixed_paths_for_nohup(monkeypatch):
+    monkeypatch.setattr(shutil, "which", lambda name: None)
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.network_isolation.os.path.isfile",
+        lambda path: path == "/usr/bin/bwrap",
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.network_isolation.os.access",
+        lambda path, mode: path == "/usr/bin/bwrap",
+    )
+    assert _find_bubblewrap() == "/usr/bin/bwrap"
+
+
+def test_bubblewrap_discovery_accepts_explicit_user_install(monkeypatch):
+    monkeypatch.setenv("SWE_BENCH_BWRAP", "/home/researcher/.local/bin/bwrap")
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.network_isolation.os.path.isfile",
+        lambda path: path == "/home/researcher/.local/bin/bwrap",
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.network_isolation.os.access",
+        lambda path, mode: path == "/home/researcher/.local/bin/bwrap",
+    )
+    assert _find_bubblewrap() == "/home/researcher/.local/bin/bwrap"
+
+
+def test_bubblewrap_discovery_rejects_relative_override(monkeypatch):
+    monkeypatch.setenv("SWE_BENCH_BWRAP", "bin/bwrap")
+    with pytest.raises(NetworkIsolationError, match="absolute executable"):
+        _find_bubblewrap()
 
 
 def test_macos_guard_rejects_direct_public_model_endpoint(monkeypatch):

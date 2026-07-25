@@ -9,7 +9,6 @@ from __future__ import annotations
 import argparse
 import ipaddress
 import os
-import selectors
 import shutil
 import socket
 import subprocess
@@ -18,6 +17,8 @@ import tempfile
 import threading
 from pathlib import Path
 from urllib.parse import urlparse
+
+from swebench.eval_pipeline.network_isolation import _find_bubblewrap
 
 _MODULE_NAME = "swebench.eval_pipeline.linux_network_guard"
 
@@ -55,30 +56,24 @@ def _loopback_target(endpoint: str) -> tuple[str, int]:
 
 
 def _copy_bidirectionally(left: socket.socket, right: socket.socket) -> None:
-    selector = selectors.DefaultSelector()
-    try:
-        left.setblocking(False)
-        right.setblocking(False)
-        selector.register(left, selectors.EVENT_READ, right)
-        selector.register(right, selectors.EVENT_READ, left)
-        while selector.get_map():
-            for key, _ in selector.select():
-                source = key.fileobj
-                destination = key.data
-                try:
-                    chunk = source.recv(65536)
-                except OSError:
-                    chunk = b""
-                if not chunk:
-                    selector.unregister(source)
-                    try:
-                        destination.shutdown(socket.SHUT_WR)
-                    except OSError:
-                        pass
-                    continue
+    def copy(source: socket.socket, destination: socket.socket) -> None:
+        try:
+            while chunk := source.recv(65536):
                 destination.sendall(chunk)
+        except OSError:
+            pass
+        finally:
+            try:
+                destination.shutdown(socket.SHUT_WR)
+            except OSError:
+                pass
+
+    reverse = threading.Thread(target=copy, args=(right, left), daemon=True)
+    try:
+        reverse.start()
+        copy(left, right)
+        reverse.join()
     finally:
-        selector.close()
         left.close()
         right.close()
 
@@ -209,7 +204,7 @@ def _bubblewrap_command(
 def _run_guard(endpoint: str | None, command: list[str]) -> int:
     if sys.platform != "linux":
         raise GuardConfigurationError("the Bubblewrap guard is Linux-only")
-    bwrap = shutil.which("bwrap")
+    bwrap = _find_bubblewrap()
     if not bwrap:
         raise GuardConfigurationError(
             "bubblewrap is required; install the distribution's bubblewrap package"

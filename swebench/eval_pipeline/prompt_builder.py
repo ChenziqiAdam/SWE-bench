@@ -107,7 +107,11 @@ def _coverage_generation_instruction(instance: dict) -> str:
         "3. Add meaningful assertions, not merely execution-based tests.\n"
         "4. Keep the complete existing test suite passing.\n"
         "5. Focus on edge cases, numerical behavior, and scientific invariants.\n"
-        "6. Run tests and coverage tools as useful, then leave the test edits in the working tree.\n"
+        "6. After editing, run the Complete test command exactly as written from "
+        "the repository root; a focused test command is not a substitute.\n"
+        "7. Tests must be independent of the current working directory and must "
+        "not replace production modules in sys.modules.\n"
+        "8. Run coverage tools as useful, then leave the test edits in the working tree.\n"
         "Return only a valid unified git diff."
     )
 

@@ -144,6 +144,10 @@ All inference scripts produce outputs in a format compatible with the SWE-bench 
   unprivileged namespaces are unavailable, the pipeline remains fail-closed;
   configure a separately audited `SWE_BENCH_NETWORK_GUARD` rather than using
   `--inference_network_policy unrestricted` for formal results.
+  On hosts without sudo, extract the distribution's Bubblewrap package into a
+  user-owned directory and set `SWE_BENCH_BWRAP` to the resulting absolute
+  executable path. Rootless execution still requires the host kernel to permit
+  unprivileged user namespaces; the `--verify` command is the acceptance test.
 - If old per-instance logs show `ConnectionRefused`, start/fix the gateway and
   use a fresh output directory for leak-free results. `--force_inference
   --retry_empty_predictions` is appropriate only when deliberately repairing

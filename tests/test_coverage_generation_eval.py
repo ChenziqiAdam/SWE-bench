@@ -240,6 +240,9 @@ def test_coverage_prompt_includes_standalone_repository_commands():
     )
     assert "Environment setup command: python -m pip install ." in prompt
     assert "Complete test command: python -m pytest -q" in prompt
+    assert "run the Complete test command exactly as written" in prompt
+    assert "independent of the current working directory" in prompt
+    assert "must not replace production modules in sys.modules" in prompt
     assert "Repository totals: line 42.00%" in prompt
 
 
