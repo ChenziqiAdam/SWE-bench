@@ -350,7 +350,7 @@ def run_pynguin_generation(
     version: str = "0.45.0",
     seed: int = 0,
     total_budget: int = 900,
-    module_slice: int = 60,
+    module_slice: int = 120,
     assertion_mode: str = "SIMPLE",
     explicit_modules: list[str] | None = None,
     setup_command: str | None = None,

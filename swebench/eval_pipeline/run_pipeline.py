@@ -322,7 +322,12 @@ def parse_args():
     p.add_argument("--pynguin_version", default="0.45.0")
     p.add_argument("--pynguin_seed", type=int, default=0)
     p.add_argument("--pynguin_total_budget", type=int, default=900)
-    p.add_argument("--pynguin_module_slice", type=int, default=60)
+    p.add_argument(
+        "--pynguin_module_slice",
+        type=int,
+        default=120,
+        help="Maximum Pynguin search seconds per module (default: 120).",
+    )
     p.add_argument("--pynguin_assertion_mode", default="SIMPLE")
     p.add_argument(
         "--skip_pynguin", action="store_true",

@@ -27,7 +27,7 @@ Enable the Python-first conventional baseline with:
 ```
 
 The defaults pin Pynguin `0.45.0`, seed `0`, `PYTHONHASHSEED=0`, DynaMOSA,
-`SIMPLE` assertions, a 900-second end-to-end budget, and sequential 60-second
+`SIMPLE` assertions, a 900-second end-to-end budget, and 120-second
 module slices. Override them with `--pynguin_version`, `--pynguin_seed`,
 `--pynguin_total_budget`, `--pynguin_module_slice`, and
 `--pynguin_assertion_mode`. Repeat `--pynguin_module` to restrict eligible

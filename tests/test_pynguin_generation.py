@@ -39,7 +39,7 @@ def test_pynguin_cli_defaults_and_overrides(monkeypatch):
     assert defaults.pynguin_version == "0.45.0"
     assert defaults.pynguin_seed == 0
     assert defaults.pynguin_total_budget == 900
-    assert defaults.pynguin_module_slice == 60
+    assert defaults.pynguin_module_slice == 120
     assert defaults.pynguin_assertion_mode == "SIMPLE"
     assert defaults.skip_pynguin is False
     assert defaults.force_pynguin is False
