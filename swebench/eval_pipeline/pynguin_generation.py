@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 
 
-PYNGUIN_POSTPROCESSING_VERSION = 8
+PYNGUIN_POSTPROCESSING_VERSION = 9
 PYNGUIN_MODULE_SHUTDOWN_GRACE_SECONDS = 10
 
 
@@ -640,7 +640,9 @@ def run_pynguin_generation(
                 "removed_strict_xfail_test_count": attempt_removed_strict_xfails,
                 "rejected_mismatched_module_count": attempt_rejected_mismatches,
                 "network_guard_injected_count": attempt_network_guards,
-                "output_tail": module_output[-2000:] if code else "",
+                # A zero exit code can still produce important diagnostics when
+                # Pynguin exports no tests, so retain stdout for every outcome.
+                "output_tail": module_output[-2000:],
             })
         # Validate exported tests under the repository's own pytest settings.
         # Remove only explicitly failed test functions; collection/tool failures
