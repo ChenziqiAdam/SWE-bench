@@ -13,6 +13,7 @@ from swebench.eval_pipeline.coverage_generation_eval import (
     freeze_agent_selected_targets,
 )
 from swebench.eval_pipeline.pynguin_generation import (
+    _GENERATION_NETWORK_GUARD_SOURCE,
     _NONCALLABLE_SIGNATURE_COMPAT_SOURCE,
     _run,
     conventional_test_directory,
@@ -110,7 +111,7 @@ def test_pynguin_cache_is_matched_and_replaced_by_instance(monkeypatch):
         "total_budget_seconds": args.pynguin_total_budget,
         "module_slice_seconds": args.pynguin_module_slice,
         "assertion_mode": args.pynguin_assertion_mode,
-        "postprocessing_version": 9,
+        "postprocessing_version": 10,
     }
     rows = [
         {"instance_id": "repo-a", "model_patch": "a", "metrics": matching_metrics},
@@ -142,7 +143,7 @@ def test_shared_target_cache_fingerprints_modules_python_budget_and_setup(monkey
         "total_budget_seconds": 123,
         "module_slice_seconds": args.pynguin_module_slice,
         "assertion_mode": args.pynguin_assertion_mode,
-        "postprocessing_version": 9,
+        "postprocessing_version": 10,
         "requested_modules": ["pkg.a"],
         "python_version": ".".join(map(str, sys.version_info[:3])),
         "budget_strategy": "equal_shared_targets",
@@ -472,7 +473,7 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
         result["metrics"]["module_attempts"][0]["output_tail"]
         == "pynguin completed successfully\n"
     )
-    assert result["metrics"]["postprocessing_version"] == 9
+    assert result["metrics"]["postprocessing_version"] == 10
     assert result["metrics"]["network_guard_injected_count"] == 1
     finalization_calls = [call for call in calls if call[0][:2] == ["git", "add"]]
     assert finalization_calls[0][1] >= 1
@@ -634,6 +635,76 @@ def test_scheduler_scopes_noncallable_signature_compatibility(tmp_path, monkeypa
     assert ".pynguin-compatibility" in generation_environments[0]["PYTHONPATH"]
     assert result["metrics"]["ignore_noncallable_signatures"] is True
     assert not (tmp_path / ".pynguin-compatibility").exists()
+
+
+def test_scheduler_enables_network_guard_only_for_generation(tmp_path, monkeypatch):
+    (tmp_path / "tests").mkdir()
+    generation_environments = []
+    sitecustomize_sources = []
+    setup_environments = []
+
+    def fake_run(command, repo_dir, timeout, env):
+        if command[:3] == ["python", "-m", "pynguin"]:
+            generation_environments.append(env.copy())
+            guard_dir = Path(env["PYTHONPATH"].split(os.pathsep)[0])
+            sitecustomize_sources.append((guard_dir / "sitecustomize.py").read_text())
+        elif command[:4] == ["python", "-m", "pip", "install"] or (
+            command[:2] == ["python", "-c"]
+            and "importlib.metadata" in command[2]
+        ):
+            setup_environments.append(env.copy())
+        return subprocess.CompletedProcess(command, 0, stdout="")
+
+    monkeypatch.setattr("swebench.eval_pipeline.pynguin_generation._run", fake_run)
+    result = run_pynguin_generation(
+        tmp_path,
+        {"files": {"pkg/core.py": {
+            "covered_lines": 0, "num_statements": 1,
+            "covered_branches": 0, "num_branches": 0,
+        }}},
+        total_budget=20,
+    )
+
+    assert generation_environments
+    assert "_pynguin_guard_create_connection" in sitecustomize_sources[0]
+    assert setup_environments
+    assert all(
+        ".pynguin-compatibility" not in environment.get("PYTHONPATH", "")
+        for environment in setup_environments
+    )
+    assert result["metrics"]["generation_network_guard"] is True
+    assert not (tmp_path / ".pynguin-compatibility").exists()
+
+
+def test_generation_network_guard_blocks_external_and_allows_loopback(tmp_path):
+    (tmp_path / "sitecustomize.py").write_text(_GENERATION_NETWORK_GUARD_SOURCE)
+    script = (
+        "import errno, socket\n"
+        "assert socket.getaddrinfo('localhost', 0)\n"
+        "try:\n"
+        "    socket.getaddrinfo('example.com', 443)\n"
+        "except OSError as exc:\n"
+        "    assert exc.errno == errno.ENETUNREACH\n"
+        "else:\n"
+        "    raise AssertionError('external DNS was not blocked')\n"
+        "sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n"
+        "try:\n"
+        "    sock.connect(('203.0.113.1', 443))\n"
+        "except OSError as exc:\n"
+        "    assert exc.errno == errno.ENETUNREACH\n"
+        "else:\n"
+        "    raise AssertionError('external TCP was not blocked')\n"
+        "assert sock.connect_ex(('203.0.113.1', 443)) == errno.ENETUNREACH\n"
+        "print('guard-ok')\n"
+    )
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        env={**os.environ, "PYTHONPATH": str(tmp_path)},
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+    )
+    assert completed.stdout.strip() == "guard-ok"
 
 
 def test_noncallable_signature_compatibility_only_changes_pynguin_analysis(tmp_path):

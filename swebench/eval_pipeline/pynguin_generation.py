@@ -11,8 +11,84 @@ import time
 from pathlib import Path
 
 
-PYNGUIN_POSTPROCESSING_VERSION = 9
+PYNGUIN_POSTPROCESSING_VERSION = 10
 PYNGUIN_MODULE_SHUTDOWN_GRACE_SECONDS = 10
+
+
+_GENERATION_NETWORK_GUARD_SOURCE = """\
+import errno as _pynguin_errno
+import ipaddress as _pynguin_ipaddress
+import socket as _pynguin_socket
+
+_pynguin_original_create_connection = _pynguin_socket.create_connection
+_pynguin_original_getaddrinfo = _pynguin_socket.getaddrinfo
+_pynguin_original_gethostbyname = _pynguin_socket.gethostbyname
+_pynguin_original_gethostbyname_ex = _pynguin_socket.gethostbyname_ex
+_pynguin_original_socket_connect = _pynguin_socket.socket.connect
+_pynguin_original_socket_connect_ex = _pynguin_socket.socket.connect_ex
+
+def _pynguin_is_loopback(host):
+    if isinstance(host, bytes):
+        host = host.decode(errors="ignore")
+    if not isinstance(host, str):
+        return False
+    normalized = host.strip("[]").rstrip(".").casefold()
+    if normalized == "localhost":
+        return True
+    try:
+        return _pynguin_ipaddress.ip_address(normalized).is_loopback
+    except ValueError:
+        return False
+
+def _pynguin_external_network_error(host):
+    return OSError(
+        _pynguin_errno.ENETUNREACH,
+        f"external network disabled during Pynguin generation: {host}",
+    )
+
+def _pynguin_guard_create_connection(address, *args, **kwargs):
+    if not _pynguin_is_loopback(address[0]):
+        raise _pynguin_external_network_error(address[0])
+    return _pynguin_original_create_connection(address, *args, **kwargs)
+
+def _pynguin_guard_getaddrinfo(host, *args, **kwargs):
+    if not _pynguin_is_loopback(host):
+        raise _pynguin_external_network_error(host)
+    return _pynguin_original_getaddrinfo(host, *args, **kwargs)
+
+def _pynguin_guard_gethostbyname(host):
+    if not _pynguin_is_loopback(host):
+        raise _pynguin_external_network_error(host)
+    return _pynguin_original_gethostbyname(host)
+
+def _pynguin_guard_gethostbyname_ex(host):
+    if not _pynguin_is_loopback(host):
+        raise _pynguin_external_network_error(host)
+    return _pynguin_original_gethostbyname_ex(host)
+
+def _pynguin_guard_socket_connect(sock, address):
+    if (
+        sock.family in (_pynguin_socket.AF_INET, _pynguin_socket.AF_INET6)
+        and not _pynguin_is_loopback(address[0])
+    ):
+        raise _pynguin_external_network_error(address[0])
+    return _pynguin_original_socket_connect(sock, address)
+
+def _pynguin_guard_socket_connect_ex(sock, address):
+    if (
+        sock.family in (_pynguin_socket.AF_INET, _pynguin_socket.AF_INET6)
+        and not _pynguin_is_loopback(address[0])
+    ):
+        return _pynguin_errno.ENETUNREACH
+    return _pynguin_original_socket_connect_ex(sock, address)
+
+_pynguin_socket.create_connection = _pynguin_guard_create_connection
+_pynguin_socket.getaddrinfo = _pynguin_guard_getaddrinfo
+_pynguin_socket.gethostbyname = _pynguin_guard_gethostbyname
+_pynguin_socket.gethostbyname_ex = _pynguin_guard_gethostbyname_ex
+_pynguin_socket.socket.connect = _pynguin_guard_socket_connect
+_pynguin_socket.socket.connect_ex = _pynguin_guard_socket_connect_ex
+"""
 
 
 _NONCALLABLE_SIGNATURE_COMPAT_SOURCE = """\
@@ -459,6 +535,7 @@ def run_pynguin_generation(
                 "validation_output_tail": validation_output_tail,
                 "warning_filters": warning_filters or [],
                 "ignore_noncallable_signatures": ignore_noncallable_signatures,
+                "generation_network_guard": True,
                 "diagnostic_output_tail": "".join(output_chunks)[-8000:],
             },
         }
@@ -499,18 +576,17 @@ def run_pynguin_generation(
         generation_started = time.monotonic()
         deadline = generation_started + total_budget
 
-        generation_env = env
+        compatibility_dir.mkdir()
+        sitecustomize_source = _GENERATION_NETWORK_GUARD_SOURCE
         if ignore_noncallable_signatures:
-            compatibility_dir.mkdir()
-            (compatibility_dir / "sitecustomize.py").write_text(
-                _NONCALLABLE_SIGNATURE_COMPAT_SOURCE
-            )
-            existing_pythonpath = env.get("PYTHONPATH", "")
-            generation_env = {
-                **env,
-                "PYTHONPATH": str(compatibility_dir)
-                + (os.pathsep + existing_pythonpath if existing_pythonpath else ""),
-            }
+            sitecustomize_source += "\n" + _NONCALLABLE_SIGNATURE_COMPAT_SOURCE
+        (compatibility_dir / "sitecustomize.py").write_text(sitecustomize_source)
+        existing_pythonpath = env.get("PYTHONPATH", "")
+        generation_env = {
+            **env,
+            "PYTHONPATH": str(compatibility_dir)
+            + (os.pathsep + existing_pythonpath if existing_pythonpath else ""),
+        }
 
         shutil.rmtree(scratch, ignore_errors=True)
         scratch.mkdir(parents=True)
