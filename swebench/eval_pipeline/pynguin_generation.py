@@ -427,6 +427,7 @@ def run_pynguin_generation(
     seed: int = 0,
     total_budget: int = 900,
     module_slice: int = 120,
+    test_execution_timeout: int = 1,
     assertion_mode: str = "SIMPLE",
     explicit_modules: list[str] | None = None,
     setup_command: str | None = None,
@@ -495,6 +496,7 @@ def run_pynguin_generation(
                 "assertion_mode": assertion_mode,
                 "total_budget_seconds": total_budget,
                 "module_slice_seconds": module_slice,
+                "test_execution_timeout_seconds": test_execution_timeout,
                 "budget_strategy": budget_strategy,
                 "requested_modules": requested_modules,
                 "python_version": python_version,
@@ -635,6 +637,7 @@ def run_pynguin_generation(
                 "--module-name", module, "--output-path", str(module_scratch),
                 "--algorithm", "DYNAMOSA", "--assertion-generation", assertion_mode,
                 "--seed", str(seed), "--maximum-search-time", str(slice_seconds),
+                "--maximum-test-execution-timeout", str(test_execution_timeout),
             ]
             module_started = time.monotonic()
             try:

@@ -41,6 +41,7 @@ def test_pynguin_cli_defaults_and_overrides(monkeypatch):
     assert defaults.pynguin_seed == 0
     assert defaults.pynguin_total_budget == 900
     assert defaults.pynguin_module_slice == 120
+    assert defaults.pynguin_test_execution_timeout == 1
     assert defaults.pynguin_assertion_mode == "SIMPLE"
     assert defaults.skip_pynguin is False
     assert defaults.force_pynguin is False
@@ -48,12 +49,14 @@ def test_pynguin_cli_defaults_and_overrides(monkeypatch):
     monkeypatch.setattr(sys, "argv", [
         "run_pipeline", "--traditional_test_generator", "pynguin",
         "--pynguin_seed", "7", "--pynguin_module", "pkg.core",
+        "--pynguin_test_execution_timeout", "2",
         "--skip_pynguin", "--force_pynguin",
     ])
     overridden = parse_args()
     assert overridden.traditional_test_generator == "pynguin"
     assert overridden.pynguin_seed == 7
     assert overridden.pynguin_module == ["pkg.core"]
+    assert overridden.pynguin_test_execution_timeout == 2
     assert overridden.skip_pynguin is True
     assert overridden.force_pynguin is True
 
@@ -110,6 +113,7 @@ def test_pynguin_cache_is_matched_and_replaced_by_instance(monkeypatch):
         "seed": args.pynguin_seed,
         "total_budget_seconds": args.pynguin_total_budget,
         "module_slice_seconds": args.pynguin_module_slice,
+        "test_execution_timeout_seconds": args.pynguin_test_execution_timeout,
         "assertion_mode": args.pynguin_assertion_mode,
         "postprocessing_version": 10,
     }
@@ -142,6 +146,7 @@ def test_shared_target_cache_fingerprints_modules_python_budget_and_setup(monkey
         "seed": args.pynguin_seed,
         "total_budget_seconds": 123,
         "module_slice_seconds": args.pynguin_module_slice,
+        "test_execution_timeout_seconds": args.pynguin_test_execution_timeout,
         "assertion_mode": args.pynguin_assertion_mode,
         "postprocessing_version": 10,
         "requested_modules": ["pkg.a"],
@@ -465,6 +470,12 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
     assert pynguin_call[2]["PYTHONHASHSEED"] == "11"
     assert pynguin_call[2]["PYNGUIN_DANGER_AWARE"] == "1"
     assert pynguin_call[0][pynguin_call[0].index("--maximum-search-time") + 1] == "7"
+    assert (
+        pynguin_call[0][
+            pynguin_call[0].index("--maximum-test-execution-timeout") + 1
+        ]
+        == "1"
+    )
     assert pynguin_call[1] <= 17
     assert result["model_patch"].startswith("diff --git")
     assert result["metrics"]["successful_modules"] == ["pkg.core"]
