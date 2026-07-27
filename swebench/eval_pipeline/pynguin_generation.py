@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 PYNGUIN_POSTPROCESSING_VERSION = 11
-PYNGUIN_MODULE_SHUTDOWN_GRACE_SECONDS = 10
+PYNGUIN_DEFAULT_MODULE_FINALIZATION_GRACE_SECONDS = 10
 
 
 _GENERATION_NETWORK_GUARD_SOURCE = """\
@@ -427,6 +427,9 @@ def run_pynguin_generation(
     seed: int = 0,
     total_budget: int = 900,
     module_slice: int = 120,
+    module_finalization_grace: int = (
+        PYNGUIN_DEFAULT_MODULE_FINALIZATION_GRACE_SECONDS
+    ),
     test_execution_timeout: int = 1,
     force_subprocess: bool = False,
     verbose: bool = False,
@@ -506,6 +509,7 @@ def run_pynguin_generation(
                 "assertion_mode": assertion_mode,
                 "total_budget_seconds": total_budget,
                 "module_slice_seconds": module_slice,
+                "module_finalization_grace_seconds": module_finalization_grace,
                 "test_execution_timeout_seconds": test_execution_timeout,
                 "force_subprocess": force_subprocess,
                 "verbose": verbose,
@@ -638,7 +642,7 @@ def run_pynguin_generation(
                     1,
                     min(
                         module_slice,
-                        int(max(1.0, fair_share - PYNGUIN_MODULE_SHUTDOWN_GRACE_SECONDS)),
+                        int(max(1.0, fair_share - module_finalization_grace)),
                     ),
                 )
             else:
@@ -669,7 +673,7 @@ def run_pynguin_generation(
                 # per-module slice externally, with a small finalization grace.
                 outer_slice_timeout = min(
                     generation_remaining(),
-                    slice_seconds + PYNGUIN_MODULE_SHUTDOWN_GRACE_SECONDS,
+                    slice_seconds + module_finalization_grace,
                 )
                 completed = _run(command, repo_dir, outer_slice_timeout, generation_env)
                 code, timed_out = completed.returncode, False

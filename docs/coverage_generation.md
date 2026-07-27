@@ -31,10 +31,13 @@ The defaults pin Pynguin `0.45.0`, seed `0`, `PYTHONHASHSEED=0`, DynaMOSA,
 module slices. Individual generated candidate tests are limited to one second
 so a few blocking calls cannot consume a module's search budget. Override these
 with `--pynguin_version`, `--pynguin_seed`, `--pynguin_total_budget`,
-`--pynguin_module_slice`, `--pynguin_test_execution_timeout`, and
-`--pynguin_assertion_mode`. Repeat `--pynguin_module` to restrict eligible
-import names or source paths. Otherwise every uncovered, importable production
-module is eligible and is prioritized by uncovered branches, then lines.
+`--pynguin_module_slice`, `--pynguin_module_finalization_grace`,
+`--pynguin_test_execution_timeout`, and `--pynguin_assertion_mode`. The
+finalization grace defaults to 10 seconds beyond the search slice and covers
+minimization, assertion generation, and export. Repeat `--pynguin_module` to
+restrict eligible import names or source paths. Otherwise every uncovered,
+importable production module is eligible and is prioritized by uncovered
+branches, then lines.
 Use `--pynguin_force_subprocess` for subjects whose generated candidates hang
 or corrupt the threaded executor. It forces all candidate executions into
 killable subprocesses and disables Pynguin's C-extension-based mode override.

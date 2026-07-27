@@ -41,6 +41,7 @@ def test_pynguin_cli_defaults_and_overrides(monkeypatch):
     assert defaults.pynguin_seed == 0
     assert defaults.pynguin_total_budget == 900
     assert defaults.pynguin_module_slice == 120
+    assert defaults.pynguin_module_finalization_grace == 10
     assert defaults.pynguin_test_execution_timeout == 1
     assert defaults.pynguin_force_subprocess is False
     assert defaults.pynguin_verbose is False
@@ -51,6 +52,7 @@ def test_pynguin_cli_defaults_and_overrides(monkeypatch):
     monkeypatch.setattr(sys, "argv", [
         "run_pipeline", "--traditional_test_generator", "pynguin",
         "--pynguin_seed", "7", "--pynguin_module", "pkg.core",
+        "--pynguin_module_finalization_grace", "30",
         "--pynguin_test_execution_timeout", "2",
         "--pynguin_force_subprocess",
         "--pynguin_verbose",
@@ -60,6 +62,7 @@ def test_pynguin_cli_defaults_and_overrides(monkeypatch):
     assert overridden.traditional_test_generator == "pynguin"
     assert overridden.pynguin_seed == 7
     assert overridden.pynguin_module == ["pkg.core"]
+    assert overridden.pynguin_module_finalization_grace == 30
     assert overridden.pynguin_test_execution_timeout == 2
     assert overridden.pynguin_force_subprocess is True
     assert overridden.pynguin_verbose is True
@@ -119,6 +122,9 @@ def test_pynguin_cache_is_matched_and_replaced_by_instance(monkeypatch):
         "seed": args.pynguin_seed,
         "total_budget_seconds": args.pynguin_total_budget,
         "module_slice_seconds": args.pynguin_module_slice,
+        "module_finalization_grace_seconds": (
+            args.pynguin_module_finalization_grace
+        ),
         "test_execution_timeout_seconds": args.pynguin_test_execution_timeout,
         "force_subprocess": args.pynguin_force_subprocess,
         "verbose": args.pynguin_verbose,
@@ -154,6 +160,9 @@ def test_shared_target_cache_fingerprints_modules_python_budget_and_setup(monkey
         "seed": args.pynguin_seed,
         "total_budget_seconds": 123,
         "module_slice_seconds": args.pynguin_module_slice,
+        "module_finalization_grace_seconds": (
+            args.pynguin_module_finalization_grace
+        ),
         "test_execution_timeout_seconds": args.pynguin_test_execution_timeout,
         "force_subprocess": args.pynguin_force_subprocess,
         "verbose": args.pynguin_verbose,
@@ -173,6 +182,11 @@ def test_shared_target_cache_fingerprints_modules_python_budget_and_setup(monkey
         rows, "repo-a", args, ["pkg.a"], "setup-a"
     ) is None
     args.pynguin_force_subprocess = False
+    args.pynguin_module_finalization_grace = 30
+    assert _matching_cached_pynguin_prediction(
+        rows, "repo-a", args, ["pkg.a"], "setup-a"
+    ) is None
+    args.pynguin_module_finalization_grace = 10
     assert _matching_cached_pynguin_prediction(
         rows, "repo-a", args, ["pkg.b"], "setup-a"
     ) is None
@@ -507,6 +521,7 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
     assert pynguin_call[1] <= 17
     assert result["model_patch"].startswith("diff --git")
     assert result["metrics"]["successful_modules"] == ["pkg.core"]
+    assert result["metrics"]["module_finalization_grace_seconds"] == 10
     assert result["metrics"]["force_subprocess"] is True
     assert result["metrics"]["verbose"] is True
     diagnostic_log = Path(

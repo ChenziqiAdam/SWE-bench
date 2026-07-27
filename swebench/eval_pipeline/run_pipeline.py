@@ -329,6 +329,12 @@ def parse_args():
         help="Maximum Pynguin search seconds per module (default: 120).",
     )
     p.add_argument(
+        "--pynguin_module_finalization_grace",
+        type=int,
+        default=10,
+        help="Extra seconds per module for minimization/assertion/export (default: 10).",
+    )
+    p.add_argument(
         "--pynguin_test_execution_timeout",
         type=int,
         default=1,
@@ -791,6 +797,8 @@ def _matching_cached_pynguin_prediction(
                 else args.pynguin_total_budget
             )
             and metrics.get("module_slice_seconds") == args.pynguin_module_slice
+            and metrics.get("module_finalization_grace_seconds")
+            == args.pynguin_module_finalization_grace
             and metrics.get("test_execution_timeout_seconds")
             == args.pynguin_test_execution_timeout
             and metrics.get("force_subprocess", False)
@@ -1029,6 +1037,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                     if shared_protocol else args.pynguin_total_budget
                 ),
                 module_slice=args.pynguin_module_slice,
+                module_finalization_grace=args.pynguin_module_finalization_grace,
                 test_execution_timeout=args.pynguin_test_execution_timeout,
                 force_subprocess=args.pynguin_force_subprocess,
                 verbose=args.pynguin_verbose,
@@ -1077,6 +1086,9 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                 "error": error, "metrics": {
                     "method": "pynguin", "version": args.pynguin_version,
                     "seed": args.pynguin_seed,
+                    "module_finalization_grace_seconds": (
+                        args.pynguin_module_finalization_grace
+                    ),
                     "test_execution_timeout_seconds": (
                         args.pynguin_test_execution_timeout
                     ),
@@ -1150,6 +1162,9 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                     "method": "pynguin",
                     "version": args.pynguin_version,
                     "seed": args.pynguin_seed,
+                    "module_finalization_grace_seconds": (
+                        args.pynguin_module_finalization_grace
+                    ),
                     "test_execution_timeout_seconds": (
                         args.pynguin_test_execution_timeout
                     ),
