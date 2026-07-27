@@ -38,6 +38,10 @@ module is eligible and is prioritized by uncovered branches, then lines.
 Use `--pynguin_force_subprocess` for subjects whose generated candidates hang
 or corrupt the threaded executor. It forces all candidate executions into
 killable subprocesses and disables Pynguin's C-extension-based mode override.
+Use `--pynguin_verbose` to enable Pynguin INFO logging. Complete output for
+each attempted module is retained under
+`<output_dir>/<run_id>_pynguin_module_logs/`, while the prediction JSON
+continues to contain a short tail.
 `--skip_inference` skips only the coding-agent call: Pynguin is generated when
 its matching cached prediction is absent, so an existing agent patch can be
 compared without paying for agent inference again.

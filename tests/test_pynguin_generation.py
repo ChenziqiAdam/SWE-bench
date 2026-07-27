@@ -43,6 +43,7 @@ def test_pynguin_cli_defaults_and_overrides(monkeypatch):
     assert defaults.pynguin_module_slice == 120
     assert defaults.pynguin_test_execution_timeout == 1
     assert defaults.pynguin_force_subprocess is False
+    assert defaults.pynguin_verbose is False
     assert defaults.pynguin_assertion_mode == "SIMPLE"
     assert defaults.skip_pynguin is False
     assert defaults.force_pynguin is False
@@ -52,6 +53,7 @@ def test_pynguin_cli_defaults_and_overrides(monkeypatch):
         "--pynguin_seed", "7", "--pynguin_module", "pkg.core",
         "--pynguin_test_execution_timeout", "2",
         "--pynguin_force_subprocess",
+        "--pynguin_verbose",
         "--skip_pynguin", "--force_pynguin",
     ])
     overridden = parse_args()
@@ -60,6 +62,7 @@ def test_pynguin_cli_defaults_and_overrides(monkeypatch):
     assert overridden.pynguin_module == ["pkg.core"]
     assert overridden.pynguin_test_execution_timeout == 2
     assert overridden.pynguin_force_subprocess is True
+    assert overridden.pynguin_verbose is True
     assert overridden.skip_pynguin is True
     assert overridden.force_pynguin is True
 
@@ -118,6 +121,7 @@ def test_pynguin_cache_is_matched_and_replaced_by_instance(monkeypatch):
         "module_slice_seconds": args.pynguin_module_slice,
         "test_execution_timeout_seconds": args.pynguin_test_execution_timeout,
         "force_subprocess": args.pynguin_force_subprocess,
+        "verbose": args.pynguin_verbose,
         "assertion_mode": args.pynguin_assertion_mode,
         "postprocessing_version": 10,
     }
@@ -152,6 +156,7 @@ def test_shared_target_cache_fingerprints_modules_python_budget_and_setup(monkey
         "module_slice_seconds": args.pynguin_module_slice,
         "test_execution_timeout_seconds": args.pynguin_test_execution_timeout,
         "force_subprocess": args.pynguin_force_subprocess,
+        "verbose": args.pynguin_verbose,
         "assertion_mode": args.pynguin_assertion_mode,
         "postprocessing_version": 10,
         "requested_modules": ["pkg.a"],
@@ -474,7 +479,12 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
             "covered_lines": 0, "num_statements": 2,
             "covered_branches": 0, "num_branches": 1,
         }}},
-        seed=11, total_budget=20, module_slice=7, force_subprocess=True,
+        seed=11,
+        total_budget=20,
+        module_slice=7,
+        force_subprocess=True,
+        verbose=True,
+        diagnostic_dir=tmp_path / "diagnostics",
     )
     pynguin_call = next(call for call in calls if call[0][:3] == ["python", "-m", "pynguin"])
     assert pynguin_call[2]["PYTHONHASHSEED"] == "11"
@@ -493,10 +503,16 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
         ]
         == "False"
     )
+    assert "-v" in pynguin_call[0]
     assert pynguin_call[1] <= 17
     assert result["model_patch"].startswith("diff --git")
     assert result["metrics"]["successful_modules"] == ["pkg.core"]
     assert result["metrics"]["force_subprocess"] is True
+    assert result["metrics"]["verbose"] is True
+    diagnostic_log = Path(
+        result["metrics"]["module_attempts"][0]["diagnostic_log"]
+    )
+    assert diagnostic_log.read_text() == "pynguin completed successfully\n"
     assert result["metrics"]["module_attempts"][0]["exit_code"] == 0
     assert (
         result["metrics"]["module_attempts"][0]["output_tail"]

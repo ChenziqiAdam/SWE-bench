@@ -339,6 +339,11 @@ def parse_args():
         action="store_true",
         help="Execute every generated candidate in a killable subprocess.",
     )
+    p.add_argument(
+        "--pynguin_verbose",
+        action="store_true",
+        help="Enable Pynguin INFO logs and retain complete per-module output.",
+    )
     p.add_argument("--pynguin_assertion_mode", default="SIMPLE")
     p.add_argument(
         "--skip_pynguin", action="store_true",
@@ -790,6 +795,7 @@ def _matching_cached_pynguin_prediction(
             == args.pynguin_test_execution_timeout
             and metrics.get("force_subprocess", False)
             == args.pynguin_force_subprocess
+            and metrics.get("verbose", False) == args.pynguin_verbose
             and metrics.get("assertion_mode") == args.pynguin_assertion_mode
             and metrics.get("postprocessing_version")
             == PYNGUIN_POSTPROCESSING_VERSION
@@ -1025,6 +1031,10 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                 module_slice=args.pynguin_module_slice,
                 test_execution_timeout=args.pynguin_test_execution_timeout,
                 force_subprocess=args.pynguin_force_subprocess,
+                verbose=args.pynguin_verbose,
+                diagnostic_dir=(
+                    output_dir / f"{args.run_id}_pynguin_module_logs"
+                ).resolve(),
                 assertion_mode=args.pynguin_assertion_mode,
                 explicit_modules=(
                     frozen_modules if shared_protocol else args.pynguin_module
@@ -1071,6 +1081,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                         args.pynguin_test_execution_timeout
                     ),
                     "force_subprocess": args.pynguin_force_subprocess,
+                    "verbose": args.pynguin_verbose,
                     "requested_modules": frozen_modules or [],
                     "budget_strategy": (
                         "equal_shared_targets"
@@ -1143,6 +1154,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                         args.pynguin_test_execution_timeout
                     ),
                     "force_subprocess": args.pynguin_force_subprocess,
+                    "verbose": args.pynguin_verbose,
                     "run_id": args.run_id,
                 },
             )

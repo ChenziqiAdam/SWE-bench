@@ -429,6 +429,7 @@ def run_pynguin_generation(
     module_slice: int = 120,
     test_execution_timeout: int = 1,
     force_subprocess: bool = False,
+    verbose: bool = False,
     assertion_mode: str = "SIMPLE",
     explicit_modules: list[str] | None = None,
     setup_command: str | None = None,
@@ -438,6 +439,7 @@ def run_pynguin_generation(
     budget_strategy: str = "sequential_slice",
     setup_timeout: int = 3600,
     setup_profile_fingerprint: str = "",
+    diagnostic_dir: Path | None = None,
 ) -> dict:
     """Install/setup first, then schedule Pynguin under a generation-only budget."""
     wall_started = time.monotonic()
@@ -499,6 +501,7 @@ def run_pynguin_generation(
                 "module_slice_seconds": module_slice,
                 "test_execution_timeout_seconds": test_execution_timeout,
                 "force_subprocess": force_subprocess,
+                "verbose": verbose,
                 "budget_strategy": budget_strategy,
                 "requested_modules": requested_modules,
                 "python_version": python_version,
@@ -541,6 +544,7 @@ def run_pynguin_generation(
                 "ignore_noncallable_signatures": ignore_noncallable_signatures,
                 "generation_network_guard": True,
                 "diagnostic_output_tail": "".join(output_chunks)[-8000:],
+                "diagnostic_directory": str(diagnostic_dir or ""),
             },
         }
 
@@ -649,6 +653,8 @@ def run_pynguin_generation(
                     "--subprocess", "True",
                     "--subprocess_if_recommended", "False",
                 ])
+            if verbose:
+                command.append("-v")
             module_started = time.monotonic()
             try:
                 # Pynguin's internal search timer does not cover every analysis,
@@ -667,6 +673,16 @@ def run_pynguin_generation(
                 raw = exc.stdout or ""
                 module_output = raw if isinstance(raw, str) else raw.decode(errors="replace")
                 output_chunks.append(module_output)
+            diagnostic_log = ""
+            if diagnostic_dir is not None:
+                diagnostic_dir.mkdir(parents=True, exist_ok=True)
+                diagnostic_path = diagnostic_dir / (
+                    f"{attempt_index:04d}-"
+                    + re.sub(r"[^A-Za-z0-9_.-]", "_", module)
+                    + ".log"
+                )
+                diagnostic_path.write_text(module_output)
+                diagnostic_log = str(diagnostic_path)
             search_runtime_seconds = round(
                 time.monotonic() - module_started, 6
             )
@@ -732,6 +748,7 @@ def run_pynguin_generation(
                 # A zero exit code can still produce important diagnostics when
                 # Pynguin exports no tests, so retain stdout for every outcome.
                 "output_tail": module_output[-2000:],
+                "diagnostic_log": diagnostic_log,
             })
         # Validate exported tests under the repository's own pytest settings.
         # Remove only explicitly failed test functions; collection/tool failures
@@ -812,6 +829,7 @@ def generate_pynguin_prediction(
             github_token, tmp_root=out_dir / "worktrees",
         )
         with isolated_python_environment(out_dir / "environments") as environment:
+            options.setdefault("diagnostic_dir", out_dir / "module_logs")
             prediction = run_pynguin_generation(
                 repo_dir,
                 baseline_coverage,
