@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 
 
-PYNGUIN_POSTPROCESSING_VERSION = 10
+PYNGUIN_POSTPROCESSING_VERSION = 11
 PYNGUIN_MODULE_SHUTDOWN_GRACE_SECONDS = 10
 
 
@@ -442,6 +442,13 @@ def run_pynguin_generation(
     diagnostic_dir: Path | None = None,
 ) -> dict:
     """Install/setup first, then schedule Pynguin under a generation-only budget."""
+    # Pynguin resolves --project-path and --output-path against its process
+    # working directory.  Keep both absolute; otherwise a relative cloned
+    # worktree is duplicated below itself and exported tests become invisible
+    # to the scheduler.
+    repo_dir = repo_dir.resolve()
+    if diagnostic_dir is not None:
+        diagnostic_dir = diagnostic_dir.resolve()
     wall_started = time.monotonic()
     setup_started = wall_started
     generation_started: float | None = None
@@ -821,6 +828,7 @@ def generate_pynguin_prediction(
     from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
     from swebench.eval_pipeline.host_environment import isolated_python_environment
 
+    out_dir = out_dir.resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
     repo_dir = None
     try:

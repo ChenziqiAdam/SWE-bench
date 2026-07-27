@@ -123,7 +123,7 @@ def test_pynguin_cache_is_matched_and_replaced_by_instance(monkeypatch):
         "force_subprocess": args.pynguin_force_subprocess,
         "verbose": args.pynguin_verbose,
         "assertion_mode": args.pynguin_assertion_mode,
-        "postprocessing_version": 10,
+        "postprocessing_version": 11,
     }
     rows = [
         {"instance_id": "repo-a", "model_patch": "a", "metrics": matching_metrics},
@@ -158,7 +158,7 @@ def test_shared_target_cache_fingerprints_modules_python_budget_and_setup(monkey
         "force_subprocess": args.pynguin_force_subprocess,
         "verbose": args.pynguin_verbose,
         "assertion_mode": args.pynguin_assertion_mode,
-        "postprocessing_version": 10,
+        "postprocessing_version": 11,
         "requested_modules": ["pkg.a"],
         "python_version": ".".join(map(str, sys.version_info[:3])),
         "budget_strategy": "equal_shared_targets",
@@ -518,10 +518,55 @@ def test_scheduler_applies_seed_slice_and_emits_patch(tmp_path, monkeypatch):
         result["metrics"]["module_attempts"][0]["output_tail"]
         == "pynguin completed successfully\n"
     )
-    assert result["metrics"]["postprocessing_version"] == 10
+    assert result["metrics"]["postprocessing_version"] == 11
     assert result["metrics"]["network_guard_injected_count"] == 1
     finalization_calls = [call for call in calls if call[0][:2] == ["git", "add"]]
     assert finalization_calls[0][1] >= 1
+
+
+def test_scheduler_resolves_relative_repo_and_output_paths(tmp_path, monkeypatch):
+    repo = tmp_path / "relative-repo"
+    (repo / "tests").mkdir(parents=True)
+    monkeypatch.chdir(tmp_path)
+    pynguin_paths = {}
+
+    def fake_run(command, repo_dir, timeout, env):
+        if command[:3] == ["python", "-m", "pynguin"]:
+            project = Path(command[command.index("--project-path") + 1])
+            output = Path(command[command.index("--output-path") + 1])
+            pynguin_paths.update(project=project, output=output, cwd=repo_dir)
+            output.mkdir(parents=True, exist_ok=True)
+            (output / "test_generated.py").write_text(
+                "import pkg.core as module_0\n\n"
+                "def test_x():\n    assert 1\n"
+            )
+        if command[:2] == ["git", "diff"]:
+            stdout = "diff --git a/tests/test.py b/tests/test.py\n"
+        elif command[:2] == ["python", "-c"] and "platform" in command[2]:
+            stdout = "0.45.0\n3.10.12\n"
+        else:
+            stdout = ""
+        return subprocess.CompletedProcess(command, 0, stdout=stdout)
+
+    monkeypatch.setattr("swebench.eval_pipeline.pynguin_generation._run", fake_run)
+    result = run_pynguin_generation(
+        Path("relative-repo"),
+        {"files": {"pkg/core.py": {
+            "covered_lines": 0, "num_statements": 1,
+            "covered_branches": 0, "num_branches": 0,
+        }}},
+        total_budget=20,
+        diagnostic_dir=Path("diagnostics"),
+    )
+
+    assert pynguin_paths["project"] == repo.resolve()
+    assert pynguin_paths["output"].is_absolute()
+    assert pynguin_paths["output"].is_relative_to(repo.resolve())
+    assert pynguin_paths["cwd"] == repo.resolve()
+    assert result["metrics"]["module_attempts"][0]["generated_files"] == 1
+    assert Path(
+        result["metrics"]["module_attempts"][0]["diagnostic_log"]
+    ).is_absolute()
 
 
 def test_scheduler_revalidates_after_pruning_failed_generated_test(
