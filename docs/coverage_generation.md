@@ -27,13 +27,13 @@ Enable the Python-first conventional baseline with:
 ```
 
 The defaults pin Pynguin `0.45.0`, seed `0`, `PYTHONHASHSEED=0`, DynaMOSA,
-`SIMPLE` assertions, a 900-second end-to-end budget, and 120-second
+`SIMPLE` assertions, a 900-second end-to-end budget, and 60-second
 module slices. Individual generated candidate tests are limited to one second
 so a few blocking calls cannot consume a module's search budget. Override these
 with `--pynguin_version`, `--pynguin_seed`, `--pynguin_total_budget`,
 `--pynguin_module_slice`, `--pynguin_module_finalization_grace`,
 `--pynguin_test_execution_timeout`, and `--pynguin_assertion_mode`. The
-finalization grace defaults to 10 seconds beyond the search slice and covers
+finalization grace defaults to 30 seconds beyond the search slice and covers
 minimization, assertion generation, and export. Repeat `--pynguin_module` to
 restrict eligible import names or source paths. Otherwise every uncovered,
 importable production module is eligible and is prioritized by uncovered

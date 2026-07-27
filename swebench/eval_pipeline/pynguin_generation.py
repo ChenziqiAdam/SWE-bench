@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 PYNGUIN_POSTPROCESSING_VERSION = 11
-PYNGUIN_DEFAULT_MODULE_FINALIZATION_GRACE_SECONDS = 10
+PYNGUIN_DEFAULT_MODULE_FINALIZATION_GRACE_SECONDS = 30
 
 
 _GENERATION_NETWORK_GUARD_SOURCE = """\
@@ -426,7 +426,7 @@ def run_pynguin_generation(
     version: str = "0.45.0",
     seed: int = 0,
     total_budget: int = 900,
-    module_slice: int = 120,
+    module_slice: int = 60,
     module_finalization_grace: int = (
         PYNGUIN_DEFAULT_MODULE_FINALIZATION_GRACE_SECONDS
     ),

@@ -325,14 +325,14 @@ def parse_args():
     p.add_argument(
         "--pynguin_module_slice",
         type=int,
-        default=120,
-        help="Maximum Pynguin search seconds per module (default: 120).",
+        default=60,
+        help="Maximum Pynguin search seconds per module (default: 60).",
     )
     p.add_argument(
         "--pynguin_module_finalization_grace",
         type=int,
-        default=10,
-        help="Extra seconds per module for minimization/assertion/export (default: 10).",
+        default=30,
+        help="Extra seconds per module for minimization/assertion/export (default: 30).",
     )
     p.add_argument(
         "--pynguin_test_execution_timeout",
