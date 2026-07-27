@@ -35,6 +35,9 @@ with `--pynguin_version`, `--pynguin_seed`, `--pynguin_total_budget`,
 `--pynguin_assertion_mode`. Repeat `--pynguin_module` to restrict eligible
 import names or source paths. Otherwise every uncovered, importable production
 module is eligible and is prioritized by uncovered branches, then lines.
+Use `--pynguin_force_subprocess` for subjects whose generated candidates hang
+or corrupt the threaded executor. It forces all candidate executions into
+killable subprocesses and disables Pynguin's C-extension-based mode override.
 `--skip_inference` skips only the coding-agent call: Pynguin is generated when
 its matching cached prediction is absent, so an existing agent patch can be
 compared without paying for agent inference again.

@@ -428,6 +428,7 @@ def run_pynguin_generation(
     total_budget: int = 900,
     module_slice: int = 120,
     test_execution_timeout: int = 1,
+    force_subprocess: bool = False,
     assertion_mode: str = "SIMPLE",
     explicit_modules: list[str] | None = None,
     setup_command: str | None = None,
@@ -497,6 +498,7 @@ def run_pynguin_generation(
                 "total_budget_seconds": total_budget,
                 "module_slice_seconds": module_slice,
                 "test_execution_timeout_seconds": test_execution_timeout,
+                "force_subprocess": force_subprocess,
                 "budget_strategy": budget_strategy,
                 "requested_modules": requested_modules,
                 "python_version": python_version,
@@ -639,6 +641,14 @@ def run_pynguin_generation(
                 "--seed", str(seed), "--maximum-search-time", str(slice_seconds),
                 "--maximum-test-execution-timeout", str(test_execution_timeout),
             ]
+            if force_subprocess:
+                # Disable the recommendation heuristic because it otherwise
+                # overwrites the explicit subprocess setting for modules that
+                # do not import a detected C extension.
+                command.extend([
+                    "--subprocess", "True",
+                    "--subprocess_if_recommended", "False",
+                ])
             module_started = time.monotonic()
             try:
                 # Pynguin's internal search timer does not cover every analysis,
