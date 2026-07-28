@@ -157,6 +157,11 @@ def test_scientific_pytest_profiles_are_offline_and_generated_test_scoped(
     assert test_fragment in instance["coverage_command"]
     assert instance["mutation_test_style"] == "pytest_generated"
     assert instance["mutation_tests_dir"] == tests_dir
+    if source == "geopandas":
+        setup_command = instance["coverage_setup_command"]
+        assert setup_command.index("-r requirements-dev.txt") < setup_command.index(
+            "-e . --no-deps"
+        )
     if source == "astropy":
         assert instance["pynguin_warning_filters"] == [
             "ignore::astropy.utils.exceptions.AstropyDeprecationWarning"

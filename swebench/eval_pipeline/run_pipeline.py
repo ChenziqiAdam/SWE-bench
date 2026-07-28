@@ -43,7 +43,12 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
     },
     "geopandas/geopandas": {
         "coverage_setup_command": (
-            "python -m pip install -e . -r requirements-dev.txt"
+            # The history-isolated checkout has no tags, so GeoPandas reports a
+            # fallback development version. Resolve optional test dependencies
+            # before installing that checkout to avoid pip backtracking to old,
+            # incompatible pointpats/libpysal releases.
+            "python -m pip install -r requirements-dev.txt && "
+            "python -m pip install -e . --no-deps"
         ),
         "coverage_test_command": "python -m pytest -m 'not web' geopandas",
         "coverage_command": (
