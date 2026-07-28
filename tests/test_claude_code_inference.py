@@ -93,6 +93,120 @@ def test_claude_code_inference_writes_backend_tagged_prediction(tmp_path, monkey
     assert "Change value to 2." not in human_log
 
 
+def test_claude_code_prepares_and_preflights_standalone_environment(
+    tmp_path, monkeypatch
+):
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    claude = fake_bin / "claude"
+    claude.write_text(
+        "#!/usr/bin/env python3\n"
+        "import pathlib, sys\n"
+        "prompt = sys.stdin.read()\n"
+        "repo = pathlib.Path.cwd()\n"
+        "assert (repo / 'prepared').read_text() == 'yes'\n"
+        "assert 'Environment already prepared by the harness with:' in prompt\n"
+        "(repo / 'module.py').write_text('value = 2\\n')\n"
+    )
+    claude.chmod(0o755)
+    monkeypatch.setenv("PATH", str(fake_bin) + os.pathsep + os.environ.get("PATH", ""))
+
+    repo = _make_git_repo(tmp_path / "repo")
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.claude_code_inference._clone_repo_at_commit",
+        lambda repo_name, base_commit, github_token, tmp_root=None: repo,
+    )
+
+    out = tmp_path / "predictions.jsonl"
+    run_claude_code_inference(
+        instances=[
+            {
+                "instance_id": "demo__repo-preflight",
+                "repo": "demo/repo",
+                "base_commit": "HEAD",
+                "standalone": True,
+                "coverage_setup_command": (
+                    "python -c \"from pathlib import Path; "
+                    "Path('prepared').write_text('yes')\""
+                ),
+                "coverage_environment_preflight_command": (
+                    "python -c \"from pathlib import Path; "
+                    "assert Path('prepared').read_text() == 'yes'\""
+                ),
+            }
+        ],
+        output_file=str(out),
+        model_name="provider-claude",
+        max_workers=1,
+        timeout=30,
+        setup_timeout=30,
+        eval_mode="coverage_generation",
+    )
+
+    row = json.loads(out.read_text())
+    assert "value = 2" in row["model_patch"]
+    assert row["metrics"]["environment_prepared"] is True
+    assert row["metrics"]["environment_setup_wall_time_seconds"] >= 0
+    assert row["metrics"]["environment_preflight_wall_time_seconds"] >= 0
+    assert (tmp_path / "claude_code_logs" / "demo__repo-preflight.environment-setup.log").exists()
+    assert (
+        tmp_path
+        / "claude_code_logs"
+        / "demo__repo-preflight.environment-preflight.log"
+    ).exists()
+
+
+def test_claude_code_does_not_start_agent_when_environment_setup_fails(
+    tmp_path, monkeypatch
+):
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    invoked = tmp_path / "claude-invoked"
+    claude = fake_bin / "claude"
+    claude.write_text(
+        "#!/usr/bin/env python3\n"
+        f"from pathlib import Path\nPath({str(invoked)!r}).write_text('yes')\n"
+    )
+    claude.chmod(0o755)
+    monkeypatch.setenv("PATH", str(fake_bin) + os.pathsep + os.environ.get("PATH", ""))
+
+    repo = _make_git_repo(tmp_path / "repo")
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.claude_code_inference._clone_repo_at_commit",
+        lambda repo_name, base_commit, github_token, tmp_root=None: repo,
+    )
+
+    out = tmp_path / "predictions.jsonl"
+    run_claude_code_inference(
+        instances=[
+            {
+                "instance_id": "demo__repo-setup-failure",
+                "repo": "demo/repo",
+                "base_commit": "HEAD",
+                "standalone": True,
+                "coverage_setup_command": "exit 7",
+            }
+        ],
+        output_file=str(out),
+        model_name="provider-claude",
+        max_workers=1,
+        timeout=30,
+        setup_timeout=30,
+        eval_mode="coverage_generation",
+    )
+
+    row = json.loads(out.read_text())
+    assert row["model_patch"] == ""
+    assert "environment_setup_failed with exit code 7" in row["error"]
+    assert not invoked.exists()
+    setup_log = (
+        tmp_path
+        / "claude_code_logs"
+        / "demo__repo-setup-failure.environment-setup.log"
+    )
+    assert "=== exit code: 7 ===" in setup_log.read_text()
+
+
 def test_claude_code_inference_maps_endpoint_and_api_key_to_env(tmp_path, monkeypatch):
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()

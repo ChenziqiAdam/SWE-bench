@@ -50,6 +50,9 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
             "python -m pip install -r requirements-dev.txt && "
             "python -m pip install -e . --no-deps"
         ),
+        "coverage_environment_preflight_command": (
+            "python -c \"import dateutil, geopandas, pandas, shapely\""
+        ),
         "coverage_test_command": "python -m pytest -m 'not web' geopandas",
         "coverage_command": (
             "python -m coverage run --branch --source=geopandas "
@@ -61,6 +64,7 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
     },
     "astropy/astropy": {
         "coverage_setup_command": "python -m pip install -e '.[test]'",
+        "coverage_environment_preflight_command": "python -c \"import astropy\"",
         "coverage_test_command": "python -m pytest --pyargs astropy",
         "coverage_command": (
             "python -m coverage run --branch --source=astropy "
@@ -524,6 +528,13 @@ def parse_args():
                    help="Wall-clock timeout per instance in seconds for Claude Code CLI inference. "
                         "Only used with --agent_backend claude_code.")
     p.add_argument(
+        "--claude_code_setup_timeout",
+        type=int,
+        default=1800,
+        help="Wall-clock timeout for harness-managed standalone environment setup "
+             "before Claude Code inference (default 1800 seconds).",
+    )
+    p.add_argument(
         "--claude_code_interrupt_retries",
         type=int,
         default=1,
@@ -670,6 +681,7 @@ def _run_agent_backend(args, instances: list[dict], output_file: str,
             max_turns=args.claude_code_max_turns, eval_mode=args.eval_mode,
             interrupt_retries=args.claude_code_interrupt_retries,
             network_policy=args.inference_network_policy,
+            setup_timeout=args.claude_code_setup_timeout,
         )
     else:
         from swebench.eval_pipeline.agent_inference import run_agent_inference_for_level
@@ -742,6 +754,9 @@ def _standalone_coverage_instance(args) -> dict:
         "problem_statement": "",
         "coverage_targets": sorted(set(targets)),
         "coverage_setup_command": setup_command,
+        "coverage_environment_preflight_command": profile.get(
+            "coverage_environment_preflight_command"
+        ),
         "coverage_test_command": test_command,
         "coverage_command": coverage_command,
         "coverage_pytest_command": profile.get("coverage_pytest_command"),
@@ -845,6 +860,7 @@ def _setup_profile_fingerprint(instance: dict) -> str:
         key: instance.get(key)
         for key in (
             "coverage_setup_command",
+            "coverage_environment_preflight_command",
             "coverage_tool_install_command",
             "coverage_test_command",
             "coverage_command",

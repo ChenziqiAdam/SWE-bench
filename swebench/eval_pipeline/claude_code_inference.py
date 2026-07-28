@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import signal
 import shutil
 import subprocess
 import threading
@@ -42,12 +43,107 @@ logger = logging.getLogger(__name__)
 
 AGENT_BACKEND = "claude_code"
 _CLAUDE_CODE_TIMEOUT = 900
+_ENVIRONMENT_SETUP_TIMEOUT = 1800
 _INTERRUPTED_EXIT_CODES = {129, 130, 143}
 
 
 def _is_interrupted_exit(returncode: int) -> bool:
     """Whether the CLI appears to have ended due to a Unix signal."""
     return returncode < 0 or returncode in _INTERRUPTED_EXIT_CODES
+
+
+def _run_environment_command(
+    command: str,
+    *,
+    stage: str,
+    repo_dir: Path,
+    env: dict[str, str],
+    timeout: int,
+    log_path: Path,
+) -> float:
+    """Run one harness-managed environment stage and retain its diagnostics."""
+    started = time.perf_counter()
+    process = subprocess.Popen(
+        ["/bin/bash", "-c", command],
+        cwd=repo_dir,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        start_new_session=os.name == "posix",
+    )
+    try:
+        output, _ = process.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired as exc:
+        if os.name == "posix":
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        else:
+            process.kill()
+        output, _ = process.communicate()
+        log_path.write_text(
+            f"=== {stage} command ===\n{command}\n"
+            f"=== TIMEOUT after {timeout}s ===\n{output}"
+        )
+        raise RuntimeError(
+            f"environment_{stage}_timed_out after {timeout}s; see {log_path}"
+        ) from exc
+
+    runtime = time.perf_counter() - started
+    log_path.write_text(
+        f"=== {stage} command ===\n{command}\n"
+        f"=== exit code: {process.returncode} ===\n"
+        f"=== wall time seconds: {runtime:.6f} ===\n"
+        + (output or "")
+    )
+    if process.returncode:
+        raise RuntimeError(
+            f"environment_{stage}_failed with exit code "
+            f"{process.returncode}; see {log_path}"
+        )
+    return runtime
+
+
+def _prepare_standalone_environment(
+    inst: dict,
+    *,
+    repo_dir: Path,
+    env: dict[str, str],
+    timeout: int,
+    logs_dir: Path,
+) -> dict[str, float | bool]:
+    """Install and verify standalone dependencies before agent inference."""
+    metrics: dict[str, float | bool] = {"environment_prepared": False}
+    instance_id = inst["instance_id"]
+    setup_command = (inst.get("coverage_setup_command") or "").strip()
+    if setup_command:
+        metrics["environment_setup_wall_time_seconds"] = _run_environment_command(
+            setup_command,
+            stage="setup",
+            repo_dir=repo_dir,
+            env=env,
+            timeout=timeout,
+            log_path=logs_dir / f"{instance_id}.environment-setup.log",
+        )
+
+    preflight_command = (
+        inst.get("coverage_environment_preflight_command") or ""
+    ).strip()
+    if preflight_command:
+        metrics["environment_preflight_wall_time_seconds"] = (
+            _run_environment_command(
+                preflight_command,
+                stage="preflight",
+                repo_dir=repo_dir,
+                env=env,
+                timeout=timeout,
+                log_path=logs_dir / f"{instance_id}.environment-preflight.log",
+            )
+        )
+    metrics["environment_prepared"] = True
+    return metrics
 
 
 def _stream_diagnostics(stdout: str) -> dict:
@@ -326,6 +422,7 @@ def run_claude_code_inference(
     eval_mode: str = "fix",
     interrupt_retries: int = 1,
     network_policy: str = "unrestricted",
+    setup_timeout: int = _ENVIRONMENT_SETUP_TIMEOUT,
 ) -> None:
     """Run Claude Code inference for all instances. Writes standard prediction JSONL."""
     validate_network_policy(
@@ -383,10 +480,10 @@ def run_claude_code_inference(
         instance_id = inst["instance_id"]
         repo_dir = None
         environment_context = None
+        environment_metrics: dict = {}
         started = time.perf_counter()
         try:
             repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token, tmp_root=tmp_root)
-            prompt = _claude_problem_text(inst, eval_mode=eval_mode)
             cmd = [
                 _claude_bin(),
                 "-p",
@@ -426,6 +523,18 @@ def run_claude_code_inference(
                 env["ANTHROPIC_AUTH_TOKEN"] = api_key
             if max_turns is not None:
                 env["CLAUDE_CODE_MAX_TURNS"] = str(max_turns)
+
+            prompt_instance = inst
+            if inst.get("standalone") and eval_mode == "coverage_generation":
+                environment_metrics = _prepare_standalone_environment(
+                    inst,
+                    repo_dir=repo_dir,
+                    env=env,
+                    timeout=setup_timeout,
+                    logs_dir=logs_dir,
+                )
+                prompt_instance = {**inst, "coverage_environment_prepared": True}
+            prompt = _claude_problem_text(prompt_instance, eval_mode=eval_mode)
 
             attempts = []
             combined_stdout = []
@@ -532,7 +641,7 @@ def run_claude_code_inference(
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
                 "metrics": with_wall_time(
-                    _aggregate_attempt_metrics(attempts),
+                    {**_aggregate_attempt_metrics(attempts), **environment_metrics},
                     time.perf_counter() - started,
                 ),
                 "inference_attempts": attempts,
@@ -577,7 +686,11 @@ def run_claude_code_inference(
                 "eval_mode": eval_mode,
                 "error": "timeout",
                 "metrics": with_wall_time(
-                    metrics_from_stream_json(stdout), time.perf_counter() - started
+                    {
+                        **metrics_from_stream_json(stdout),
+                        **environment_metrics,
+                    },
+                    time.perf_counter() - started,
                 ),
             }
         except Exception as e:
@@ -590,7 +703,9 @@ def run_claude_code_inference(
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
                 "error": str(e),
-                "metrics": with_wall_time({}, time.perf_counter() - started),
+                "metrics": with_wall_time(
+                    environment_metrics, time.perf_counter() - started
+                ),
             }
         finally:
             if environment_context is not None:

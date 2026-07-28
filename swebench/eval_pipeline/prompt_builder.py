@@ -89,7 +89,15 @@ def _coverage_generation_instruction(instance: dict) -> str:
     baseline_report = (instance.get("baseline_coverage_report") or "").strip()
     commands = []
     if instance.get("coverage_setup_command"):
-        commands.append(f"Environment setup command: {instance['coverage_setup_command']}")
+        if instance.get("coverage_environment_prepared"):
+            commands.append(
+                "Environment already prepared by the harness with: "
+                f"{instance['coverage_setup_command']}"
+            )
+        else:
+            commands.append(
+                f"Environment setup command: {instance['coverage_setup_command']}"
+            )
     if instance.get("coverage_test_command"):
         commands.append(f"Complete test command: {instance['coverage_test_command']}")
     command_text = ("\n" + "\n".join(commands) + "\n") if commands else ""

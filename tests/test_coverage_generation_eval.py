@@ -162,7 +162,13 @@ def test_scientific_pytest_profiles_are_offline_and_generated_test_scoped(
         assert setup_command.index("-r requirements-dev.txt") < setup_command.index(
             "-e . --no-deps"
         )
+        assert instance["coverage_environment_preflight_command"] == (
+            "python -c \"import dateutil, geopandas, pandas, shapely\""
+        )
     if source == "astropy":
+        assert instance["coverage_environment_preflight_command"] == (
+            "python -c \"import astropy\""
+        )
         assert instance["pynguin_warning_filters"] == [
             "ignore::astropy.utils.exceptions.AstropyDeprecationWarning"
         ]
