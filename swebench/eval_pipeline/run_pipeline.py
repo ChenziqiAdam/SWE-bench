@@ -42,7 +42,7 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
         "mutation_tests_dir": "Tests",
     },
     "geopandas/geopandas": {
-        "coverage_python_executable": "python3.10",
+        "coverage_python_executable": "python3.11",
         "coverage_setup_command": (
             # The history-isolated checkout has no tags, so GeoPandas reports a
             # fallback development version. Resolve optional test dependencies
@@ -64,7 +64,7 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
         "pynguin_ignore_noncallable_signatures": True,
     },
     "astropy/astropy": {
-        "coverage_python_executable": "python3.10",
+        "coverage_python_executable": "python3.11",
         "coverage_setup_command": "python -m pip install -e '.[test]'",
         "coverage_environment_preflight_command": "python -c \"import astropy\"",
         "coverage_test_command": "python -m pytest --pyargs astropy",
@@ -389,7 +389,7 @@ def parse_args():
         "--coverage_python_executable", default=None,
         help="Python executable used to create standalone disposable environments. "
              "Repository profiles may select a compatibility version (GeoPandas and "
-             "Astropy use python3.10).",
+             "Astropy use python3.11).",
     )
     p.add_argument(
         "--coverage_setup_command", default=DEFAULT_COVERAGE_SETUP_COMMAND,
