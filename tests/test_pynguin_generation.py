@@ -15,6 +15,7 @@ from swebench.eval_pipeline.coverage_generation_eval import (
 from swebench.eval_pipeline.pynguin_generation import (
     _GENERATION_NETWORK_GUARD_SOURCE,
     _NONCALLABLE_SIGNATURE_COMPAT_SOURCE,
+    _module_search_budget,
     _run,
     conventional_test_directory,
     module_name_from_path,
@@ -148,7 +149,7 @@ def test_pynguin_cache_is_matched_and_replaced_by_instance(monkeypatch):
     ]
 
 
-def test_shared_target_cache_fingerprints_modules_python_budget_and_setup(monkeypatch):
+def test_shared_target_cache_fingerprints_modules_budget_and_setup(monkeypatch):
     monkeypatch.setattr(sys, "argv", [
         "run_pipeline",
         "--comparison_protocol", "agent_led_shared_targets",
@@ -170,7 +171,7 @@ def test_shared_target_cache_fingerprints_modules_python_budget_and_setup(monkey
         "postprocessing_version": 11,
         "requested_modules": ["pkg.a"],
         "python_version": ".".join(map(str, sys.version_info[:3])),
-        "budget_strategy": "equal_shared_targets",
+        "budget_strategy": "uncapped_equal_shared_targets",
         "setup_profile_fingerprint": "setup-a",
     }
     rows = [{"instance_id": "repo-a", "metrics": metrics}]
@@ -225,6 +226,26 @@ def test_module_resolution_and_uncovered_ranking_are_deterministic():
     assert rank_pynguin_modules(coverage, ["pkg.explicit"]) == [
         ("pkg.explicit", "")
     ]
+
+
+def test_shared_target_budget_uses_uncapped_equal_share():
+    assert _module_search_budget(
+        budget_strategy="uncapped_equal_shared_targets",
+        module_slice=60,
+        generation_remaining=890,
+        modules_left=4,
+        module_finalization_grace=30,
+    ) == 192
+
+
+def test_independent_budget_retains_module_slice_cap():
+    assert _module_search_budget(
+        budget_strategy="sequential_slice",
+        module_slice=60,
+        generation_remaining=890,
+        modules_left=4,
+        module_finalization_grace=30,
+    ) == 60
 
 
 def test_test_directory_selection_including_biopython(tmp_path):

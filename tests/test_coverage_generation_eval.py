@@ -157,6 +157,7 @@ def test_scientific_pytest_profiles_are_offline_and_generated_test_scoped(
     assert test_fragment in instance["coverage_command"]
     assert instance["mutation_test_style"] == "pytest_generated"
     assert instance["mutation_tests_dir"] == tests_dir
+    assert instance["coverage_python_executable"] == "python3.10"
     if source == "geopandas":
         setup_command = instance["coverage_setup_command"]
         assert setup_command.index("-r requirements-dev.txt") < setup_command.index(
@@ -197,12 +198,15 @@ def test_scientific_profile_allows_explicit_command_overrides(monkeypatch):
             "custom tests",
             "--coverage_command",
             "custom coverage",
+            "--coverage_python_executable",
+            "/opt/python-custom",
         ],
     )
     instance = _standalone_coverage_instance(parse_args())
     assert instance["coverage_setup_command"] == "custom setup"
     assert instance["coverage_test_command"] == "custom tests"
     assert instance["coverage_command"] == "custom coverage"
+    assert instance["coverage_python_executable"] == "/opt/python-custom"
 
 
 def test_coverage_prompt_names_target_and_tests_only_constraints():
@@ -217,7 +221,9 @@ def test_coverage_prompt_names_target_and_tests_only_constraints():
     )
 
     assert "src/package/target_module.py" in prompt
-    assert "Only add or modify test files" in prompt
+    assert "append-only test patch" in prompt
+    assert "Do not delete, replace, or edit any existing line" in prompt
+    assert "beginning with '-'" in prompt
     assert "scientific invariants" in prompt
 
 
@@ -251,7 +257,8 @@ def test_coverage_prompt_includes_standalone_repository_commands():
     )
     assert "Environment setup command: python -m pip install ." in prompt
     assert "Complete test command: python -m pytest -q" in prompt
-    assert "run the Complete test command exactly as written" in prompt
+    assert "Do not run the Complete test command" in prompt
+    assert "harness runs it outside the generation budget" in prompt
     assert "independent of the current working directory" in prompt
     assert "must not replace production modules in sys.modules" in prompt
     assert "Repository totals: line 42.00%" in prompt

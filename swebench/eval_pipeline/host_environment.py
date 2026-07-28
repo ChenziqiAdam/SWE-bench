@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import subprocess
 import tempfile
 import venv
 from contextlib import contextmanager
@@ -11,13 +12,27 @@ from typing import Iterator
 
 
 @contextmanager
-def isolated_python_environment(parent: str | Path) -> Iterator[dict[str, str]]:
+def isolated_python_environment(
+    parent: str | Path,
+    python_executable: str | None = None,
+) -> Iterator[dict[str, str]]:
     """Yield an environment backed by a disposable virtual environment."""
     Path(parent).mkdir(parents=True, exist_ok=True)
     temp_dir = tempfile.mkdtemp(prefix="python-env-", dir=parent)
     try:
         environment_dir = Path(temp_dir) / "venv"
-        venv.EnvBuilder(with_pip=True).create(environment_dir)
+        if python_executable:
+            resolved = shutil.which(python_executable)
+            if resolved is None:
+                raise RuntimeError(
+                    f"Requested Python executable is unavailable: {python_executable}"
+                )
+            subprocess.run(
+                [resolved, "-m", "venv", str(environment_dir)],
+                check=True,
+            )
+        else:
+            venv.EnvBuilder(with_pip=True).create(environment_dir)
         bin_dir = environment_dir / ("Scripts" if os.name == "nt" else "bin")
         environment = dict(os.environ)
         environment["PATH"] = str(bin_dir) + os.pathsep + environment.get("PATH", "")

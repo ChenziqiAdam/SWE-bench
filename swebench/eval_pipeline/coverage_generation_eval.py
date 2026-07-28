@@ -761,7 +761,10 @@ def _run_standalone_phase(
             tmp_root=out_dir / "worktrees",
         )
         try:
-            with isolated_python_environment(out_dir / "environments") as environment:
+            with isolated_python_environment(
+                out_dir / "environments",
+                instance.get("coverage_python_executable"),
+            ) as environment:
                 completed = subprocess.run(
                     ["/bin/bash", str(script_path.resolve())],
                     cwd=repo_dir,
@@ -810,7 +813,10 @@ def _run_standalone_mutation_phase(
             tmp_root=out_dir / "worktrees",
         )
         try:
-            with isolated_python_environment(out_dir / "environments") as environment:
+            with isolated_python_environment(
+                out_dir / "environments",
+                instance.get("coverage_python_executable"),
+            ) as environment:
                 completed = subprocess.run(
                     ["/bin/bash", str(script_path.resolve())],
                     cwd=repo_dir,

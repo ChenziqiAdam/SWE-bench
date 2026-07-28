@@ -42,6 +42,7 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
         "mutation_tests_dir": "Tests",
     },
     "geopandas/geopandas": {
+        "coverage_python_executable": "python3.10",
         "coverage_setup_command": (
             # The history-isolated checkout has no tags, so GeoPandas reports a
             # fallback development version. Resolve optional test dependencies
@@ -63,6 +64,7 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
         "pynguin_ignore_noncallable_signatures": True,
     },
     "astropy/astropy": {
+        "coverage_python_executable": "python3.10",
         "coverage_setup_command": "python -m pip install -e '.[test]'",
         "coverage_environment_preflight_command": "python -c \"import astropy\"",
         "coverage_test_command": "python -m pytest --pyargs astropy",
@@ -382,6 +384,12 @@ def parse_args():
     p.add_argument(
         "--base_commit", default=None,
         help="Fixed git commit for standalone --repo_url coverage generation.",
+    )
+    p.add_argument(
+        "--coverage_python_executable", default=None,
+        help="Python executable used to create standalone disposable environments. "
+             "Repository profiles may select a compatibility version (GeoPandas and "
+             "Astropy use python3.10).",
     )
     p.add_argument(
         "--coverage_setup_command", default=DEFAULT_COVERAGE_SETUP_COMMAND,
@@ -753,6 +761,10 @@ def _standalone_coverage_instance(args) -> dict:
         "base_commit": args.base_commit,
         "problem_statement": "",
         "coverage_targets": sorted(set(targets)),
+        "coverage_python_executable": (
+            args.coverage_python_executable
+            or profile.get("coverage_python_executable")
+        ),
         "coverage_setup_command": setup_command,
         "coverage_environment_preflight_command": profile.get(
             "coverage_environment_preflight_command"
@@ -832,10 +844,8 @@ def _matching_cached_pynguin_prediction(
                 or (
                     metrics.get("requested_modules")
                     == sorted(set(requested_modules or []))
-                    and metrics.get("python_version")
-                    == ".".join(map(str, sys.version_info[:3]))
                     and metrics.get("budget_strategy")
-                    == "equal_shared_targets"
+                    == "uncapped_equal_shared_targets"
                     and metrics.get("setup_profile_fingerprint")
                     == setup_profile_fingerprint
                 )
@@ -860,6 +870,7 @@ def _setup_profile_fingerprint(instance: dict) -> str:
         key: instance.get(key)
         for key in (
             "coverage_setup_command",
+            "coverage_python_executable",
             "coverage_environment_preflight_command",
             "coverage_tool_install_command",
             "coverage_test_command",
@@ -1070,7 +1081,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                     frozen_modules if shared_protocol else args.pynguin_module
                 ),
                 budget_strategy=(
-                    "equal_shared_targets"
+                    "uncapped_equal_shared_targets"
                     if shared_protocol else "sequential_slice"
                 ),
                 setup_profile_fingerprint=setup_fingerprint,
@@ -1117,7 +1128,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
                     "verbose": args.pynguin_verbose,
                     "requested_modules": frozen_modules or [],
                     "budget_strategy": (
-                        "equal_shared_targets"
+                        "uncapped_equal_shared_targets"
                         if shared_protocol else "sequential_slice"
                     ),
                 },

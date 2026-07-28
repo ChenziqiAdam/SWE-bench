@@ -507,7 +507,10 @@ def run_claude_code_inference(
             )
 
             environment_context = (
-                isolated_python_environment(tmp_root / "environments")
+                isolated_python_environment(
+                    tmp_root / "environments",
+                    inst.get("coverage_python_executable"),
+                )
                 if inst.get("standalone") and eval_mode == "coverage_generation"
                 else nullcontext(dict(os.environ))
             )

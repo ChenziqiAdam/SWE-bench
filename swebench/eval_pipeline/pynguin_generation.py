@@ -374,6 +374,21 @@ def rank_pynguin_modules(
     return [(module, path) for _, _, module, path in sorted(ranked)]
 
 
+def _module_search_budget(
+    *,
+    budget_strategy: str,
+    module_slice: int,
+    generation_remaining: float,
+    modules_left: int,
+    module_finalization_grace: int,
+) -> int:
+    """Allocate search time without capping shared-target fair shares."""
+    if budget_strategy == "uncapped_equal_shared_targets":
+        fair_share = generation_remaining / max(1, modules_left)
+        return max(1, int(max(1.0, fair_share - module_finalization_grace)))
+    return max(1, min(module_slice, int(generation_remaining)))
+
+
 def conventional_test_directory(repo_dir: Path) -> Path:
     """Choose the repository's existing conventional test directory."""
     for name in ("Tests", "tests", "test"):
@@ -635,20 +650,13 @@ def run_pynguin_generation(
                 + re.sub(r"[^A-Za-z0-9_.-]", "_", module)
             )
             module_scratch.mkdir()
-            if budget_strategy == "equal_shared_targets":
-                modules_left = max(1, len(ranked_modules) - attempt_index)
-                fair_share = generation_remaining() / modules_left
-                slice_seconds = max(
-                    1,
-                    min(
-                        module_slice,
-                        int(max(1.0, fair_share - module_finalization_grace)),
-                    ),
-                )
-            else:
-                slice_seconds = max(
-                    1, min(module_slice, int(generation_remaining()))
-                )
+            slice_seconds = _module_search_budget(
+                budget_strategy=budget_strategy,
+                module_slice=module_slice,
+                generation_remaining=generation_remaining(),
+                modules_left=len(ranked_modules) - attempt_index,
+                module_finalization_grace=module_finalization_grace,
+            )
             command = [
                 "python", "-m", "pynguin", "--project-path", str(repo_dir),
                 "--module-name", module, "--output-path", str(module_scratch),
@@ -840,7 +848,10 @@ def generate_pynguin_prediction(
             instance.get("repo_url") or instance["repo"], instance["base_commit"],
             github_token, tmp_root=out_dir / "worktrees",
         )
-        with isolated_python_environment(out_dir / "environments") as environment:
+        with isolated_python_environment(
+            out_dir / "environments",
+            instance.get("coverage_python_executable"),
+        ) as environment:
             options.setdefault("diagnostic_dir", out_dir / "module_logs")
             prediction = run_pynguin_generation(
                 repo_dir,
