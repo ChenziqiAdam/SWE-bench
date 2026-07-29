@@ -244,6 +244,11 @@ Outputs are stored under `outputs/paper_replication/<run_id>/`:
 - `summary.json`: cohort score/success statistics, failure classes, and total
   agent usage.
 
+Standard output emits timestamped per-task stage transitions, inference
+tokens/cost/time, trusted-execution resources, final score and success state,
+and one compact diagnostic line for every failed evaluator check. This output
+is suitable for `nohup` log monitoring and is flushed after every line.
+
 Agent inference metrics describe model usage and generation resources: tokens,
 cost, turns, and wall time. Scientific difference metrics come exclusively from
 the hidden task evaluators and describe agreement between generated artifacts

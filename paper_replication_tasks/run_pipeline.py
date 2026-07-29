@@ -16,6 +16,7 @@ import socket
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -58,6 +59,7 @@ ROOT = Path(__file__).resolve().parent
 REPOSITORY_ROOT = ROOT.parent
 DEFAULT_OUTPUT_ROOT = REPOSITORY_ROOT / "outputs" / "paper_replication"
 MAX_ENTRYPOINT_ARGUMENTS = 256
+_PROGRESS_LOCK = threading.Lock()
 PROMPT = """\
 You are reproducing one scientific paper task in a clean-room, offline workspace.
 Only the files in this workspace are public benchmark inputs. Do not seek or use
@@ -74,6 +76,42 @@ artifact. The entrypoint in results.json must be the shell-style command that a
 trusted runner can parse and execute directly without a shell. That entrypoint
 must recreate results.json and all declared artifacts from a clean copy.
 """
+
+
+def progress(task_id: str | None, message: str) -> None:
+    """Write one atomic, immediately flushed human-readable progress line."""
+    scope = task_id or "pipeline"
+    with _PROGRESS_LOCK:
+        print(f"[{utc_timestamp()}] [{scope}] {message}", flush=True)
+
+
+def compact_value(value: Any, limit: int = 180) -> str:
+    rendered = json.dumps(json_safe(value), separators=(",", ":"), sort_keys=True)
+    return rendered if len(rendered) <= limit else rendered[: limit - 3] + "..."
+
+
+def failed_check_summary(check: dict[str, Any]) -> str:
+    diagnostics = check.get("diagnostics") or {}
+    parts = [
+        f"check={check.get('id')}",
+        f"category={check.get('category')}",
+    ]
+    for key in (
+        "max_abs",
+        "rmse",
+        "actual",
+        "expected",
+        "absolute_tolerance",
+        "relative_tolerance",
+        "max_abs_limit",
+        "rmse_limit",
+        "limit",
+    ):
+        if key in diagnostics:
+            parts.append(f"{key}={compact_value(diagnostics[key])}")
+    if check.get("message"):
+        parts.append(f"message={check['message']}")
+    return " ".join(parts)
 
 
 def utc_timestamp() -> str:
@@ -630,6 +668,20 @@ def process_task(args: argparse.Namespace, run_dir: Path, task_id: str) -> dict[
         and not args.force_evaluation
         and prior.get("stage") == "evaluated"
     ):
+        progress(
+            task_id,
+            f"resume: reusing completed result score={prior.get('score')} "
+            f"full_success={prior.get('full_success')}",
+        )
+        prior_checks = (
+            ((prior.get("evaluator") or {}).get("report") or {}).get("checks") or []
+        )
+        for check in prior_checks:
+            if not check.get("passed"):
+                progress(
+                    task_id,
+                    f"resume: FAIL {failed_check_summary(check)}",
+                )
         return prior
 
     task_dir.mkdir(parents=True, exist_ok=True)
@@ -654,7 +706,17 @@ def process_task(args: argparse.Namespace, run_dir: Path, task_id: str) -> dict[
         and not args.force_inference
     )
     try:
+        progress(
+            task_id,
+            f"start backend={args.backend} model={args.model} "
+            f"bundle={bundle_hash[:12]} image={expected['container_image_digest']}",
+        )
         if not reuse_inference:
+            progress(
+                task_id,
+                f"inference: starting timeout={args.agent_timeout:g}s "
+                f"retries={args.agent_retries}",
+            )
             with tempfile.TemporaryDirectory(
                 prefix=f"{task_id}-", dir=args.workspace_root
             ) as temporary:
@@ -677,12 +739,24 @@ def process_task(args: argparse.Namespace, run_dir: Path, task_id: str) -> dict[
                     container_pids=args.container_pids,
                     container_tmpfs_size=args.container_tmpfs_size,
                 )
+                usage = record["agent"].get("usage") or {}
+                progress(
+                    task_id,
+                    "inference: finished "
+                    f"exit={record['agent'].get('exit_code')} "
+                    f"attempts={record['agent'].get('attempt_count')} "
+                    f"wall={usage.get('wall_time_seconds', 0):.3f}s "
+                    f"tokens={usage.get('total_tokens', 0)} "
+                    f"cost_usd={usage.get('cost_usd', 0):.6f}",
+                )
                 redact_tree_credentials(workspace, secrets)
                 if raw_dir.exists():
                     shutil.rmtree(raw_dir)
                 shutil.copytree(workspace, raw_dir, symlinks=True)
             record["stage"] = "inference"
             write_json(record_path, redact(record, secrets))
+        else:
+            progress(task_id, "inference: reusing matching raw submission")
 
         if not raw_dir.is_dir():
             raise EvaluationInputError("agent did not produce a submission workspace")
@@ -694,8 +768,17 @@ def process_task(args: argparse.Namespace, run_dir: Path, task_id: str) -> dict[
             record["error"] = (record.get("agent") or {}).get("error")
             raise RuntimeError("agent inference failed")
         initial_results, entrypoint = validate_initial_results(raw_dir, task_id)
+        progress(
+            task_id,
+            f"format: valid results.json artifacts={len(initial_results['artifacts'])} "
+            f"entrypoint={shlex.join(entrypoint)}",
+        )
         prepare_execution_copy(raw_dir, execution_dir, initial_results)
         manifest_path = task_dir / "execution_manifest.json"
+        progress(
+            task_id,
+            f"execution: starting offline trusted rerun timeout={args.execution_timeout:g}s",
+        )
         execution = run_trusted_execution(
             task_id=task_id,
             execution_dir=execution_dir,
@@ -711,6 +794,17 @@ def process_task(args: argparse.Namespace, run_dir: Path, task_id: str) -> dict[
         )
         record["execution"] = execution
         record["stage"] = "execution"
+        manifest = execution.get("manifest") or {}
+        resource = manifest.get("resource_usage") or {}
+        progress(
+            task_id,
+            "execution: finished "
+            f"runner_exit={execution.get('runner_exit_code')} "
+            f"submission_exit={manifest.get('exit_code')} "
+            f"wall={resource.get('wall_seconds', 0):.3f}s "
+            f"cpu={resource.get('cpu_seconds', 0):.3f}s "
+            f"peak_memory_bytes={resource.get('peak_memory_bytes', 0)}",
+        )
         if execution.get("runner_exit_code") != 0 or not manifest_path.is_file():
             record["failure_type"] = "execution"
             record["error"] = execution.get("stderr") or "trusted runner failed"
@@ -718,6 +812,10 @@ def process_task(args: argparse.Namespace, run_dir: Path, task_id: str) -> dict[
         execution_valid = execution["manifest"].get("exit_code") == 0
 
         evaluation_path = task_dir / "evaluation.json"
+        progress(
+            task_id,
+            f"evaluation: starting hidden evaluator timeout={args.evaluator_timeout:g}s",
+        )
         evaluation = run_evaluator(
             task_id,
             execution_dir,
@@ -737,11 +835,28 @@ def process_task(args: argparse.Namespace, run_dir: Path, task_id: str) -> dict[
                 "format" if evaluation.get("exit_code") == 2 else "evaluator"
             )
             record["error"] = evaluation.get("stderr") or "evaluator failed"
+            progress(
+                task_id,
+                "evaluation: failed "
+                f"exit={evaluation.get('exit_code')} "
+                f"error={compact_value(record['error'])}",
+            )
         else:
             report = evaluation["report"]
             record["score"] = report.get("score")
             record["full_success"] = report.get("full_success")
             record["valid_execution"] = report.get("valid_execution")
+            checks = report.get("checks") or []
+            failed = [check for check in checks if not check.get("passed")]
+            progress(
+                task_id,
+                "evaluation: finished "
+                f"score={record['score']} full_success={record['full_success']} "
+                f"valid_execution={record['valid_execution']} "
+                f"checks_passed={len(checks) - len(failed)}/{len(checks)}",
+            )
+            for check in failed:
+                progress(task_id, f"evaluation: FAIL {failed_check_summary(check)}")
             if execution_valid and report.get("valid_execution") is True:
                 record["status"] = "completed"
                 record["failure_type"] = None
@@ -753,15 +868,26 @@ def process_task(args: argparse.Namespace, run_dir: Path, task_id: str) -> dict[
         record["failure_type"] = "format"
         record["error"] = str(exc)
         record["stage"] = record.get("stage", "inference")
+        progress(task_id, f"format failure: {exc}")
     except (ContainerRuntimeError, OSError, subprocess.SubprocessError) as exc:
         record["failure_type"] = record.get("failure_type") or "infrastructure"
         record["error"] = str(exc)
+        progress(task_id, f"infrastructure failure: {exc}")
     except Exception as exc:
         record["failure_type"] = record.get("failure_type") or "infrastructure"
         record["error"] = record.get("error") or f"{type(exc).__name__}: {exc}"
+        progress(
+            task_id,
+            f"{record['failure_type']} failure: {compact_value(record['error'])}",
+        )
     record["ended_at"] = utc_timestamp()
     clean = redact(record, secrets)
     write_json(record_path, clean)
+    progress(
+        task_id,
+        f"done status={clean.get('status')} failure_type={clean.get('failure_type')} "
+        f"score={clean.get('score')} full_success={clean.get('full_success')}",
+    )
     return clean
 
 
@@ -1015,6 +1141,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    progress(
+        None,
+        f"initializing run_id={args.run_id} backend={args.backend} "
+        f"model={args.model} tasks={len(args.task_ids)} workers={args.workers}",
+    )
     client = None
     try:
         client = podman_client()
@@ -1099,6 +1230,10 @@ def main(argv: list[str] | None = None) -> int:
         },
     }
     write_json(run_dir / "run_config.json", config)
+    progress(
+        None,
+        f"run configured output={run_dir} image={args.container_image_identity['digest']}",
+    )
 
     records: list[dict[str, Any]] = []
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
@@ -1110,7 +1245,19 @@ def main(argv: list[str] | None = None) -> int:
             records.append(future.result())
     write_reports(run_dir, records)
     failures = sum(row.get("status") != "completed" for row in records)
-    print(f"wrote {len(records)} task result(s) to {run_dir}; failures={failures}")
+    successful = sum(bool(row.get("full_success")) for row in records)
+    scores = [
+        float(row["score"])
+        for row in records
+        if isinstance(row.get("score"), (int, float))
+    ]
+    progress(
+        None,
+        f"finished tasks={len(records)} completed={len(records) - failures} "
+        f"full_success={successful} mean_score="
+        f"{(sum(scores) / len(scores)) if scores else 'n/a'} "
+        f"failures={failures} output={run_dir}",
+    )
     return 1 if failures else 0
 
 
