@@ -1,0 +1,306 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 2663 >>
+stream
+BT
+/F1 8 Tf
+44 754 Td
+(SCIBENCH ANONYMIZED REPLICATION DOSSIER) Tj
+0 -12 Td
+(This is a manually rewritten scientific specification, not the original paper text.) Tj
+0 -12 Td
+(Identity metadata, bibliographic fingerprints, and benchmark answers are intentionally) Tj
+0 -12 Td
+(withheld.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(# Anonymous replication dossier: finite-temperature single-spin curves) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(## Scientific objective) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(For one spin in a constant field along z, reproduce five families of thermal) Tj
+0 -12 Td
+(expectation-value curves. Compare the exact discrete quantum calculation,) Tj
+0 -12 Td
+(continuous coherent-state approximations, and classical limits. This task) Tj
+0 -12 Td
+(evaluates only the finite deterministic curves; stochastic spin-dynamics) Tj
+0 -12 Td
+(estimates and graphics are outside its scope.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(## Definitions) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Let s be the spin quantum number, beta = 1/\(k_B T\), and use the Zeeman) Tj
+0 -12 Td
+(Hamiltonian H = -g mu_B B_z S_z / hbar. In the discrete basis,) Tj
+0 -12 Td
+(S_z |s,m> = hbar m |s,m>, with m = -s,...,s. The exact reference expectation is) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    <S_z>_q =) Tj
+0 -12 Td
+(      sum_{m=-s}^{s} hbar m exp\(beta g mu_B m B_z\)) Tj
+0 -12 Td
+(      / sum_{m=-s}^{s} exp\(beta g mu_B m B_z\).) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Introduce coherent states indexed by complex z:) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    |z> = \(1+|z|^2\)^\(-s\)) Tj
+0 -12 Td
+(        sum_{p=0}^{2s} binom\(2s,p\)^\(1/2\) z^p |p>,) Tj
+0 -12 Td
+(    dmu\(z\) = \(2s+1\)/pi * dz/\(1+|z|^2\)^2.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Map z to the unit-vector component) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    n_z = \(1-|z|^2\)/\(1+|z|^2\).) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(The leading moments needed by the expansion are) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    <z|S_z|z> = hbar s n_z,) Tj
+0 -12 Td
+(    <z|S_z^2|z> = \(hbar s n_z\)^2) Tj
+0 -12 Td
+(        + 2 hbar^2 s |z|^2/\(1+|z|^2\)^2.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Higher powers contain the classical term \(hbar s n_z\)^k plus corrections of) Tj
+0 -12 Td
+(higher order in 1/s. Generate the coherent-state approximation by expanding the) Tj
+0 -12 Td
+(operator exponential in beta and retaining the requested number of correction) Tj
+0 -12 Td
+(orders for each logical curve.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(## Classical and coherent-state expectations) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(The classical-limit expectation can be evaluated as) Tj
+0 -12 Td
+() Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 2771 >>
+stream
+BT
+/F1 8 Tf
+44 754 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    <n_z>_cl =) Tj
+0 -12 Td
+(      integral_{-1}^{1} n_z exp\(beta g mu_B s B_z n_z\) dn_z) Tj
+0 -12 Td
+(      / integral_{-1}^{1} exp\(beta g mu_B s B_z n_z\) dn_z.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(For a coherent-state effective Hamiltonian H_eff, use) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    <S_z>_eff =) Tj
+0 -12 Td
+(      integral dmu\(z\) hbar s n_z exp\(-beta H_eff\)) Tj
+0 -12 Td
+(      / integral dmu\(z\) exp\(-beta H_eff\).) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(A coarse low-temperature correction is) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    H_eff_low =) Tj
+0 -12 Td
+(      -g mu_B B_z s n_z) Tj
+0 -12 Td
+(      + \(1/2\) g mu_B B_z sqrt\(2s\) sqrt\(1-n_z^2\).) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(For the high-temperature construction, start from the exact coherent-state) Tj
+0 -12 Td
+(integrand) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    F\(beta,z\) = exp\(-beta g mu_B s B_z\)) Tj
+0 -12 Td
+(      \(\(exp\(beta g mu_B B_z\)+|z|^2\)/\(1+|z|^2\)\)^\(2s\).) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Expanding log\(F\) through third order in beta gives the effective Hamiltonian) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    H_eff_high =) Tj
+0 -12 Td
+(      -g mu_B s B_z n_z) Tj
+0 -12 Td
+(      -\(1/4\) beta \(g mu_B\)^2 s B_z^2 \(1-n_z^2\)) Tj
+0 -12 Td
+(      +\(1/12\) beta^2 \(g mu_B\)^3 s B_z^3 n_z\(1-n_z^2\).) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(When the approximate coherent-state observable is used, apply the normalization) Tj
+0 -12 Td
+(required by its beta -> infinity limit, which is s^2/\(s+1\), so the saturated) Tj
+0 -12 Td
+(observable has the correct scale.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(## Curve groups) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Use the following fixed curve ordering:) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(- Group 1 \(`curve_01`--`curve_05`, s=0.5\): classical limit; coherent-state) Tj
+0 -12 Td
+(  series with one, two, and three retained correction orders; exact quantum.) Tj
+0 -12 Td
+(  Use 500 uniformly spaced temperatures from 0.02 K to 5 K.) Tj
+0 -12 Td
+(- Group 2 \(`curve_06`--`curve_14`\): classical curves for s={0.5,2,5};) Tj
+0 -12 Td
+(  low-temperature curves for s={0.5,2,5}; exact quantum curves for s={0.5,2,5}.) Tj
+0 -12 Td
+(  Use 100 uniformly spaced temperatures from 0.02 K to 5 K.) Tj
+0 -12 Td
+(- Group 3 \(`curve_15`--`curve_18`, s=2\): classical, first-order) Tj
+0 -12 Td
+(  high-temperature, second-order high-temperature, and exact quantum curves.) Tj
+0 -12 Td
+(  Use 100 uniformly spaced temperatures from 0.07 K to 5 K.) Tj
+0 -12 Td
+(- Group 4 \(`curve_19`--`curve_21`, s=2\): normalized coherent-state,) Tj
+0 -12 Td
+(  unnormalized coherent-state, and exact quantum curves.) Tj
+ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 9 0 R >>
+endobj
+9 0 obj
+<< /Length 484 >>
+stream
+BT
+/F1 8 Tf
+44 754 Td
+(  Use 50 uniformly spaced temperatures from 0.07 K to 5 K.) Tj
+0 -12 Td
+(- Group 5 \(`curve_22`--`curve_23`, s=2\): classical and exact quantum curves.) Tj
+0 -12 Td
+(  Use 500 uniformly spaced temperatures from 0.02 K to 5 K. The divergent) Tj
+0 -12 Td
+(  high-order curve with non-finite low-temperature values is intentionally) Tj
+0 -12 Td
+(  excluded.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([MASKED: all reference curves and numerical comparisons are withheld.]) Tj
+ET
+endstream
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000195 00000 n 
+0000000321 00000 n 
+0000003036 00000 n 
+0000003162 00000 n 
+0000005985 00000 n 
+0000006111 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+6646
+%%EOF

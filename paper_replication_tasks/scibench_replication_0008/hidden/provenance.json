@@ -1,0 +1,8 @@
+{
+  "commit": "5697c290660572012c59c579ca4b99feafd159b8",
+  "official_entrypoint": "make clean && make",
+  "paper": "Numerical Simulations of a Spin Dynamics Model Based on a Path Integral Approach",
+  "repository": "https://github.com/stonerlab/PIQSD-SingleSpinBz",
+  "schema_version": 1,
+  "task_id": "scibench_replication_0008"
+}

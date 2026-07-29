@@ -486,7 +486,11 @@ def _run_agentic_loop(
         logger.warning(f"[{instance['instance_id']}] Reached max_turns={max_turns}")
 
     # Stage all changes (including new files) then diff against HEAD
-    subprocess.run(["git", "add", "-A"], cwd=repo_dir, capture_output=True)
+    add_command = ["git", "add", "-A"]
+    if instance.get("coverage_language") == "cpp":
+        from swebench.eval_pipeline.coverage_adapters import COVERAGE_GIT_EXCLUDES
+        add_command += ["--", ".", *COVERAGE_GIT_EXCLUDES]
+    subprocess.run(add_command, cwd=repo_dir, capture_output=True)
     diff_result = subprocess.run(
         ["git", "diff", "--cached", "HEAD"],
         cwd=repo_dir, capture_output=True, text=True,
@@ -544,6 +548,9 @@ def run_agent_inference_for_level(
         started = time.perf_counter()
         try:
             repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token, tmp_root=tmp_root)
+            if eval_mode == "coverage_generation":
+                from swebench.eval_pipeline.coverage_adapters import install_coverage_runner
+                install_coverage_runner(repo_dir, inst)
             patch, metrics = _run_agentic_loop(
                 inst,
                 anthropic_client,

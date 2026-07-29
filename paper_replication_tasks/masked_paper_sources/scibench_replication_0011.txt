@@ -1,0 +1,78 @@
+SCIBENCH ANONYMIZED REPLICATION DOSSIER
+This is a manually rewritten scientific specification, not the original paper text.
+Identity metadata, bibliographic fingerprints, and benchmark answers are intentionally withheld.
+
+# Anonymous replication dossier: correlated displacement regression
+
+## Scientific objective
+
+Reproduce a complete stochastic experiment comparing ordinary, weighted, and
+generalized least-squares estimates of a diffusion coefficient from correlated
+mean-squared-displacement (MSD) observations. Generate every trajectory from
+the prescribed seeds; do not substitute a published MSD curve or sample from a
+fitted distribution.
+
+## Random-walk experiment
+
+For each integer seed from 0 through 4095, initialize an independent legacy
+MT19937 random-number generator using the semantics of
+`numpy.random.RandomState(seed)`. Simulate 128 particles, each taking 128 steps
+on a three-dimensional cubic lattice. Draw all direction indices in one call
+equivalent to `rng.choice(6, size=(128,128))`: rows index particles and columns
+index consecutive timesteps. Map choices, in order, to displacement vectors
+
+[EQUATION]
+
+    (+j,0,0), (-j,0,0), (0,+j,0), (0,-j,0), (0,0,+j), (0,0,-j),
+    where j = 2.4494897428.
+
+This decimal step length is part of the fixed workflow and makes the true
+diffusion coefficient numerically equal to one in the dimensionless timestep
+convention because <|Delta r|^2> = 6 D Delta t.
+
+For a lag k in {1,...,128}, include the implicit position at time zero and
+calculate all valid time-origin displacements for each particle:
+
+[EQUATION]
+
+    MSD_s(k) = 1 / [128(129-k)]
+               sum_{p=1}^{128} sum_{t=0}^{128-k}
+               |r_{s,p}(t+k)-r_{s,p}(t)|^2.
+
+The submitted `msd` array contains lags k=2,...,128 in increasing order and has
+one row per seed, producing shape (4096,127). Lag one is excluded from the
+regression experiment.
+
+## Covariance and regressions
+
+Compute the unbiased sample covariance across the 4096 MSD curves, using the
+4095 denominator. Submit this 127 by 127 matrix as `covariance`. Let the time
+vector be t=(1,2,...,127), matching the historical index convention for the
+selected MSD columns, and use a design matrix with columns [t,1]. Thus every
+fit includes an intercept. For a response vector y, calculate
+
+[EQUATION]
+
+    beta_hat = (A^T W A)^(-1) A^T W y,
+    D_hat = beta_hat[0] / 6.
+
+Use W=I for OLS, `numpy.linalg.pinv` with `rcond=1e-15` on the diagonal
+covariance for WLS, and the same pseudoinverse convention on the full covariance
+for GLS. Apply each fixed weight matrix to all 4096 response curves. Submit
+`diffusion_estimates` with rows ordered OLS, WLS, GLS and shape (3,4096).
+
+## Summary statistics
+
+Submit a JSON object named `summary`, keyed exactly by `OLS`, `WLS`, and `GLS`.
+For every method provide `population_mean` and
+`population_standard_deviation`; the latter uses the population convention
+with denominator 4096. Also provide `analytical_uncertainty`. For WLS and GLS,
+this is sqrt([(A^T W A)^(-1)]_00)/6. For OLS, calculate the conventional
+intercept-inclusive slope standard error separately for each response curve,
+divide each by six, and report their arithmetic mean.
+
+All arrays must be finite, numeric, non-pickle NPY files. The covariance must
+be symmetric and positive semidefinite up to ordinary floating-point roundoff.
+
+[MASKED: all generated arrays, estimator means, estimator spreads, analytical
+uncertainties, and numerical comparisons are withheld.]

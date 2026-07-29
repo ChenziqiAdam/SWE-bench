@@ -1,0 +1,30 @@
+{
+  "resources": [
+    {
+      "id": "masked_paper",
+      "media_type": "application/pdf",
+      "path": "masked_paper.pdf"
+    }
+  ],
+  "schema_version": 3,
+  "submission": {
+    "path": "results.json",
+    "protocol_fields": [],
+    "required_artifacts": [
+      {
+        "id": "floquet_eigenvalues",
+        "media_type": "application/x-npy"
+      },
+      {
+        "id": "prediction_times",
+        "media_type": "application/x-npy"
+      },
+      {
+        "id": "prediction_trajectory",
+        "media_type": "application/x-npy"
+      }
+    ],
+    "schema": "submission_schema.json"
+  },
+  "task_id": "scibench_replication_0009"
+}

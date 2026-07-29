@@ -1,0 +1,49 @@
+{
+  "candidate": "baddoo/piDMD",
+  "commit": "743d8cbc5267799ed9f32145e2b5854f07960a20",
+  "conclusion": {
+    "formal_task_created": false,
+    "promotion_requirement": "Obtain author-provided or officially archived paper scripts and raw inputs, reproduce them in licensed MATLAB, and independently verify the numerical outputs.",
+    "reason": "The pinned repository contains two demonstrations, but neither reproduces the experiments reported in the paper.",
+    "status": "blocked_missing_paper_experiments"
+  },
+  "paper_audit": {
+    "arxiv_source": "2112.04307",
+    "arxiv_source_sha256": "4d45daff6e3205f39a213aff3c93a1cbfb74167127027b3bf0a63b77cc1e5927",
+    "missing_paper_experiments": [
+      "energy-preserving fluid flow",
+      "travelling-wave systems",
+      "Schrodinger equation",
+      "solute advection-diffusion",
+      "causal dynamics",
+      "three-dimensional transitional channel flow"
+    ],
+    "repository_demos_are_paper_gold": false,
+    "searches_performed": [
+      "complete pinned repository tree",
+      "both repository examples",
+      "pinned repository README claims",
+      "arXiv source archive and experiment sections"
+    ]
+  },
+  "repository_audit": {
+    "archive_sha256": "a9981573068e97142254179ad4300c395bc70f551c0caf826669ec6f1f1d6931",
+    "contents": [
+      {
+        "file": "examples/orthogonalExample.m",
+        "paper_experiment": false,
+        "sha256": "434e24bad1c26c43e81a9cec5c4055fbdec1341490c5881205c66b1e425fc97a",
+        "summary": "Seeded synthetic orthogonal-operator recovery with Gaussian noise."
+      },
+      {
+        "file": "examples/pendulumExample.m",
+        "paper_experiment": false,
+        "sha256": "de7be9793d37fc113de4d7011f54fb08938c1e9f67d25fc4097bb50bc27ddbcc",
+        "summary": "Seeded noisy nonlinear double-pendulum trajectory reconstruction not present in the paper."
+      }
+    ],
+    "readme_sha256": "7d4626457f69d27e9032d921854924bb9b26dcb2ccecd8c02b2959951e36bfd2",
+    "solver_sha256": "c80447b8b5074898314dcee160cb4cdf15f4e8ef274cff464726c5da9f1ac5b0"
+  },
+  "schema_version": 1
+}

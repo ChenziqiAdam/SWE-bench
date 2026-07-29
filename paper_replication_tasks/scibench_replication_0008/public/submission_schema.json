@@ -1,0 +1,894 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "artifacts": {
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_01"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_02"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_03"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_04"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_05"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_06"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_07"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_08"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_09"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_10"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_11"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_12"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_13"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_14"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_15"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_16"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_17"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_18"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_19"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_20"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_21"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_22"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "curve_23"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        }
+      ],
+      "items": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_01"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_02"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_03"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_04"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_05"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_06"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_07"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_08"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_09"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_10"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_11"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_12"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_13"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_14"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_15"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_16"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_17"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_18"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_19"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_20"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_21"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_22"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "curve_23"
+              },
+              "media_type": {
+                "const": "text/tab-separated-values"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "maxItems": 23,
+      "minItems": 23,
+      "type": "array"
+    },
+    "checkpoints": {
+      "type": "object"
+    },
+    "entrypoint": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "protocol": {
+      "type": "object"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "task_id": {
+      "const": "scibench_replication_0008"
+    }
+  },
+  "required": [
+    "schema_version",
+    "task_id",
+    "entrypoint",
+    "protocol",
+    "checkpoints",
+    "artifacts"
+  ],
+  "title": "SciBench submission for scibench_replication_0008",
+  "type": "object"
+}

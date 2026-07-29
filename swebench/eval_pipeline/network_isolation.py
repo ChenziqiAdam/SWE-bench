@@ -8,6 +8,7 @@ import shutil
 import socket
 import subprocess
 import sys
+from pathlib import Path
 from urllib.parse import urlparse
 
 
@@ -61,7 +62,23 @@ def _endpoint_addresses(endpoint: str) -> tuple[list[str], int]:
     return addresses, port
 
 
-def _macos_profile(endpoint: str | None) -> str:
+def _validated_hidden_paths(hidden_paths: list[str] | None) -> list[str]:
+    validated = []
+    for raw in hidden_paths or []:
+        path = Path(raw)
+        if not path.is_absolute():
+            raise NetworkIsolationError("hidden paths must be absolute")
+        try:
+            resolved = path.resolve(strict=True)
+        except OSError as exc:
+            raise NetworkIsolationError(f"hidden path does not exist: {path}") from exc
+        validated.append(str(resolved))
+    return validated
+
+
+def _macos_profile(
+    endpoint: str | None, hidden_paths: list[str] | None = None
+) -> str:
     lines = [
         "(version 1)",
         "(allow default)",
@@ -80,6 +97,12 @@ def _macos_profile(endpoint: str | None) -> str:
         lines.append(
             f'(allow network-outbound (remote ip "localhost:{port}"))'
         )
+    for path in _validated_hidden_paths(hidden_paths):
+        escaped = path.replace("\\", "\\\\").replace('"', '\\"')
+        lines.append(f'(deny file-read* (literal "{escaped}"))')
+        lines.append(f'(deny file-read* (subpath "{escaped}"))')
+        lines.append(f'(deny file-write* (literal "{escaped}"))')
+        lines.append(f'(deny file-write* (subpath "{escaped}"))')
     return "\n".join(lines)
 
 
@@ -88,6 +111,7 @@ def guard_command(
     *,
     policy: str,
     endpoint: str | None = None,
+    hidden_paths: list[str] | None = None,
 ) -> list[str]:
     """Wrap ``command`` in an OS network sandbox.
 
@@ -95,9 +119,10 @@ def guard_command(
     it denies all network, which is suitable for builtin-agent shell tools.
     Unsupported platforms fail closed unless a trusted external guard is
     configured through ``SWE_BENCH_NETWORK_GUARD``. The external guard contract
-    is: ``guard [--allow-endpoint URL] -- COMMAND ...``.
+    is: ``guard [--allow-endpoint URL] [--hide-path PATH]... -- COMMAND ...``.
     """
-    if policy == "unrestricted":
+    hidden = _validated_hidden_paths(hidden_paths)
+    if policy == "unrestricted" and not hidden:
         return list(command)
     if policy != "model-only":
         raise ValueError(f"unknown inference network policy: {policy}")
@@ -107,6 +132,8 @@ def guard_command(
         wrapped = shlex.split(external_guard)
         if endpoint:
             wrapped += ["--allow-endpoint", endpoint]
+        for path in hidden:
+            wrapped += ["--hide-path", path]
         return wrapped + ["--", *command]
 
     sandbox_exec = shutil.which("sandbox-exec")
@@ -114,7 +141,7 @@ def guard_command(
         return [
             sandbox_exec,
             "-p",
-            _macos_profile(endpoint),
+            _macos_profile(endpoint, hidden),
             *command,
         ]
 
@@ -135,6 +162,8 @@ def guard_command(
         ]
         if endpoint:
             wrapped += ["--allow-endpoint", endpoint]
+        for path in hidden:
+            wrapped += ["--hide-path", path]
         return [*wrapped, "--", *command]
 
     if sys.platform.startswith("linux"):
@@ -151,9 +180,18 @@ def guard_command(
     )
 
 
-def validate_network_policy(policy: str, endpoint: str | None = None) -> None:
+def validate_network_policy(
+    policy: str,
+    endpoint: str | None = None,
+    hidden_paths: list[str] | None = None,
+) -> None:
     """Validate that a requested guard can be constructed before inference."""
-    guard_command(["/usr/bin/true"], policy=policy, endpoint=endpoint)
+    guard_command(
+        ["/usr/bin/true"],
+        policy=policy,
+        endpoint=endpoint,
+        hidden_paths=hidden_paths,
+    )
 
 
 def preflight_anthropic_endpoint(

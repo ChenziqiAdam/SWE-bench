@@ -1,0 +1,202 @@
+{
+  "artifact_index": [
+    {
+      "figure": 1,
+      "id": "curve_01",
+      "reference_path": "gold_artifacts/figure1_data/analytic_classical_limit_s0.5.tsv",
+      "sha256": "5fadfcd00e2ae338efc9fde00282e45145e5614519dff42f3ea9596435cb4f36"
+    },
+    {
+      "figure": 1,
+      "id": "curve_02",
+      "reference_path": "gold_artifacts/figure1_data/analytic_coherent_state_terms1_s0.5.tsv",
+      "sha256": "99961d8cbfd8e259f0a5aee9e2c2e15c459fa7d7d66ccf0478efeb7ebeae5e2d"
+    },
+    {
+      "figure": 1,
+      "id": "curve_03",
+      "reference_path": "gold_artifacts/figure1_data/analytic_coherent_state_terms2_s0.5.tsv",
+      "sha256": "1bb594a75b2624dcfbb10bc3d3b8dd05209ef1a43c176efb0ba47ede0b44d66e"
+    },
+    {
+      "figure": 1,
+      "id": "curve_04",
+      "reference_path": "gold_artifacts/figure1_data/analytic_coherent_state_terms3_s0.5.tsv",
+      "sha256": "ed282dea9b8ddc2aeed23282121c99368936eb33f7dd4f4ffa1c2fe2825a2a02"
+    },
+    {
+      "figure": 1,
+      "id": "curve_05",
+      "reference_path": "gold_artifacts/figure1_data/analytic_quantum_solution_s0.5.tsv",
+      "sha256": "94333ff7f17678ce1ffd9f832d133cfd8452a039b64b25bd292abbac6f96eb57"
+    },
+    {
+      "figure": 2,
+      "id": "curve_06",
+      "reference_path": "gold_artifacts/figure2_data/analytic_classical_limit_solution_s0.5.tsv",
+      "sha256": "7ccbd3b46cae5d78ceb26b7e89bda723dd425fc489c0739252d8f3c5cf3e5900"
+    },
+    {
+      "figure": 2,
+      "id": "curve_07",
+      "reference_path": "gold_artifacts/figure2_data/analytic_classical_limit_solution_s2.0.tsv",
+      "sha256": "ea0276e71edce095559fab80b68cb0cc6f6c21de03cc4476b23fe1e139a97d2c"
+    },
+    {
+      "figure": 2,
+      "id": "curve_08",
+      "reference_path": "gold_artifacts/figure2_data/analytic_classical_limit_solution_s5.0.tsv",
+      "sha256": "b2b956f11495d7cabbbb8d70ce44a48d36b477ec674f06ece673cb8f6272fe45"
+    },
+    {
+      "figure": 2,
+      "id": "curve_09",
+      "reference_path": "gold_artifacts/figure2_data/analytic_low_temperature_exponential_solution_s0.5.tsv",
+      "sha256": "06ab833ed5c88ba0a23ded39a434f9d01290f4349e65afeca78180af8ac377b9"
+    },
+    {
+      "figure": 2,
+      "id": "curve_10",
+      "reference_path": "gold_artifacts/figure2_data/analytic_low_temperature_exponential_solution_s2.0.tsv",
+      "sha256": "b4bfe86103c8c99c4c82b3d76b4ec19d49fc6b6601c6de4b02fe9bcf56c5b01b"
+    },
+    {
+      "figure": 2,
+      "id": "curve_11",
+      "reference_path": "gold_artifacts/figure2_data/analytic_low_temperature_exponential_solution_s5.0.tsv",
+      "sha256": "b9a0f9603d1613438de3ea46847d409ef3cd5d0621352513317d8c9e81f247fd"
+    },
+    {
+      "figure": 2,
+      "id": "curve_12",
+      "reference_path": "gold_artifacts/figure2_data/analytic_quantum_solution_s0.5.tsv",
+      "sha256": "750ce450a28e53a0cb50e1dd62303366ab3f0c646f72f857039afceefec38270"
+    },
+    {
+      "figure": 2,
+      "id": "curve_13",
+      "reference_path": "gold_artifacts/figure2_data/analytic_quantum_solution_s2.0.tsv",
+      "sha256": "d4db472a10a95e669ff529c590610fc67ac5fdbe055936e77a993972e8408b67"
+    },
+    {
+      "figure": 2,
+      "id": "curve_14",
+      "reference_path": "gold_artifacts/figure2_data/analytic_quantum_solution_s5.0.tsv",
+      "sha256": "b0f81ff6b60ae1c834e0f7c3bb99cf5b174691f155ac8bc2e372bfe5ea2aa1ef"
+    },
+    {
+      "figure": 3,
+      "id": "curve_15",
+      "reference_path": "gold_artifacts/figure3_data/analytical_classical_limit_solution_s2.0.tsv",
+      "sha256": "76a43ac328de9a90246fa77c83aee9cdd994dfe7e22e2d813f95b9eef9db3404"
+    },
+    {
+      "figure": 3,
+      "id": "curve_16",
+      "reference_path": "gold_artifacts/figure3_data/analytical_high_temperature_first_correction_solution_s2.0.tsv",
+      "sha256": "68f19b49c3331b834d893960e44dcb0f8f994a701f5d231a196e1684e9d951d3"
+    },
+    {
+      "figure": 3,
+      "id": "curve_17",
+      "reference_path": "gold_artifacts/figure3_data/analytical_high_temperature_second_correction_solution_s2.0.tsv",
+      "sha256": "07536272e5751f941f1c3dca3ee3985c88c5a86f1093c1cfe32013cd8b3ee70d"
+    },
+    {
+      "figure": 3,
+      "id": "curve_18",
+      "reference_path": "gold_artifacts/figure3_data/analytical_quantum_state_solution_s2.0.tsv",
+      "sha256": "e5d5c300f5b2ebb4504936ac25b2601211320e6f1993c664e94d561390c0d371"
+    },
+    {
+      "figure": 4,
+      "id": "curve_19",
+      "reference_path": "gold_artifacts/figure4_data/analytic_normalised_solution_s2.tsv",
+      "sha256": "26716e035ff18983e9f3ba6739c5830ff5efb255377a0b529a7cd5a671b8b805"
+    },
+    {
+      "figure": 4,
+      "id": "curve_20",
+      "reference_path": "gold_artifacts/figure4_data/analytic_not_normalised_solution_s2.tsv",
+      "sha256": "545c4fcbeb16939e9bffbd5703bbeebe64fcac896b224a759d675f696f5afc6c"
+    },
+    {
+      "figure": 4,
+      "id": "curve_21",
+      "reference_path": "gold_artifacts/figure4_data/analytic_quantum_solution_s2.tsv",
+      "sha256": "26716e035ff18983e9f3ba6739c5830ff5efb255377a0b529a7cd5a671b8b805"
+    },
+    {
+      "figure": 5,
+      "id": "curve_22",
+      "reference_path": "gold_artifacts/figure5_data/analytic_classical_limit_s2.tsv",
+      "sha256": "7819cc016039016b88cb8d538584e6e55d6ca5702b2bed95ee0eed858850dcc9"
+    },
+    {
+      "figure": 5,
+      "id": "curve_23",
+      "reference_path": "gold_artifacts/figure5_data/analytic_quantum_solution_s2.tsv",
+      "sha256": "0f376b4e562fd5b422f2cc9cc86d0d689cfa6034ee127e1955156ff4b502c993"
+    }
+  ],
+  "required_artifact_ids": [
+    "curve_01",
+    "curve_02",
+    "curve_03",
+    "curve_04",
+    "curve_05",
+    "curve_06",
+    "curve_07",
+    "curve_08",
+    "curve_09",
+    "curve_10",
+    "curve_11",
+    "curve_12",
+    "curve_13",
+    "curve_14",
+    "curve_15",
+    "curve_16",
+    "curve_17",
+    "curve_18",
+    "curve_19",
+    "curve_20",
+    "curve_21",
+    "curve_22",
+    "curve_23"
+  ],
+  "required_artifacts": {
+    "curve_01": "text/tab-separated-values",
+    "curve_02": "text/tab-separated-values",
+    "curve_03": "text/tab-separated-values",
+    "curve_04": "text/tab-separated-values",
+    "curve_05": "text/tab-separated-values",
+    "curve_06": "text/tab-separated-values",
+    "curve_07": "text/tab-separated-values",
+    "curve_08": "text/tab-separated-values",
+    "curve_09": "text/tab-separated-values",
+    "curve_10": "text/tab-separated-values",
+    "curve_11": "text/tab-separated-values",
+    "curve_12": "text/tab-separated-values",
+    "curve_13": "text/tab-separated-values",
+    "curve_14": "text/tab-separated-values",
+    "curve_15": "text/tab-separated-values",
+    "curve_16": "text/tab-separated-values",
+    "curve_17": "text/tab-separated-values",
+    "curve_18": "text/tab-separated-values",
+    "curve_19": "text/tab-separated-values",
+    "curve_20": "text/tab-separated-values",
+    "curve_21": "text/tab-separated-values",
+    "curve_22": "text/tab-separated-values",
+    "curve_23": "text/tab-separated-values"
+  },
+  "schema_version": 3,
+  "scoring": {
+    "artifacts": 0.1,
+    "scientific": 0.9
+  },
+  "task_id": "scibench_replication_0008",
+  "tolerances": {
+    "max_abs": 1e-05,
+    "rmse": 2e-06
+  }
+}

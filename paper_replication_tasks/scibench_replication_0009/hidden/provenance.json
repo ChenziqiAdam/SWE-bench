@@ -1,0 +1,12 @@
+{
+  "commit": "8678a7ae99b66554654e13ec5ec0075607c2f44b",
+  "official_entrypoint": "Examples.ipynb, deterministic Floquet-DMD Example 2",
+  "paper": "Bilinear Dynamic Mode Decomposition for Quantum Control",
+  "reference_generation": {
+    "path": "gold_artifacts/reference_generation.json",
+    "sha256": "7017f5e64e03b791a933be7cff75f06e27f3f495997e439a200e23964f06e024"
+  },
+  "repository": "https://github.com/andgoldschmidt/biDMD-for-quantum",
+  "schema_version": 1,
+  "task_id": "scibench_replication_0009"
+}

@@ -280,8 +280,12 @@ def _claude_problem_text(instance: dict, eval_mode: str = "fix") -> str:
     )
 
 
-def _capture_patch(repo_dir: Path) -> str:
-    subprocess.run(["git", "add", "-N", "."], cwd=repo_dir, capture_output=True)
+def _capture_patch(repo_dir: Path, exclude_cpp_build: bool = False) -> str:
+    command = ["git", "add", "-N", "."]
+    if exclude_cpp_build:
+        from swebench.eval_pipeline.coverage_adapters import COVERAGE_GIT_EXCLUDES
+        command = ["git", "add", "-N", "--", ".", *COVERAGE_GIT_EXCLUDES]
+    subprocess.run(command, cwd=repo_dir, capture_output=True)
     result = subprocess.run(
         ["git", "-c", "core.fileMode=false", "diff", "--binary", "HEAD"],
         cwd=repo_dir,
@@ -484,6 +488,9 @@ def run_claude_code_inference(
         started = time.perf_counter()
         try:
             repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token, tmp_root=tmp_root)
+            if eval_mode == "coverage_generation":
+                from swebench.eval_pipeline.coverage_adapters import install_coverage_runner
+                install_coverage_runner(repo_dir, inst)
             cmd = [
                 _claude_bin(),
                 "-p",
@@ -528,7 +535,11 @@ def run_claude_code_inference(
                 env["CLAUDE_CODE_MAX_TURNS"] = str(max_turns)
 
             prompt_instance = inst
-            if inst.get("standalone") and eval_mode == "coverage_generation":
+            if (
+                inst.get("standalone")
+                and eval_mode == "coverage_generation"
+                and inst.get("coverage_language") != "cpp"
+            ):
                 environment_metrics = _prepare_standalone_environment(
                     inst,
                     repo_dir=repo_dir,
@@ -632,7 +643,9 @@ def run_claude_code_inference(
                     f"detail: {detail}"
                 )
 
-            patch = _repair_patch(_clean_patch(_capture_patch(repo_dir)))
+            patch = _repair_patch(_clean_patch(_capture_patch(
+                repo_dir, inst.get("coverage_language") == "cpp"
+            )))
             logger.info(
                 f"[{instance_id}] claude_code exit={result.returncode}, "
                 f"patch_len={len(patch)}, log={stderr_path}"
@@ -657,7 +670,9 @@ def run_claude_code_inference(
             patch = ""
             if repo_dir:
                 try:
-                    patch = _repair_patch(_clean_patch(_capture_patch(repo_dir)))
+                    patch = _repair_patch(_clean_patch(_capture_patch(
+                        repo_dir, inst.get("coverage_language") == "cpp"
+                    )))
                     if not patch:
                         patch = _repair_patch(
                             _clean_patch(_capture_structured_patch_from_stream(stdout, repo_dir))

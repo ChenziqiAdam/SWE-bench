@@ -100,6 +100,12 @@ def _coverage_generation_instruction(instance: dict) -> str:
             )
     if instance.get("coverage_test_command"):
         commands.append(f"Complete test command: {instance['coverage_test_command']}")
+    if instance.get("coverage_language") == "cpp":
+        commands.extend([
+            "C++ helper: .git/coverage-runner build",
+            "Focused tests: .git/coverage-runner test -- <CTest arguments>",
+            "Coverage: .git/coverage-runner coverage",
+        ])
     command_text = ("\n" + "\n".join(commands) + "\n") if commands else ""
     return (
         "Improve whole-repository test coverage. Choose meaningful, poorly tested "
@@ -115,7 +121,8 @@ def _coverage_generation_instruction(instance: dict) -> str:
         "2. Do not delete, replace, or edit any existing line, including imports, "
         "fixtures, comments, and formatting. The evaluator rejects every diff line "
         "beginning with '-'.\n"
-        "3. Do not modify production code, configuration files, or existing test behavior.\n"
+        "3. Do not modify production code, root/production build configuration, or "
+        "existing test behavior. C++ test-local CMakeLists.txt files may only be appended.\n"
         "4. Add meaningful assertions, not merely execution-based tests.\n"
         "5. Keep the complete existing test suite passing; the evaluation harness "
         "will verify it after generation.\n"

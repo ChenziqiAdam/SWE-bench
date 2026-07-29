@@ -10,6 +10,36 @@ commit and baseline. Mutation testing then uses the union of production modules
 whose coverage increased in either generated-test arm, making mutation targets
 identical for the original, Pynguin, and agent rows.
 
+## C++ CMake/CTest repositories
+
+Select C++ explicitly for mixed-language repositories:
+
+```bash
+python -m swebench.eval_pipeline.run_pipeline \
+  --eval_mode coverage_generation \
+  --repo_url https://github.com/openmm/openmm.git \
+  --base_commit 3ff9269047207049c2f4bd3ae960dca7b717d29a \
+  --coverage_language cpp
+```
+
+`--coverage_language auto` detects unambiguous Python or CMake/C++ checkouts.
+Repeat `--coverage_source_root` to restrict production coverage and use
+`--coverage_container_image` for a compatible prebuilt evaluator. C++ phases
+run offline as the host UID/GID with no Linux capabilities. The checked-in
+image definition is under `docker/coverage-cpp` and pins GCC 12.5, CMake,
+Ninja, Python, and gcovr 8.6.
+
+Agents can use `.git/coverage-runner build`, `.git/coverage-runner test`,
+`.git/coverage-runner test -- <CTest arguments>`, and
+`.git/coverage-runner coverage`. The helper is untracked and is never included
+in the submitted patch.
+
+The `openmm/openmm` profile builds instrumented Debug CPU and Reference tests,
+disables GPU backends and wrappers, and uses OpenMM's retry-aware
+`devtools/run-ctest.py`. Mutation testing is reported as unsupported for C++
+unless both custom mutation commands are supplied. Pynguin options are rejected
+for C++ experiments.
+
 ```bash
 python -m swebench.eval_pipeline.run_pipeline \
   --eval_mode coverage_generation \

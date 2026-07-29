@@ -1,0 +1,259 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 2426 >>
+stream
+BT
+/F1 8 Tf
+44 754 Td
+(SCIBENCH ANONYMIZED REPLICATION DOSSIER) Tj
+0 -12 Td
+(This is a manually rewritten scientific specification, not the original paper text.) Tj
+0 -12 Td
+(Identity metadata, bibliographic fingerprints, and benchmark answers are intentionally) Tj
+0 -12 Td
+(withheld.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(# Anonymous replication dossier: logarithmic spin effective Hamiltonian) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(## Scope) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Reproduce the deterministic core calculation that supplies an effective field) Tj
+0 -12 Td
+(to a finite-temperature spin-dynamics simulation. This task does not run the) Tj
+0 -12 Td
+(subsequent stochastic dynamics and does not claim to reproduce its sampled) Tj
+0 -12 Td
+(magnetization curves.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Consider one spin with dimensionless S_z eigenvalues m=-s,...,s and) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    H = -\(A_0 I + A_1 S_z + A_2 S_z^2\),) Tj
+0 -12 Td
+(    A_0 = lambda sigma,) Tj
+0 -12 Td
+(    A_1 = g mu_B mu_0 H_z,) Tj
+0 -12 Td
+(    A_2 = K-lambda sigma.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Use lambda sigma=0 and mu_0 H_z=1 tesla. Obtain the absolute electron Lande?) Tj
+0 -12 Td
+(factor, Bohr magneton, and Boltzmann constant from a standard CODATA constants) Tj
+0 -12 Td
+(library. Let beta=1/\(k_B T\).) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(## Coherent-state construction) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(For p=0,...,2s, define |p>=|s,s-p> and) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    |z> = \(1+|z|^2\)^\(-s\)) Tj
+0 -12 Td
+(        sum_p binom\(2s,p\)^\(1/2\) z^p |p>.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Map the stereographic radius to the unit-spin orientation by) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    u_z = \(1-|z|^2\)/\(1+|z|^2\),) Tj
+0 -12 Td
+(    |z|^2 = \(1-u_z\)/\(1+u_z\).) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(The polynomial entering the coherent-state partition integrand is) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    L = sum_p binom\(2s,p\) |z|^\(2p\)) Tj
+0 -12 Td
+(        exp\(beta A_2 p^2\)) Tj
+0 -12 Td
+(        exp[-beta\(2s A_2+A_1\)p].) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(After factoring out the energy of the m=s state, define) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    W\(beta,u_z\) = L/\(1+|z|^2\)^\(2s\),) Tj
+0 -12 Td
+(    H_eff\(beta,u_z\) = -beta^\(-1\) log W\(beta,u_z\).) Tj
+0 -12 Td
+() Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 2411 >>
+stream
+BT
+/F1 8 Tf
+44 754 Td
+(This factorization fixes the otherwise arbitrary additive constant:) Tj
+0 -12 Td
+(H_eff\(beta,1\)=0. Submit the dimensionless gauge-fixed Hamiltonian) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    h\(beta,u_z\) = H_eff\(beta,u_z\)/A_1.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Evaluate logarithms and exponential sums stably. In particular, do not form) Tj
+0 -12 Td
+(large low-temperature exponentials before applying the logarithm.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(The longitudinal effective field supplied to spin dynamics is) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    B_eff,z = -\(g mu_B s\)^\(-1\) partial H_eff/partial u_z.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Because A_1=g mu_B mu_0 H_z, submit the dimensionless field) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    b\(beta,u_z\) = B_eff,z/\(mu_0 H_z\)) Tj
+0 -12 Td
+(        = -\(1/s\) partial h/partial u_z.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(The field should be obtained analytically or to equivalent numerical accuracy.) Tj
+0 -12 Td
+(It is not a thermal average and cannot be replaced by a partition-function) Tj
+0 -12 Td
+(magnetization.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(## Parameter groups and artifacts) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Submit `temperature` as float64 `linspace\(0.02,10.0,200\)` in kelvin, shape) Tj
+0 -12 Td
+(`\(200,\)`. Submit `orientation` as float64) Tj
+0 -12 Td
+(`linspace\(-0.98,0.98,201\)`, shape `\(201,\)`. Array axes are always parameter) Tj
+0 -12 Td
+(row, increasing temperature, increasing orientation.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(For the Figure 2 parameter group, use K/A_1=-2 and rows ordered by) Tj
+0 -12 Td
+(s={0.5,1.0,1.5,2.0}. Submit `figure2_hamiltonian` and `figure2_field`, each) Tj
+0 -12 Td
+(with shape `\(4,200,201\)`.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(For the Figure 3 parameter group, fix s=1 and order rows by) Tj
+0 -12 Td
+(K/A_1={10,0,-1,-10}. Submit `figure3_hamiltonian` and `figure3_field`, each) Tj
+0 -12 Td
+(with shape `\(4,200,201\)`.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(All six artifacts must be finite, numeric, non-pickle float64 NPY files.) Tj
+0 -12 Td
+(Graphics, stochastic trajectories, magnetization averages, and self-reported) Tj
+0 -12 Td
+(checkpoints are not scored.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([MASKED: all effective-Hamiltonian values, effective-field values, comparisons,) Tj
+0 -12 Td
+(and original graphics are withheld.]) Tj
+ET
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000189 00000 n 
+0000000315 00000 n 
+0000002793 00000 n 
+0000002919 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+5382
+%%EOF

@@ -477,6 +477,35 @@ def render_coverage_generation_table(
             "coverage_scope": info.get("coverage_scope") or (
                 "repository" if inst.get("standalone") else "targeted"
             ),
+            "coverage_language": info.get(
+                "coverage_language", inst.get("coverage_language", "python")
+            ),
+            "coverage_tool": info.get(
+                "coverage_tool", inst.get("coverage_tool", "coverage.py")
+            ),
+            "coverage_container_image": info.get(
+                "coverage_container_image", inst.get("coverage_container_image", "")
+            ),
+            "coverage_container_digest": info.get(
+                "coverage_container_digest",
+                inst.get("coverage_container_digest", ""),
+            ),
+            "compiler_version": (info.get("toolchain") or inst.get("toolchain") or {}).get(
+                "compiler", ""
+            ),
+            "cmake_version": (info.get("toolchain") or inst.get("toolchain") or {}).get(
+                "cmake", ""
+            ),
+            "gcovr_version": (info.get("toolchain") or inst.get("toolchain") or {}).get(
+                "gcovr", ""
+            ),
+            "mutation_supported": (
+                "yes"
+                if info.get(
+                    "mutation_supported", inst.get("mutation_supported", True)
+                )
+                else "no"
+            ),
             "mutation_targets": ";".join(info.get("mutation_targets") or []),
             "mutation_excluded_targets": ";".join(
                 info.get("mutation_excluded_targets") or []
@@ -662,6 +691,16 @@ def render_coverage_comparison_table(rows: list[dict], output_csv: str) -> None:
         normalized.append({
             "method": info.get("method", ""),
             "method_version": info.get("method_version", ""),
+            "coverage_language": info.get("coverage_language", "python"),
+            "coverage_tool": info.get("coverage_tool", "coverage.py"),
+            "coverage_container_image": info.get("coverage_container_image", ""),
+            "coverage_container_digest": info.get("coverage_container_digest", ""),
+            "compiler_version": (info.get("toolchain") or {}).get("compiler", ""),
+            "cmake_version": (info.get("toolchain") or {}).get("cmake", ""),
+            "gcovr_version": (info.get("toolchain") or {}).get("gcovr", ""),
+            "mutation_supported": (
+                "yes" if info.get("mutation_supported", True) else "no"
+            ),
             "seed": info.get("seed", ""),
             "status": info.get("status", ""),
             "failure_reason": info.get("failure_reason", ""),

@@ -1,0 +1,76 @@
+{
+  "candidate": "bio-phys/DiffusionGLS",
+  "commit": "6b90359f698f6e7aa212587a984aa470f835d99e",
+  "conclusion": {
+    "formal_task_created": false,
+    "reason": "The official repository does not contain the 4139 water trajectories or the 2 microsecond ubiquitin trajectory used for paper Figures 2-6. The manuscript states that supporting data are available from the corresponding author upon reasonable request.",
+    "status": "blocked_missing_paper_data"
+  },
+  "paper_data_audit": {
+    "arxiv_source_contents": [
+      "manuscript.tex",
+      "figure_1.pdf",
+      "figure_2.pdf",
+      "figure_3.pdf",
+      "figure_4.pdf",
+      "figure_5.pdf",
+      "figure_6.pdf"
+    ],
+    "arxiv_source_sha256": "2e7423d2b2e725f0708dec6a6b84a3d1b5b2efb6b976bd60b14851ee48c03ceb",
+    "missing_required_inputs": [
+      "1 microsecond center-of-mass trajectories for 4139 TIP4P-D water molecules",
+      "2 microsecond center-of-mass trajectory for ubiquitin",
+      "paper Figure 2-6 numerical source data or complete figure-generation scripts"
+    ],
+    "paper_scope_mapping": {
+      "figure_2_to_4": "TIP4P-D water diffusion, uncertainty, quality-factor, and estimator comparisons",
+      "figure_5": "segmented and full ubiquitin diffusion and quality-factor analysis",
+      "figure_6": "water and ubiquitin Kolmogorov-Smirnov curves"
+    },
+    "repository_example_is_paper_gold": false,
+    "searches_performed": [
+      "official repository tree and history at the pinned commit",
+      "repository notebook and all bundled trajectory/output files",
+      "arXiv source archive",
+      "paper data-availability statement",
+      "public web searches for supplementary, Zenodo, and Dryad records"
+    ]
+  },
+  "repository_hashes": {
+    "Dfit/Dfit.py": "9e663bb796163c4988ef1a6ba19a48a9968e84fcb4e42a69fda47b5cbd9c245a",
+    "Example/D_analysis.dat": "0d9091088e7af8974969e46bc848b5ac2db913831c1f7ea323de817183094cf2",
+    "Example/D_analysis.pdf": "508dacd1feaea1762470019af0c7ee37dda8d7c2615ab57dceb40180c533e666",
+    "Example/example.ipynb": "9895fe40af4fa6fcf8867c608eb60000e7a966b8f01ae39393078c36d70c13b7",
+    "Example/example_trajectory_1D.dat": "d9231474bbca4588c234993d95fb686a41f2745468e872a3359ace14b27c5eeb",
+    "Example/example_trajectory_3D.dat": "2dc910fcc3f3a57d6ef0e1d48056733e4b0f03883e9ea8878505ea58ac876ef3"
+  },
+  "repository_example_reproduction": {
+    "command_3d": "Dfit.Dcov(fz='Example/example_trajectory_3D.dat', m=20, tmin=1, tmax=100, nseg=50, dt=1).run_Dfit(); analysis(tc=7)",
+    "compatibility_patch": {
+      "algorithm_changed": false,
+      "description": "A no-op progress-bar shim replaced the unavailable progressbar UI package.",
+      "sha256": "70d66cb1ff1f5f1e68c478b17b33b929a53b8e2f4041caf0ffceb0775ceef892"
+    },
+    "output_3d_at_7_ps": {
+      "D_nm2_per_ps": 5.994671226210524e-05,
+      "empirical_uncertainty_nm2_per_ps": 2.4233002566198263e-06,
+      "mean_quality_factor": 0.48132978302629664,
+      "predicted_uncertainty_nm2_per_ps": 2.3085310443755972e-06,
+      "quality_factor_standard_deviation": 0.3057786451193132
+    },
+    "output_3d_sha256": "3b619ec08a1a2b725836d7655932cc4bff44f567e8ab71d74fc0effb63e0bdb5",
+    "precomputed_output_note": "The checked-in D_analysis.dat was produced by the notebook's final 1D example, not by its earlier 3D cell.",
+    "precomputed_1d_numeric_rows": 99,
+    "precomputed_1d_numeric_rows_max_abs_error": 0.0,
+    "reproduced_1d_at_7_ps": {
+      "D_nm2_per_ps": 5.977392261749052e-05,
+      "empirical_uncertainty_nm2_per_ps": 4.138653543497199e-06,
+      "mean_quality_factor": 0.5326799134333279,
+      "predicted_uncertainty_nm2_per_ps": 4.000007682339411e-06,
+      "quality_factor_standard_deviation": 0.298881527528682
+    },
+    "reproduced_1d_output_sha256": "1ba20cba26298a84482867d899d7c553e315c9837b8a108aae40a31edb2eec2d",
+    "trajectory_rows": 500000
+  },
+  "schema_version": 1
+}

@@ -116,8 +116,12 @@ def _codex_problem_text(instance: dict, eval_mode: str = "fix") -> str:
     )
 
 
-def _capture_patch(repo_dir: Path) -> str:
-    subprocess.run(["git", "add", "-N", "."], cwd=repo_dir, capture_output=True)
+def _capture_patch(repo_dir: Path, exclude_cpp_build: bool = False) -> str:
+    command = ["git", "add", "-N", "."]
+    if exclude_cpp_build:
+        from swebench.eval_pipeline.coverage_adapters import COVERAGE_GIT_EXCLUDES
+        command = ["git", "add", "-N", "--", ".", *COVERAGE_GIT_EXCLUDES]
+    subprocess.run(command, cwd=repo_dir, capture_output=True)
     result = subprocess.run(
         ["git", "-c", "core.fileMode=false", "diff", "--binary", "HEAD"],
         cwd=repo_dir,
@@ -233,6 +237,9 @@ def run_codex_inference(
         stream_output = ""
         try:
             repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token, tmp_root=tmp_root)
+            if eval_mode == "coverage_generation":
+                from swebench.eval_pipeline.coverage_adapters import install_coverage_runner
+                install_coverage_runner(repo_dir, inst)
             prompt = _codex_problem_text(inst, eval_mode=eval_mode)
             cmd = [
                 _codex_bin(),
@@ -284,7 +291,9 @@ def run_codex_inference(
                     f"stderr: {(result.stderr or '')[-500:]}"
                 )
 
-            patch = _repair_patch(_clean_patch(_capture_patch(repo_dir)))
+            patch = _repair_patch(_clean_patch(_capture_patch(
+                repo_dir, inst.get("coverage_language") == "cpp"
+            )))
             logger.info(
                 f"[{instance_id}] codex exit={result.returncode}, "
                 f"patch_len={len(patch)}, log={stderr_path}"

@@ -23,6 +23,9 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_COVERAGE_SETUP_COMMAND = "python -m pip install -e . pytest"
 DEFAULT_COVERAGE_TEST_COMMAND = "python -m pytest"
+DEFAULT_CPP_COVERAGE_IMAGE = (
+    "localhost/swebench-coverage-cpp:gcc12.5-cmake3.25-gcovr8.6"
+)
 
 STANDALONE_COVERAGE_REPO_PROFILES = {
     "biopython/biopython": {
@@ -81,6 +84,42 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
         ],
         # mutmut 2.5/parso cannot parse this module's current syntax.
         "mutation_excluded_targets": ["astropy/utils/data.py"],
+    },
+    "openmm/openmm": {
+        "coverage_language": "cpp",
+        "coverage_source_roots": [
+            "openmmapi/src", "platforms/cpu/src", "platforms/reference/src",
+            "serialization/src", "plugins",
+        ],
+        "coverage_setup_command": (
+            "cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug "
+            "-DBUILD_TESTING=ON -DOPENMM_BUILD_CPU_LIB=ON "
+            "-DOPENMM_BUILD_CPU_TESTS=ON -DOPENMM_BUILD_REFERENCE_TESTS=ON "
+            "-DOPENMM_BUILD_SERIALIZATION_TESTS=ON "
+            "-DOPENMM_BUILD_CUDA_LIB=OFF -DOPENMM_BUILD_HIP_LIB=OFF "
+            "-DOPENMM_BUILD_OPENCL_LIB=OFF -DOPENMM_BUILD_PYTHON_WRAPPERS=OFF "
+            "-DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF "
+            "-DOPENMM_BUILD_EXAMPLES=OFF "
+            "-DCMAKE_C_FLAGS=--coverage -DCMAKE_CXX_FLAGS=--coverage "
+            "-DCMAKE_SHARED_LINKER_FLAGS=--coverage "
+            "-DCMAKE_EXE_LINKER_FLAGS=--coverage && cmake --build build"
+        ),
+        "coverage_test_command": (
+            "(cd build && python3 ../devtools/run-ctest.py --attempts 2 "
+            "--parallel 2 --job-duration 60)"
+        ),
+        "coverage_reset_command": "find build -name '*.gcda' -delete",
+        "coverage_command": (
+            "(cd build && python3 ../devtools/run-ctest.py --attempts 2 "
+            "--parallel 2 --job-duration 60)"
+        ),
+        "coverage_results_command": (
+            "gcovr --root . --filter openmmapi/src --filter platforms/cpu/src "
+            "--filter platforms/reference/src --filter serialization/src "
+            "--filter plugins --exclude '.*[/\\\\](tests?|serialization/tests)"
+            "[/\\\\].*' --exclude 'build/.*' --json-summary {output}"
+        ),
+        "coverage_phase_timeout": 7200,
     },
 }
 
@@ -315,6 +354,23 @@ def parse_args():
         "--coverage_target", action="append", default=None,
         help="Optional repo-relative mutation target. Repeat for multiple modules. "
              "Without it, the agent chooses modules from whole-repository coverage.",
+    )
+    p.add_argument(
+        "--coverage_language",
+        choices=["auto", "python", "cpp"],
+        default="auto",
+        help="Coverage adapter. Auto-detection rejects ambiguous mixed repositories.",
+    )
+    p.add_argument(
+        "--coverage_container_image",
+        default=DEFAULT_CPP_COVERAGE_IMAGE,
+        help="Prebuilt offline Linux evaluator image used for C++ coverage.",
+    )
+    p.add_argument(
+        "--coverage_source_root",
+        action="append",
+        default=None,
+        help="Repository-relative production source root; repeat as needed.",
     )
     p.add_argument(
         "--traditional_test_generator", choices=["pynguin"], default=None,
@@ -723,6 +779,20 @@ def _standalone_coverage_instance(args) -> dict:
         targets.append(path)
     if any(".." in Path(path).parts for path in targets):
         raise SystemExit("--coverage_target values must be repository-relative paths")
+    source_roots = []
+    for raw_root in args.coverage_source_root or []:
+        source_root = raw_root.strip().replace("\\", "/")
+        while source_root.startswith("./"):
+            source_root = source_root[2:]
+        if (
+            not source_root
+            or source_root.startswith("/")
+            or ".." in Path(source_root).parts
+        ):
+            raise SystemExit(
+                "--coverage_source_root values must be repository-relative paths"
+            )
+        source_roots.append(source_root.rstrip("/"))
     if args.mutation_command and not targets and "{targets}" not in args.mutation_command:
         raise SystemExit(
             "repository-wide --mutation_command must contain {targets}; otherwise "
@@ -734,9 +804,28 @@ def _standalone_coverage_instance(args) -> dict:
     if repo_path.endswith(".git"):
         repo_path = repo_path[:-4]
     profile = STANDALONE_COVERAGE_REPO_PROFILES.get(repo_path.lower(), {})
+    language = (
+        profile.get("coverage_language")
+        if args.coverage_language == "auto" and profile.get("coverage_language")
+        else args.coverage_language
+    )
+    if profile.get("coverage_language") and language != profile["coverage_language"]:
+        profile = {}
+    if language == "cpp":
+        pynguin_overrides = (
+            args.traditional_test_generator == "pynguin"
+            or args.pynguin_module
+            or args.comparison_protocol != "independent"
+        )
+        if pynguin_overrides:
+            raise SystemExit(
+                "Pynguin and shared Pynguin comparison options are unsupported "
+                "with --coverage_language cpp"
+            )
     setup_command = args.coverage_setup_command
     test_command = args.coverage_test_command
     coverage_command = args.coverage_command
+    coverage_results_command = args.coverage_results_command
     mutation_results_command = args.mutation_results_command
     if profile:
         if setup_command == DEFAULT_COVERAGE_SETUP_COMMAND:
@@ -745,7 +834,12 @@ def _standalone_coverage_instance(args) -> dict:
             test_command = profile["coverage_test_command"]
         if coverage_command is None:
             coverage_command = profile["coverage_command"]
-        if mutation_results_command == "mutmut results":
+        if coverage_results_command is None:
+            coverage_results_command = profile.get("coverage_results_command")
+        if (
+            mutation_results_command == "mutmut results"
+            and profile.get("coverage_language") != "cpp"
+        ):
             # mutmut 2.5's results renderer crashes through Pony ORM on the
             # Python 3.13 environment; its run progress already has the counts.
             mutation_results_command = "true"
@@ -761,6 +855,20 @@ def _standalone_coverage_instance(args) -> dict:
         "base_commit": args.base_commit,
         "problem_statement": "",
         "coverage_targets": sorted(set(targets)),
+        "coverage_language": language,
+        "coverage_tool": (
+            "gcovr" if language == "cpp"
+            else "coverage.py" if language == "python"
+            else ""
+        ),
+        "coverage_container_image": (
+            args.coverage_container_image if language in {"auto", "cpp"} else ""
+        ),
+        "coverage_source_roots": (
+            sorted(set(source_roots))
+            if args.coverage_source_root is not None
+            else profile.get("coverage_source_roots", [])
+        ),
         "coverage_python_executable": (
             args.coverage_python_executable
             or profile.get("coverage_python_executable")
@@ -770,11 +878,19 @@ def _standalone_coverage_instance(args) -> dict:
             "coverage_environment_preflight_command"
         ),
         "coverage_test_command": test_command,
+        "coverage_reset_command": profile.get("coverage_reset_command"),
         "coverage_command": coverage_command,
         "coverage_pytest_command": profile.get("coverage_pytest_command"),
-        "coverage_results_command": args.coverage_results_command,
+        "coverage_results_command": coverage_results_command,
         "mutation_command": args.mutation_command,
         "mutation_results_command": mutation_results_command,
+        "mutation_supported": (
+            language != "cpp"
+            or bool(
+                args.mutation_command
+                and args.mutation_results_command != "mutmut results"
+            )
+        ),
         "mutation_test_style": profile.get("mutation_test_style"),
         "mutation_tests_dir": profile.get("mutation_tests_dir"),
         "mutation_excluded_targets": profile.get("mutation_excluded_targets", []),
@@ -792,6 +908,63 @@ def _standalone_coverage_instance(args) -> dict:
 def _reuse_cached_pynguin_prediction(args) -> bool:
     """Return whether the matching control cache may be reused."""
     return args.skip_pynguin or not (args.force_inference or args.force_pynguin)
+
+
+def _resolve_standalone_coverage_language(
+    instance: dict, github_token: str | None, work_root: Path
+) -> None:
+    """Resolve auto language and generic commands against a clean checkout."""
+    from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
+    from swebench.eval_pipeline.coverage_adapters import (
+        default_commands,
+        detect_coverage_language,
+        discover_cpp_sources,
+    )
+
+    language = instance.get("coverage_language", "auto")
+    repo_dir = None
+    try:
+        if language == "auto":
+            repo_dir = _clone_repo_at_commit(
+                instance.get("repo_url") or instance["repo"],
+                instance["base_commit"],
+                github_token,
+                tmp_root=work_root,
+            )
+            language = detect_coverage_language(repo_dir)
+            instance["coverage_language"] = language
+        commands = default_commands(language, instance.get("coverage_source_roots"))
+        if language == "cpp":
+            if instance.get("coverage_setup_command") == DEFAULT_COVERAGE_SETUP_COMMAND:
+                instance["coverage_setup_command"] = commands.setup
+            if instance.get("coverage_test_command") == DEFAULT_COVERAGE_TEST_COMMAND:
+                instance["coverage_test_command"] = commands.test
+            instance["coverage_reset_command"] = (
+                instance.get("coverage_reset_command") or commands.reset
+            )
+            instance["coverage_command"] = (
+                instance.get("coverage_command") or commands.run
+            )
+            instance["coverage_results_command"] = (
+                instance.get("coverage_results_command") or commands.report
+            )
+            if repo_dir:
+                instance["coverage_targets_discovered"] = discover_cpp_sources(
+                    repo_dir, instance.get("coverage_source_roots")
+                )
+        instance["coverage_tool"] = "gcovr" if language == "cpp" else "coverage.py"
+        if language == "python":
+            instance["coverage_container_image"] = ""
+        instance["mutation_supported"] = (
+            language != "cpp"
+            or bool(
+                instance.get("mutation_command")
+                and instance.get("mutation_results_command") != "mutmut results"
+            )
+        )
+    finally:
+        if repo_dir:
+            shutil.rmtree(repo_dir, ignore_errors=True)
 
 
 def _retain_cached_pynguin_prediction(cached: dict | None, generated: dict) -> dict:
@@ -875,6 +1048,12 @@ def _setup_profile_fingerprint(instance: dict) -> str:
             "coverage_tool_install_command",
             "coverage_test_command",
             "coverage_command",
+            "coverage_results_command",
+            "coverage_language",
+            "coverage_source_roots",
+            "coverage_container_image",
+            "coverage_container_digest",
+            "toolchain",
             "pynguin_warning_filters",
             "pynguin_ignore_noncallable_signatures",
         )
@@ -909,6 +1088,21 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     instance = _standalone_coverage_instance(args)
+    if not (args.skip_inference and args.skip_eval):
+        _resolve_standalone_coverage_language(
+            instance, github_token, output_dir / ".coverage-language-checkouts"
+        )
+    if (
+        instance["coverage_language"] == "cpp"
+        and (
+            args.traditional_test_generator == "pynguin"
+            or args.pynguin_module
+            or args.comparison_protocol != "independent"
+        )
+    ):
+        raise SystemExit(
+            "Pynguin and shared Pynguin comparison options are unsupported for C++"
+        )
     eval_run_id = f"{args.run_id}_coveragegen"
     if not args.skip_inference or not args.skip_eval:
         evaluation_failure = _docker_unavailable_reason()

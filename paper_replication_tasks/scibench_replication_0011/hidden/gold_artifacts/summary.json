@@ -1,0 +1,17 @@
+{
+  "GLS": {
+    "analytical_uncertainty": 0.012748513493637141,
+    "population_mean": 0.9998281421847128,
+    "population_standard_deviation": 0.012746957182929048
+  },
+  "OLS": {
+    "analytical_uncertainty": 0.0029074762655684062,
+    "population_mean": 1.0009561318955558,
+    "population_standard_deviation": 0.0773376770499975
+  },
+  "WLS": {
+    "analytical_uncertainty": 0.0035024592260452015,
+    "population_mean": 1.000184638516278,
+    "population_standard_deviation": 0.029426300252612784
+  }
+}

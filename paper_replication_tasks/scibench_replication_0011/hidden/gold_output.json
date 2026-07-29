@@ -1,0 +1,74 @@
+{
+  "artifact_index": {
+    "covariance": {
+      "reference_path": "gold_artifacts/covariance.npy",
+      "sha256": "84d03a9f9b93023b9c37695626a19bed889b461a49a9243c371c6542ba8af6a9",
+      "shape": [
+        127,
+        127
+      ]
+    },
+    "diffusion_estimates": {
+      "reference_path": "gold_artifacts/diffusion_estimates.npy",
+      "sha256": "81b5893705ca9074e79346272c0db98c08ebb09fda9937690f43c6779e40c1f1",
+      "shape": [
+        3,
+        4096
+      ]
+    },
+    "msd": {
+      "reference_path": "gold_artifacts/msd.npy",
+      "sha256": "54add4326a34a58dfc814e5e2fa75e5efc0452d4ef70b76eadd564ae49c46817",
+      "shape": [
+        4096,
+        127
+      ]
+    },
+    "summary": {
+      "reference_path": "gold_artifacts/summary.json",
+      "sha256": "656c4cf4ab3d371e0c79b724b6ddeee8da650291311421b14eba4efc9c217fb5"
+    }
+  },
+  "experiment": {
+    "diffusion_coefficient": 1.0,
+    "dimensions": 3,
+    "jump_size": 2.4494897428,
+    "particles": 128,
+    "seed_sequence": [
+      0,
+      4095
+    ],
+    "seeds": 4096,
+    "steps": 128
+  },
+  "method_order": [
+    "OLS",
+    "WLS",
+    "GLS"
+  ],
+  "required_artifact_ids": [
+    "msd",
+    "covariance",
+    "diffusion_estimates",
+    "summary"
+  ],
+  "required_artifacts": {
+    "covariance": "application/x-npy",
+    "diffusion_estimates": "application/x-npy",
+    "msd": "application/x-npy",
+    "summary": "application/json"
+  },
+  "schema_version": 3,
+  "scoring": {
+    "artifacts": 0.1,
+    "scientific": 0.9
+  },
+  "task_id": "scibench_replication_0011",
+  "tolerances": {
+    "covariance_max_abs": 1e-10,
+    "diffusion_estimates_max_abs": 1e-11,
+    "msd_max_abs": 3.410605131648481e-12,
+    "psd_eigenvalue_floor": -1e-10,
+    "summary_absolute": 1e-11
+  }
+}

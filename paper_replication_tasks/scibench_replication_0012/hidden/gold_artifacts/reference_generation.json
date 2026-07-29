@@ -1,0 +1,156 @@
+{
+  "artifacts": {
+    "figure2_field.npy": {
+      "bytes": 1286528,
+      "dtype": "float64",
+      "sha256": "11f3fa72d2cd7ff12d98dbe9be54221a972e641b79efe9ee3ac7ec48bea1e35a",
+      "shape": [
+        4,
+        200,
+        201
+      ]
+    },
+    "figure2_hamiltonian.npy": {
+      "bytes": 1286528,
+      "dtype": "float64",
+      "sha256": "0d17d95f4340c7b526b9449b45382270131d584d80036a448f25451e95f6b86f",
+      "shape": [
+        4,
+        200,
+        201
+      ]
+    },
+    "figure3_field.npy": {
+      "bytes": 1286528,
+      "dtype": "float64",
+      "sha256": "50f0172176d2e218550b86700deff82b6a54cc7328bd2e9d2f6afab699057459",
+      "shape": [
+        4,
+        200,
+        201
+      ]
+    },
+    "figure3_hamiltonian.npy": {
+      "bytes": 1286528,
+      "dtype": "float64",
+      "sha256": "c64d9f1ca5a7f594fe7796d63b556ce42dccded1fd0c9bfd6248a157523973ea",
+      "shape": [
+        4,
+        200,
+        201
+      ]
+    },
+    "orientation.npy": {
+      "bytes": 1736,
+      "dtype": "float64",
+      "sha256": "ac32a4bb72eb8c8171d787a4eacdb193ca451fa7836ac32887292bee1dcc8dc9",
+      "shape": [
+        201
+      ]
+    },
+    "temperature.npy": {
+      "bytes": 1728,
+      "dtype": "float64",
+      "sha256": "00ab44a2eeaf277686636d81c90d4b6b0891d0e182a5ae15af68612a3cf9282e",
+      "shape": [
+        200
+      ]
+    }
+  },
+  "command": "python paper_replication_tasks/generate_reference_0012.py",
+  "curve_order": {
+    "figure2_anisotropy_ratio": -2.0,
+    "figure2_spins": [
+      0.5,
+      1.0,
+      1.5,
+      2.0
+    ],
+    "figure3_anisotropy_ratios": [
+      10.0,
+      0.0,
+      -1.0,
+      -10.0
+    ],
+    "figure3_spin": 1.0
+  },
+  "environment": {
+    "numpy": "1.23.5",
+    "platform": "macOS-26.4.1-arm64-arm-64bit",
+    "python": "3.10.12",
+    "scipy": "1.9.3"
+  },
+  "experiment": "deterministic_effective_hamiltonian_core_method",
+  "generator_sha256": "14c40408e45adf24385b45bb6d0ffe72c7650b671d29a7e19cf3fab1c4899d11",
+  "grids": {
+    "orientation": "numpy.linspace(-0.98,0.98,201), dimensionless u_z",
+    "temperature": "numpy.linspace(0.02,10.0,200), kelvin"
+  },
+  "implementation_cross_check": {
+    "figure2_field": {
+      "max_absolute": 2.0374812947920873e-12,
+      "rmse": 4.3384501982897317e-14
+    },
+    "figure2_hamiltonian": {
+      "max_absolute": 3.419486915845482e-14,
+      "rmse": 1.652043889593392e-15
+    },
+    "figure3_field": {
+      "max_absolute": 1.3526957332032907e-12,
+      "rmse": 4.1378588294163264e-14
+    },
+    "figure3_hamiltonian": {
+      "max_absolute": 1.9095836023552692e-14,
+      "rmse": 1.1433762798715992e-15
+    },
+    "orientation": {
+      "max_absolute": 0.0,
+      "rmse": 0.0
+    },
+    "temperature": {
+      "max_absolute": 0.0,
+      "rmse": 0.0
+    }
+  },
+  "output_conventions": {
+    "field": "B_eff_z/H_z = -(1/s) d[(H_eff-H_eff(1))/A1]/du_z",
+    "hamiltonian": "(H_eff(u_z)-H_eff(1))/A1"
+  },
+  "paper_equations": [
+    "partitionAlmostOk",
+    "exactHam",
+    "B_eff"
+  ],
+  "paper_source": "arXiv:2404.19539v2/main1.tex",
+  "parameters": {
+    "a1_over_kb_kelvin": 1.3449855400346522,
+    "field_tesla": 1.0,
+    "g_factor": 2.00231930436256,
+    "k_b_joule_per_kelvin": 1.380649e-23,
+    "mu_b_joule_per_tesla": 9.2740100783e-24,
+    "stress": 0.0
+  },
+  "routes": {
+    "independent": "coherent-basis diagonal matrix element and analytic derivative",
+    "official": "pinned repository L-polynomial in stereographic radius"
+  },
+  "schema_version": 1,
+  "scope": "core_method_not_full_stochastic_asd_replication",
+  "source_commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+  "source_hashes": {
+    "arxiv_v2_source": "efc4c6b34f724876478272dea9e7a93ef7a2acbacae4cd976654936be01e45f6",
+    "commit_archive": "c4ad694bb05862fb5537977c3128667d8c5c49cd8829e047ad1197acbf18ff41",
+    "main1.tex": "a95e00bcabc25f3f9fb2220c783d8194079d2a78fc0cdf2c67277f9263e11b2d",
+    "zenodo_v1.0.8": "4e159d40c40df7fb4186378ab45118ec1b2b30a6fbebd74e654e3b647fd7509e"
+  },
+  "source_release": "v1.0.8",
+  "tolerance_policy": "ten times the largest cross-route discrepancy or the documented floating-point floor, whichever is larger",
+  "tolerances": {
+    "field_max_abs": 1e-10,
+    "field_rmse": 1e-11,
+    "grid_max_abs": 1e-14,
+    "hamiltonian_max_abs": 1e-11,
+    "hamiltonian_rmse": 1e-12,
+    "identity_abs": 1e-09
+  }
+}

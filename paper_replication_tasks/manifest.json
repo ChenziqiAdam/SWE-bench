@@ -1,0 +1,55 @@
+{
+  "schema_version": 3,
+  "tasks": [
+    {
+      "gold_output_sha256": "66ebc50e3f2497d7c5f23aaeab17307d5ee4be40e8f71b0bad2f651b61565dde",
+      "public_files": {
+        "input.json": "375fe5d19bb91ce0f9ac6afcf367e1ef6a8b17ea36781031efa35919bafb04cc",
+        "masked_paper.pdf": "774a52202fec9473789fcc2f8071416189168d7e0082948e8dd19699b0aa4b47",
+        "submission_schema.json": "17cde64aa5411590e55e2dfbe05c3d112ec4531081d8c5a2ae0e1dab476853df",
+        "task.md": "fdfe2c2b330f221106815239551609c30d829fc6bc0b2373c127b784928eb54d"
+      },
+      "task_id": "scibench_replication_0007"
+    },
+    {
+      "gold_output_sha256": "cdf3c06fc4f6ca76235002d4db3e9a974ca4a59ca4bf2c4fe9b1dc67d907cfe0",
+      "public_files": {
+        "input.json": "baaa1015231978ae6ce99ee761580744507da97b0d51f8511cb1464b8cf9ca7d",
+        "masked_paper.pdf": "cad0c101cea545fb031c4e30d2cc9c669bdb4a030966a681619ebb6d673e4c7e",
+        "submission_schema.json": "8fd96beff3118b207cb9a50ad55c49fc973ad1a31c45378e0bc8261509760d07",
+        "task.md": "a3aaf4d2f23d9472c3938641f86931098c1afbfe2331efc3390a4c8706909c9d"
+      },
+      "task_id": "scibench_replication_0008"
+    },
+    {
+      "gold_output_sha256": "b88b99b58ad08e14a6b151e53e501f6767e300f509df2ceecc380854a8dd6058",
+      "public_files": {
+        "input.json": "a3c6d82478957dd866c9b628357d076cfb82339517933740393288c5b33d80a0",
+        "masked_paper.pdf": "0cdd92bb8d330dc0e4deb6949c485cf7da57b5925ed21a4be2e73294fa4d3e6a",
+        "submission_schema.json": "5ba32dd7e29f57b4e0e1ff7c212c05fa77b9dc7e11363088b5ceb094bdd04166",
+        "task.md": "fc1d4a2813f26f12feef3bf90f466797cd69c01afed9bec10390b06e2c757e70"
+      },
+      "task_id": "scibench_replication_0009"
+    },
+    {
+      "gold_output_sha256": "b35068e42d0760ff20f6705ec56769c020cea57fd129f7452918893e1c3fcbce",
+      "public_files": {
+        "input.json": "f3431c40b395446ec21e581eaa34496b51c9eb0f74a16381e6b0c0d46542c9cc",
+        "masked_paper.pdf": "ad9b8b26ec95a73643d329eeb6100880ec0bf94da8276f2047c947680ef77882",
+        "submission_schema.json": "7a396a4d5bdff29a975fcedfe58b12a13d01fe3d84fe9a69004950c24f3a1573",
+        "task.md": "f6e3b0c03c2101bf5f86a53449e3c431d17b086e818137e063d7421b56da6b02"
+      },
+      "task_id": "scibench_replication_0011"
+    },
+    {
+      "gold_output_sha256": "ace23b36e4b44917ff5e593cea4b3f152ba47e74adad12e365d643dfef433bc4",
+      "public_files": {
+        "input.json": "7dbb979c00172efbb6c9183b450190aff740ba3fe8db9bffdae8c7c4a2b3b4c3",
+        "masked_paper.pdf": "23ba8b7c0c38cabbf64c0ac006a2158d3c6215bc0d880f4fc2f582073e6e02c0",
+        "submission_schema.json": "e818b478f1a1b9f9ae204cf3e27f7ca213732a5ab53e3a1569b756a404e35e5f",
+        "task.md": "1765cd7bdbd1aed2c929bb4738b83def673770c73005d24bba7884b9b383aab4"
+      },
+      "task_id": "scibench_replication_0012"
+    }
+  ]
+}

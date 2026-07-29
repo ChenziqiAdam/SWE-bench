@@ -1,0 +1,54 @@
+SCIBENCH ANONYMIZED REPLICATION DOSSIER
+This is a manually rewritten scientific specification, not the original paper text.
+Identity metadata, bibliographic fingerprints, and benchmark answers are intentionally withheld.
+
+# Anonymous replication dossier: transformed regression
+
+## Scientific objective
+
+Quantify the bias introduced when noisy exponential-decay observations are
+log-transformed before regression. Compare fitting in the original observation
+space with ordinary and weighted least squares in transformed space.
+
+## Model and estimators
+
+Use the first-order decay model
+
+[EQUATION]
+
+    y(t) = y_0 exp(-k t).
+
+The transformed relation is
+
+[EQUATION]
+
+    log(y(t)) = -k t + log(y_0).
+
+For every simulated data set, estimate k in two ways:
+
+1. Fit y(t) directly to the exponential model by nonlinear least squares.
+2. Fit log(y(t)) against t by linear least squares and negate the fitted slope.
+
+The unweighted comparison assumes constant additive uncertainty in the original
+observation space. For the weighted comparison, propagate a common observation
+standard deviation through the logarithm. The transformed uncertainty for an
+observation y_i is sigma_log,i = sigma_y / y_i, so the corresponding WLS weight
+used by the reference experiment is proportional to 1 / sigma_log,i. This is
+the historical weighting convention evaluated by this replication task. Use
+the same generated observations for the paired nonlinear and transformed fits.
+
+## Monte Carlo protocol
+
+Set k = 0.15 s^-1 and y_0 = 7.5 mol m^-3. Generate 2^15 independent noisy data
+sets at t={2,4,6,8,10,12,14,16,18,20} seconds. Use additive Gaussian
+measurement noise with standard deviation
+0.3 mol m^-3 for the uncertainty-aware comparison. Reject or otherwise handle
+non-positive noisy concentrations consistently before taking a logarithm; do
+not silently replace the requested number of successful replicates.
+
+For each estimator, collect the fitted k values. Compute the requested means and
+the 2.5th and 97.5th percentiles of the empirical distribution. The
+six scalar artifacts correspond to the transformed and direct-fit summaries for
+the OLS and WLS comparisons. Write each requested scalar artifact separately.
+
+[MASKED: all reference estimates and interval endpoints are withheld.]

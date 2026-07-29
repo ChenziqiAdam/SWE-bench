@@ -1,0 +1,8 @@
+{
+  "commit": "eb4dd97c3b4d04f43d8e5c9a402aa63a9e532406",
+  "official_entrypoint": "python src/scripts/ols.py; python src/scripts/wls.py; python src/scripts/distributions.py",
+  "paper": "Is There Still a Place for Linearization in the Chemistry Curriculum?",
+  "repository": "https://github.com/arm61/linearization-issues",
+  "schema_version": 1,
+  "task_id": "scibench_replication_0007"
+}

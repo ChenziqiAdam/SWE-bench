@@ -150,6 +150,7 @@ def _bubblewrap_command(
     relay_dir: Path,
     port: int | None,
     command: list[str],
+    hidden_paths: list[str] | None = None,
 ) -> list[str]:
     """Construct the namespace wrapper; the relay directory is the only host IPC."""
     inner = [
@@ -198,10 +199,28 @@ def _bubblewrap_command(
         "SSH_AUTH_SOCK",
     ):
         wrapped += ["--unsetenv", name]
+    for raw in hidden_paths or []:
+        path = Path(raw)
+        if not path.is_absolute():
+            raise GuardConfigurationError("hidden paths must be absolute")
+        try:
+            resolved = path.resolve(strict=True)
+        except OSError as exc:
+            raise GuardConfigurationError(f"hidden path does not exist: {path}") from exc
+        if resolved.is_dir():
+            wrapped += ["--tmpfs", str(resolved)]
+        elif resolved.is_file():
+            wrapped += ["--ro-bind", "/dev/null", str(resolved)]
+        else:
+            raise GuardConfigurationError(
+                f"hidden path must be a regular file or directory: {resolved}"
+            )
     return [*wrapped, *inner]
 
 
-def _run_guard(endpoint: str | None, command: list[str]) -> int:
+def _run_guard(
+    endpoint: str | None, command: list[str], hidden_paths: list[str] | None = None
+) -> int:
     if sys.platform != "linux":
         raise GuardConfigurationError("the Bubblewrap guard is Linux-only")
     bwrap = _find_bubblewrap()
@@ -232,6 +251,7 @@ def _run_guard(endpoint: str | None, command: list[str]) -> int:
             relay_root,
             target[1] if target else None,
             command,
+            hidden_paths,
         )
         return subprocess.run(wrapped).returncode
     finally:
@@ -258,9 +278,12 @@ def _verify_inside(port: int) -> int:
     return 4
 
 
-def _parse_outer(argv: list[str]) -> tuple[str | None, bool, list[str]]:
+def _parse_outer_with_hidden(
+    argv: list[str],
+) -> tuple[str | None, bool, list[str], list[str]]:
     parser = argparse.ArgumentParser()
     parser.add_argument("--allow-endpoint")
+    parser.add_argument("--hide-path", action="append", default=[])
     parser.add_argument("--verify", action="store_true")
     args, command = parser.parse_known_args(argv)
     if command and command[0] == "--":
@@ -269,7 +292,13 @@ def _parse_outer(argv: list[str]) -> tuple[str | None, bool, list[str]]:
         parser.error("a command is required after --")
     if args.verify and not args.allow_endpoint:
         parser.error("--verify requires --allow-endpoint")
-    return args.allow_endpoint, args.verify, command
+    return args.allow_endpoint, args.verify, command, args.hide_path
+
+
+def _parse_outer(argv: list[str]) -> tuple[str | None, bool, list[str]]:
+    """Backward-compatible parser for the public network-guard contract."""
+    endpoint, verify, command, _ = _parse_outer_with_hidden(argv)
+    return endpoint, verify, command
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -285,7 +314,7 @@ def main(argv: list[str] | None = None) -> int:
     if raw[:1] == ["--_verify-inside"]:
         return _verify_inside(int(raw[1]))
 
-    endpoint, verify, command = _parse_outer(raw)
+    endpoint, verify, command, hidden_paths = _parse_outer_with_hidden(raw)
     if verify:
         _, port = _loopback_target(endpoint or "")
         command = [
@@ -296,7 +325,7 @@ def main(argv: list[str] | None = None) -> int:
             str(port),
         ]
     try:
-        return _run_guard(endpoint, command)
+        return _run_guard(endpoint, command, hidden_paths)
     except GuardConfigurationError as exc:
         print(f"Linux model-only guard unavailable: {exc}", file=sys.stderr)
         return 2

@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "artifacts": {
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "metric_lin_mean_ols"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "metric_non_mean_ols"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "metric_lin_ci_ols"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "metric_non_ci_ols"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "metric_lin_mean_wls"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "metric_non_mean_wls"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        }
+      ],
+      "items": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "metric_lin_mean_ols"
+              },
+              "media_type": {
+                "const": "text/plain"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "metric_non_mean_ols"
+              },
+              "media_type": {
+                "const": "text/plain"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "metric_lin_ci_ols"
+              },
+              "media_type": {
+                "const": "text/plain"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "metric_non_ci_ols"
+              },
+              "media_type": {
+                "const": "text/plain"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "metric_lin_mean_wls"
+              },
+              "media_type": {
+                "const": "text/plain"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "metric_non_mean_wls"
+              },
+              "media_type": {
+                "const": "text/plain"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "maxItems": 6,
+      "minItems": 6,
+      "type": "array"
+    },
+    "checkpoints": {
+      "type": "object"
+    },
+    "entrypoint": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "protocol": {
+      "type": "object"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "task_id": {
+      "const": "scibench_replication_0007"
+    }
+  },
+  "required": [
+    "schema_version",
+    "task_id",
+    "entrypoint",
+    "protocol",
+    "checkpoints",
+    "artifacts"
+  ],
+  "title": "SciBench submission for scibench_replication_0007",
+  "type": "object"
+}

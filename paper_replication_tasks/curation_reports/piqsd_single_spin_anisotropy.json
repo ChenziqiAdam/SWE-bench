@@ -1,0 +1,113 @@
+{
+  "candidate": "stonerlab/PIQSD-SingleSpinAnisotropy",
+  "commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+  "decision": "validated_core_method_redesign",
+  "paper": {
+    "source": "arXiv:2404.19539v2",
+    "source_file": "main1.tex",
+    "source_file_sha256": "a95e00bcabc25f3f9fb2220c783d8194079d2a78fc0cdf2c67277f9263e11b2d",
+    "source_package_sha256": "efc4c6b34f724876478272dea9e7a93ef7a2acbacae4cd976654936be01e45f6"
+  },
+  "repository": {
+    "commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+    "commit_archive_sha256": "c4ad694bb05862fb5537977c3128667d8c5c49cd8829e047ad1197acbf18ff41",
+    "environment": {
+      "python": "3.10.12",
+      "matplotlib": "3.6.2",
+      "numba": "0.59.0",
+      "numpy": "1.23.5",
+      "scipy": "1.9.3",
+      "sympy": "1.11.1"
+    },
+    "figure2": {
+      "scripts": [
+        "python/figure2_a.py",
+        "python/figure2_b.py",
+        "python/figure2_c.py",
+        "python/figure2_d.py"
+      ],
+      "spin_order": [0.5, 1.0, 1.5, 2.0],
+      "anisotropy_ratio": -2.0
+    },
+    "figure3": {
+      "scripts": [
+        "python/figure3_a.py",
+        "python/figure3_b.py",
+        "python/figure3_c.py",
+        "python/figure3_d.py"
+      ],
+      "spin": 1.0,
+      "anisotropy_ratio_order": [10.0, 0.0, -1.0, -10.0]
+    },
+    "temperature_grid": "numpy.linspace(0.02, 10, 200)"
+  },
+  "zenodo": {
+    "concept_record": 11072984,
+    "record": 12638435,
+    "release": "v1.0.8",
+    "archive_md5": "12bfd561ff94ba95aad0222e51626598",
+    "archive_sha256": "4e159d40c40df7fb4186378ab45118ec1b2b30a6fbebd74e654e3b647fd7509e",
+    "content_matches_commit_archive": true
+  },
+  "reproduction": {
+    "routes": [
+      "stable finite-state thermal sum plus the repository L-polynomial with 128-node Gauss-Legendre quadrature",
+      "finite-dimensional Hamiltonian diagonalization plus adaptive coherent-state quadrature from basis amplitudes"
+    ],
+    "maximum_cross_route_absolute_errors": {
+      "figure2_partition": 1.1102230246251565e-16,
+      "figure2_effective": 4.107825191113079e-15,
+      "figure3_partition": 2.220446049250313e-16,
+      "figure3_effective": 7.105427357601002e-15
+    },
+    "maximum_partition_vs_effective_absolute_errors": {
+      "figure2": 4.107825191113079e-15,
+      "figure3": 7.105427357601002e-15
+    },
+    "raw_repository_nonfinite": {
+      "location": "Figure 3, K/A1=10, T=0.02 K",
+      "cause": "unshifted exponential overflow in analytic.quantum_state_sz",
+      "used_as_gold": false,
+      "stable_equivalent_is_finite": true
+    }
+  },
+  "blocking_reason": {
+    "identity": "For every Hamiltonian diagonal in S_z, coherent-state resolution of unity gives integral dmu(z) u_z <z|exp(-beta H)|z> = Tr[S_z exp(-beta H)]/(s+1).",
+    "consequence": "The paper's Figure 2/3 normalization M_effective=(s+1)<u_z> makes the deterministic exact-log-Hamiltonian magnetization identically equal to the exact partition magnetization.",
+    "failed_gate": "A submission that swaps or duplicates partition and effective curves cannot be rejected.",
+    "benchmark_impact": "The proposed deterministic task cannot enforce the effective-Hamiltonian implementation and collapses to a partition-function exercise. Retaining stochastic ASD would violate the requested deterministic CPU-only scope."
+  },
+  "redesign": {
+    "scope": "deterministic paper core method, not full stochastic ASD replication",
+    "outputs": [
+      "gauge-fixed exact logarithmic effective Hamiltonian as a function of temperature and orientation",
+      "dimensionless longitudinal effective field as its orientation derivative"
+    ],
+    "why_enforceable": "These orientation-dependent arrays cannot be obtained by copying the scalar partition magnetization.",
+    "reference_submission_score": 1.0,
+    "reference_submission_full_success": true,
+    "reference_wall_seconds": 0.466
+  },
+  "core_method_reference": {
+    "maximum_cross_route_absolute_errors": {
+      "figure2_hamiltonian": 3.419486915845482e-14,
+      "figure2_field": 2.0374812947920873e-12,
+      "figure3_hamiltonian": 1.9095836023552692e-14,
+      "figure3_field": 1.3526957332032907e-12
+    },
+    "fixed_tolerances": {
+      "hamiltonian_max_abs": 1e-11,
+      "hamiltonian_rmse": 1e-12,
+      "field_max_abs": 1e-10,
+      "field_rmse": 1e-11
+    }
+  },
+  "task_assignment": {
+    "proposed_id": "scibench_replication_0012",
+    "assigned": true
+  },
+  "conclusion": {
+    "status": "validated_core_method_redesign",
+    "formal_task_created": true
+  }
+}

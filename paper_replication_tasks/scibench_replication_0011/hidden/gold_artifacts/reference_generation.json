@@ -1,0 +1,72 @@
+{
+  "artifacts": {
+    "covariance.npy": {
+      "bytes": 129160,
+      "sha256": "84d03a9f9b93023b9c37695626a19bed889b461a49a9243c371c6542ba8af6a9"
+    },
+    "diffusion_estimates.npy": {
+      "bytes": 98432,
+      "sha256": "81b5893705ca9074e79346272c0db98c08ebb09fda9937690f43c6779e40c1f1"
+    },
+    "msd.npy": {
+      "bytes": 4161664,
+      "sha256": "54add4326a34a58dfc814e5e2fa75e5efc0452d4ef70b76eadd564ae49c46817"
+    },
+    "summary.json": {
+      "bytes": 509,
+      "sha256": "656c4cf4ab3d371e0c79b724b6ddeee8da650291311421b14eba4efc9c217fb5"
+    }
+  },
+  "command": "python paper_replication_tasks/generate_reference_0011.py",
+  "environment": {
+    "numpy": "1.26.4",
+    "platform": "macOS-26.4.1-arm64-arm-64bit",
+    "python": "3.12.7"
+  },
+  "experiment": "figure_1_fixed_seed_random_walk",
+  "generator_sha256": "c5d8bbf6d42791d6b79b2bdf54426c9c032818b6ad636ca1167485f1e5be071e",
+  "implementation_cross_check": {
+    "checked_seeds": 4096,
+    "maximum_msd_absolute_error": 3.410605131648481e-13,
+    "method": "batched FFT autocorrelation versus direct time-origin displacements"
+  },
+  "official_source_files": {
+    "Snakefile": "eabccb9e5279abd831664535a7b5113ddd6fe7e52012f45bc24f7dcc59d68a6a",
+    "src/code/random_walks/glswlsols.py": "6abe46289cbd1c6f741db35a3c363d7911c17ca7d70d21c5d2497543a2f05e32",
+    "src/code/random_walks/numerical_rw.py": "cb0952fb98ec7b7582db5456d8ebcb6dce70eb5d6e92069a32d3c2bdb83e609e",
+    "src/code/random_walks/random_walk.py": "d76634ffdf789479f2c72535f1c813a39d93a1e5216ff85fc1995ebf9fc3dafc",
+    "src/tex/ms.tex": "8f28c63e9cd1e32fbe938daee122baec19cc40cc34e817f49ad4bd827165735c"
+  },
+  "parameters": {
+    "diffusion_coefficient": 1.0,
+    "dimensions": 3,
+    "jump_size": 2.4494897428,
+    "particles": 128,
+    "seed_sequence": [
+      0,
+      4095
+    ],
+    "seeds": 4096,
+    "steps": 128
+  },
+  "repeat_clean_run_cross_check": {
+    "maximum_absolute_errors": {
+      "covariance": 0.0,
+      "diffusion_estimates": 0.0,
+      "msd": 0.0,
+      "summary": 0.0
+    },
+    "previous_artifacts_present": true
+  },
+  "schema_version": 1,
+  "source_commit": "9141e4edcddc386cdf10a9201d70aba1abaeb66c",
+  "source_release": "1.0.0",
+  "tolerance_policy": "maximum observed implementation discrepancy times ten, or the stated floating-point numerical floor, whichever is larger",
+  "tolerances": {
+    "covariance_max_abs": 1e-10,
+    "diffusion_estimates_max_abs": 1e-11,
+    "msd_max_abs": 3.410605131648481e-12,
+    "psd_eigenvalue_floor": -1e-10,
+    "summary_absolute": 1e-11
+  }
+}

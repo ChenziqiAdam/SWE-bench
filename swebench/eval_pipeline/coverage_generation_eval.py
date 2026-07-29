@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import shutil
 import shlex
@@ -13,6 +14,12 @@ from pathlib import Path, PurePosixPath
 
 import docker
 
+from swebench.eval_pipeline.coverage_adapters import (
+    CPP_EXTENSIONS,
+    is_cpp_test_path,
+    is_test_local_cmake,
+    parse_gcovr_json,
+)
 from swebench.eval_pipeline.host_environment import isolated_python_environment
 from swebench.eval_pipeline.prediction_utils import read_prediction_rows
 from swebench.harness.constants import MAP_REPO_VERSION_TO_SPECS
@@ -40,16 +47,21 @@ _TEST_CONFIG_NAMES = {
 
 
 def infer_coverage_targets(instance: dict) -> list[str]:
-    """Return explicit targets, or Python implementation files captured at ingest."""
+    """Return explicit targets, or implementation files captured at ingest."""
     explicit = instance.get("coverage_targets") or []
     if isinstance(explicit, str):
         explicit = [explicit]
     if explicit:
         return sorted({str(path).lstrip("./") for path in explicit if str(path).strip()})
+    extensions = (
+        CPP_EXTENSIONS
+        if instance.get("coverage_language") == "cpp"
+        else {".py"}
+    )
     return sorted(
         path.lstrip("./")
         for path in (instance.get("file_contents") or {})
-        if path.endswith(".py") and not _is_test_path(path)
+        if Path(path).suffix.lower() in extensions and not _is_test_path(path)
     )
 
 
@@ -65,7 +77,7 @@ def _is_test_path(path: str) -> bool:
     name = parts[-1].lower()
     if name in _TEST_CONFIG_NAMES:
         return False
-    return (
+    return is_cpp_test_path(path) or (
         any(part.lower() in {"test", "tests"} for part in parts[:-1])
         or name.startswith("test_")
         or name.endswith("_test.py")
@@ -78,28 +90,45 @@ def _count_assertion_evidence(patch: str) -> int:
         r"^\+(?!\+\+)\s*(?:"
         r"assert\b|"
         r"(?:with\s+)?(?:[A-Za-z_]\w*\.)*"
-        r"(?:assert(?:_[A-Za-z_]\w*|[A-Z]\w*)|raises|warns)\s*\("
+        r"(?:assert(?:_[A-Za-z_]\w*|[A-Z]\w*)|raises|warns)\s*\(|"
+        r"(?:ASSERT|EXPECT)_[A-Z0-9_]+\s*\(|"
+        r"(?:REQUIRE|CHECK)(?:_[A-Z0-9_]+)?\s*\(|"
+        r"BOOST_(?:AUTO_TEST_CASE|TEST|CHECK|REQUIRE)(?:_[A-Z0-9_]+)?\s*\(|"
+        r"ASSERT[A-Z0-9_]*\s*\("
         r")",
         re.MULTILINE,
     )
     return len(pattern.findall(patch))
 
 
-def inspect_test_patch(patch: str) -> dict:
+def inspect_test_patch(patch: str, language: str | None = None) -> dict:
     pairs = _diff_paths(patch)
     paths = sorted({path for pair in pairs for path in pair if path != "/dev/null"})
-    illegal = [path for path in paths if not _is_test_path(path)]
-    added_tests = len(re.findall(r"^\+\s*(?:async\s+)?def\s+test[_A-Za-z0-9]*\s*\(", patch, re.MULTILINE))
+    cmake_paths = [path for path in paths if Path(path).name == "CMakeLists.txt"]
+    illegal = [
+        path for path in paths
+        if not _is_test_path(path) and not is_test_local_cmake(path)
+    ]
+    added_tests = len(re.findall(
+        r"^\+\s*(?:(?:async\s+)?def\s+test[_A-Za-z0-9]*\s*\(|"
+        r"(?:TEST|TEST_F|TEST_P|TYPED_TEST|SCENARIO|TEST_CASE|"
+        r"BOOST_AUTO_TEST_CASE)\s*\()",
+        patch,
+        re.MULTILINE,
+    ))
     added_assertions = _count_assertion_evidence(patch)
     removed_test_lines = sum(
         1
         for line in patch.splitlines()
         if line.startswith("-") and not line.startswith("---")
     )
+    # A test-local CMake file may only be extended. Root and production CMake
+    # files are rejected above; deletions in any existing test file remain invalid.
+    cmake_append_only = not cmake_paths or removed_test_lines == 0
     return {
         "changed_files": paths,
         "illegal_changed_files": illegal,
-        "tests_only_patch": bool(paths) and not illegal,
+        "tests_only_patch": bool(paths) and not illegal and cmake_append_only,
         "added_test_count": added_tests,
         "added_assertion_count": added_assertions,
         "added_assertion_evidence_count": added_assertions,
@@ -108,6 +137,7 @@ def inspect_test_patch(patch: str) -> dict:
         # Compatibility alias. This is only a static deletion check, not proof
         # that fixtures, hooks, or other existing behavior are unchanged.
         "preserves_existing_test_behavior": removed_test_lines == 0,
+        "test_local_cmake_append_only": cmake_append_only,
     }
 
 
@@ -126,6 +156,8 @@ def parse_coverage_json(payload: str, targets: list[str]) -> dict | None:
             break
     if data is None:
         return None
+    if isinstance(data.get("files"), list):
+        return parse_gcovr_json(json.dumps(data), targets)
     files = data.get("files") or {}
     matched: list[tuple[str, dict]] = []
     normalized_targets = [target.replace("\\", "/").lstrip("./") for target in targets]
@@ -584,7 +616,7 @@ def _standalone_phase_script(
     else:
         lines.append("PYTEST_EXIT=$PRIMARY_TEST_EXIT")
     lines += [
-        "python -m coverage erase",
+        instance.get("coverage_reset_command") or "python -m coverage erase",
         primary_coverage_command,
         "PRIMARY_COVERAGE_EXIT=$?",
     ]
@@ -636,7 +668,9 @@ def _standalone_mutation_script(
     runner_setup: list[str] = []
     mutation_test_style = instance.get("mutation_test_style")
     if not custom_command and mutation_test_style in {"biopython", "pytest_generated"}:
-        patch_info = inspect_test_patch(patch_path.read_text())
+        patch_info = inspect_test_patch(
+            patch_path.read_text(), instance.get("coverage_language")
+        )
         test_files = sorted({
             path
             for path in patch_info.get("changed_files", [])
@@ -760,6 +794,16 @@ def _run_standalone_phase(
             github_token,
             tmp_root=out_dir / "worktrees",
         )
+        if instance.get("coverage_language") == "cpp":
+            container_patch = Path("/results") / patch_path.name
+            script_path.write_text(
+                _standalone_phase_script(
+                    instance, container_patch, apply_patch, flaky_runs
+                )
+            )
+            return _run_cpp_container(
+                instance, repo_dir, out_dir, script_path.name, name, timeout
+            )
         try:
             with isolated_python_environment(
                 out_dir / "environments",
@@ -784,6 +828,70 @@ def _run_standalone_phase(
     finally:
         if repo_dir:
             shutil.rmtree(repo_dir, ignore_errors=True)
+
+
+def _run_cpp_container(
+    instance: dict,
+    repo_dir: Path,
+    out_dir: Path,
+    script_name: str,
+    log_name: str,
+    timeout: int,
+) -> tuple[str, bool, float]:
+    """Execute a C++ phase in the offline, unprivileged evaluator container."""
+    started = time.perf_counter()
+    client = docker.from_env()
+    container = None
+    image_name = instance["coverage_container_image"]
+    try:
+        try:
+            image = client.images.get(image_name)
+        except docker.errors.ImageNotFound:
+            image = client.images.pull(image_name)
+        digests = (image.attrs or {}).get("RepoDigests") or []
+        instance["coverage_container_digest"] = digests[0] if digests else image.id
+        container = client.containers.run(
+            image_name,
+            ["sleep", "infinity"],
+            detach=True,
+            network_disabled=True,
+            user=f"{os.getuid()}:{os.getgid()}",
+            cap_drop=["ALL"],
+            security_opt=["no-new-privileges:true"],
+            working_dir="/workspace",
+            volumes={
+                str(repo_dir.resolve()): {"bind": "/workspace", "mode": "rw"},
+                str(out_dir.resolve()): {"bind": "/results", "mode": "rw"},
+            },
+        )
+        identity, identity_timeout, _ = exec_run_with_timeout(
+            container,
+            (
+                "/bin/bash -lc \"gcc --version | head -1; "
+                "cmake --version | head -1; gcovr --version | head -1\""
+            ),
+            min(timeout, 60),
+        )
+        output, timed_out, _ = exec_run_with_timeout(
+            container, f"/bin/bash /results/{shlex.quote(script_name)}", timeout
+        )
+        output = f"TOOLCHAIN_IDENTITY_START\n{identity}TOOLCHAIN_IDENTITY_END\n{output}"
+        versions = [line.strip() for line in identity.splitlines() if line.strip()]
+        instance["toolchain"] = {
+            "compiler": versions[0] if len(versions) > 0 else "",
+            "cmake": versions[1] if len(versions) > 1 else "",
+            "gcovr": versions[2] if len(versions) > 2 else "",
+        }
+        timed_out = timed_out or identity_timeout
+        (out_dir / f"{log_name}.log").write_text(output)
+        return output, timed_out, time.perf_counter() - started
+    finally:
+        if container is not None:
+            try:
+                container.remove(force=True)
+            except docker.errors.DockerException:
+                logger.warning("Could not remove C++ coverage evaluator container")
+        client.close()
 
 
 def _run_standalone_mutation_phase(
@@ -812,6 +920,20 @@ def _run_standalone_mutation_phase(
             github_token,
             tmp_root=out_dir / "worktrees",
         )
+        if instance.get("coverage_language") == "cpp":
+            container_patch = Path("/results") / patch_path.name
+            script_path.write_text(
+                _standalone_mutation_script(
+                    instance, container_patch, apply_patch, targets
+                )
+            )
+            result = _run_cpp_container(
+                instance, repo_dir, out_dir, script_path.name, name, timeout
+            )
+            details_path = repo_dir / ".mutation-details.json"
+            if details_path.is_file():
+                shutil.copy2(details_path, out_dir / f"{name}.mutants.json")
+            return result
         try:
             with isolated_python_environment(
                 out_dir / "environments",
@@ -973,7 +1095,7 @@ def _evaluate_one(instance: dict, prediction: dict | None, run_id: str, client,
     inst_logger = setup_logger(iid, out_dir / "coverage_generation.log")
     report_path = out_dir / "report.json"
     patch = (prediction or {}).get("model_patch") or ""
-    patch_info = inspect_test_patch(patch)
+    patch_info = inspect_test_patch(patch, instance.get("coverage_language"))
     targets = infer_coverage_targets(instance)
     if not patch.strip() or not targets:
         result = {
@@ -1110,7 +1232,7 @@ def run_standalone_coverage_evaluation(
     out_dir.mkdir(parents=True, exist_ok=True)
     report_path = out_dir / "report.json"
     patch = (prediction or {}).get("model_patch") or ""
-    patch_info = inspect_test_patch(patch)
+    patch_info = inspect_test_patch(patch, instance.get("coverage_language"))
     targets = infer_coverage_targets(instance)
     if not patch.strip():
         inference_error = (prediction or {}).get("error") or "empty_prediction"
@@ -1124,8 +1246,14 @@ def run_standalone_coverage_evaluation(
             "standalone": True,
             "coverage_targets": targets,
             "coverage_scope": "repository",
+            "coverage_language": instance.get("coverage_language", "python"),
+            "coverage_tool": instance.get("coverage_tool", "coverage.py"),
+            "coverage_container_image": instance.get("coverage_container_image", ""),
+            "coverage_container_digest": instance.get("coverage_container_digest", ""),
+            "toolchain": instance.get("toolchain", {}),
             "mutation_targets": [],
             "mutation_skipped_no_selected_modules": True,
+            "mutation_supported": instance.get("mutation_supported", True),
             "repo_url": instance.get("repo_url") or instance.get("repo"),
             "base_commit": instance["base_commit"],
             "setup_before_exit_code": baseline.get("setup_exit"),
@@ -1190,13 +1318,15 @@ def run_standalone_coverage_evaluation(
         generated_tests_flaky = _is_flaky(after_exit, after_repeat_exits)
         selected_mutation_targets = (
             select_mutation_targets(before_cov, after_cov, targets)
-            if run_mutation else []
+            if run_mutation and instance.get("mutation_supported", True) else []
         )
         mutation_targets, mutation_excluded_targets = exclude_mutation_targets(
             selected_mutation_targets, instance.get("mutation_excluded_targets")
         )
         before_mut = after_mut = None
-        before_mutation_exit = after_mutation_exit = 125
+        before_mutation_exit = after_mutation_exit = (
+            125 if instance.get("mutation_supported", True) else None
+        )
         mutation_before_setup_exit = mutation_after_setup_exit = None
         mutation_before_timeout = mutation_after_timeout = False
         mutation_before_runtime = mutation_after_runtime = 0.0
@@ -1268,9 +1398,15 @@ def run_standalone_coverage_evaluation(
             "base_commit": instance["base_commit"],
             "coverage_targets": targets,
             "coverage_scope": "repository",
+            "coverage_language": instance.get("coverage_language", "python"),
+            "coverage_tool": instance.get("coverage_tool", "coverage.py"),
+            "coverage_container_image": instance.get("coverage_container_image", ""),
+            "coverage_container_digest": instance.get("coverage_container_digest", ""),
+            "toolchain": instance.get("toolchain", {}),
             "mutation_targets": mutation_targets,
             "mutation_excluded_targets": mutation_excluded_targets,
             "mutation_skipped_no_selected_modules": not mutation_targets,
+            "mutation_supported": instance.get("mutation_supported", True),
             "test_patch_applied": PATCH_APPLIED in after_output,
             "setup_before_exit_code": before_setup_exit,
             "setup_after_exit_code": after_setup_exit,
@@ -1341,6 +1477,13 @@ def run_standalone_coverage_evaluation(
             "repo_url": instance.get("repo_url") or instance.get("repo"),
             "base_commit": instance["base_commit"],
             "coverage_targets": targets,
+            "coverage_scope": "repository",
+            "coverage_language": instance.get("coverage_language", "python"),
+            "coverage_tool": instance.get("coverage_tool", "coverage.py"),
+            "coverage_container_image": instance.get("coverage_container_image", ""),
+            "coverage_container_digest": instance.get("coverage_container_digest", ""),
+            "toolchain": instance.get("toolchain", {}),
+            "mutation_supported": instance.get("mutation_supported", True),
             "inference_metrics": (prediction or {}).get("metrics", {}),
         }
     _mark_inference_completion(result, prediction)
@@ -1574,6 +1717,9 @@ def evaluate_common_mutation_targets(
     eligible_results = [
         result for result in arm_results.values() if _eligible_for_mutation(result)
     ]
+    if not instance.get("mutation_supported", True):
+        frozen_target_manifest = None
+        eligible_results = []
     if frozen_target_manifest is not None:
         targets = list(frozen_target_manifest.get("target_paths") or [])
         compatibility_excluded_targets = [
@@ -1590,7 +1736,7 @@ def evaluate_common_mutation_targets(
         selected_targets = common_improved_modules(
             baseline.get("coverage"), eligible_results,
             infer_coverage_targets(instance),
-        )
+        ) if instance.get("mutation_supported", True) else []
         compatible_targets, compatibility_excluded_targets = exclude_mutation_targets(
             selected_targets, instance.get("mutation_excluded_targets")
         )
@@ -1612,7 +1758,11 @@ def evaluate_common_mutation_targets(
         patch_path.write_text(patch)
         if not targets or not eligible:
             return {
-                "mutation": None, "exit_code": 125, "timed_out": False,
+                "mutation": None,
+                "exit_code": (
+                    125 if instance.get("mutation_supported", True) else None
+                ),
+                "timed_out": False,
                 "setup_exit_code": None, "runtime": 0.0,
                 "tool_error": False, "unsupported": False, "partial": None,
             }
@@ -1698,6 +1848,12 @@ def evaluate_common_mutation_targets(
         "coverage_before": baseline.get("coverage"),
         "coverage_after": baseline.get("coverage"),
         "coverage_line_delta": 0.0, "coverage_branch_delta": 0.0,
+        "coverage_language": instance.get("coverage_language", "python"),
+        "coverage_tool": instance.get("coverage_tool", "coverage.py"),
+        "coverage_container_image": instance.get("coverage_container_image", ""),
+        "coverage_container_digest": instance.get("coverage_container_digest", ""),
+        "toolchain": instance.get("toolchain", {}),
+        "mutation_supported": instance.get("mutation_supported", True),
         "mutation_targets": targets,
         "mutation_excluded_targets": excluded_targets,
         "mutation_budget_excluded_targets": budget_excluded_targets,
@@ -1721,7 +1877,9 @@ def evaluate_common_mutation_targets(
         "mutation_after_timed_out": original_mutation["timed_out"],
         "mutation_after_tool_error": original_mutation["tool_error"],
         "mutation_policy": (
-            "touched-test-files-only marginal mutation effectiveness"
+            "not_applicable"
+            if not instance.get("mutation_supported", True)
+            else "touched-test-files-only marginal mutation effectiveness"
             if instance.get("mutation_test_style")
             in {"biopython", "pytest_generated"}
             else "full configured test command"

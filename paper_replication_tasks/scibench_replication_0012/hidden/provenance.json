@@ -1,0 +1,14 @@
+{
+  "commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+  "official_entrypoint": "python/analytic.py exact logarithmic Hamiltonian/effective-field functions mapped to python/figure2_*.py and python/figure3_*.py",
+  "paper": "Path Integral Spin Dynamics for Quantum Paramagnets",
+  "paper_source": "arXiv:2404.19539v2, main1.tex",
+  "reference_generation": {
+    "path": "gold_artifacts/reference_generation.json",
+    "sha256": "30b680fadcf2be5b03515467fda50a69db5a03f5aa31118f76abef9b8446d7bb"
+  },
+  "release": "Zenodo v1.0.8",
+  "repository": "https://github.com/stonerlab/PIQSD-SingleSpinAnisotropy",
+  "schema_version": 1,
+  "task_id": "scibench_replication_0012"
+}

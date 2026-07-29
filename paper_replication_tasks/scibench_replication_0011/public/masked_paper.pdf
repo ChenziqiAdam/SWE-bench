@@ -1,0 +1,205 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 3216 >>
+stream
+BT
+/F1 8 Tf
+44 754 Td
+(SCIBENCH ANONYMIZED REPLICATION DOSSIER) Tj
+0 -12 Td
+(This is a manually rewritten scientific specification, not the original paper text.) Tj
+0 -12 Td
+(Identity metadata, bibliographic fingerprints, and benchmark answers are intentionally) Tj
+0 -12 Td
+(withheld.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(# Anonymous replication dossier: correlated displacement regression) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(## Scientific objective) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Reproduce a complete stochastic experiment comparing ordinary, weighted, and) Tj
+0 -12 Td
+(generalized least-squares estimates of a diffusion coefficient from correlated) Tj
+0 -12 Td
+(mean-squared-displacement \(MSD\) observations. Generate every trajectory from) Tj
+0 -12 Td
+(the prescribed seeds; do not substitute a published MSD curve or sample from a) Tj
+0 -12 Td
+(fitted distribution.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(## Random-walk experiment) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(For each integer seed from 0 through 4095, initialize an independent legacy) Tj
+0 -12 Td
+(MT19937 random-number generator using the semantics of) Tj
+0 -12 Td
+(`numpy.random.RandomState\(seed\)`. Simulate 128 particles, each taking 128 steps) Tj
+0 -12 Td
+(on a three-dimensional cubic lattice. Draw all direction indices in one call) Tj
+0 -12 Td
+(equivalent to `rng.choice\(6, size=\(128,128\)\)`: rows index particles and columns) Tj
+0 -12 Td
+(index consecutive timesteps. Map choices, in order, to displacement vectors) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    \(+j,0,0\), \(-j,0,0\), \(0,+j,0\), \(0,-j,0\), \(0,0,+j\), \(0,0,-j\),) Tj
+0 -12 Td
+(    where j = 2.4494897428.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(This decimal step length is part of the fixed workflow and makes the true) Tj
+0 -12 Td
+(diffusion coefficient numerically equal to one in the dimensionless timestep) Tj
+0 -12 Td
+(convention because <|Delta r|^2> = 6 D Delta t.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(For a lag k in {1,...,128}, include the implicit position at time zero and) Tj
+0 -12 Td
+(calculate all valid time-origin displacements for each particle:) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    MSD_s\(k\) = 1 / [128\(129-k\)]) Tj
+0 -12 Td
+(        sum_{p=1}^{128} sum_{t=0}^{128-k}) Tj
+0 -12 Td
+(        |r_{s,p}\(t+k\)-r_{s,p}\(t\)|^2.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(The submitted `msd` array contains lags k=2,...,128 in increasing order and has) Tj
+0 -12 Td
+(one row per seed, producing shape \(4096,127\). Lag one is excluded from the) Tj
+0 -12 Td
+(regression experiment.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(## Covariance and regressions) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Compute the unbiased sample covariance across the 4096 MSD curves, using the) Tj
+0 -12 Td
+(4095 denominator. Submit this 127 by 127 matrix as `covariance`. Let the time) Tj
+0 -12 Td
+(vector be t=\(1,2,...,127\), matching the historical index convention for the) Tj
+0 -12 Td
+(selected MSD columns, and use a design matrix with columns [t,1]. Thus every) Tj
+0 -12 Td
+(fit includes an intercept. For a response vector y, calculate) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([EQUATION]) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(    beta_hat = \(A^T W A\)^\(-1\) A^T W y,) Tj
+0 -12 Td
+(    D_hat = beta_hat[0] / 6.) Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 1423 >>
+stream
+BT
+/F1 8 Tf
+44 754 Td
+() Tj
+0 -12 Td
+(Use W=I for OLS, `numpy.linalg.pinv` with `rcond=1e-15` on the diagonal) Tj
+0 -12 Td
+(covariance for WLS, and the same pseudoinverse convention on the full covariance) Tj
+0 -12 Td
+(for GLS. Apply each fixed weight matrix to all 4096 response curves. Submit) Tj
+0 -12 Td
+(`diffusion_estimates` with rows ordered OLS, WLS, GLS and shape \(3,4096\).) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(## Summary statistics) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(Submit a JSON object named `summary`, keyed exactly by `OLS`, `WLS`, and `GLS`.) Tj
+0 -12 Td
+(For every method provide `population_mean` and) Tj
+0 -12 Td
+(`population_standard_deviation`; the latter uses the population convention) Tj
+0 -12 Td
+(with denominator 4096. Also provide `analytical_uncertainty`. For WLS and GLS,) Tj
+0 -12 Td
+(this is sqrt\([\(A^T W A\)^\(-1\)]_00\)/6. For OLS, calculate the conventional) Tj
+0 -12 Td
+(intercept-inclusive slope standard error separately for each response curve,) Tj
+0 -12 Td
+(divide each by six, and report their arithmetic mean.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+(All arrays must be finite, numeric, non-pickle NPY files. The covariance must) Tj
+0 -12 Td
+(be symmetric and positive semidefinite up to ordinary floating-point roundoff.) Tj
+0 -12 Td
+() Tj
+0 -12 Td
+([MASKED: all generated arrays, estimator means, estimator spreads, analytical) Tj
+0 -12 Td
+(uncertainties, and numerical comparisons are withheld.]) Tj
+ET
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000189 00000 n 
+0000000315 00000 n 
+0000003583 00000 n 
+0000003709 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+5184
+%%EOF

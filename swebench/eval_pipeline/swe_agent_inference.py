@@ -328,6 +328,9 @@ def run_sweagent_inference(
         sweagent_tmp = None
         try:
             repo_dir = _clone_repo_at_commit(inst["repo"], inst["base_commit"], github_token)
+            if eval_mode == "coverage_generation":
+                from swebench.eval_pipeline.coverage_adapters import install_coverage_runner
+                install_coverage_runner(repo_dir, inst)
             tmp_out = Path(tempfile.mkdtemp(prefix="sweagent_out_"))
 
             cfg = _build_sweagent_config(
@@ -373,6 +376,11 @@ def run_sweagent_inference(
 
             patch = _read_patch_from_output(tmp_out, instance_id)
             patch = _clean_patch(patch)
+            if inst.get("coverage_language") == "cpp":
+                from swebench.eval_pipeline.coverage_adapters import (
+                    strip_cpp_coverage_artifacts,
+                )
+                patch = strip_cpp_coverage_artifacts(patch)
             patch = _repair_patch(patch)
             logger.info(
                 f"[{instance_id}] sweagent exit={result.returncode}, "

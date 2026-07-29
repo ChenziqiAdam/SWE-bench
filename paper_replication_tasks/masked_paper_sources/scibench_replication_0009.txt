@@ -1,0 +1,81 @@
+SCIBENCH ANONYMIZED REPLICATION DOSSIER
+This is a manually rewritten scientific specification, not the original paper text.
+Identity metadata, bibliographic fingerprints, and benchmark answers are intentionally withheld.
+
+# Anonymous replication dossier: deterministic Floquet system identification
+
+## Scientific objective
+
+Reproduce a deterministic stroboscopic Floquet-DMD experiment for a driven
+two-level quantum system. Learn a one-drive-period propagator from four
+training periods and extrapolate the Pauli-vector trajectory. No measurement
+noise or random sampling is used.
+
+## State dynamics
+
+Use the Hamiltonian
+
+[EQUATION]
+
+    H(t) = pi sigma_3 + cos(2 pi omega_D t) sigma_1,
+    omega_D = 1.1.
+
+The intrinsic period is 1 and the drive period is T=1/omega_D. Start in the
+lower sigma_3 eigenstate and record
+
+[EQUATION]
+
+    x(t) = (<sigma_1>, <sigma_2>, <sigma_3>)^T.
+
+Equivalently, evolve the density matrix with the von Neumann equation or the
+real Bloch vector with
+
+[EQUATION]
+
+    dx_1/dt = -2 pi x_2,
+    dx_2/dt = 2 pi x_1 - 2 cos(2 pi omega_D t) x_3,
+    dx_3/dt = 2 cos(2 pi omega_D t) x_2.
+
+## Floquet snapshots
+
+Sample four equally spaced phases per drive period. Arrange one period in each
+column:
+
+[EQUATION]
+
+    z_n = [x(nT); x(nT+T/4); x(nT+T/2); x(nT+3T/4)].
+
+The one-period propagator exists because
+
+[EQUATION]
+
+    P_T(t_0) = exp(-i T H_F(t_0)).
+
+Use z_0,z_1,z_2,z_3 as the four training columns. Apply rank-three exact DMD to
+the three offset pairs:
+
+[EQUATION]
+
+    X  = [z_0,z_1,z_2],
+    X' = [z_1,z_2,z_3].
+
+If X=U Sigma V^dagger, diagonalize
+
+[EQUATION]
+
+    A_tilde = U^dagger X' V Sigma^(-1).
+
+Return its three eigenvalues. Use the full fifth-period column z_4 as the
+initial condition and extrapolate eight subsequent periods. Submit the 32
+predicted phase samples for periods beginning at 5T through 13T (endpoint
+excluded); do not include z_4 itself in the submitted prediction.
+
+## Output requirements
+
+Save the eigenvalues as `floquet_eigenvalues`, a float array of shape (3,2)
+whose columns are real and imaginary parts. Save the 32 sample times as
+`prediction_times` and the three Pauli components as
+`prediction_trajectory` with shape (3,32). Eigenvalue order is arbitrary.
+
+[MASKED: all eigenvalues, extrapolated values, comparisons, and original
+graphics are withheld.]

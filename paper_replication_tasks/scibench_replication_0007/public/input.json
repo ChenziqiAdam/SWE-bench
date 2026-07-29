@@ -1,0 +1,42 @@
+{
+  "resources": [
+    {
+      "id": "masked_paper",
+      "media_type": "application/pdf",
+      "path": "masked_paper.pdf"
+    }
+  ],
+  "schema_version": 3,
+  "submission": {
+    "path": "results.json",
+    "protocol_fields": [],
+    "required_artifacts": [
+      {
+        "id": "metric_lin_mean_ols",
+        "media_type": "text/plain"
+      },
+      {
+        "id": "metric_non_mean_ols",
+        "media_type": "text/plain"
+      },
+      {
+        "id": "metric_lin_ci_ols",
+        "media_type": "text/plain"
+      },
+      {
+        "id": "metric_non_ci_ols",
+        "media_type": "text/plain"
+      },
+      {
+        "id": "metric_lin_mean_wls",
+        "media_type": "text/plain"
+      },
+      {
+        "id": "metric_non_mean_wls",
+        "media_type": "text/plain"
+      }
+    ],
+    "schema": "submission_schema.json"
+  },
+  "task_id": "scibench_replication_0007"
+}

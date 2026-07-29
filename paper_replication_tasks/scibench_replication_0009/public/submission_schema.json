@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "artifacts": {
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "floquet_eigenvalues"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "prediction_times"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "prediction_trajectory"
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "type": "object"
+          },
+          "maxContains": 1,
+          "minContains": 1
+        }
+      ],
+      "items": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "floquet_eigenvalues"
+              },
+              "media_type": {
+                "const": "application/x-npy"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "prediction_times"
+              },
+              "media_type": {
+                "const": "application/x-npy"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "const": "prediction_trajectory"
+              },
+              "media_type": {
+                "const": "application/x-npy"
+              },
+              "path": {
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "path",
+              "media_type"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "maxItems": 3,
+      "minItems": 3,
+      "type": "array"
+    },
+    "checkpoints": {
+      "type": "object"
+    },
+    "entrypoint": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "protocol": {
+      "type": "object"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "task_id": {
+      "const": "scibench_replication_0009"
+    }
+  },
+  "required": [
+    "schema_version",
+    "task_id",
+    "entrypoint",
+    "protocol",
+    "checkpoints",
+    "artifacts"
+  ],
+  "title": "SciBench submission for scibench_replication_0009",
+  "type": "object"
+}
