@@ -499,41 +499,68 @@ def run_evaluator(
     manifest_path: Path,
     output_path: Path,
     timeout: float,
+    *,
+    container_image: str,
+    container_python: str,
+    container_memory: str | None,
+    container_cpus: float | None,
+    container_pids: int,
+    container_tmpfs_size: str,
 ) -> dict[str, Any]:
     hidden = ROOT / task_id / "hidden"
     output_path.unlink(missing_ok=True)
+    runtime_dir = output_path.parent / "evaluator_runtime"
+    if runtime_dir.exists():
+        shutil.rmtree(runtime_dir)
+    runtime_dir.mkdir(parents=True)
+    shutil.copytree(ROOT / "evaluation", runtime_dir / "evaluation")
+    shutil.copytree(hidden, runtime_dir / "task_hidden")
+    shutil.copy2(manifest_path, runtime_dir / "execution_manifest.json")
+    runtime_home = output_path.parent / "evaluator_output"
+    runtime_home.mkdir(parents=True, exist_ok=True)
+    container_output = runtime_home / "evaluation.json"
+    container_output.unlink(missing_ok=True)
     command = [
-        sys.executable,
-        str(hidden / "evaluator.py"),
+        container_python,
+        "/runner/task_hidden/evaluator.py",
         "--submission-dir",
-        str(execution_dir),
+        "/workspace",
         "--gold",
-        str(hidden / "gold_output.json"),
+        "/runner/task_hidden/gold_output.json",
         "--run-manifest",
-        str(manifest_path),
+        "/runner/execution_manifest.json",
         "--output",
-        str(output_path),
+        "/agent-home/evaluation.json",
     ]
+    client = podman_client()
     try:
-        completed = subprocess.run(
-            command, capture_output=True, text=True, timeout=timeout
+        container_result = run_podman_container(
+            client=client,
+            image=container_image,
+            command=command,
+            workspace=execution_dir,
+            runtime_dir=runtime_dir,
+            runtime_home=runtime_home,
+            environment={"HOME": "/tmp", "PYTHONPATH": "/runner"},
+            timeout=timeout,
+            container_python=container_python,
+            gateway_endpoint=None,
+            memory=container_memory,
+            cpus=container_cpus,
+            pids_limit=container_pids,
+            tmpfs_size=container_tmpfs_size,
+            workspace_mode="ro,Z",
         )
         result = {
-            "exit_code": completed.returncode,
-            "stderr": completed.stderr or "",
-            "timed_out": False,
+            "exit_code": container_result["exit_code"],
+            "stderr": container_result["stderr"],
+            "timed_out": container_result["timed_out"],
+            "container_id": container_result["container_id"],
         }
-    except subprocess.TimeoutExpired as exc:
-        result = {
-            "exit_code": 124,
-            "stderr": (
-                exc.stderr
-                if isinstance(exc.stderr, str)
-                else (exc.stderr or b"").decode(errors="replace")
-            ),
-            "timed_out": True,
-        }
-    if output_path.is_file():
+    finally:
+        client.close()
+    if container_output.is_file():
+        shutil.copy2(container_output, output_path)
         result["report"] = read_json(output_path)
     return result
 
@@ -697,6 +724,12 @@ def process_task(args: argparse.Namespace, run_dir: Path, task_id: str) -> dict[
             manifest_path,
             evaluation_path,
             args.evaluator_timeout,
+            container_image=args.container_image,
+            container_python=args.container_python,
+            container_memory=args.container_memory,
+            container_cpus=args.container_cpus,
+            container_pids=args.container_pids,
+            container_tmpfs_size=args.container_tmpfs_size,
         )
         record["evaluator"] = evaluation
         if evaluation.get("exit_code") != 0 or "report" not in evaluation:

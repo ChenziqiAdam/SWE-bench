@@ -167,11 +167,12 @@ tasks. Formal runs require:
   gateway for Claude Code;
 - that gateway bound to a loopback address.
 
-Both inference and trusted execution run in ephemeral, rootless Podman
-containers with a read-only root filesystem, all Linux capabilities dropped,
-`no-new-privileges`, PID/CPU/memory limits, and only the task workspace plus
-narrow runtime/relay directories mounted writable. The repository and hidden
-task tree are not mounted.
+Inference, trusted execution, and hidden evaluation run in separate ephemeral,
+rootless Podman containers with a read-only root filesystem, all Linux
+capabilities dropped, `no-new-privileges`, and PID/CPU/memory limits. The agent
+and execution containers never mount the repository or hidden task tree. Only
+the trusted evaluator container receives a read-only copy of its selected
+hidden evaluator and gold data; it receives the executed submission read-only.
 
 The container uses `network=none`. During inference, a mounted Unix socket
 relays only the host's loopback model gateway to `127.0.0.1` inside the

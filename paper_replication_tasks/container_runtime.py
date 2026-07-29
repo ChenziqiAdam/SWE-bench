@@ -105,6 +105,7 @@ def run_podman_container(
     cpus: float | None,
     pids_limit: int,
     tmpfs_size: str,
+    workspace_mode: str = "rw,Z",
 ) -> dict[str, Any]:
     """Run one ephemeral, unprivileged, read-only-root Podman container."""
     workspace = workspace.resolve()
@@ -119,7 +120,7 @@ def run_podman_container(
     started = time.perf_counter()
     try:
         volumes = {
-            str(workspace): {"bind": "/workspace", "mode": "rw,Z"},
+            str(workspace): {"bind": "/workspace", "mode": workspace_mode},
             str(runtime_dir): {"bind": "/runner", "mode": "ro,Z"},
             str(runtime_home): {"bind": "/agent-home", "mode": "rw,Z"},
         }

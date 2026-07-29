@@ -297,6 +297,64 @@ def test_podman_runtime_uses_no_network_and_hardened_container(
     ]
 
 
+def test_hidden_evaluator_runs_offline_with_read_only_submission(
+    tmp_path, monkeypatch
+):
+    observed = {}
+
+    class FakeClient:
+        def close(self):
+            observed["closed"] = True
+
+    def fake_container(**kwargs):
+        observed.update(kwargs)
+        pipeline.write_json(
+            kwargs["runtime_home"] / "evaluation.json",
+            {
+                "schema_version": 1,
+                "task_id": "scibench_replication_0007",
+                "valid_execution": True,
+                "score": 1.0,
+                "full_success": True,
+                "checks": [],
+            },
+        )
+        return {
+            "exit_code": 0,
+            "stderr": "",
+            "timed_out": False,
+            "container_id": "evaluator-container",
+        }
+
+    monkeypatch.setattr(pipeline, "podman_client", lambda: FakeClient())
+    monkeypatch.setattr(pipeline, "run_podman_container", fake_container)
+    submission = tmp_path / "submission"
+    submission.mkdir()
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text("{}")
+    output = tmp_path / "evaluation.json"
+    result = pipeline.run_evaluator(
+        "scibench_replication_0007",
+        submission,
+        manifest,
+        output,
+        30,
+        container_image="paper:test",
+        container_python="python3",
+        container_memory="8g",
+        container_cpus=2,
+        container_pids=128,
+        container_tmpfs_size="1g",
+    )
+    assert result["exit_code"] == 0
+    assert result["report"]["score"] == 1.0
+    assert observed["gateway_endpoint"] is None
+    assert observed["workspace_mode"] == "ro,Z"
+    assert observed["environment"]["PYTHONPATH"] == "/runner"
+    assert (observed["runtime_dir"] / "evaluation/plugins.py").is_file()
+    assert (observed["runtime_dir"] / "task_hidden/gold_output.json").is_file()
+
+
 def test_reports_preserve_nonfinite_and_structured_diagnostics(tmp_path):
     records = [{
         "task_id": "task",
@@ -405,7 +463,9 @@ Path("results.json").write_text(json.dumps({
         pipeline.write_json(kwargs["manifest_path"], manifest)
         return {"runner_exit_code": 0, "stderr": "", "manifest": manifest}
 
-    def fake_evaluator(task_id, execution_dir, manifest_path, output_path, timeout):
+    def fake_evaluator(
+        task_id, execution_dir, manifest_path, output_path, timeout, **kwargs
+    ):
         report = {
             "task_id": task_id,
             "valid_execution": True,
