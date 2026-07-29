@@ -585,6 +585,7 @@ def _rdkit_python_wrapper_spec(
     new_boost: bool = False,
     extra_cmake: str = "",
     legacy_boost_endian: bool = False,
+    extra_apt_packages: tuple[str, ...] = (),
 ) -> dict:
     """Build RDKit in-tree with Python wrappers and run a focused Python test."""
     test_paths = (test_path,) if isinstance(test_path, str) else test_path
@@ -602,6 +603,11 @@ def _rdkit_python_wrapper_spec(
         "-DRDK_BUILD_PYTHON_WRAPPERS=ON ",
     )
     spec["pre_install"].append("apt-get install -y --no-install-recommends python3-dev python3-numpy")
+    if extra_apt_packages:
+        spec["pre_install"].append(
+            "apt-get install -y --no-install-recommends "
+            + " ".join(extra_apt_packages)
+        )
     spec["build"][-1] = "cmake --build build --parallel $(nproc)"
     runtime = "RDBASE=$PWD PYTHONPATH=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
     spec["test_cmd"] = [
@@ -1386,19 +1392,40 @@ SPECS_RDKIT = _RDKitSpecs({
     ),
     # ── Issues_No_Tests_split.xlsx fallback regression families ────────────
     "8796": _rdkit_python_wrapper_spec(
-        "rdkit/Chem/UnitTestPandasTools.py", new_boost=True
+        "rdkit/Chem/UnitTestPandasTools.py",
+        new_boost=True,
+        extra_apt_packages=(
+            "python3-pandas",
+            "python3-openpyxl",
+            "python3-xlsxwriter",
+        ),
     ),
     "8166": _rdkit_python_wrapper_spec(
-        "rdkit/Chem/Draw/UnitTestIPython.py", new_boost=True
+        "rdkit/Chem/Draw/UnitTestIPython.py",
+        new_boost=True,
+        extra_apt_packages=("python3-ipython", "python3-pil"),
     ),
     "7814": _rdkit_cpp_targets_spec(
         "testMMFFForceField",
         extra_cmake="-DRDK_TEST_MMFF_COMPLIANCE=ON ",
         new_boost=True,
     ),
-    "5261": _rdkit_python_wrapper_spec("rdkit/Chem/Draw/UnitTestDraw.py"),
-    "5103": _rdkit_python_wrapper_spec("rdkit/Chem/UnitTestPandasTools.py"),
-    "4793": _rdkit_python_wrapper_spec("rdkit/Chem/Draw/UnitTestDraw.py"),
+    "5261": _rdkit_python_wrapper_spec(
+        "rdkit/Chem/Draw/UnitTestDraw.py",
+        extra_apt_packages=("python3-pil",),
+    ),
+    "5103": _rdkit_python_wrapper_spec(
+        "rdkit/Chem/UnitTestPandasTools.py",
+        extra_apt_packages=(
+            "python3-pandas",
+            "python3-openpyxl",
+            "python3-xlsxwriter",
+        ),
+    ),
+    "4793": _rdkit_python_wrapper_spec(
+        "rdkit/Chem/Draw/UnitTestDraw.py",
+        extra_apt_packages=("python3-pil",),
+    ),
     # ── issues_testgen_001 generated-test specs ────────────────────────────
     # These targets correspond to the test files touched by the generated
     # patches.  Keeping them concrete avoids excluding valid generated tests
