@@ -41,6 +41,7 @@ except ImportError:  # Direct script execution.
     from task_registry import select_validated  # type: ignore
 
 from swebench.eval_pipeline.codex_inference import _write_endpoint_config
+from swebench.eval_pipeline.claude_code_inference import _extract_claude_error
 from swebench.eval_pipeline.inference_metrics import (
     metrics_from_stream_json,
     with_wall_time,
@@ -353,7 +354,19 @@ def run_agent(
                 stdout, stderr = result["stdout"], result["stderr"]
                 final_exit = result["exit_code"]
                 timed_out = result["timed_out"]
-                error = None if final_exit == 0 else f"agent exited with code {final_exit}"
+                if final_exit == 0:
+                    error = None
+                elif backend == "claude_code":
+                    error = (
+                        f"agent exited with code {final_exit}: "
+                        f"{_extract_claude_error(stdout, stderr)}"
+                    )
+                else:
+                    detail = (stderr or stdout).strip()[-500:]
+                    error = (
+                        f"agent exited with code {final_exit}"
+                        + (f": {detail}" if detail else "")
+                    )
             except ContainerRuntimeError as exc:
                 final_exit = None
                 timed_out = False

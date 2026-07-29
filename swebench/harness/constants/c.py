@@ -820,6 +820,102 @@ SPECS_OPENMM = _OpenMMSpecs({
     "5031": _openmm_cpp_targets_spec("TestReferenceCustomCentroidBondForce"),
     "5198": _openmm_cpp_targets_spec("TestCpuLocalEnergyMinimizer"),
     "5322": _openmm_cpp_targets_spec("TestReferenceMonteCarloFlexibleBarostat"),
+    # ── Issues_No_Tests_split.xlsx: CPU/Reference regression families ──────
+    # These PRs intentionally contain no authored tests.  Build and run the
+    # narrowest registered CPU/Reference suite for the production subsystem
+    # changed by each PR.
+    **{
+        pr: _openmm_cpp_targets_spec(*targets)
+        for pr, targets in {
+            "2255": ("TestCpuLocalEnergyMinimizer",),
+            "4294": ("TestReferenceEwald",),
+            "3326": (
+                "TestReferenceHarmonicAngleForce",
+                "TestReferenceNonbondedForce",
+            ),
+            "2781": ("TestCpuNonbondedForce",),
+            "2644": ("TestReferenceCMAPTorsionForce",),
+            "1592": ("TestCpuGBSAOBCForce",),
+            "3280": ("TestReferenceCustomNonbondedForce",),
+            "5242": ("TestCpuLocalEnergyMinimizer",),
+            "920": ("TestCpuNonbondedForce",),
+            "3834": ("TestParser",),
+            "3574": ("TestReferenceLangevinMiddleIntegrator",),
+            "3321": ("TestReferenceNonbondedForce",),
+            "3240": ("TestReferenceCustomExternalForce",),
+            "2544": ("TestCpuNonbondedForce",),
+            "2328": ("TestCpuNonbondedForce",),
+            "631": ("TestCpuGBSAOBCForce",),
+        }.items()
+    },
+    # ── Issues_No_Tests_split.xlsx: Common/OpenCL regression families ──────
+    # POCL provides a CPU OpenCL device, allowing the common/OpenCL kernels to
+    # be exercised in the evaluation container without requiring a GPU.
+    **{
+        pr: _openmm_opencl_targets_spec(*targets, amoeba=amoeba)
+        for pr, targets, amoeba in [
+            ("2819", ("TestOpenCLNonbondedForce",), False),
+            ("5069", ("TestOpenCLNonbondedForce",), False),
+            ("1640", ("TestOpenCLAmoebaMultipoleForce",), True),
+            ("1679", ("TestOpenCLCustomIntegrator",), False),
+            ("1382", ("TestOpenCLCustomExternalForce",), False),
+            ("5346", ("TestOpenCLCustomCVForce",), False),
+            ("5117", ("TestOpenCLCustomBondForce",), False),
+            ("3460", ("TestOpenCLNonbondedForce",), False),
+            (
+                "3428",
+                ("TestOpenCLNonbondedForce", "TestOpenCLAmoebaMultipoleForce"),
+                True,
+            ),
+            ("2829", ("TestOpenCLNonbondedForce",), False),
+            ("1924", ("TestOpenCLNonbondedForce",), False),
+            ("2152", ("TestOpenCLAmoebaMultipoleForce",), True),
+            ("4364", ("TestOpenCLMonteCarloBarostat",), False),
+            ("4079", ("TestOpenCLRpmd",), False),
+            ("4249", ("TestOpenCLCustomNonbondedForce",), False),
+            ("4148", ("TestOpenCLCustomNonbondedForce",), False),
+            ("4119", ("TestOpenCLMonteCarloBarostat",), False),
+            ("4090", ("TestOpenCLRpmd",), False),
+            ("3771", ("TestOpenCLNonbondedForce",), False),
+            ("3057", ("TestOpenCLNonbondedForce",), False),
+            ("1682", ("TestOpenCLNonbondedForce",), False),
+        ]
+    },
+    # ── Issues_No_Tests_split.xlsx: pure-Python app regression families ────
+    **{
+        pr: _openmm_python_app_spec(test_file, test_filter)
+        for pr, test_file, test_filter in [
+            ("1540", "TestForceField.py", "test_ImplicitSolvent"),
+            ("1932", "TestTopology.py", "test_getters"),
+            ("3630", "TestGromacsTopFile.py", "test_NonbondedMethod"),
+            ("4293", "TestModeller.py", "testNestedVirtualSites"),
+            ("4748", "TestModeller.py", "test_addExtraParticles"),
+            ("5149", "TestPdbxFile.py", "test_FormatConversion"),
+            ("5213", "TestPdbFile.py", "test_WriteFile"),
+            ("5221", "TestModeller.py", "test_addHydrogensPdb3"),
+            ("5359", "TestStateDataReporter.py", "testAppend"),
+            ("4986", "TestForceField.py", "test_CustomNonbondedGenerator"),
+            ("4279", "TestForceField.py", "test_residueMatcher"),
+            ("4104", "TestModeller.py", "test_addSolventIons"),
+            ("3442", "TestForceField.py", "test_Forces"),
+            ("3241", "TestModeller.py", "test_addSolventPeriodicBox"),
+            ("3198", "TestGromacsTopFile.py", "test_NonbondedMethod"),
+            ("3041", "TestAmberPrmtopFile.py", "test_NonbondedMethod"),
+            ("2639", "TestStateDataReporter.py", "testAppend"),
+            ("2575", "TestPdbxFile.py", "test_FormatConversion"),
+            ("2563", "TestPdbxFile.py", "test_FormatConversion"),
+            ("2429", "TestCharmmFiles.py", "test_Drude"),
+            ("2363", "TestForceField.py", "test_ImplicitSolventParameters"),
+            ("1957", "TestPdbFile.py", "test_Triclinic"),
+            ("1363", "TestForceField.py", "test_ImpropersOrdering"),
+            ("1250", "TestForceField.py", "test_RigidWaterAndConstraints"),
+        ]
+    },
+    # PR 3923 changes the SWIG exposure of AmoebaVdwForce parameters, so the
+    # patched native wrappers (rather than a pip app overlay) must be built.
+    "3923": _openmm_native_python_spec(
+        "TestAPIUnits.py", "testAmoebaVdwForce", amoeba=True
+    ),
     # ── Exact Python wrapper tests ───────────────────────────────────────────
     # These PRs add or modify focused Python app tests. Use pip's compiled
     # OpenMM package for native libraries, then overlay the patched pure-Python
@@ -1288,6 +1384,21 @@ SPECS_RDKIT = _RDKitSpecs({
         "External/pubchem_shape/Wrap/test_rdshapealign.py",
         new_boost=True,
     ),
+    # ── Issues_No_Tests_split.xlsx fallback regression families ────────────
+    "8796": _rdkit_python_wrapper_spec(
+        "rdkit/Chem/UnitTestPandasTools.py", new_boost=True
+    ),
+    "8166": _rdkit_python_wrapper_spec(
+        "rdkit/Chem/Draw/UnitTestIPython.py", new_boost=True
+    ),
+    "7814": _rdkit_cpp_targets_spec(
+        "testMMFFForceField",
+        extra_cmake="-DRDK_TEST_MMFF_COMPLIANCE=ON ",
+        new_boost=True,
+    ),
+    "5261": _rdkit_python_wrapper_spec("rdkit/Chem/Draw/UnitTestDraw.py"),
+    "5103": _rdkit_python_wrapper_spec("rdkit/Chem/UnitTestPandasTools.py"),
+    "4793": _rdkit_python_wrapper_spec("rdkit/Chem/Draw/UnitTestDraw.py"),
     # ── issues_testgen_001 generated-test specs ────────────────────────────
     # These targets correspond to the test files touched by the generated
     # patches.  Keeping them concrete avoids excluding valid generated tests

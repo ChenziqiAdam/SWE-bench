@@ -406,3 +406,42 @@ def test_sci_cc_001_rdkit_specs_use_registered_ctest_targets():
             assert f"-R '^{target}$'" in spec_text
             assert f"--target {' '.join(targets)}" in spec_text
         assert not any(regex in spec_text for regex in known_bad_regexes)
+
+
+def test_issues_no_tests_batches_have_concrete_specs():
+    batch_1_openmm = {
+        "4138", "2819", "2255", "4294", "4618", "4079", "5069",
+        "1640", "1540", "3326", "3923", "2318", "1679", "2781",
+        "2644", "1932", "1592", "3280", "1382", "5242", "920",
+        "5346", "5117", "5219", "4748", "3630", "3460", "3428",
+        "2829", "1924", "2322", "2257", "2152", "4440", "5302",
+        "5359", "5213", "5221", "4760", "4364", "4293", "5149",
+    }
+    batch_2_openmm = {
+        "4986", "4249", "4279", "4148", "4161", "4119", "4104",
+        "4090", "3872", "3834", "3771", "3574", "3442", "3311",
+        "3321", "3240", "3241", "3198", "3151", "3057", "3041",
+        "2639", "2575", "2544", "2563", "2363", "2429", "2328",
+        "1957", "1363", "1100", "1682", "1250", "631",
+    }
+    batch_2_rdkit = {
+        "8796", "8166", "7990", "7814", "5261", "5103", "4793",
+    }
+
+    assert len(batch_1_openmm) == 42
+    assert len(batch_2_openmm) == 34
+    assert len(batch_2_rdkit) == 7
+    for specs, prs in (
+        (SPECS_OPENMM, batch_1_openmm | batch_2_openmm),
+        (SPECS_RDKIT, batch_2_rdkit),
+    ):
+        for pr in prs:
+            spec = specs[pr]
+            text = "\n".join(
+                spec.get("build", [])
+                + spec.get("build_after_test_patch", [])
+                + spec.get("test_cmd", [])
+            )
+            assert spec.get("fail_to_pass"), pr
+            assert "not evaluable" not in text, pr
+            assert "no curated" not in text, pr
