@@ -293,7 +293,8 @@ def test_cpp_container_is_offline_unprivileged_and_mount_scoped(
     assert options["network_disabled"] is True
     assert options["cap_drop"] == ["ALL"]
     assert options["security_opt"] == ["no-new-privileges:true"]
-    assert options["userns_mode"] == "keep-id"
+    assert options["userns_mode"] == "host"
+    assert options["user"] == "0:0"
     assert len(options["volumes"]) == 2
     assert options["user"].count(":") == 1
     assert instance["coverage_container_digest"] == "example@sha256:abc"

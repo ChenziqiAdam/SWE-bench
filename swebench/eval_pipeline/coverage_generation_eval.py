@@ -868,10 +868,12 @@ def _run_cpp_container(
             engine_identity = ""
         docker_host = os.environ.get("DOCKER_HOST", "").lower()
         if "podman" in engine_identity or "podman" in docker_host:
-            # A rootless Podman namespace maps an explicitly requested host UID
-            # to a subordinate host UID unless keep-id is selected. That process
-            # cannot traverse the owner-only temporary checkout/result paths.
-            run_options["userns_mode"] = "keep-id"
+            # docker-py only accepts UsernsMode=host, not Podman's keep-id.
+            # In rootless Podman host mode, container root maps to the invoking
+            # (unprivileged) host UID/GID, giving it access to owner-only bind
+            # mounts without granting host root privileges.
+            run_options["user"] = "0:0"
+            run_options["userns_mode"] = "host"
         container = client.containers.run(
             image_name, ["sleep", "infinity"], **run_options
         )
