@@ -5,7 +5,7 @@
       "gold_output_sha256": "66ebc50e3f2497d7c5f23aaeab17307d5ee4be40e8f71b0bad2f651b61565dde",
       "public_files": {
         "input.json": "375fe5d19bb91ce0f9ac6afcf367e1ef6a8b17ea36781031efa35919bafb04cc",
-        "masked_paper.pdf": "774a52202fec9473789fcc2f8071416189168d7e0082948e8dd19699b0aa4b47",
+        "masked_paper.pdf": "81048b95c9d595f30c5e0adb6952b9c0229eb26fecafd59367541cdf76a7f24e",
         "submission_schema.json": "17cde64aa5411590e55e2dfbe05c3d112ec4531081d8c5a2ae0e1dab476853df",
         "task.md": "fdfe2c2b330f221106815239551609c30d829fc6bc0b2373c127b784928eb54d"
       },

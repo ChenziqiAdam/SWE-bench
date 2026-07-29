@@ -28,9 +28,9 @@
   "schema_version": 1,
   "sources": {
     "0007": {
-      "curated_text_sha256": "7cdc4bbf72c91111ccfe00acb30f6e6d8cf3c25bf3219bc9be0028ade1ce2adf",
+      "curated_text_sha256": "c4cf7ac12ced6e2991c24405f79c3c72c4628c041a01e77489a0bdd6f911a9d9",
       "kind": "author_repository_latex",
-      "masked_pdf_sha256": "774a52202fec9473789fcc2f8071416189168d7e0082948e8dd19699b0aa4b47",
+      "masked_pdf_sha256": "81048b95c9d595f30c5e0adb6952b9c0229eb26fecafd59367541cdf76a7f24e",
       "source_file_sha256": "9a10be4dab2d2a3d4de745886bace3a90dbea6e76cf20d5054b1f6486dd1ef91",
       "verbatim_12gram_overlap": 0.0
     },

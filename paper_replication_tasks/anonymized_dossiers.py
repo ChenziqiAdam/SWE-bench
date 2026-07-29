@@ -34,7 +34,8 @@ The transformed relation is
 
 For every simulated data set, estimate k in two ways:
 
-1. Fit y(t) directly to the exponential model by nonlinear least squares.
+1. Fit y(t) directly to the exponential model by nonlinear least squares,
+   treating both k and y_0 as free parameters.
 2. Fit log(y(t)) against t by linear least squares and negate the fitted slope.
 
 The unweighted comparison assumes constant additive uncertainty in the original
@@ -48,16 +49,19 @@ the same generated observations for the paired nonlinear and transformed fits.
 ## Monte Carlo protocol
 
 Set k = 0.15 s^-1 and y_0 = 7.5 mol m^-3. Generate 2^15 independent noisy data
-sets at t={2,4,6,8,10,12,14,16,18,20} seconds. Use additive Gaussian
-measurement noise with standard deviation
+sets using NumPy's default random generator initialized with seed 1, at
+t={2,4,6,8,10,12,14,16,18,20} seconds. Use additive Gaussian measurement
+noise with standard deviation
 0.3 mol m^-3 for the uncertainty-aware comparison. Reject or otherwise handle
 non-positive noisy concentrations consistently before taking a logarithm; do
 not silently replace the requested number of successful replicates.
 
-For each estimator, collect the fitted k values. Compute the requested means and
-the 2.5th and 97.5th percentiles of the empirical distribution. The
-six scalar artifacts correspond to the transformed and direct-fit summaries for
-the OLS and WLS comparisons. Write each requested scalar artifact separately.
+For every fitted rate constant, form the dimensionless normalized estimate
+r = k_hat / k, where the denominator is the true rate constant k = 0.15 s^-1.
+Compute the requested means and the 2.5th and 97.5th percentiles from the
+empirical distribution of r, not from the raw fitted k_hat values. The six
+artifacts correspond to the transformed and direct-fit normalized summaries for
+the OLS and WLS comparisons. Write each requested artifact separately.
 
 [MASKED: all reference estimates and interval endpoints are withheld.]
 """,

@@ -850,24 +850,35 @@ def _run_cpp_container(
             image = client.images.pull(image_name)
         digests = (image.attrs or {}).get("RepoDigests") or []
         instance["coverage_container_digest"] = digests[0] if digests else image.id
-        container = client.containers.run(
-            image_name,
-            ["sleep", "infinity"],
-            detach=True,
-            network_disabled=True,
-            user=f"{os.getuid()}:{os.getgid()}",
-            cap_drop=["ALL"],
-            security_opt=["no-new-privileges:true"],
-            working_dir="/workspace",
-            volumes={
+        run_options = {
+            "detach": True,
+            "network_disabled": True,
+            "user": f"{os.getuid()}:{os.getgid()}",
+            "cap_drop": ["ALL"],
+            "security_opt": ["no-new-privileges:true"],
+            "working_dir": "/workspace",
+            "volumes": {
                 str(repo_dir.resolve()): {"bind": "/workspace", "mode": "rw"},
                 str(out_dir.resolve()): {"bind": "/results", "mode": "rw"},
             },
+        }
+        try:
+            engine_identity = json.dumps(client.version()).lower()
+        except (AttributeError, docker.errors.DockerException):
+            engine_identity = ""
+        docker_host = os.environ.get("DOCKER_HOST", "").lower()
+        if "podman" in engine_identity or "podman" in docker_host:
+            # A rootless Podman namespace maps an explicitly requested host UID
+            # to a subordinate host UID unless keep-id is selected. That process
+            # cannot traverse the owner-only temporary checkout/result paths.
+            run_options["userns_mode"] = "keep-id"
+        container = client.containers.run(
+            image_name, ["sleep", "infinity"], **run_options
         )
         identity, identity_timeout, _ = exec_run_with_timeout(
             container,
             (
-                "/bin/bash -lc \"gcc --version | head -1; "
+                "/bin/bash -c \"gcc --version | head -1; "
                 "cmake --version | head -1; gcovr --version | head -1\""
             ),
             min(timeout, 60),

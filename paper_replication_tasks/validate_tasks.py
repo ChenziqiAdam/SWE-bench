@@ -198,6 +198,11 @@ def main() -> None:
         assert "scibench anonymized replication dossier" in curated_text
         assert "not the original paper text" in curated_text
         assert "[masked:" in curated_text
+        if task_id.endswith("0007"):
+            assert "treating both k and y_0 as free parameters" in curated_text
+            assert "default random generator initialized with seed 1" in curated_text
+            assert "r = k_hat / k" in curated_text
+            assert "not from the raw fitted k_hat values" in curated_text
         assert not re.search(
             r"^##\s+(abstract|introduction|references|acknowledgements?)\b",
             curated_text,

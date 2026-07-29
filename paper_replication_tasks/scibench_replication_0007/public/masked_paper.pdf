@@ -3,7 +3,7 @@
 << /Type /Catalog /Pages 2 0 R >>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [4 0 R] /Count 1 >>
+<< /Type /Pages /Kids [4 0 R 6 0 R] /Count 2 >>
 endobj
 3 0 obj
 << /Type /Font /Subtype /Type1 /BaseFont /Courier >>
@@ -12,7 +12,7 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
 endobj
 5 0 obj
-<< /Length 3078 >>
+<< /Length 3306 >>
 stream
 BT
 /F1 8 Tf
@@ -75,7 +75,9 @@ BT
 0 -12 Td
 () Tj
 0 -12 Td
-(1. Fit y\(t\) directly to the exponential model by nonlinear least squares.) Tj
+(1. Fit y\(t\) directly to the exponential model by nonlinear least squares,) Tj
+0 -12 Td
+(   treating both k and y_0 as free parameters.) Tj
 0 -12 Td
 (2. Fit log\(y\(t\)\) against t by linear least squares and negate the fitted slope.) Tj
 0 -12 Td
@@ -103,9 +105,11 @@ BT
 0 -12 Td
 (Set k = 0.15 s^-1 and y_0 = 7.5 mol m^-3. Generate 2^15 independent noisy data) Tj
 0 -12 Td
-(sets at t={2,4,6,8,10,12,14,16,18,20} seconds. Use additive Gaussian) Tj
+(sets using NumPy's default random generator initialized with seed 1, at) Tj
 0 -12 Td
-(measurement noise with standard deviation) Tj
+(t={2,4,6,8,10,12,14,16,18,20} seconds. Use additive Gaussian measurement) Tj
+0 -12 Td
+(noise with standard deviation) Tj
 0 -12 Td
 (0.3 mol m^-3 for the uncertainty-aware comparison. Reject or otherwise handle) Tj
 0 -12 Td
@@ -115,30 +119,47 @@ BT
 0 -12 Td
 () Tj
 0 -12 Td
-(For each estimator, collect the fitted k values. Compute the requested means and) Tj
+(For every fitted rate constant, form the dimensionless normalized estimate) Tj
 0 -12 Td
-(the 2.5th and 97.5th percentiles of the empirical distribution. The) Tj
+(r = k_hat / k, where the denominator is the true rate constant k = 0.15 s^-1.) Tj
 0 -12 Td
-(six scalar artifacts correspond to the transformed and direct-fit summaries for) Tj
+(Compute the requested means and the 2.5th and 97.5th percentiles from the) Tj
 0 -12 Td
-(the OLS and WLS comparisons. Write each requested scalar artifact separately.) Tj
+(empirical distribution of r, not from the raw fitted k_hat values. The six) Tj
+0 -12 Td
+(artifacts correspond to the transformed and direct-fit normalized summaries for) Tj
+0 -12 Td
+(the OLS and WLS comparisons. Write each requested artifact separately.) Tj
 0 -12 Td
 () Tj
-0 -12 Td
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 100 >>
+stream
+BT
+/F1 8 Tf
+44 754 Td
 ([MASKED: all reference estimates and interval endpoints are withheld.]) Tj
 ET
 endstream
 endobj
 xref
-0 6
+0 8
 0000000000 65535 f 
 0000000009 00000 n 
 0000000058 00000 n 
-0000000115 00000 n 
-0000000183 00000 n 
-0000000309 00000 n 
+0000000121 00000 n 
+0000000189 00000 n 
+0000000315 00000 n 
+0000003673 00000 n 
+0000003799 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<< /Size 8 /Root 1 0 R >>
 startxref
-3439
+3950
 %%EOF

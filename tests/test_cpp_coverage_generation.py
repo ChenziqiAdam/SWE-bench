@@ -269,6 +269,9 @@ def test_cpp_container_is_offline_unprivileged_and_mount_scoped(
         images = Images()
         containers = Containers()
 
+        def version(self):
+            return {"Platform": {"Name": "Podman Engine"}}
+
         def close(self):
             captured["closed"] = True
 
@@ -290,6 +293,7 @@ def test_cpp_container_is_offline_unprivileged_and_mount_scoped(
     assert options["network_disabled"] is True
     assert options["cap_drop"] == ["ALL"]
     assert options["security_opt"] == ["no-new-privileges:true"]
+    assert options["userns_mode"] == "keep-id"
     assert len(options["volumes"]) == 2
     assert options["user"].count(":") == 1
     assert instance["coverage_container_digest"] == "example@sha256:abc"
