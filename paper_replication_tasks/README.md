@@ -217,9 +217,13 @@ python -m paper_replication_tasks.run_pipeline \
   --run-id claude-model-id-01
 ```
 
-If the gateway requires authentication, pass `--api-key`. The key is injected
-only into the agent environment and is redacted from persisted commands, errors,
-and logs. It is never written to `run_config.json`.
+Claude Code containers do not mount the host's `~/.claude` login state. Supply
+authentication with `--api-key`, `ANTHROPIC_API_KEY`,
+`ANTHROPIC_AUTH_TOKEN`, `--claude-oauth-token`, or
+`CLAUDE_CODE_OAUTH_TOKEN`. Environment variables are resolved by the host
+pipeline and only the selected credential is injected into the container. Keys
+and tokens are redacted from persisted commands, errors, runtime state, and
+logs; only the credential source name is recorded in `run_config.json`.
 
 Outputs are stored under `outputs/paper_replication/<run_id>/`:
 

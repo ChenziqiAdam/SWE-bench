@@ -289,6 +289,7 @@ def run_agent(
     model: str,
     endpoint: str,
     api_key: str | None,
+    claude_oauth_token: str | None,
     workspace: Path,
     task_dir: Path,
     timeout: float,
@@ -312,6 +313,7 @@ def run_agent(
         "NO_PROXY": "127.0.0.1,localhost",
         "no_proxy": "127.0.0.1,localhost",
     }
+    secrets = [api_key or "", claude_oauth_token or ""]
     if backend == "codex":
         _write_endpoint_config(runtime_home, model, endpoint, bool(api_key))
         env["CODEX_HOME"] = "/agent-home"
@@ -322,6 +324,8 @@ def run_agent(
         if api_key:
             env["ANTHROPIC_API_KEY"] = api_key
             env["ANTHROPIC_AUTH_TOKEN"] = api_key
+        if claude_oauth_token:
+            env["CLAUDE_CODE_OAUTH_TOKEN"] = claude_oauth_token
 
     final_exit: int | None = None
     error: str | None = None
@@ -381,7 +385,7 @@ def run_agent(
             attempts.append(
                 {
                     "attempt": index + 1,
-                    "command": redact(command[:-1] + ["<prompt>"], [api_key or ""]),
+                    "command": redact(command[:-1] + ["<prompt>"], secrets),
                     "exit_code": final_exit,
                     "timed_out": timed_out,
                     "metrics": metrics,
@@ -390,16 +394,16 @@ def run_agent(
             log_dir = task_dir / "agent"
             log_dir.mkdir(parents=True, exist_ok=True)
             (log_dir / f"attempt-{index + 1}.jsonl").write_text(
-                redact(stdout, [api_key or ""]), encoding="utf-8"
+                redact(stdout, secrets), encoding="utf-8"
             )
             (log_dir / f"attempt-{index + 1}.stderr.log").write_text(
-                redact(stderr, [api_key or ""]), encoding="utf-8"
+                redact(stderr, secrets), encoding="utf-8"
             )
             if final_exit == 0 or final_exit is None:
                 break
     finally:
         client.close()
-    redact_tree_credentials(runtime_home, [api_key or ""])
+    redact_tree_credentials(runtime_home, secrets)
 
     aggregate["wall_time_seconds"] = sum(
         float(row["metrics"].get("wall_time_seconds", 0)) for row in attempts
@@ -412,7 +416,7 @@ def run_agent(
         "model": model,
         "exit_code": final_exit,
         "timed_out": timed_out,
-        "error": redact(error, [api_key or ""]),
+        "error": redact(error, secrets),
         "container_image": image_identity,
         "attempt_count": len(attempts),
         "attempts": attempts,
@@ -613,7 +617,7 @@ def process_task(args: argparse.Namespace, run_dir: Path, task_id: str) -> dict[
     )
     record["public_bundle"] = public_manifest
     record["agent"] = prior.get("agent") if prior else None
-    secrets = [args.api_key or ""]
+    secrets = [args.api_key or "", args.claude_oauth_token or ""]
 
     reuse_inference = (
         args.resume
@@ -634,6 +638,7 @@ def process_task(args: argparse.Namespace, run_dir: Path, task_id: str) -> dict[
                     model=args.model,
                     endpoint=args.endpoint,
                     api_key=args.api_key,
+                    claude_oauth_token=args.claude_oauth_token,
                     workspace=workspace,
                     task_dir=task_dir,
                     timeout=args.agent_timeout,
@@ -889,6 +894,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--endpoint", required=True)
     parser.add_argument("--api-key")
     parser.add_argument(
+        "--claude-oauth-token",
+        help="Claude Code OAuth token; preferably supply CLAUDE_CODE_OAUTH_TOKEN in the environment",
+    )
+    parser.add_argument(
         "--container-image",
         required=True,
         help="Prebuilt local Podman image containing the agent CLI and scientific dependencies",
@@ -923,6 +932,31 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error(str(exc))
     if args.workers <= 0:
         parser.error("--workers must be positive")
+    args.auth_source = None
+    if args.backend == "claude_code":
+        if args.api_key:
+            args.auth_source = "--api-key"
+        else:
+            for name in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"):
+                value = os.environ.get(name)
+                if value:
+                    args.api_key = value
+                    args.auth_source = name
+                    break
+        if args.claude_oauth_token:
+            args.auth_source = args.auth_source or "--claude-oauth-token"
+        elif os.environ.get("CLAUDE_CODE_OAUTH_TOKEN"):
+            args.claude_oauth_token = os.environ["CLAUDE_CODE_OAUTH_TOKEN"]
+            args.auth_source = args.auth_source or "CLAUDE_CODE_OAUTH_TOKEN"
+        if not args.api_key and not args.claude_oauth_token:
+            parser.error(
+                "Claude Code container authentication requires --api-key, "
+                "ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN, "
+                "--claude-oauth-token, or CLAUDE_CODE_OAUTH_TOKEN; host "
+                "~/.claude login state is not mounted"
+            )
+    elif args.api_key:
+        args.auth_source = "--api-key"
     if args.container_cpus <= 0:
         parser.error("--container-cpus must be positive")
     if args.container_pids <= 0:
@@ -1007,6 +1041,7 @@ def main(argv: list[str] | None = None) -> int:
         "backend": args.backend,
         "model": args.model,
         "endpoint": args.endpoint,
+        "auth_source": args.auth_source,
         "container_image": args.container_image_identity,
         "container_image_digest": args.container_image_identity["digest"],
         "task_ids": list(args.task_ids),

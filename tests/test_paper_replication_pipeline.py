@@ -50,6 +50,33 @@ def test_non_loopback_endpoint_is_rejected(monkeypatch):
         pipeline.validate_loopback_endpoint("https://example.test")
 
 
+def test_claude_auth_uses_environment_without_mounting_host_login(monkeypatch):
+    monkeypatch.setattr(
+        pipeline.socket,
+        "getaddrinfo",
+        lambda *args, **kwargs: [(2, 1, 6, "", ("127.0.0.1", 4000))],
+    )
+    for name in (
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_AUTH_TOKEN",
+        "CLAUDE_CODE_OAUTH_TOKEN",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    base = [
+        "--backend", "claude_code",
+        "--model", "m",
+        "--endpoint", "http://localhost:4000",
+        "--container-image", "paper-agent:test",
+    ]
+    with pytest.raises(SystemExit):
+        pipeline.parse_args(base)
+
+    monkeypatch.setenv("ANTHROPIC_AUTH_TOKEN", "gateway-secret")
+    args = pipeline.parse_args(base)
+    assert args.api_key == "gateway-secret"
+    assert args.auth_source == "ANTHROPIC_AUTH_TOKEN"
+
+
 def test_workspace_copies_only_regular_public_files(tmp_path):
     public = tmp_path / "public"
     public.mkdir()
@@ -404,6 +431,7 @@ Path("results.json").write_text(json.dumps({
         model="m",
         endpoint="http://127.0.0.1:4000",
         api_key=None,
+        claude_oauth_token=None,
         container_image="paper-agent:test",
         container_image_identity={"digest": "sha256:test"},
         container_python="python3",
