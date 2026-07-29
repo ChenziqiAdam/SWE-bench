@@ -157,8 +157,10 @@ def run_podman_container(
             "read_only": True,
             "cap_drop": ["ALL"],
             "security_opt": ["no-new-privileges:true"],
-            "userns_mode": "keep-id",
-            "user": f"{os.getuid()}:{os.getgid()}",
+            # Use rootless Podman's default mapping. Through the Docker-compatible
+            # API, docker-py rejects Podman's otherwise valid ``keep-id`` value
+            # before sending the request. Container UID 0 remains mapped to the
+            # unprivileged user running the rootless Podman service.
             "working_dir": "/workspace",
             "volumes": volumes,
             "environment": environment,
