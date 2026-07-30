@@ -21,6 +21,11 @@ from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
 from swebench.eval_pipeline.host_environment import isolated_python_environment
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
 from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json, with_wall_time
+from swebench.eval_pipeline.inference_security import (
+    guarded_hidden_paths,
+    inference_input_hash,
+    inference_worktree_root,
+)
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
 from swebench.eval_pipeline.network_isolation import (
     guard_command,
@@ -431,6 +436,7 @@ def run_claude_code_inference(
     interrupt_retries: int = 1,
     network_policy: str = "unrestricted",
     setup_timeout: int = _ENVIRONMENT_SETUP_TIMEOUT,
+    hidden_paths: list[str] | None = None,
 ) -> None:
     """Run Claude Code inference for all instances. Writes standard prediction JSONL."""
     validate_network_policy(
@@ -445,10 +451,17 @@ def run_claude_code_inference(
         )
 
     out_path = Path(output_file)
+    unique_instances = unique_instances_by_id(instances)
+    input_hashes = {
+        inst["instance_id"]: inference_input_hash(inst) for inst in unique_instances
+    }
     existing_ids: set[str] = set()
     retained_records: list[dict] = []
     for obj in read_prediction_rows(out_path):
-        if prediction_matches_backend(obj, AGENT_BACKEND, model_name, eval_mode=eval_mode):
+        if prediction_matches_backend(
+            obj, AGENT_BACKEND, model_name, eval_mode=eval_mode,
+            input_hash=input_hashes.get(obj.get("instance_id")),
+        ):
             has_patch = bool((obj.get("model_patch") or "").strip())
             if has_patch or not retry_empty_predictions:
                 existing_ids.add(obj["instance_id"])
@@ -461,7 +474,6 @@ def run_claude_code_inference(
     if existing_ids:
         logger.info(f"Resuming Claude Code: {len(existing_ids)} predictions already written")
 
-    unique_instances = unique_instances_by_id(instances)
     skipped_duplicates = len(instances) - len(unique_instances)
     if skipped_duplicates:
         logger.info(f"Skipping {skipped_duplicates} duplicate instance row(s) before Claude Code inference")
@@ -480,7 +492,10 @@ def run_claude_code_inference(
 
     logs_dir = out_path.parent / "claude_code_logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
-    tmp_root = out_path.parent / "tmp" / AGENT_BACKEND
+    tmp_root = inference_worktree_root(AGENT_BACKEND)
+    effective_hidden_paths = guarded_hidden_paths(
+        network_policy, out_path, hidden_paths or []
+    )
     tmp_root.mkdir(parents=True, exist_ok=True)
     write_lock = threading.Lock()
 
@@ -515,6 +530,7 @@ def run_claude_code_inference(
                 cmd,
                 policy=network_policy,
                 endpoint=api_base or "https://api.anthropic.com",
+                hidden_paths=effective_hidden_paths,
             )
 
             environment_context = (
@@ -659,6 +675,7 @@ def run_claude_code_inference(
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
+                "inference_input_hash": input_hashes[instance_id],
                 "metrics": with_wall_time(
                     {**_aggregate_attempt_metrics(attempts), **environment_metrics},
                     time.perf_counter() - started,
@@ -705,6 +722,7 @@ def run_claude_code_inference(
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
+                "inference_input_hash": input_hashes[instance_id],
                 "error": "timeout",
                 "metrics": with_wall_time(
                     {
@@ -723,6 +741,7 @@ def run_claude_code_inference(
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
+                "inference_input_hash": input_hashes[instance_id],
                 "error": str(e),
                 "metrics": with_wall_time(
                     environment_metrics, time.perf_counter() - started

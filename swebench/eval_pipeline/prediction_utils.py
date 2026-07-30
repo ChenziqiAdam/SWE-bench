@@ -14,6 +14,7 @@ def prediction_matches_backend(
     backend: str,
     model_name: str,
     eval_mode: str = "fix",
+    input_hash: str | None = None,
 ) -> bool:
     """Return whether a prediction row belongs to a backend/model pair.
 
@@ -26,6 +27,8 @@ def prediction_matches_backend(
         return False
     row_eval_mode = row.get("eval_mode") or "fix"
     if row_eval_mode != eval_mode:
+        return False
+    if input_hash is not None and row.get("inference_input_hash") != input_hash:
         return False
     row_backend = row.get("agent_backend")
     if row_backend:

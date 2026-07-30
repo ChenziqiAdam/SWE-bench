@@ -27,9 +27,13 @@ from tqdm.auto import tqdm
 from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
 from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json, with_wall_time
+from swebench.eval_pipeline.inference_security import inference_input_hash
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
 from swebench.eval_pipeline.network_isolation import require_nested_container_guard
-from swebench.eval_pipeline.prediction_utils import prediction_matches_backend
+from swebench.eval_pipeline.prediction_utils import (
+    prediction_matches_backend,
+    unique_instances_by_id,
+)
 from swebench.eval_pipeline.prompt_builder import (
     _coverage_generation_instruction,
     _problem_text,
@@ -278,6 +282,10 @@ def run_sweagent_inference(
 
     # Resume: skip already-done instances.  Empty patches are often transient
     # SWE-agent/model failures, so callers can opt into retrying them.
+    unique_instances = unique_instances_by_id(instances)
+    input_hashes = {
+        inst["instance_id"]: inference_input_hash(inst) for inst in unique_instances
+    }
     existing_ids: set[str] = set()
     out_path = Path(output_file)
     retained_records: list[dict] = []
@@ -290,7 +298,8 @@ def run_sweagent_inference(
                 try:
                     obj = json.loads(line)
                     if prediction_matches_backend(
-                        obj, AGENT_BACKEND, model_name, eval_mode=eval_mode
+                        obj, AGENT_BACKEND, model_name, eval_mode=eval_mode,
+                        input_hash=input_hashes.get(obj.get("instance_id")),
                     ):
                         has_patch = bool((obj.get("model_patch") or "").strip())
                         if has_patch or not retry_empty_predictions:
@@ -307,7 +316,7 @@ def run_sweagent_inference(
     if existing_ids:
         logger.info(f"Resuming: {len(existing_ids)} predictions already written")
 
-    todo = [i for i in instances if i["instance_id"] not in existing_ids]
+    todo = [i for i in unique_instances if i["instance_id"] not in existing_ids]
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if retry_empty_predictions and out_path.exists():
         with open(out_path, "w") as f:
@@ -392,6 +401,7 @@ def run_sweagent_inference(
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
+                "inference_input_hash": input_hashes[instance_id],
                 "metrics": with_wall_time(
                     metrics_from_stream_json(stream_output), time.perf_counter() - started
                 ),
@@ -416,6 +426,7 @@ def run_sweagent_inference(
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
+                "inference_input_hash": input_hashes[instance_id],
                 "error": "timeout",
                 "metrics": with_wall_time(
                     metrics_from_stream_json(so + "\n" + se),
@@ -431,6 +442,7 @@ def run_sweagent_inference(
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
+                "inference_input_hash": input_hashes[instance_id],
                 "error": str(e),
                 "metrics": with_wall_time({}, time.perf_counter() - started),
             }

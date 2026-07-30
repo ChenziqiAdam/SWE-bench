@@ -303,6 +303,7 @@ def test_claude_code_inference_maps_endpoint_and_api_key_to_env(tmp_path, monkey
 
 
 def test_claude_code_inference_skips_duplicate_instance_rows(tmp_path, monkeypatch):
+    monkeypatch.setenv("SWE_AGENT_TMPDIR", str(tmp_path / "safe-worktrees"))
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()
     claude = fake_bin / "claude"
@@ -345,7 +346,7 @@ def test_claude_code_inference_skips_duplicate_instance_rows(tmp_path, monkeypat
     rows = [json.loads(line) for line in out.read_text().splitlines()]
     assert len(rows) == 1
     assert len(calls) == 1
-    assert calls[0][1] == tmp_path / "tmp" / "claude_code"
+    assert calls[0][1] == tmp_path / "safe-worktrees" / "claude_code"
 
 
 def test_claude_code_inference_records_nonzero_exit_detail(tmp_path, monkeypatch):

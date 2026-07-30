@@ -2,7 +2,7 @@ import subprocess
 
 import pytest
 
-from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
+from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit, _execute_tool
 
 
 def _git(repo, *args, check=True):
@@ -81,3 +81,34 @@ def test_clone_repo_excludes_future_history_and_removes_remote(tmp_path):
         check=False,
     ).returncode != 0
     assert not (checkout / ".git" / "FETCH_HEAD").exists()
+
+
+@pytest.mark.parametrize("tool_name", ["read_file", "list_dir", "search_code"])
+def test_builtin_read_tools_reject_paths_outside_repo(tmp_path, tool_name):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    secret = tmp_path / "gold.patch"
+    secret.write_text("gold answer")
+    tool_input = (
+        {"query": "gold", "path": ".."}
+        if tool_name == "search_code"
+        else {"path": "../gold.patch"}
+    )
+
+    result = _execute_tool(tool_name, tool_input, repo)
+
+    assert "escapes repository" in result
+    assert "gold answer" not in result
+
+
+def test_builtin_read_rejects_symlink_escape(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    secret = tmp_path / "gold.patch"
+    secret.write_text("gold answer")
+    (repo / "answer").symlink_to(secret)
+
+    result = _execute_tool("read_file", {"path": "answer"}, repo)
+
+    assert "escapes repository" in result
+    assert "gold answer" not in result

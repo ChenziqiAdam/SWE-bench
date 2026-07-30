@@ -152,3 +152,9 @@ All inference scripts produce outputs in a format compatible with the SWE-bench 
   use a fresh output directory for leak-free results. `--force_inference
   --retry_empty_predictions` is appropriate only when deliberately repairing
   the same experiment lineage.
+- In `model-only` mode, host inference backends also hide the active output
+  directory, the repository's `outputs/` and `logs/` trees, research process
+  notes, and input spreadsheets. Use repeatable `--inference_hidden_path`
+  arguments for evaluation or cache directories stored elsewhere. Disposable
+  inference clones are created outside result directories, and cached
+  predictions are reused only when their complete instance-input hash matches.

@@ -26,6 +26,11 @@ from tqdm.auto import tqdm
 from swebench.eval_pipeline.constants import MODEL_COST_PER_INPUT, MODEL_COST_PER_OUTPUT
 from swebench.eval_pipeline.inference import _calc_cost, _clean_patch, _repair_patch
 from swebench.eval_pipeline.inference_metrics import with_wall_time
+from swebench.eval_pipeline.inference_security import (
+    guarded_hidden_paths,
+    inference_input_hash,
+    inference_worktree_root,
+)
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
 from swebench.eval_pipeline.network_isolation import (
     guard_command,
@@ -270,11 +275,19 @@ def _execute_tool(
     tool_input: dict,
     repo_dir: Path,
     network_policy: str = "unrestricted",
+    hidden_paths: list[str] | None = None,
 ) -> str:
     """Execute a tool call and return its string result."""
+    def _repo_path(raw: str) -> Path:
+        candidate = (repo_dir / raw).resolve()
+        root = repo_dir.resolve()
+        if candidate != root and root not in candidate.parents:
+            raise ValueError(f"path escapes repository: {raw}")
+        return candidate
+
     if tool_name == "read_file":
-        path = repo_dir / tool_input["path"]
         try:
+            path = _repo_path(tool_input["path"])
             content = path.read_text(errors="replace")
             if len(content) > _MAX_READ_CHARS:
                 content = content[:_MAX_READ_CHARS] + "\n... [truncated]"
@@ -285,8 +298,8 @@ def _execute_tool(
             return f"Error reading file: {e}"
 
     elif tool_name == "list_dir":
-        path = repo_dir / tool_input.get("path", ".")
         try:
+            path = _repo_path(tool_input.get("path", "."))
             entries = sorted(os.listdir(path))
             return "\n".join(entries) if entries else "(empty directory)"
         except FileNotFoundError:
@@ -303,6 +316,8 @@ def _execute_tool(
         else:
             cmd = ["grep", "-r", "-n", query, search_path]
         try:
+            search_path = str(_repo_path(search_path).relative_to(repo_dir.resolve()))
+            search_path = search_path or "."
             result = subprocess.run(
                 cmd, cwd=repo_dir, capture_output=True, text=True, timeout=15,
             )
@@ -316,8 +331,8 @@ def _execute_tool(
             return f"Error searching: {e}"
 
     elif tool_name == "write_file":
-        path = repo_dir / tool_input["path"]
         try:
+            path = _repo_path(tool_input["path"])
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(tool_input["content"])
             return f"Written: {tool_input['path']}"
@@ -329,6 +344,7 @@ def _execute_tool(
             command = guard_command(
                 ["/bin/bash", "-lc", tool_input["command"]],
                 policy=network_policy,
+                hidden_paths=hidden_paths,
             )
             result = subprocess.run(
                 command,
@@ -395,6 +411,7 @@ def _run_agentic_loop(
     max_turns: int,
     eval_mode: str = "fix",
     network_policy: str = "unrestricted",
+    hidden_paths: list[str] | None = None,
 ) -> tuple[str, dict]:
     """Run multi-turn tool-use loop. Return the patch and API usage metrics."""
     messages = [{"role": "user", "content": _build_issue_prompt(instance, eval_mode=eval_mode)}]
@@ -462,6 +479,7 @@ def _run_agentic_loop(
                 block.input,
                 repo_dir,
                 network_policy=network_policy,
+                hidden_paths=hidden_paths,
             )
             if result == "SUBMIT":
                 submitted = True
@@ -509,10 +527,15 @@ def run_agent_inference_for_level(
     max_workers: int = 2,
     eval_mode: str = "fix",
     network_policy: str = "unrestricted",
+    hidden_paths: list[str] | None = None,
 ) -> None:
     """Run agentic inference for all instances. Writes same JSONL format as inference.py."""
     validate_network_policy(network_policy)
     # Resume: skip already-done instances
+    unique_instances = unique_instances_by_id(instances)
+    input_hashes = {
+        inst["instance_id"]: inference_input_hash(inst) for inst in unique_instances
+    }
     existing_ids: set[str] = set()
     out_path = Path(output_file)
     if out_path.exists():
@@ -524,7 +547,8 @@ def run_agent_inference_for_level(
                 try:
                     obj = json.loads(line)
                     if prediction_matches_backend(
-                        obj, AGENT_BACKEND, model_name, eval_mode=eval_mode
+                        obj, AGENT_BACKEND, model_name, eval_mode=eval_mode,
+                        input_hash=input_hashes.get(obj.get("instance_id")),
                     ):
                         existing_ids.add(obj["instance_id"])
                 except (json.JSONDecodeError, KeyError):
@@ -532,12 +556,14 @@ def run_agent_inference_for_level(
     if existing_ids:
         logger.info(f"Resuming: {len(existing_ids)} predictions already written")
 
-    unique_instances = unique_instances_by_id(instances)
     skipped_duplicates = len(instances) - len(unique_instances)
     if skipped_duplicates:
         logger.info(f"Skipping {skipped_duplicates} duplicate instance row(s) before inference")
     todo = [i for i in unique_instances if i["instance_id"] not in existing_ids]
-    tmp_root = out_path.parent / "tmp" / AGENT_BACKEND
+    tmp_root = inference_worktree_root(AGENT_BACKEND)
+    effective_hidden_paths = guarded_hidden_paths(
+        network_policy, out_path, hidden_paths or []
+    )
     out_path.parent.mkdir(parents=True, exist_ok=True)
     tmp_root.mkdir(parents=True, exist_ok=True)
     write_lock = threading.Lock()
@@ -559,6 +585,7 @@ def run_agent_inference_for_level(
                 max_turns,
                 eval_mode=eval_mode,
                 network_policy=network_policy,
+                hidden_paths=effective_hidden_paths,
             )
             patch = _clean_patch(patch)
             patch = _repair_patch(patch)
@@ -568,6 +595,7 @@ def run_agent_inference_for_level(
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
+                "inference_input_hash": input_hashes[instance_id],
                 "metrics": with_wall_time(metrics, time.perf_counter() - started),
             }
         except Exception as e:
@@ -579,6 +607,7 @@ def run_agent_inference_for_level(
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
+                "inference_input_hash": input_hashes[instance_id],
                 "error": str(e),
                 "metrics": with_wall_time({}, time.perf_counter() - started),
             }

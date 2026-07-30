@@ -8,7 +8,6 @@ import logging
 import os
 import re
 import shutil
-import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -342,6 +341,13 @@ def parse_args():
         "gateway (for example --endpoint http://localhost:4000) and fails closed "
         "when no supported OS guard is available. "
         "Use unrestricted only for explicitly non-benchmark debugging.",
+    )
+    p.add_argument(
+        "--inference_hidden_path",
+        action="append",
+        default=[],
+        help="Additional existing file or directory to hide from host inference "
+        "agents. May be repeated for nonstandard evaluation/cache locations.",
     )
     p.add_argument("--sweagent_config", default=None,
                    help="Optional path to a custom SWE-agent config YAML. When omitted a "
@@ -724,6 +730,15 @@ def _run_eval_with_timeout(timeout_seconds: int, **eval_kwargs) -> bool:
 def _run_agent_backend(args, instances: list[dict], output_file: str,
                        inference_model: str, github_token: str | None) -> None:
     """Dispatch one inference backend for both SWE-bench and standalone modes."""
+    hidden_paths = [
+        path
+        for path in (
+            getattr(args, "log_dir", None),
+            getattr(args, "spreadsheet", None),
+            *getattr(args, "inference_hidden_path", []),
+        )
+        if path
+    ]
     if args.agent_backend == "sweagent":
         from swebench.eval_pipeline.swe_agent_inference import run_sweagent_inference
         run_sweagent_inference(
@@ -743,6 +758,7 @@ def _run_agent_backend(args, instances: list[dict], output_file: str,
             profile=args.codex_profile, api_base=args.endpoint, api_key=args.api_key,
             retry_empty_predictions=args.retry_empty_predictions, eval_mode=args.eval_mode,
             network_policy=args.inference_network_policy,
+            hidden_paths=hidden_paths,
         )
     elif args.agent_backend == "claude_code":
         from swebench.eval_pipeline.claude_code_inference import run_claude_code_inference
@@ -756,6 +772,7 @@ def _run_agent_backend(args, instances: list[dict], output_file: str,
             interrupt_retries=args.claude_code_interrupt_retries,
             network_policy=args.inference_network_policy,
             setup_timeout=args.claude_code_setup_timeout,
+            hidden_paths=hidden_paths,
         )
     else:
         from swebench.eval_pipeline.agent_inference import run_agent_inference_for_level
@@ -769,6 +786,7 @@ def _run_agent_backend(args, instances: list[dict], output_file: str,
             max_turns=args.max_turns, max_workers=args.max_workers,
             eval_mode=args.eval_mode,
             network_policy=args.inference_network_policy,
+            hidden_paths=hidden_paths,
         )
 
 

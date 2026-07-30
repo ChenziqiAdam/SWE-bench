@@ -19,6 +19,11 @@ from tqdm.auto import tqdm
 from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
 from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json, with_wall_time
+from swebench.eval_pipeline.inference_security import (
+    guarded_hidden_paths,
+    inference_input_hash,
+    inference_worktree_root,
+)
 from swebench.eval_pipeline.media_assets import format_issue_media_for_prompt
 from swebench.eval_pipeline.network_isolation import (
     guard_command,
@@ -175,6 +180,7 @@ def run_codex_inference(
     retry_empty_predictions: bool = False,
     eval_mode: str = "fix",
     network_policy: str = "unrestricted",
+    hidden_paths: list[str] | None = None,
 ) -> None:
     """Run Codex inference for all instances. Writes standard prediction JSONL."""
     validate_network_policy(
@@ -184,7 +190,8 @@ def run_codex_inference(
     codex_home = None
     endpoint_config_path = None
     if api_base:
-        codex_home = Path(tempfile.mkdtemp(prefix="codex_home_"))
+        config_root = inference_worktree_root(f"{AGENT_BACKEND}-config")
+        codex_home = Path(tempfile.mkdtemp(prefix="codex_home_", dir=config_root))
         endpoint_config_path = _write_endpoint_config(
             codex_home,
             model_name=model_name,
@@ -198,10 +205,17 @@ def run_codex_inference(
         )
 
     out_path = Path(output_file)
+    unique_instances = unique_instances_by_id(instances)
+    input_hashes = {
+        inst["instance_id"]: inference_input_hash(inst) for inst in unique_instances
+    }
     existing_ids: set[str] = set()
     retained_records: list[dict] = []
     for obj in read_prediction_rows(out_path):
-        if prediction_matches_backend(obj, AGENT_BACKEND, model_name, eval_mode=eval_mode):
+        if prediction_matches_backend(
+            obj, AGENT_BACKEND, model_name, eval_mode=eval_mode,
+            input_hash=input_hashes.get(obj.get("instance_id")),
+        ):
             has_patch = bool((obj.get("model_patch") or "").strip())
             if has_patch or not retry_empty_predictions:
                 existing_ids.add(obj["instance_id"])
@@ -214,7 +228,6 @@ def run_codex_inference(
     if existing_ids:
         logger.info(f"Resuming Codex: {len(existing_ids)} predictions already written")
 
-    unique_instances = unique_instances_by_id(instances)
     skipped_duplicates = len(instances) - len(unique_instances)
     if skipped_duplicates:
         logger.info(f"Skipping {skipped_duplicates} duplicate instance row(s) before Codex inference")
@@ -226,7 +239,10 @@ def run_codex_inference(
 
     logs_dir = out_path.parent / "codex_logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
-    tmp_root = out_path.parent / "tmp" / AGENT_BACKEND
+    tmp_root = inference_worktree_root(AGENT_BACKEND)
+    effective_hidden_paths = guarded_hidden_paths(
+        network_policy, out_path, hidden_paths or []
+    )
     tmp_root.mkdir(parents=True, exist_ok=True)
     write_lock = threading.Lock()
 
@@ -260,6 +276,7 @@ def run_codex_inference(
                 cmd,
                 policy=network_policy,
                 endpoint=api_base or "https://api.openai.com",
+                hidden_paths=effective_hidden_paths,
             )
 
             env = dict(os.environ)
@@ -304,6 +321,7 @@ def run_codex_inference(
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
+                "inference_input_hash": input_hashes[instance_id],
                 "metrics": with_wall_time(
                     metrics_from_stream_json(stream_output), time.perf_counter() - started
                 ),
@@ -327,6 +345,7 @@ def run_codex_inference(
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
+                "inference_input_hash": input_hashes[instance_id],
                 "error": "timeout",
                 "metrics": with_wall_time(
                     metrics_from_stream_json(stdout), time.perf_counter() - started
@@ -341,6 +360,7 @@ def run_codex_inference(
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
+                "inference_input_hash": input_hashes[instance_id],
                 "error": str(e),
                 "metrics": with_wall_time({}, time.perf_counter() - started),
             }
