@@ -210,11 +210,29 @@ def test_scientific_infrastructure_failure_markers_are_narrow():
     assert not _infrastructure_failure_output("AssertionError: expected 3, found 2")
 
 
+def test_openmm_pocl_runtime_crashes_are_infrastructure_failures():
+    outputs = (
+        "WARNING: Using an unsupported OpenCL implementation.\n"
+        "exception: Error creating array forceBuffers: clCreateBuffer (-61)",
+        "WARNING: Using an unsupported OpenCL implementation.\n"
+        "exception: clCreateKernel",
+        "LLVM ERROR: Cannot select: v4f32 = X86ISD::VFPROUND",
+        "Test: ./lib/CL/pocl_llvm_build.cc:587: Assertion failed.",
+        "/tmp/swebench_pocl_cpu_compat.so ./build/Test\nSegmentation fault",
+    )
+
+    for output in outputs:
+        assert _infrastructure_failure_output(output)
+
+
 def test_openmm_opencl_specs_apply_portable_pocl_cpu_compatibility():
     spec = SPECS_OPENMM["1382"]
 
     assert any(
-        "getHostCPUName()" in command and 'StringRef("x86-64", 6)' in command
+        "getHostCPUName()" in command
+        and "swebench_cpu=znver2" in command
+        and "swebench_cpu=haswell" in command
+        and "swebench_cpu=nehalem" in command
         for command in spec["build_after_test_patch"]
     )
     assert all(
@@ -225,7 +243,7 @@ def test_openmm_opencl_specs_apply_portable_pocl_cpu_compatibility():
 
 
 def test_openmm_opencl_specs_supply_cl_make_version_compatibility():
-    spec = SPECS_OPENMM["5302"]
+    spec = SPECS_OPENMM["3872"]
 
     assert any(
         "#define CL_MAKE_VERSION(major, minor, patch)" in command
@@ -235,6 +253,19 @@ def test_openmm_opencl_specs_supply_cl_make_version_compatibility():
         "-DCMAKE_CXX_FLAGS='-include /tmp/swebench_opencl_compat.h'" in command
         for command in spec["build_after_test_patch"]
     )
+
+
+def test_openmm_gpu_only_specs_are_explicitly_non_evaluable():
+    for pr in ("1640", "2152", "2255", "2829", "4364", "5302"):
+        spec_text = "\n".join(SPECS_OPENMM[pr]["test_cmd"])
+        assert "not evaluable:" in spec_text
+        assert "GPU" in spec_text or "CUDA" in spec_text
+
+
+def test_openmm_native_python_specs_pin_numpy_one_x():
+    commands = "\n".join(SPECS_OPENMM["3923"]["pre_install"])
+
+    assert "'numpy<2'" in commands
 
 
 def test_every_openmm_opencl_spec_has_runtime_and_header_compatibility():

@@ -85,7 +85,7 @@ def test_current_scientific_issues_sheet_specs_are_concrete():
             "4440": "TestReferenceLangevinIntegrator",
             "1100": "TestReferenceSettle",
             "3151": "test_addSolventPeriodicBox",
-            "5302": "TestOpenCLAmoebaMultipoleForce",
+            "5302": "GPU runtime",
             "4760": "absinth_force_field_removed",
             "4161": "test_IgnoreExternalBonds",
             "3851": "test_CharmmPolar",
@@ -131,12 +131,15 @@ def test_current_scientific_issues_sheet_specs_are_concrete():
             text = _spec_text(spec)
             assert spec.get("fail_to_pass"), (repo, pr)
             assert marker in text, (repo, pr, marker)
-            assert "not evaluable" not in text
+            if repo == "openmm/openmm" and pr == "5302":
+                assert "not evaluable:" in text
+            else:
+                assert "not evaluable" not in text
             assert "no curated" not in text
 
 
 def test_scientific_opencl_specs_use_a_cpu_opencl_runtime():
-    for pr in ("4618", "2318", "2322", "2257", "5302", "3872"):
+    for pr in ("4618", "2318", "2322", "2257", "3872"):
         text = _spec_text(SPECS_OPENMM[pr])
         assert "pocl-opencl-icd" in text
         assert "-DOPENMM_BUILD_OPENCL_LIB=ON" in text

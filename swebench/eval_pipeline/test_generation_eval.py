@@ -171,7 +171,7 @@ def _non_evaluable_output(output: str) -> bool:
 
 def _infrastructure_failure_output(output: str) -> bool:
     """Recognize host/toolchain failures unrelated to a generated test oracle."""
-    return any(
+    direct_failure = any(
         marker in output
         for marker in (
             "fatal error: GL/gl.h: No such file or directory",
@@ -182,8 +182,31 @@ def _infrastructure_failure_output(output: str) -> bool:
             "size of array 'altStackMem' is not an integral constant-expression",
             "call to non-'constexpr' function 'long int sysconf(int)'",
             "CMake 3.23.0 or higher is required",
+            "pocl_llvm_build.cc:",
+            "LLVM ERROR: Cannot select:",
+            "error: cannot convert ‘PyObject*’",
         )
     )
+    pocl_runtime_failure = (
+        "WARNING: Using an unsupported OpenCL implementation" in output
+        and any(
+            marker in output
+            for marker in (
+                "clCreateBuffer (-61)",
+                "exception: clCreateKernel",
+                "Segmentation fault",
+                "Illegal instruction",
+            )
+        )
+    )
+    preload_failure = (
+        "/tmp/swebench_pocl_cpu_compat.so" in output
+        and any(
+            marker in output
+            for marker in ("Segmentation fault", "Illegal instruction", "Aborted")
+        )
+    )
+    return direct_failure or pocl_runtime_failure or preload_failure
 
 
 def _no_tests_selected(output: str) -> bool:

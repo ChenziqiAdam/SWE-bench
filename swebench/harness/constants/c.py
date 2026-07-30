@@ -346,6 +346,12 @@ _OPENMM_OPENCL_COMPAT_HEADER_COMMAND = (
 
 _OPENMM_POCL_CPU_COMPAT_COMMAND = (
     "if [ \"$(uname -m)\" = x86_64 ]; then "
+    "swebench_cpu=x86-64; "
+    "if grep -q 'AuthenticAMD' /proc/cpuinfo && grep -qm1 '\\<avx2\\>' /proc/cpuinfo; "
+    "then swebench_cpu=znver2; "
+    "elif grep -q 'GenuineIntel' /proc/cpuinfo && grep -qm1 '\\<avx2\\>' /proc/cpuinfo; "
+    "then swebench_cpu=haswell; "
+    "elif grep -qm1 '\\<sse4_2\\>' /proc/cpuinfo; then swebench_cpu=nehalem; fi; "
     "printf '%s\\n' "
     "'#include <cstddef>' "
     "'namespace llvm {' "
@@ -356,7 +362,8 @@ _OPENMM_POCL_CPU_COMPAT_COMMAND = (
     "'  StringRef(const char* data, std::size_t size) : data_(data), size_(size) {}' "
     "'};' "
     "'namespace sys {' "
-    "'StringRef getHostCPUName() { return StringRef(\"x86-64\", 6); }' "
+    "'StringRef getHostCPUName() { return StringRef(\"'\"$swebench_cpu\"'\", "
+    "sizeof(\"'\"$swebench_cpu\"'\")-1); }' "
     "'}' "
     "'}' > /tmp/swebench_pocl_cpu_compat.cpp && "
     "g++ -shared -fPIC -O2 /tmp/swebench_pocl_cpu_compat.cpp "
@@ -375,8 +382,8 @@ def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False) -> dict:
 
     Ubuntu 22.04's POCL/LLVM combination reports ``generic`` for CPUs newer
     than its LLVM release (for example Zen 4), but ``generic`` is not a valid
-    x86 LLVM CPU name.  A tiny process-local symbol interposer makes POCL emit
-    portable x86-64 code without changing OpenMM or the test oracle.
+    x86 LLVM CPU name.  A tiny process-local symbol interposer selects the
+    closest LLVM-supported CPU baseline without changing OpenMM or the oracle.
 
     Recent bundled ``opencl.hpp`` revisions also use ``CL_MAKE_VERSION`` while
     Jammy's C OpenCL headers can expose the extension without that macro.  A
@@ -416,6 +423,17 @@ def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False) -> dict:
     }
 
 
+def _openmm_gpu_non_evaluable_spec(reason: str) -> dict:
+    """Exclude a GPU-only regression when no faithful GPU runtime is available."""
+    return {
+        "pre_install": [],
+        "build": [],
+        "test_cmd": [f"echo 'not evaluable: {reason}' && false"],
+        "fail_to_pass": ["scientific_spec::gpu_runtime_required"],
+        "test_generation_use_spec_cmd": True,
+    }
+
+
 def _openmm_source_check_spec(name: str, condition: str) -> dict:
     """Expose a source/data/documentation-only correction as a parsed test."""
     nodeid = f"scientific_spec::{name}"
@@ -441,7 +459,7 @@ def _openmm_native_python_spec(
         "pre_install": [
             "apt-get update -q",
             "apt-get install -y --no-install-recommends cmake g++ make swig doxygen python3-dev",
-            "python -m pip install --no-cache-dir numpy cython pytest setuptools wheel",
+            "python -m pip install --no-cache-dir 'numpy<2' cython pytest setuptools wheel",
         ],
         "build_after_test_patch": [
             "cmake -B build -S . "
@@ -756,8 +774,8 @@ SPECS_OPENMM = _OpenMMSpecs({
     "3151": _openmm_python_app_spec(
         "TestModeller.py", "test_addSolventPeriodicBox"
     ),
-    "5302": _openmm_opencl_targets_spec(
-        "TestOpenCLAmoebaMultipoleForce", amoeba=True
+    "5302": _openmm_gpu_non_evaluable_spec(
+        "Amoeba molecule-reordering regression requires a supported GPU runtime"
     ),
     "4760": _openmm_source_check_spec(
         "absinth_force_field_removed",
@@ -885,7 +903,6 @@ SPECS_OPENMM = _OpenMMSpecs({
     **{
         pr: _openmm_cpp_targets_spec(*targets)
         for pr, targets in {
-            "2255": ("TestCpuLocalEnergyMinimizer",),
             "4294": ("TestReferenceEwald",),
             "3326": (
                 "TestReferenceHarmonicAngleForce",
@@ -914,7 +931,6 @@ SPECS_OPENMM = _OpenMMSpecs({
         for pr, targets, amoeba in [
             ("2819", ("TestOpenCLNonbondedForce",), False),
             ("5069", ("TestOpenCLNonbondedForce",), False),
-            ("1640", ("TestOpenCLAmoebaMultipoleForce",), True),
             ("1679", ("TestOpenCLCustomIntegrator",), False),
             ("1382", ("TestOpenCLCustomExternalForce",), False),
             ("5346", ("TestOpenCLCustomCVForce",), False),
@@ -925,10 +941,7 @@ SPECS_OPENMM = _OpenMMSpecs({
                 ("TestOpenCLNonbondedForce", "TestOpenCLAmoebaMultipoleForce"),
                 True,
             ),
-            ("2829", ("TestOpenCLNonbondedForce",), False),
             ("1924", ("TestOpenCLNonbondedForce",), False),
-            ("2152", ("TestOpenCLAmoebaMultipoleForce",), True),
-            ("4364", ("TestOpenCLMonteCarloBarostat",), False),
             ("4079", ("TestOpenCLRpmd",), False),
             ("4249", ("TestOpenCLCustomNonbondedForce",), False),
             ("4148", ("TestOpenCLCustomNonbondedForce",), False),
@@ -973,6 +986,24 @@ SPECS_OPENMM = _OpenMMSpecs({
     # patched native wrappers (rather than a pip app overlay) must be built.
     "3923": _openmm_native_python_spec(
         "TestAPIUnits.py", "testAmoebaVdwForce", amoeba=True
+    ),
+    # These regressions depend on CUDA behavior, GPU atom reordering, or memory
+    # sizes that POCL cannot faithfully emulate.  Treating POCL failures as
+    # model failures would corrupt the benchmark result.
+    "1640": _openmm_gpu_non_evaluable_spec(
+        "CUDA Amoeba DIIS regression requires a CUDA runtime"
+    ),
+    "2152": _openmm_gpu_non_evaluable_spec(
+        "CUDA Amoeba PME regression requires a CUDA runtime"
+    ),
+    "2255": _openmm_gpu_non_evaluable_spec(
+        "GPU minimizer performance regression requires a supported GPU runtime"
+    ),
+    "2829": _openmm_gpu_non_evaluable_spec(
+        "large AMD OpenCL regression requires a GPU with sufficient device memory"
+    ),
+    "4364": _openmm_gpu_non_evaluable_spec(
+        "GPU atom-reordering/barostat regression requires a supported GPU runtime"
     ),
     # ── Exact Python wrapper tests ───────────────────────────────────────────
     # These PRs add or modify focused Python app tests. Use pip's compiled

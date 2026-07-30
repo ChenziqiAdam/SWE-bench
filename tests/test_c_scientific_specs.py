@@ -151,7 +151,7 @@ def test_qgis_60631_uses_modern_cmake_build_image():
 
 
 def test_openmm_opencl_specs_install_gl_headers():
-    for pr in ("2257", "2318", "2322", "3872", "4618", "5302"):
+    for pr in ("2257", "2318", "2322", "3872", "4618"):
         assert "libgl1-mesa-dev" in "\n".join(SPECS_OPENMM[pr]["pre_install"])
 
 
@@ -409,6 +409,7 @@ def test_sci_cc_001_rdkit_specs_use_registered_ctest_targets():
 
 
 def test_issues_no_tests_batches_have_concrete_specs():
+    gpu_only = {"1640", "2152", "2255", "2829", "4364", "5302"}
     batch_1_openmm = {
         "4138", "2819", "2255", "4294", "4618", "4079", "5069",
         "1640", "1540", "3326", "3923", "2318", "1679", "2781",
@@ -443,5 +444,8 @@ def test_issues_no_tests_batches_have_concrete_specs():
                 + spec.get("test_cmd", [])
             )
             assert spec.get("fail_to_pass"), pr
-            assert "not evaluable" not in text, pr
+            if pr in gpu_only:
+                assert "not evaluable:" in text, pr
+            else:
+                assert "not evaluable" not in text, pr
             assert "no curated" not in text, pr

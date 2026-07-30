@@ -549,6 +549,18 @@ def render_coverage_generation_table(
             "after_coverage_tests_passed": (
                 "yes" if info.get("after_coverage_tests_passed") else "no"
             ),
+            "base_coverage_report_passed": (
+                "yes" if info.get("base_coverage_report_passed") else "no"
+            ),
+            "after_coverage_report_passed": (
+                "yes" if info.get("after_coverage_report_passed") else "no"
+            ),
+            "coverage_report_before_exit_code": info.get(
+                "coverage_report_before_exit_code", ""
+            ),
+            "coverage_report_after_exit_code": info.get(
+                "coverage_report_after_exit_code", ""
+            ),
             "baseline_flaky": "yes" if info.get("baseline_flaky") else "no",
             "generated_tests_flaky": "yes" if info.get("generated_tests_flaky") else "no",
             "flaky": "yes" if info.get("flaky") else "no",
@@ -704,6 +716,18 @@ def render_coverage_comparison_table(rows: list[dict], output_csv: str) -> None:
             "seed": info.get("seed", ""),
             "status": info.get("status", ""),
             "failure_reason": info.get("failure_reason", ""),
+            "base_coverage_report_passed": (
+                "yes" if info.get("base_coverage_report_passed") else "no"
+            ),
+            "after_coverage_report_passed": (
+                "yes" if info.get("after_coverage_report_passed") else "no"
+            ),
+            "coverage_report_before_exit_code": info.get(
+                "coverage_report_before_exit_code", ""
+            ),
+            "coverage_report_after_exit_code": info.get(
+                "coverage_report_after_exit_code", ""
+            ),
             "comparison_protocol": info.get("comparison_protocol", "independent"),
             "target_selection_failure": info.get("target_selection_failure", ""),
             "line_coverage": after.get("line_coverage", ""),

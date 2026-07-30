@@ -105,13 +105,21 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
             "-DCMAKE_EXE_LINKER_FLAGS=--coverage && cmake --build build"
         ),
         "coverage_test_command": (
-            "(cd build && python3 ../devtools/run-ctest.py --attempts 2 "
-            "--parallel 2 --job-duration 60)"
+            "(cd build && "
+            "python3 ../devtools/run-ctest.py --attempts 0 --parallel 2 "
+            "--job-duration 120 --timeout 900 || "
+            "{ test -s Testing/Temporary/LastTestsFailed.log && "
+            "ctest --output-on-failure --rerun-failed --parallel 2 "
+            "--timeout 900; })"
         ),
         "coverage_reset_command": "find build -name '*.gcda' -delete",
         "coverage_command": (
-            "(cd build && python3 ../devtools/run-ctest.py --attempts 2 "
-            "--parallel 2 --job-duration 60)"
+            "(cd build && "
+            "python3 ../devtools/run-ctest.py --attempts 0 --parallel 2 "
+            "--job-duration 120 --timeout 900 || "
+            "{ test -s Testing/Temporary/LastTestsFailed.log && "
+            "ctest --output-on-failure --rerun-failed --parallel 2 "
+            "--timeout 900; })"
         ),
         "coverage_results_command": (
             "gcovr --root . --filter openmmapi/src --filter platforms/cpu/src "
@@ -121,7 +129,7 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
             "--gcov-ignore-parse-errors=suspicious_hits.warn_once_per_file "
             "--json-summary {output}"
         ),
-        "coverage_phase_timeout": 7200,
+        "coverage_phase_timeout": 14400,
     },
 }
 
@@ -902,7 +910,10 @@ def _standalone_coverage_instance(args) -> dict:
         "pynguin_ignore_noncallable_signatures": profile.get(
             "pynguin_ignore_noncallable_signatures", False
         ),
-        "coverage_tool_install_command": args.coverage_tool_install_command,
+        "coverage_tool_install_command": (
+            args.coverage_tool_install_command
+            or ("true" if language == "cpp" else None)
+        ),
         "standalone": True,
     }
 
@@ -937,6 +948,12 @@ def _resolve_standalone_coverage_language(
             instance["coverage_language"] = language
         commands = default_commands(language, instance.get("coverage_source_roots"))
         if language == "cpp":
+            # The pinned evaluator image already contains the C++ coverage
+            # toolchain. Avoid Python/Mutmut installation attempts in the
+            # network-disabled container.
+            instance["coverage_tool_install_command"] = (
+                instance.get("coverage_tool_install_command") or "true"
+            )
             if instance.get("coverage_setup_command") == DEFAULT_COVERAGE_SETUP_COMMAND:
                 instance["coverage_setup_command"] = commands.setup
             if instance.get("coverage_test_command") == DEFAULT_COVERAGE_TEST_COMMAND:

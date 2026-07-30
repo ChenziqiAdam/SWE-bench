@@ -421,10 +421,12 @@ def _extract_block(output: str, start: str, end: str) -> str:
     if not start_matches:
         return ""
     block_start = start_matches[-1].end()
-    end_match = re.search(rf"(?m)^{re.escape(end)}\s*$", output[block_start:])
-    if not end_match:
+    # gcovr JSON-summary files do not necessarily end with a newline, so the
+    # shell's end marker can be attached directly to the closing JSON brace.
+    block_end = output.find(end, block_start)
+    if block_end < 0:
         return ""
-    return output[block_start:block_start + end_match.start()].strip()
+    return output[block_start:block_end].strip()
 
 
 def _module_level_pytest_files(patch: str) -> list[str]:
@@ -489,7 +491,9 @@ def _phase_script(instance: dict, apply_patch: bool, flaky_runs: int) -> str:
         coverage_command,
         "COVERAGE_TEST_EXIT=$?",
         coverage_results_command.replace("{output}", "/tmp/coverage.json"),
-        f"echo {_COVERAGE_START}; cat /tmp/coverage.json 2>/dev/null || true; echo {_COVERAGE_END}",
+        "COVERAGE_REPORT_EXIT=$?",
+        f"echo {_COVERAGE_START}; cat /tmp/coverage.json 2>/dev/null || true; "
+        f"echo; echo {_COVERAGE_END}",
     ]
     for index in range(flaky_runs):
         lines += [f"{pytest_command}", f"echo REPEAT_RUN_{index + 1}_EXIT=$?"]
@@ -502,6 +506,7 @@ def _phase_script(instance: dict, apply_patch: bool, flaky_runs: int) -> str:
         f"  {mutation_command}", "  MUTATION_EXIT=$?",
         f"  {mutation_results_command} 2>&1 || true", "fi", f"echo {_MUTATION_END}",
         "echo PYTEST_EXIT=$PYTEST_EXIT", "echo COVERAGE_TEST_EXIT=$COVERAGE_TEST_EXIT",
+        "echo COVERAGE_REPORT_EXIT=$COVERAGE_REPORT_EXIT",
         "echo MUTATION_EXIT=$MUTATION_EXIT", "exit 0",
     ]
     return "\n".join(lines) + "\n"
@@ -631,7 +636,9 @@ def _standalone_phase_script(
         lines.append("COVERAGE_TEST_EXIT=$PRIMARY_COVERAGE_EXIT")
     lines += [
         coverage_results_command.replace("{output}", shlex.quote(coverage_output)),
-        f"echo {_COVERAGE_START}; cat {coverage_output} 2>/dev/null || true; echo {_COVERAGE_END}",
+        "COVERAGE_REPORT_EXIT=$?",
+        f"echo {_COVERAGE_START}; cat {coverage_output} 2>/dev/null || true; "
+        f"echo; echo {_COVERAGE_END}",
     ]
     for index in range(flaky_runs):
         repeat_var = f"REPEAT_RUN_{index + 1}_EXIT"
@@ -651,6 +658,7 @@ def _standalone_phase_script(
         "echo TOOLS_EXIT=$TOOLS_EXIT",
         "echo PYTEST_EXIT=$PYTEST_EXIT",
         "echo COVERAGE_TEST_EXIT=$COVERAGE_TEST_EXIT",
+        "echo COVERAGE_REPORT_EXIT=$COVERAGE_REPORT_EXIT",
         "exit 0",
     ]
     return "\n".join(lines) + "\n"
@@ -1016,6 +1024,7 @@ def prepare_standalone_coverage_baseline(
         "tools_exit": _exit_code(output, "TOOLS_EXIT"),
         "test_exit": _exit_code(output, "PYTEST_EXIT"),
         "coverage_test_exit": _exit_code(output, "COVERAGE_TEST_EXIT"),
+        "coverage_report_exit": _exit_code(output, "COVERAGE_REPORT_EXIT"),
         "repeat_exits": [
             _exit_code(output, f"REPEAT_RUN_{index + 1}_EXIT")
             for index in range(flaky_runs)
@@ -1038,6 +1047,8 @@ def standalone_baseline_failure(baseline: dict) -> str:
         return "baseline_tests_failed"
     if baseline.get("coverage_test_exit") != 0:
         return "baseline_coverage_test_failed"
+    if baseline.get("coverage_report_exit", 0) != 0:
+        return "baseline_coverage_report_failed"
     if baseline.get("coverage") is None:
         return "baseline_coverage_unavailable"
     repeat_exits = baseline.get("repeat_exits") or []
@@ -1050,6 +1061,7 @@ def classify_coverage_result(before: dict | None, after: dict | None, patch_info
                              before_test_exit: int | None, after_test_exit: int | None,
                              patch_applied: bool, timed_out: bool,
                              coverage_test_failed: bool = False,
+                             coverage_report_failed: bool = False,
                              mutation_before: dict | None = None,
                              mutation_after: dict | None = None,
                              mutation_timed_out: bool = False,
@@ -1076,6 +1088,8 @@ def classify_coverage_result(before: dict | None, after: dict | None, patch_info
         return "unresolved", "flaky_generated_tests"
     if coverage_test_failed:
         return "errored", "coverage_test_run_failed"
+    if coverage_report_failed:
+        return "errored", "coverage_report_failed"
     if patch_info.get("added_assertion_count", 0) == 0:
         return "invalid", "no_added_assertions"
     if before is None or after is None:
@@ -1147,6 +1161,8 @@ def _evaluate_one(instance: dict, prediction: dict | None, run_id: str, client,
         after_exit = _exit_code(after_output, "PYTEST_EXIT")
         before_coverage_exit = _exit_code(before_output, "COVERAGE_TEST_EXIT")
         after_coverage_exit = _exit_code(after_output, "COVERAGE_TEST_EXIT")
+        before_report_exit = _exit_code(before_output, "COVERAGE_REPORT_EXIT")
+        after_report_exit = _exit_code(after_output, "COVERAGE_REPORT_EXIT")
         before_mutation_exit = _exit_code(before_output, "MUTATION_EXIT")
         after_mutation_exit = _exit_code(after_output, "MUTATION_EXIT")
         baseline_repeat_exits = [
@@ -1163,6 +1179,7 @@ def _evaluate_one(instance: dict, prediction: dict | None, run_id: str, client,
             before_cov, after_cov, patch_info, before_exit, after_exit,
             PATCH_APPLIED in after_output, before_timeout or after_timeout,
             coverage_test_failed=(before_coverage_exit != 0 or after_coverage_exit != 0),
+            coverage_report_failed=(before_report_exit != 0 or after_report_exit != 0),
             mutation_before=usable_before_mut,
             mutation_after=usable_after_mut,
             baseline_flaky=baseline_flaky,
@@ -1174,6 +1191,10 @@ def _evaluate_one(instance: dict, prediction: dict | None, run_id: str, client,
             "base_tests_passed": before_exit == 0, "after_tests_passed": after_exit == 0,
             "base_coverage_tests_passed": before_coverage_exit == 0,
             "after_coverage_tests_passed": after_coverage_exit == 0,
+            "base_coverage_report_passed": before_report_exit == 0,
+            "after_coverage_report_passed": after_report_exit == 0,
+            "coverage_report_before_exit_code": before_report_exit,
+            "coverage_report_after_exit_code": after_report_exit,
             "baseline_flaky": baseline_flaky,
             "generated_tests_flaky": generated_tests_flaky,
             "flaky": baseline_flaky or generated_tests_flaky,
@@ -1273,6 +1294,8 @@ def run_standalone_coverage_evaluation(
             "tools_before_exit_code": baseline.get("tools_exit"),
             "base_tests_passed": baseline.get("test_exit") == 0,
             "base_coverage_tests_passed": baseline.get("coverage_test_exit") == 0,
+            "base_coverage_report_passed": baseline.get("coverage_report_exit", 0) == 0,
+            "coverage_report_before_exit_code": baseline.get("coverage_report_exit", 0),
             "baseline_flaky": any(code != 0 for code in baseline_repeats),
             "coverage_before": baseline.get("coverage"),
             "before_wall_time_seconds": round(float(baseline.get("runtime", 0.0)), 6),
@@ -1297,6 +1320,7 @@ def run_standalone_coverage_evaluation(
             )
             before_exit = _exit_code(before_output, "PYTEST_EXIT")
             before_coverage_exit = _exit_code(before_output, "COVERAGE_TEST_EXIT")
+            before_report_exit = _exit_code(before_output, "COVERAGE_REPORT_EXIT")
             before_setup_exit = _exit_code(before_output, "SETUP_EXIT")
             before_tools_exit = _exit_code(before_output, "TOOLS_EXIT")
             baseline_repeat_exits = [
@@ -1310,6 +1334,7 @@ def run_standalone_coverage_evaluation(
             before_cov = baseline.get("coverage")
             before_exit = baseline.get("test_exit")
             before_coverage_exit = baseline.get("coverage_test_exit")
+            before_report_exit = baseline.get("coverage_report_exit", 0)
             before_setup_exit = baseline.get("setup_exit")
             before_tools_exit = baseline.get("tools_exit")
             baseline_repeat_exits = baseline.get("repeat_exits") or []
@@ -1322,6 +1347,7 @@ def run_standalone_coverage_evaluation(
         )
         after_exit = _exit_code(after_output, "PYTEST_EXIT")
         after_coverage_exit = _exit_code(after_output, "COVERAGE_TEST_EXIT")
+        after_report_exit = _exit_code(after_output, "COVERAGE_REPORT_EXIT")
         after_setup_exit = _exit_code(after_output, "SETUP_EXIT")
         after_tools_exit = _exit_code(after_output, "TOOLS_EXIT")
         after_repeat_exits = [
@@ -1396,6 +1422,9 @@ def run_standalone_coverage_evaluation(
                 PATCH_APPLIED in after_output,
                 before_timeout or after_timeout,
                 coverage_test_failed=(before_coverage_exit != 0 or after_coverage_exit != 0),
+                coverage_report_failed=(
+                    before_report_exit != 0 or after_report_exit != 0
+                ),
                 mutation_before=usable_before_mut,
                 mutation_after=usable_after_mut,
                 mutation_timed_out=mutation_before_timeout or mutation_after_timeout,
@@ -1429,6 +1458,10 @@ def run_standalone_coverage_evaluation(
             "after_tests_passed": after_exit == 0,
             "base_coverage_tests_passed": before_coverage_exit == 0,
             "after_coverage_tests_passed": after_coverage_exit == 0,
+            "base_coverage_report_passed": before_report_exit == 0,
+            "after_coverage_report_passed": after_report_exit == 0,
+            "coverage_report_before_exit_code": before_report_exit,
+            "coverage_report_after_exit_code": after_report_exit,
             "baseline_flaky": baseline_flaky,
             "generated_tests_flaky": generated_tests_flaky,
             "flaky": baseline_flaky or generated_tests_flaky,

@@ -5,6 +5,7 @@ import sys
 import pytest
 
 from swebench.eval_pipeline.coverage_generation_eval import (
+    _extract_block,
     _is_flaky,
     _is_test_path,
     _mark_inference_completion,
@@ -29,6 +30,14 @@ from swebench.eval_pipeline.coverage_generation_eval import (
 )
 from swebench.eval_pipeline.prompt_builder import build_agent_prompt
 from swebench.eval_pipeline.run_pipeline import _standalone_coverage_instance, parse_args
+
+
+def test_extract_block_accepts_end_marker_after_json_without_newline():
+    output = 'COVERAGE_JSON_START\n{"files": []}COVERAGE_JSON_END\n'
+    assert (
+        _extract_block(output, "COVERAGE_JSON_START", "COVERAGE_JSON_END")
+        == '{"files": []}'
+    )
 
 
 def test_standalone_default_setup_uses_editable_install(monkeypatch):
@@ -426,6 +435,16 @@ def test_classification_requires_valid_passing_improvement():
     assert classify_coverage_result(before, after, patch_info, 0, 1, True, False) == (
         "unresolved", "tests_failed_after_patch"
     )
+    assert classify_coverage_result(
+        before,
+        after,
+        patch_info,
+        0,
+        0,
+        True,
+        False,
+        coverage_report_failed=True,
+    ) == ("errored", "coverage_report_failed")
 
 
 def test_mutation_improvement_can_resolve_without_coverage_delta():
@@ -611,6 +630,8 @@ def test_biopython_script_runs_module_level_tests_with_pytest_and_combines_cover
     assert "run_without_generated_pytests" in script
     assert "PYTEST_EXIT=$PRIMARY_TEST_EXIT" in script
     assert "COVERAGE_TEST_EXIT=$PRIMARY_COVERAGE_EXIT" in script
+    assert "COVERAGE_REPORT_EXIT=$?" in script
+    assert "echo COVERAGE_REPORT_EXIT=$COVERAGE_REPORT_EXIT" in script
     completed = subprocess.run(["bash", "-n"], input=script, text=True)
     assert completed.returncode == 0
 
@@ -716,6 +737,7 @@ def test_nested_pytest_mutation_script_uses_only_touched_test_files(tmp_path):
         ({"tools_exit": 1}, "baseline_test_or_coverage_tools_unavailable"),
         ({"test_exit": 1}, "baseline_tests_failed"),
         ({"coverage_test_exit": 1}, "baseline_coverage_test_failed"),
+        ({"coverage_report_exit": 1}, "baseline_coverage_report_failed"),
         ({"coverage": None}, "baseline_coverage_unavailable"),
         ({"repeat_exits": [0, 1]}, "baseline_test_suite_flaky_or_failed"),
     ],

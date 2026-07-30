@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -18,6 +19,7 @@ from swebench.eval_pipeline.coverage_adapters import (
 )
 from swebench.eval_pipeline.coverage_generation_eval import inspect_test_patch
 from swebench.eval_pipeline.coverage_generation_eval import _run_cpp_container
+from swebench.eval_pipeline.cpp_coverage_runner import run as run_cpp_coverage_runner
 from swebench.eval_pipeline.run_pipeline import _standalone_coverage_instance, parse_args
 
 
@@ -135,6 +137,7 @@ def test_cpp_default_commands_and_helper(tmp_path):
         tmp_path,
         {
             "coverage_language": "cpp",
+            "coverage_container_image": "example/coverage:latest",
             "coverage_setup_command": commands.setup,
             "coverage_test_command": commands.test,
             "coverage_reset_command": commands.reset,
@@ -143,8 +146,11 @@ def test_cpp_default_commands_and_helper(tmp_path):
         },
     )
     source = helper.read_text()
-    assert "ctest --test-dir build --output-on-failure" in source
-    assert "coverage-summary.json" in source
+    config = json.loads((tmp_path / ".git" / "coverage-runner.json").read_text())
+    assert "swebench.eval_pipeline.cpp_coverage_runner" in source
+    assert config["image"] == "example/coverage:latest"
+    assert config["test"] == "ctest --test-dir build --output-on-failure"
+    assert "coverage-summary.json" in config["report"]
     assert helper.stat().st_mode & 0o111
 
 
@@ -185,11 +191,20 @@ def test_openmm_profile_is_cpu_only_and_mutation_unsupported(monkeypatch):
     assert "OPENMM_BUILD_CPU_LIB=ON" in instance["coverage_setup_command"]
     assert "OPENMM_BUILD_CUDA_LIB=OFF" in instance["coverage_setup_command"]
     assert "OPENMM_BUILD_SERIALIZATION_TESTS=ON" in instance["coverage_setup_command"]
-    assert "python3 ../devtools/run-ctest.py --attempts 2" in instance[
+    assert "python3 ../devtools/run-ctest.py --attempts 0" in instance[
+        "coverage_test_command"
+    ]
+    assert "--timeout 900" in instance["coverage_test_command"]
+    assert "Testing/Temporary/LastTestsFailed.log" in instance[
+        "coverage_test_command"
+    ]
+    assert "ctest --output-on-failure --rerun-failed" in instance[
         "coverage_test_command"
     ]
     assert instance["coverage_test_command"].startswith("(cd build &&")
     assert instance["coverage_test_command"].endswith(")")
+    assert instance["coverage_tool_install_command"] == "true"
+    assert instance["coverage_phase_timeout"] == 14400
     assert "gcovr" in instance["coverage_results_command"]
     assert (
         "--gcov-ignore-parse-errors=suspicious_hits.warn_once_per_file"
@@ -200,6 +215,56 @@ def test_openmm_profile_is_cpu_only_and_mutation_unsupported(monkeypatch):
         in instance["coverage_results_command"]
     )
     assert instance["mutation_supported"] is False
+
+
+def test_openmm_retry_command_propagates_retry_status(tmp_path, monkeypatch):
+    root = tmp_path / "openmm"
+    build = root / "build"
+    devtools = root / "devtools"
+    fake_bin = root / "bin"
+    build.mkdir(parents=True)
+    devtools.mkdir()
+    fake_bin.mkdir()
+    (devtools / "run-ctest.py").write_text(
+        "from pathlib import Path\n"
+        "failed = Path('Testing/Temporary/LastTestsFailed.log')\n"
+        "failed.parent.mkdir(parents=True, exist_ok=True)\n"
+        "failed.write_text('1:TimedOutTest\\n')\n"
+        "raise SystemExit(1)\n"
+    )
+    ctest_log = root / "ctest-args.log"
+    ctest = fake_bin / "ctest"
+    ctest.write_text(
+        "#!/bin/bash\n"
+        "printf '%s\\n' \"$*\" > \"$CTEST_ARGS_LOG\"\n"
+        "exit \"${FAKE_CTEST_EXIT:-0}\"\n"
+    )
+    ctest.chmod(0o755)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_pipeline",
+            "--repo_url",
+            "https://github.com/openmm/openmm.git",
+            "--base_commit",
+            "3ff9269047207049c2f4bd3ae960dca7b717d29a",
+        ],
+    )
+    command = _standalone_coverage_instance(parse_args())["coverage_test_command"]
+    env = {
+        **os.environ,
+        "PATH": f"{fake_bin}{os.pathsep}{os.environ['PATH']}",
+        "CTEST_ARGS_LOG": str(ctest_log),
+        "FAKE_CTEST_EXIT": "0",
+    }
+    completed = subprocess.run(["bash", "-c", command], cwd=root, env=env)
+    assert completed.returncode == 0
+    assert "--rerun-failed" in ctest_log.read_text()
+
+    env["FAKE_CTEST_EXIT"] = "7"
+    completed = subprocess.run(["bash", "-c", command], cwd=root, env=env)
+    assert completed.returncode == 7
 
 
 def test_cpp_rejects_pynguin(monkeypatch):
@@ -306,6 +371,68 @@ def test_cpp_container_is_offline_unprivileged_and_mount_scoped(
     assert len(options["volumes"]) == 2
     assert options["user"].count(":") == 1
     assert instance["coverage_container_digest"] == "example@sha256:abc"
+
+
+def test_agent_cpp_runner_uses_same_offline_container_policy(tmp_path, monkeypatch):
+    repo = tmp_path / "repo"
+    config_path = repo / ".git" / "coverage-runner.json"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text(json.dumps({
+        "image": "example:fixed",
+        "timeout": 30,
+        "setup": "cmake --build build",
+        "test": "ctest --test-dir build",
+        "reset": "true",
+        "coverage": "ctest --test-dir build",
+        "report": "gcovr --json-summary .git/coverage-summary.json",
+    }))
+    captured = {}
+
+    class Container:
+        def wait(self, timeout):
+            captured["timeout"] = timeout
+            return {"StatusCode": 0}
+
+        def logs(self, stdout=True, stderr=True):
+            return b"ok\n"
+
+        def remove(self, force=False):
+            captured["removed"] = force
+
+    class Images:
+        def get(self, name):
+            captured["image_get"] = name
+
+    class Containers:
+        def run(self, image, command, **kwargs):
+            captured.update(image=image, command=command, kwargs=kwargs)
+            return Container()
+
+    class Client:
+        images = Images()
+        containers = Containers()
+
+        def version(self):
+            return {"Platform": {"Name": "Podman Engine"}}
+
+        def close(self):
+            captured["closed"] = True
+
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.cpp_coverage_runner.docker.from_env",
+        lambda: Client(),
+    )
+    assert run_cpp_coverage_runner(config_path, "test", ["-R", "Focused"]) == 0
+    options = captured["kwargs"]
+    assert options["network_disabled"] is True
+    assert options["cap_drop"] == ["ALL"]
+    assert options["security_opt"] == ["no-new-privileges:true"]
+    assert options["userns_mode"] == "host"
+    assert options["user"] == "0:0"
+    assert len(options["volumes"]) == 1
+    assert "ctest --test-dir build --output-on-failure -R Focused" in " ".join(
+        captured["command"]
+    )
 
 
 @pytest.mark.skipif(

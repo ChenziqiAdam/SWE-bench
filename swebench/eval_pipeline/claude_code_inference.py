@@ -117,7 +117,11 @@ def _prepare_standalone_environment(
     """Install and verify standalone dependencies before agent inference."""
     metrics: dict[str, float | bool] = {"environment_prepared": False}
     instance_id = inst["instance_id"]
-    setup_command = (inst.get("coverage_setup_command") or "").strip()
+    setup_command = (
+        ".git/coverage-runner build"
+        if inst.get("coverage_language") == "cpp"
+        else (inst.get("coverage_setup_command") or "").strip()
+    )
     if setup_command:
         metrics["environment_setup_wall_time_seconds"] = _run_environment_command(
             setup_command,
@@ -538,7 +542,6 @@ def run_claude_code_inference(
             if (
                 inst.get("standalone")
                 and eval_mode == "coverage_generation"
-                and inst.get("coverage_language") != "cpp"
             ):
                 environment_metrics = _prepare_standalone_environment(
                     inst,

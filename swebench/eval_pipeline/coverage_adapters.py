@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import shlex
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -236,24 +237,26 @@ def install_coverage_runner(repo_dir: str | Path, instance: dict) -> Path | None
     reset = instance.get("coverage_reset_command") or default_commands("cpp").reset
     coverage = instance.get("coverage_command") or tests
     report = instance.get("coverage_results_command") or default_commands("cpp").report
-    focused = "ctest --test-dir build --output-on-failure \"$@\""
+    config = helper.with_name("coverage-runner.json")
+    config.write_text(json.dumps({
+        "image": instance["coverage_container_image"],
+        "timeout": int(instance.get("coverage_phase_timeout") or 14400),
+        "setup": setup,
+        "test": tests,
+        "reset": reset,
+        "coverage": coverage,
+        "report": report.replace(
+            "{output}", ".git/coverage-summary.json"
+        ),
+    }, indent=2))
+    runner_python = shlex.quote(sys.executable)
+    runner_config = shlex.quote(str(config))
     script = "\n".join([
         "#!/bin/bash",
         "set -euo pipefail",
         'cd "$(git rev-parse --show-toplevel)"',
-        'action="${1:-}"',
-        'if [ "$#" -gt 0 ]; then shift; fi',
-        'case "$action" in',
-        f"  build) /bin/bash -lc {shlex.quote(setup)} ;;",
-        "  test)",
-        '    if [ "${1:-}" = "--" ]; then shift; ' + focused + ";",
-        f"    else /bin/bash -lc {shlex.quote(tests)}; fi ;;",
-        "  coverage)",
-        f"    /bin/bash -lc {shlex.quote(reset)}",
-        f"    /bin/bash -lc {shlex.quote(coverage)}",
-        f"    /bin/bash -lc {shlex.quote(report.replace('{output}', '.git/coverage-summary.json'))} ;;",
-        '  *) echo "usage: .git/coverage-runner {build|test [-- CTest args]|coverage}" >&2; exit 2 ;;',
-        "esac",
+        f"exec {runner_python} -m swebench.eval_pipeline.cpp_coverage_runner "
+        f"--config {runner_config} \"$@\"",
         "",
     ])
     helper.write_text(script)

@@ -2,7 +2,10 @@ import json
 import os
 import subprocess
 
-from swebench.eval_pipeline.claude_code_inference import run_claude_code_inference
+from swebench.eval_pipeline.claude_code_inference import (
+    _prepare_standalone_environment,
+    run_claude_code_inference,
+)
 from swebench.eval_pipeline.prediction_utils import selected_prediction_rows
 
 
@@ -27,6 +30,33 @@ def _make_git_repo(path):
         capture_output=True,
     )
     return path
+
+
+def test_cpp_environment_preparation_uses_container_helper(tmp_path, monkeypatch):
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append((command, kwargs))
+        return 1.25
+
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.claude_code_inference._run_environment_command",
+        fake_run,
+    )
+    metrics = _prepare_standalone_environment(
+        {
+            "instance_id": "openmm",
+            "coverage_language": "cpp",
+            "coverage_setup_command": "cmake should-not-run-on-host",
+        },
+        repo_dir=tmp_path,
+        env={},
+        timeout=1800,
+        logs_dir=tmp_path,
+    )
+    assert calls[0][0] == ".git/coverage-runner build"
+    assert metrics["environment_prepared"] is True
+    assert metrics["environment_setup_wall_time_seconds"] == 1.25
 
 
 def test_claude_code_inference_writes_backend_tagged_prediction(tmp_path, monkeypatch):
