@@ -2,6 +2,7 @@ import json
 import sys
 
 from swebench.eval_pipeline.prompt_builder import build_agent_prompt
+from swebench.harness.constants.c import SPECS_OPENMM
 from swebench.eval_pipeline.test_generation_eval import (
     BUILD_FAIL,
     GOLD_APPLY_PASS,
@@ -207,6 +208,54 @@ def test_scientific_infrastructure_failure_markers_are_narrow():
         assert _infrastructure_failure_output(output)
 
     assert not _infrastructure_failure_output("AssertionError: expected 3, found 2")
+
+
+def test_openmm_opencl_specs_apply_portable_pocl_cpu_compatibility():
+    spec = SPECS_OPENMM["1382"]
+
+    assert any(
+        "getHostCPUName()" in command and 'StringRef("x86-64", 6)' in command
+        for command in spec["build_after_test_patch"]
+    )
+    assert all(
+        "LD_PRELOAD=${LD_PRELOAD:+$LD_PRELOAD:}"
+        "/tmp/swebench_pocl_cpu_compat.so" in command
+        for command in spec["test_cmd"]
+    )
+
+
+def test_openmm_opencl_specs_supply_cl_make_version_compatibility():
+    spec = SPECS_OPENMM["5302"]
+
+    assert any(
+        "#define CL_MAKE_VERSION(major, minor, patch)" in command
+        for command in spec["build_after_test_patch"]
+    )
+    assert any(
+        "-DCMAKE_CXX_FLAGS='-include /tmp/swebench_opencl_compat.h'" in command
+        for command in spec["build_after_test_patch"]
+    )
+
+
+def test_every_openmm_opencl_spec_has_runtime_and_header_compatibility():
+    opencl_specs = [
+        spec
+        for spec in SPECS_OPENMM.values()
+        if any(
+            "-DOPENMM_BUILD_OPENCL_LIB=ON" in command
+            for command in spec.get("build_after_test_patch", [])
+        )
+    ]
+
+    assert opencl_specs
+    for spec in opencl_specs:
+        build_commands = spec["build_after_test_patch"]
+        assert any("swebench_opencl_compat.h" in command for command in build_commands)
+        assert any("swebench_pocl_cpu_compat.cpp" in command for command in build_commands)
+        assert all(
+            "/tmp/swebench_pocl_cpu_compat.so" in command
+            for command in spec["test_cmd"]
+        )
 
 
 def test_test_generation_marks_zero_selected_not_exercised():

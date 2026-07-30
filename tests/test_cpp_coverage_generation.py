@@ -191,6 +191,14 @@ def test_openmm_profile_is_cpu_only_and_mutation_unsupported(monkeypatch):
     assert instance["coverage_test_command"].startswith("(cd build &&")
     assert instance["coverage_test_command"].endswith(")")
     assert "gcovr" in instance["coverage_results_command"]
+    assert (
+        "--gcov-ignore-parse-errors=suspicious_hits.warn_once_per_file"
+        in instance["coverage_results_command"]
+    )
+    assert (
+        "--exclude '.*/(tests?|serialization/tests)/.*'"
+        in instance["coverage_results_command"]
+    )
     assert instance["mutation_supported"] is False
 
 

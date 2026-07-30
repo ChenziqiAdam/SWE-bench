@@ -336,8 +336,52 @@ def _openmm_cpp_targets_spec(*targets: str) -> dict:
     }
 
 
+_OPENMM_OPENCL_COMPAT_HEADER_COMMAND = (
+    "printf '%s\\n' "
+    "'#ifndef CL_MAKE_VERSION' "
+    "'#define CL_MAKE_VERSION(major, minor, patch) "
+    "(((major) << 22) | ((minor) << 12) | (patch))' "
+    "'#endif' > /tmp/swebench_opencl_compat.h"
+)
+
+_OPENMM_POCL_CPU_COMPAT_COMMAND = (
+    "if [ \"$(uname -m)\" = x86_64 ]; then "
+    "printf '%s\\n' "
+    "'#include <cstddef>' "
+    "'namespace llvm {' "
+    "'class StringRef {' "
+    "'  const char* data_;' "
+    "'  std::size_t size_;' "
+    "' public:' "
+    "'  StringRef(const char* data, std::size_t size) : data_(data), size_(size) {}' "
+    "'};' "
+    "'namespace sys {' "
+    "'StringRef getHostCPUName() { return StringRef(\"x86-64\", 6); }' "
+    "'}' "
+    "'}' > /tmp/swebench_pocl_cpu_compat.cpp && "
+    "g++ -shared -fPIC -O2 /tmp/swebench_pocl_cpu_compat.cpp "
+    "-o /tmp/swebench_pocl_cpu_compat.so; "
+    "fi"
+)
+
+_OPENMM_POCL_TEST_ENV = (
+    "LD_PRELOAD=${LD_PRELOAD:+$LD_PRELOAD:}"
+    "/tmp/swebench_pocl_cpu_compat.so "
+)
+
+
 def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False) -> dict:
-    """Build OpenCL tests against POCL so GPU-kernel fixes remain CPU-evaluable."""
+    """Build OpenCL tests against POCL so GPU-kernel fixes remain CPU-evaluable.
+
+    Ubuntu 22.04's POCL/LLVM combination reports ``generic`` for CPUs newer
+    than its LLVM release (for example Zen 4), but ``generic`` is not a valid
+    x86 LLVM CPU name.  A tiny process-local symbol interposer makes POCL emit
+    portable x86-64 code without changing OpenMM or the test oracle.
+
+    Recent bundled ``opencl.hpp`` revisions also use ``CL_MAKE_VERSION`` while
+    Jammy's C OpenCL headers can expose the extension without that macro.  A
+    forced compatibility header supplies the Khronos-defined encoding.
+    """
     cmake_targets = " ".join(targets)
     return {
         "pre_install": [
@@ -346,8 +390,11 @@ def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False) -> dict:
             "cmake g++ make libgl1-mesa-dev ocl-icd-opencl-dev pocl-opencl-icd",
         ],
         "build_after_test_patch": [
+            _OPENMM_OPENCL_COMPAT_HEADER_COMMAND,
+            _OPENMM_POCL_CPU_COMPAT_COMMAND,
             "cmake -B build -S . "
             "-DCMAKE_BUILD_TYPE=Release "
+            "-DCMAKE_CXX_FLAGS='-include /tmp/swebench_opencl_compat.h' "
             "-DOPENMM_BUILD_CUDA_LIB=OFF "
             "-DOPENMM_BUILD_OPENCL_LIB=ON "
             "-DOPENMM_BUILD_HIP_LIB=OFF "
@@ -358,7 +405,8 @@ def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False) -> dict:
             f"cmake --build build --parallel $(nproc) --target {cmake_targets}",
         ],
         "test_cmd": [
-            "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
+            _OPENMM_POCL_TEST_ENV
+            + "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
             "OPENMM_PLUGIN_DIR=$PWD/build "
             f"./build/{target}"
             for target in targets
@@ -796,8 +844,11 @@ SPECS_OPENMM = _OpenMMSpecs({
             "cmake g++ make ocl-icd-opencl-dev pocl-opencl-icd",
         ],
         "build_after_test_patch": [
+            _OPENMM_OPENCL_COMPAT_HEADER_COMMAND,
+            _OPENMM_POCL_CPU_COMPAT_COMMAND,
             "cmake -B build -S . "
             "-DCMAKE_BUILD_TYPE=Release "
+            "-DCMAKE_CXX_FLAGS='-include /tmp/swebench_opencl_compat.h' "
             "-DOPENMM_BUILD_CUDA_LIB=OFF "
             "-DOPENMM_BUILD_OPENCL_LIB=ON "
             "-DOPENMM_BUILD_HIP_LIB=OFF "
@@ -806,7 +857,8 @@ SPECS_OPENMM = _OpenMMSpecs({
             "cmake --build build --parallel $(nproc) --target TestOpenCLFFT",
         ],
         "test_cmd": [
-            "LD_LIBRARY_PATH=$PWD/build:$PWD/build/platforms/opencl:${LD_LIBRARY_PATH:-} "
+            _OPENMM_POCL_TEST_ENV
+            + "LD_LIBRARY_PATH=$PWD/build:$PWD/build/platforms/opencl:${LD_LIBRARY_PATH:-} "
             "OPENMM_PLUGIN_DIR=$PWD/build/platforms/opencl "
             "./build/TestOpenCLFFT",
         ],

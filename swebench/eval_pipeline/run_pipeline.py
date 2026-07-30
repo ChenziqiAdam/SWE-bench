@@ -116,8 +116,10 @@ STANDALONE_COVERAGE_REPO_PROFILES = {
         "coverage_results_command": (
             "gcovr --root . --filter openmmapi/src --filter platforms/cpu/src "
             "--filter platforms/reference/src --filter serialization/src "
-            "--filter plugins --exclude '.*[/\\\\](tests?|serialization/tests)"
-            "[/\\\\].*' --exclude 'build/.*' --json-summary {output}"
+            "--filter plugins --exclude '.*/(tests?|serialization/tests)/.*' "
+            "--exclude 'build/.*' "
+            "--gcov-ignore-parse-errors=suspicious_hits.warn_once_per_file "
+            "--json-summary {output}"
         ),
         "coverage_phase_timeout": 7200,
     },
