@@ -1719,6 +1719,65 @@ SPECS_RDKIT = _RDKitSpecs({
     ),
 })
 
+
+def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
+    """Build LAMMPS after applying an agent-generated regression-test patch."""
+    package_flags = " ".join(f"-D PKG_{package}=ON" for package in packages)
+    kokkos_flags = "-D BUILD_KOKKOS=ON -D Kokkos_ENABLE_SERIAL=ON" if kokkos else ""
+    return {
+        "pre_install": [
+            "apt-get update -q",
+            "apt-get install -y --no-install-recommends cmake g++ make ninja-build "
+            "python3 libfftw3-dev libjpeg-dev libpng-dev libgtest-dev "
+            "ocl-icd-opencl-dev",
+        ],
+        "build_after_test_patch": [
+            *(["git submodule update --init --recursive lib/kokkos"] if kokkos else []),
+            "cmake -S cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=Release "
+            "-D BUILD_MPI=OFF -D BUILD_TESTING=ON "
+            f"{kokkos_flags} {package_flags}",
+            "cmake --build build --parallel $(nproc)",
+        ],
+        "test_cmd": ["ctest --test-dir build --output-on-failure"],
+        "test_generation_use_spec_cmd": True,
+        "oracle_kind": "generated_test",
+    }
+
+
+SPECS_LAMMPS = {
+    "5039": _lammps_test_generation_spec("MANYBODY"),
+    "5042": _lammps_test_generation_spec("SPIN", "KSPACE"),
+    "4887": _lammps_test_generation_spec("GPU"),
+    "4590": _lammps_test_generation_spec("SRD"),
+    "4861": _lammps_test_generation_spec("RHEO"),
+    "4768": _lammps_test_generation_spec("KOKKOS", kokkos=True),
+    "4760": _lammps_test_generation_spec("RIGID"),
+    "4732": _lammps_test_generation_spec("MOLECULE"),
+    "4019": _lammps_test_generation_spec("MC", "RIGID"),
+    "4545": _lammps_test_generation_spec("RHEO"),
+    "4481": _lammps_test_generation_spec(),
+    "2026": _lammps_test_generation_spec("GPU", "ASPHERE"),
+    "2105": _lammps_test_generation_spec(),
+    "2367": _lammps_test_generation_spec("RIGID"),
+    "4443": _lammps_test_generation_spec("REAXFF"),
+    "4310": _lammps_test_generation_spec("MOLECULE", "EXTRA-MOLECULE", "OPENMP"),
+    "4312": _lammps_test_generation_spec("REAXFF"),
+    "4346": _lammps_test_generation_spec("KOKKOS", "GRANULAR", kokkos=True),
+    "4339": _lammps_test_generation_spec("GRANULAR", "RHEO", "EXTRA-FIX"),
+    "4243": _lammps_test_generation_spec("SPH", "DPD-MESO", "DPD-SMOOTH", "MACHDYN"),
+    "4239": _lammps_test_generation_spec(),
+    "4202": _lammps_test_generation_spec(),
+    "4195": _lammps_test_generation_spec("GRANULAR", "BPM"),
+    "4134": _lammps_test_generation_spec("MANYBODY"),
+    "4123": _lammps_test_generation_spec("RIGID"),
+    "4120": _lammps_test_generation_spec("ASPHERE"),
+    "3553": _lammps_test_generation_spec(),
+    "3931": _lammps_test_generation_spec(),
+    "3941": _lammps_test_generation_spec("MANYBODY", "KOKKOS", kokkos=True),
+    "4407": _lammps_test_generation_spec("EXTRA-FIX", "BPM", "GRANULAR"),
+    "3930": _lammps_test_generation_spec("KOKKOS", kokkos=True),
+}
+
 MAP_REPO_VERSION_TO_SPECS_C = {
     "redis/redis": SPECS_REDIS,  # c
     "jqlang/jq": SPECS_JQ,  # c
@@ -1731,6 +1790,7 @@ MAP_REPO_VERSION_TO_SPECS_C = {
     "openmc-dev/openmc": SPECS_OPENMC,  # c++
     "qgis/QGIS": SPECS_QGIS,  # c++
     "rdkit/rdkit": SPECS_RDKIT,  # c++
+    "lammps/lammps": SPECS_LAMMPS,  # c++
 }
 
 # Constants - Repository Specific Installation Instructions

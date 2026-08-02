@@ -1238,6 +1238,21 @@ SPECS_MDTRAJ = {
     for k in ["1.9", "1.10", "1.11"]
 }
 
+
+_BIOPYTHON_TEST_GENERATION_SPEC = {
+    "python": "3.9",
+    "packages": "pytest",
+    "pip_packages": ["pytest"],
+    "install": "python -m pip install --no-build-isolation -e .",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+}
+
+SPECS_BIOPYTHON = {
+    pr: dict(_BIOPYTHON_TEST_GENERATION_SPEC)
+    for pr in ("4439", "3846", "3281", "2283")
+}
+
 # Constants - Task Instance Instllation Environment
 MAP_REPO_VERSION_TO_SPECS_PY = {
     "astropy/astropy": SPECS_ASTROPY,
@@ -1264,6 +1279,7 @@ MAP_REPO_VERSION_TO_SPECS_PY = {
     "swe-bench/humaneval": SPECS_HUMANEVAL,
     "sympy/sympy": SPECS_SYMPY,
     "mdtraj/mdtraj": SPECS_MDTRAJ,
+    "biopython/biopython": SPECS_BIOPYTHON,
 }
 
 # Constants - Repository Specific Installation Instructions

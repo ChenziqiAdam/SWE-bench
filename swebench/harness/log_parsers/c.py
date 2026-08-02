@@ -353,4 +353,5 @@ MAP_REPO_TO_PARSER_C = {
     "openmc-dev/openmc": parse_log_googletest,
     "qgis/QGIS": parse_log_qgis,
     "rdkit/rdkit": parse_log_catch2,
+    "lammps/lammps": parse_log_qgis,
 }

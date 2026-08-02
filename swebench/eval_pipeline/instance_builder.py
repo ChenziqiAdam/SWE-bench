@@ -17,6 +17,10 @@ from swebench.harness.constants.c import MAP_REPO_VERSION_TO_SPECS_C
 # Key: (repo_full, pr_number), Value: version string matching a key in the repo's SPECS dict.
 _PR_VERSION_OVERRIDES: dict[tuple[str, int], str] = {
     ("mdtraj/mdtraj", 2038): "1.10",
+    **{
+        ("biopython/biopython", pr): str(pr)
+        for pr in (4439, 3846, 3281, 2283)
+    },
 }
 
 logger = logging.getLogger(__name__)

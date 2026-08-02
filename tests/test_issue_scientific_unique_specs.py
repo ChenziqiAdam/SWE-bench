@@ -1,9 +1,20 @@
 import openpyxl
 
 from swebench.eval_pipeline.ingest import load_spreadsheet_issues
-from swebench.eval_pipeline.instance_builder import _split_patches
-from swebench.harness.constants.c import SPECS_OPENMM, SPECS_QGIS, SPECS_RDKIT
+from swebench.eval_pipeline.instance_builder import (
+    _PR_VERSION_OVERRIDES,
+    _split_patches,
+)
+from swebench.harness.constants import MAP_REPO_TO_EXT, MAP_REPO_VERSION_TO_SPECS
+from swebench.harness.constants.c import (
+    SPECS_LAMMPS,
+    SPECS_OPENMM,
+    SPECS_QGIS,
+    SPECS_RDKIT,
+)
+from swebench.harness.constants.python import SPECS_BIOPYTHON
 from swebench.harness.dockerfiles import get_dockerfile_base
+from swebench.harness.log_parsers import MAP_REPO_TO_PARSER
 from swebench.harness.log_parsers.c import parse_log_qgis
 from swebench.harness.test_spec.test_spec import TestSpec as HarnessTestSpec
 
@@ -71,6 +82,54 @@ def test_remaining_scientific_issue_specs_are_concrete():
             assert "not evaluable" not in text
             assert "no curated" not in text
             assert "placeholder" not in text
+
+
+def test_issues_no_tests_v1_generated_test_specs_are_registered():
+    lammps_prs = {
+        "5039", "5042", "4887", "4590", "4861", "4768", "4760",
+        "4732", "4019", "4545", "4481", "2026", "2105", "2367",
+        "4443", "4310", "4312", "4346", "4339", "4243", "4239",
+        "4202", "4195", "4134", "4123", "4120", "3553", "3931",
+        "3941", "4407", "3930",
+    }
+    biopython_prs = {"4439", "3846", "3281", "2283"}
+
+    assert set(SPECS_LAMMPS) == lammps_prs
+    assert set(SPECS_BIOPYTHON) == biopython_prs
+    assert MAP_REPO_VERSION_TO_SPECS["lammps/lammps"] is SPECS_LAMMPS
+    assert MAP_REPO_VERSION_TO_SPECS["biopython/biopython"] is SPECS_BIOPYTHON
+    assert MAP_REPO_TO_EXT["lammps/lammps"] == "c"
+    assert MAP_REPO_TO_EXT["biopython/biopython"] == "py"
+    assert "lammps/lammps" in MAP_REPO_TO_PARSER
+    assert "biopython/biopython" in MAP_REPO_TO_PARSER
+
+    for pr in map(int, biopython_prs):
+        assert _PR_VERSION_OVERRIDES[("biopython/biopython", pr)] == str(pr)
+
+    for pr, spec in SPECS_LAMMPS.items():
+        text = _spec_text(spec)
+        assert spec["oracle_kind"] == "generated_test", pr
+        assert spec["test_generation_use_spec_cmd"] is True, pr
+        assert "BUILD_TESTING=ON" in text, pr
+        assert "cmake --build build" in text, pr
+        assert "ctest --test-dir build --output-on-failure" in text, pr
+        assert "source_invariant" not in text, pr
+
+    for pr, spec in SPECS_BIOPYTHON.items():
+        assert spec["oracle_kind"] == "generated_test", pr
+        assert spec["test_cmd"].startswith("pytest "), pr
+        assert spec["install"].endswith("-e ."), pr
+
+
+def test_issues_no_tests_v1_parsers_read_generated_test_results():
+    ctest_log = "1/1 Test #1: generated_lammps_regression ....   Passed  0.2 sec"
+    assert MAP_REPO_TO_PARSER["lammps/lammps"](ctest_log, None) == {
+        "generated_lammps_regression": "PASSED"
+    }
+    pytest_log = "PASSED Tests/test_generated.py::test_regression"
+    assert MAP_REPO_TO_PARSER["biopython/biopython"](pytest_log, None) == {
+        "Tests/test_generated.py::test_regression": "PASSED"
+    }
 
 
 def test_current_scientific_issues_sheet_specs_are_concrete():
