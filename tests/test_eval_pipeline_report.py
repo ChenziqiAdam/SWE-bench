@@ -197,6 +197,7 @@ def test_test_generation_report_excludes_base_image_infrastructure_failure(
             "demo__repo-1": {
                 "status": "errored",
                 "failure_reason": "evaluation_exception",
+                "evaluation_stage": "build_instance_image",
             }
         },
         instances=[{"instance_id": "demo__repo-1", "repo": "demo/repo"}],
@@ -217,6 +218,31 @@ def test_test_generation_report_excludes_base_image_infrastructure_failure(
     assert row["failure_reason"] == "base_image_not_buildable"
     assert row["build_validation_error"] == "apt exited with code 100"
     assert "0/0 scorable; 1 total" in capsys.readouterr().out
+
+
+def test_test_generation_report_does_not_exclude_invalid_spec(tmp_path):
+    output_csv = tmp_path / "results.csv"
+    render_test_generation_table(
+        results={
+            "demo__repo-1": {
+                "status": "errored",
+                "failure_reason": "invalid_test_spec",
+                "evaluation_stage": "resolve_test_spec",
+                "error": "KeyError: '0'",
+            }
+        },
+        instances=[{"instance_id": "demo__repo-1", "repo": "demo/repo"}],
+        output_csv=str(output_csv),
+        build_validation={
+            "demo__repo-1": {"buildable": False, "error": "no spec for version '0'"}
+        },
+    )
+
+    with open(output_csv, newline="") as handle:
+        row = next(csv.DictReader(handle))
+    assert row["status"] == "errored"
+    assert row["failure_reason"] == "invalid_test_spec"
+    assert row["evaluation_error"] == "KeyError: '0'"
 
 
 def test_test_generation_report_keeps_successful_validation_retry(tmp_path):

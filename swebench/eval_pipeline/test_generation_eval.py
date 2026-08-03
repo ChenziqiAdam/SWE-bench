@@ -35,6 +35,7 @@ from swebench.harness.test_spec.test_spec import make_test_spec
 from swebench.harness.test_spec.utils import get_test_cmds
 
 logger = logging.getLogger(__name__)
+MAX_GENERATED_TEST_PATCH_BYTES = 1_000_000
 
 GENERATED_TEST_PATCH = "/tmp/generated_test.patch"
 GOLD_PATCH = "/tmp/gold.patch"
@@ -755,11 +756,39 @@ def _evaluate_one(
         return report[instance_id]
 
     generated_patch = prediction["model_patch"]
+    generated_patch_bytes = len(generated_patch.encode())
+    if generated_patch_bytes > MAX_GENERATED_TEST_PATCH_BYTES:
+        report = {
+            instance_id: {
+                "status": "errored",
+                "failure_reason": "prediction_patch_too_large",
+                "error": (
+                    f"generated patch is {generated_patch_bytes} bytes; maximum is "
+                    f"{MAX_GENERATED_TEST_PATCH_BYTES}"
+                ),
+                "test_patch_applied": False,
+                "gold_patch_applied": False,
+                "base_failed_tests": [],
+                "gold_passed_tests": [],
+                "inference_metrics": prediction.get("metrics", {}),
+                "evaluation_wall_time_seconds": round(
+                    time.perf_counter() - evaluation_started, 6
+                ),
+            }
+        }
+        _write_report_and_cleanup_instance_image(
+            report_path, report, instance, client, clean_images
+        )
+        close_logger(inst_logger)
+        return report[instance_id]
+
     container = None
     base_duration = None
     gold_duration = None
+    evaluation_stage = "resolve_test_spec"
     try:
         spec = make_test_spec(instance)
+        evaluation_stage = "build_instance_image"
         stale_name = spec.get_instance_container_name(run_id)
         try:
             stale = client.containers.get(stale_name)
@@ -776,6 +805,7 @@ def _evaluate_one(
             force_rebuild=False,
         )
         container.start()
+        evaluation_stage = "execute_generated_tests"
 
         gen_patch_path = out_dir / "generated_test.patch"
         gold_patch_path = out_dir / "gold.patch"
@@ -848,10 +878,16 @@ def _evaluate_one(
         }
     except Exception as e:
         inst_logger.exception("test-generation evaluation failed")
+        failure_reason = (
+            "invalid_test_spec"
+            if evaluation_stage == "resolve_test_spec"
+            else "evaluation_exception"
+        )
         report = {
             instance_id: {
                 "status": "errored",
-                "failure_reason": "evaluation_exception",
+                "failure_reason": failure_reason,
+                "evaluation_stage": evaluation_stage,
                 "error": f"{type(e).__name__}: {e}",
                 "test_patch_applied": False,
                 "gold_patch_applied": False,

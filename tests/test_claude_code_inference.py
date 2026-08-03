@@ -3,6 +3,7 @@ import os
 import subprocess
 
 from swebench.eval_pipeline.claude_code_inference import (
+    _enforce_patch_size,
     _prepare_standalone_environment,
     run_claude_code_inference,
 )
@@ -30,6 +31,14 @@ def _make_git_repo(path):
         capture_output=True,
     )
     return path
+
+
+def test_enforce_patch_size_rejects_runaway_patch():
+    assert _enforce_patch_size("small", 10) == ("small", "")
+    patch, error = _enforce_patch_size("x" * 11, 10)
+    assert patch == ""
+    assert error == "patch_too_large:11>10"
+    assert _enforce_patch_size("x" * 11, 0) == ("x" * 11, "")
 
 
 def test_cpp_environment_preparation_uses_container_helper(tmp_path, monkeypatch):

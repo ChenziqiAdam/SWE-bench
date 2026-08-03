@@ -11,6 +11,7 @@ from unidiff import PatchSet
 
 from swebench.eval_pipeline.constants import COL_REPO, COL_PR_NUMBER, COL_PAPER_REFERENCE, COL_HAS_ISSUE
 from swebench.eval_pipeline.media_assets import extract_image_urls
+from swebench.harness.constants import MAP_REPO_VERSION_TO_SPECS
 from swebench.harness.constants.c import MAP_REPO_VERSION_TO_SPECS_C
 
 # Manual version overrides for repos where auto-detection fails (e.g. versioneer).
@@ -258,6 +259,14 @@ def _get_version(repo_full: str, base_commit: str, github_token: Optional[str], 
     if pr_number is not None and (repo_full, pr_number) in _PR_VERSION_OVERRIDES:
         return _PR_VERSION_OVERRIDES[(repo_full, pr_number)]
 
+    # Scientific issue specs are keyed by PR number. Prefer that exact key for
+    # every language, rather than attempting package-version detection and
+    # silently falling back to the unusable sentinel "0".
+    if pr_number is not None:
+        version_key = str(pr_number)
+        if version_key in MAP_REPO_VERSION_TO_SPECS.get(repo_full, {}):
+            return version_key
+
     if repo_full in MAP_REPO_VERSION_TO_SPECS_C:
         if pr_number is None:
             raise ValueError(f"pr_number required for C/C++ repo {repo_full!r}")
@@ -282,6 +291,26 @@ def _get_version(repo_full: str, base_commit: str, github_token: Optional[str], 
     # Fallback: repos with dynamic versioning (pandas, old numpy/scipy) need
     # alternative lookup strategies.
     return _get_version_fallback(repo_full, base_commit, github_token) or "0"
+
+
+def _refresh_cached_instance(instance: dict, repo_full: str, pr_number: int) -> tuple[dict, bool]:
+    """Refresh stale per-PR metadata without refetching the GitHub diff."""
+    version_key = str(pr_number)
+    if version_key not in MAP_REPO_VERSION_TO_SPECS.get(repo_full, {}):
+        return instance, False
+    if str(instance.get("version", "")) == version_key:
+        return instance, False
+
+    refreshed = {**instance, "version": version_key}
+    if not refreshed.get("FAIL_TO_PASS"):
+        refreshed["FAIL_TO_PASS"] = _spec_fail_to_pass(repo_full, version_key)
+    logger.warning(
+        "Refreshed stale checkpoint metadata for %s: version %r -> %r",
+        refreshed.get("instance_id"),
+        instance.get("version"),
+        version_key,
+    )
+    return refreshed, True
 
 
 def _get_version_fallback(repo_full: str, base_commit: str, github_token: Optional[str]) -> Optional[str]:
@@ -387,6 +416,7 @@ def build_all_instances(
     selected_ids: set[str] = set()
     skipped = 0
     built = 0
+    checkpoint_dirty = False
 
     for row in enriched_rows:
         repo_full = row.get(COL_REPO, "")
@@ -397,7 +427,13 @@ def build_all_instances(
             continue
 
         if instance_id in existing:
-            instances.append(existing[instance_id])
+            cached, refreshed = _refresh_cached_instance(
+                existing[instance_id], repo_full, pr_number
+            )
+            if refreshed:
+                existing[instance_id] = cached
+                checkpoint_dirty = True
+            instances.append(cached)
             selected_ids.add(instance_id)
             skipped += 1
             continue
@@ -411,6 +447,11 @@ def build_all_instances(
                 Path(checkpoint_path).parent.mkdir(parents=True, exist_ok=True)
                 with open(checkpoint_path, "a") as f:
                     f.write(json.dumps(inst) + "\n")
+
+    if checkpoint_dirty and checkpoint_path:
+        with open(checkpoint_path, "w") as f:
+            for cached in existing.values():
+                f.write(json.dumps(cached) + "\n")
 
     if skipped:
         logger.info(f"Instance checkpoint: skipped {skipped} already-built rows")

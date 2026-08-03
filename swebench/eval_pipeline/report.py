@@ -307,6 +307,8 @@ def render_test_generation_table(
             not buildable
             and status == "errored"
             and info.get("failure_reason") == "evaluation_exception"
+            and info.get("evaluation_stage", "build_instance_image")
+            == "build_instance_image"
         )
         if infrastructure_failure:
             status = "excluded"

@@ -608,6 +608,13 @@ def parse_args():
                    help="Wall-clock timeout per instance in seconds for Claude Code CLI inference. "
                         "Only used with --agent_backend claude_code.")
     p.add_argument(
+        "--claude_code_max_patch_bytes",
+        type=int,
+        default=1_000_000,
+        help="Reject runaway Claude Code patches larger than this many bytes "
+             "(default 1000000; use 0 to disable).",
+    )
+    p.add_argument(
         "--claude_code_setup_timeout",
         type=int,
         default=1800,
@@ -773,6 +780,7 @@ def _run_agent_backend(args, instances: list[dict], output_file: str,
             network_policy=args.inference_network_policy,
             setup_timeout=args.claude_code_setup_timeout,
             hidden_paths=hidden_paths,
+            max_patch_bytes=args.claude_code_max_patch_bytes,
         )
     else:
         from swebench.eval_pipeline.agent_inference import run_agent_inference_for_level
@@ -1907,6 +1915,7 @@ def main():
         "codex_profile": args.codex_profile,
         "codex_model": args.codex_model,
         "claude_code_timeout": args.claude_code_timeout,
+        "claude_code_max_patch_bytes": args.claude_code_max_patch_bytes,
         "claude_code_interrupt_retries": args.claude_code_interrupt_retries,
         "claude_code_permission_mode": args.claude_code_permission_mode,
         "claude_code_max_turns": args.claude_code_max_turns,

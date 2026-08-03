@@ -49,12 +49,21 @@ logger = logging.getLogger(__name__)
 AGENT_BACKEND = "claude_code"
 _CLAUDE_CODE_TIMEOUT = 900
 _ENVIRONMENT_SETUP_TIMEOUT = 1800
+_MAX_PATCH_BYTES = 1_000_000
 _INTERRUPTED_EXIT_CODES = {129, 130, 143}
 
 
 def _is_interrupted_exit(returncode: int) -> bool:
     """Whether the CLI appears to have ended due to a Unix signal."""
     return returncode < 0 or returncode in _INTERRUPTED_EXIT_CODES
+
+
+def _enforce_patch_size(patch: str, max_patch_bytes: int) -> tuple[str, str]:
+    """Reject runaway patches instead of evaluating multi-megabyte artifacts."""
+    patch_bytes = len(patch.encode())
+    if max_patch_bytes > 0 and patch_bytes > max_patch_bytes:
+        return "", f"patch_too_large:{patch_bytes}>{max_patch_bytes}"
+    return patch, ""
 
 
 def _run_environment_command(
@@ -437,6 +446,7 @@ def run_claude_code_inference(
     network_policy: str = "unrestricted",
     setup_timeout: int = _ENVIRONMENT_SETUP_TIMEOUT,
     hidden_paths: list[str] | None = None,
+    max_patch_bytes: int = _MAX_PATCH_BYTES,
 ) -> None:
     """Run Claude Code inference for all instances. Writes standard prediction JSONL."""
     validate_network_policy(
@@ -665,6 +675,7 @@ def run_claude_code_inference(
             patch = _repair_patch(_clean_patch(_capture_patch(
                 repo_dir, inst.get("coverage_language") == "cpp"
             )))
+            patch, patch_error = _enforce_patch_size(patch, max_patch_bytes)
             logger.info(
                 f"[{instance_id}] claude_code exit={result.returncode}, "
                 f"patch_len={len(patch)}, log={stderr_path}"
@@ -684,6 +695,9 @@ def run_claude_code_inference(
             }
             if error:
                 record["error"] = error
+            if patch_error:
+                logger.error("[%s] %s", instance_id, patch_error)
+                record["error"] = patch_error
         except subprocess.TimeoutExpired as te:
             stdout = te.stdout if isinstance(te.stdout, str) else (te.stdout or b"").decode(errors="replace")
             stderr = te.stderr if isinstance(te.stderr, str) else (te.stderr or b"").decode(errors="replace")
@@ -703,6 +717,7 @@ def run_claude_code_inference(
                             )
                 except Exception as patch_error:
                     logger.warning(f"[{instance_id}] failed to capture timeout patch: {patch_error}")
+            patch, patch_size_error = _enforce_patch_size(patch, max_patch_bytes)
             try:
                 (logs_dir / f"{instance_id}.jsonl").write_text(stdout or "")
                 (logs_dir / f"{instance_id}.log").write_text(
@@ -728,10 +743,15 @@ def run_claude_code_inference(
                     {
                         **metrics_from_stream_json(stdout),
                         **environment_metrics,
+                        "timed_out": True,
+                        "partial_patch_recovered": bool(patch),
                     },
                     time.perf_counter() - started,
                 ),
             }
+            if patch_size_error:
+                logger.error("[%s] %s", instance_id, patch_size_error)
+                record["error"] = f"timeout; {patch_size_error}"
         except Exception as e:
             logger.error(f"Error on {instance_id}: {e}")
             traceback.print_exc()

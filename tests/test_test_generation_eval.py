@@ -829,9 +829,34 @@ def test_evaluation_exception_records_failure_reason(monkeypatch, tmp_path):
     )
 
     assert result["status"] == "errored"
-    assert result["failure_reason"] == "evaluation_exception"
+    assert result["failure_reason"] == "invalid_test_spec"
+    assert result["evaluation_stage"] == "resolve_test_spec"
     assert result["evaluation_wall_time_seconds"] >= 0
     report = json.loads(
         (tmp_path / "run/model/demo__repo-1/report.json").read_text()
     )
     assert "image build failed" in report["demo__repo-1"]["error"]
+
+
+def test_evaluation_rejects_runaway_cached_patch(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.MAX_GENERATED_TEST_PATCH_BYTES",
+        10,
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.close_logger",
+        lambda *_args: None,
+    )
+
+    result = _evaluate_one(
+        {"instance_id": "demo__repo-1"},
+        {"model_patch": "x" * 11, "model_name_or_path": "model"},
+        "run",
+        object(),
+        str(tmp_path),
+        1,
+    )
+
+    assert result["status"] == "errored"
+    assert result["failure_reason"] == "prediction_patch_too_large"
+    assert "11 bytes" in result["error"]
