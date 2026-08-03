@@ -1641,6 +1641,7 @@ def main():
             cache_path=output_dir / "build_validation.json",
             max_workers=args.docker_workers,
             force=args.revalidate,
+            clean_images=args.clean_images,
         )
         n_bad = sum(1 for iid in (i["instance_id"] for i in instances)
                     if not build_validation.get(iid, {}).get("buildable", True))

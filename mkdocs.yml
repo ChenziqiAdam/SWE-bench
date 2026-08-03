@@ -61,6 +61,7 @@ nav:
     - "SWE-bench Quickstart": guides/quickstart.md
     - "Evaluation": guides/evaluation.md
     - "Test-generation Storage": test_generation_storage.md
+    - "Issues-No-Tests Offline Pilot": issues_no_tests_offline_pilot.md
     - "Docker Setup": guides/docker_setup.md
     - "Datasets": guides/datasets.md
     - "Create RAG Datasets": guides/create_rag_datasets.md

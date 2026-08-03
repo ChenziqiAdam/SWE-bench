@@ -90,6 +90,72 @@ def test_forced_validation_preserves_unselected_cached_results(monkeypatch, tmp_
     assert json.loads(cache_path.read_text()) == result
 
 
+def test_clean_validation_batches_and_removes_instance_images(monkeypatch, tmp_path):
+    instances = [
+        {"instance_id": f"repo__pkg-{i}", "repo": "repo/pkg", "version": "v1"}
+        for i in range(5)
+    ]
+    specs = {
+        inst["instance_id"]: type(
+            "Spec",
+            (),
+            {
+                "instance_id": inst["instance_id"],
+                "env_image_key": "env:v1",
+                "instance_image_key": f"image:{i}",
+            },
+        )()
+        for i, inst in enumerate(instances)
+    }
+    removed = []
+    batches = []
+
+    class Images:
+        def remove(self, name, force=False):
+            removed.append((name, force))
+
+    class Client:
+        images = Images()
+
+        def ping(self):
+            pass
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(validate_base, "_spec_hash", lambda _: "hash")
+    monkeypatch.setattr(
+        validate_base, "MAP_REPO_VERSION_TO_SPECS", {"repo/pkg": {"v1": {}}}
+    )
+    monkeypatch.setattr(
+        validate_base, "make_test_spec", lambda inst: specs[inst["instance_id"]]
+    )
+    monkeypatch.setattr(validate_base.docker, "from_env", lambda: Client())
+    monkeypatch.setattr(
+        validate_base,
+        "build_env_images",
+        lambda **_kwargs: ([], []),
+    )
+
+    def build_instances(**kwargs):
+        batch = kwargs["dataset"]
+        batches.append([inst["instance_id"] for inst in batch])
+        return ([(specs[inst["instance_id"]],) for inst in batch], [])
+
+    monkeypatch.setattr(validate_base, "build_instance_images", build_instances)
+
+    result = validate_base.validate_buildable(
+        instances,
+        cache_path=tmp_path / "validation.json",
+        max_workers=2,
+        clean_images=True,
+    )
+
+    assert list(map(len, batches)) == [2, 2, 1]
+    assert len(removed) == 5
+    assert all(value["buildable"] for value in result.values())
+
+
 def test_mine_fail_to_pass_caches_docker_unavailable(monkeypatch, tmp_path):
     inst = {
         "instance_id": "repo__pkg-1",

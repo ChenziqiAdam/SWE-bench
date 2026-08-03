@@ -528,6 +528,85 @@ def _qgis_isolated_python_command(
     )
 
 
+def _generated_python_test_nodeids(
+    generated_patch: str, prefix: str = ""
+) -> tuple[list[str], list[str]]:
+    """Return touched Python test files and added pytest/unittest node IDs."""
+    files: set[str] = set()
+    nodeids: set[str] = set()
+    current_file = None
+    current_class = None
+    for raw in generated_patch.splitlines():
+        diff_match = re.match(r"^diff --git a/(\S+) b/\S+", raw)
+        if diff_match:
+            current_file = diff_match.group(1)
+            current_class = None
+            if current_file.startswith(prefix) and current_file.endswith(".py"):
+                files.add(current_file)
+            continue
+        if current_file not in files:
+            continue
+        hunk_match = re.match(r"^@@.*@@\s*(?:class\s+([A-Za-z_]\w*)\b.*)?$", raw)
+        if hunk_match:
+            if hunk_match.group(1):
+                current_class = hunk_match.group(1)
+            continue
+        content = raw[1:] if raw.startswith(("+", " ")) else raw
+        class_match = re.match(r"^\s*class\s+([A-Za-z_]\w*)\b", content)
+        if class_match:
+            current_class = class_match.group(1)
+            continue
+        if not raw.startswith("+") or raw.startswith("+++"):
+            continue
+        test_match = re.match(r"^(\s*)def\s+(test[A-Za-z0-9_]*)\s*\(", content)
+        if not test_match:
+            continue
+        path = current_file[len(prefix):] if prefix else current_file
+        if test_match.group(1) and current_class:
+            nodeids.add(f"{path}::{current_class}::{test_match.group(2)}")
+        else:
+            nodeids.add(f"{path}::{test_match.group(2)}")
+    return sorted(files), sorted(nodeids)
+
+
+def _biopython_generated_test_command(generated_patch: str) -> str | None:
+    files, nodeids = _generated_python_test_nodeids(generated_patch, "Tests/")
+    if not files:
+        return None
+    targets = nodeids or [path[len("Tests/"):] for path in files]
+    return (
+        "cd /testbed/Tests && PYTHONPATH=/testbed:${PYTHONPATH:-} "
+        "pytest -rA --tb=long -p no:cacheprovider " + " ".join(targets)
+    )
+
+
+def _lammps_generated_test_targets(generated_patch: str) -> list[tuple[str, str]]:
+    """Map touched LAMMPS unit-test sources to CMake targets and binaries."""
+    targets: set[tuple[str, str]] = set()
+    paths = re.findall(r"^diff --git a/(\S+) b/\S+", generated_patch, re.MULTILINE)
+    for path in paths:
+        match = re.match(r"unittest/(.+)/([^/]+)\.cpp$", path)
+        if match and _is_test_path(path):
+            subdir, stem = match.groups()
+            targets.add((stem, f"build/unittest/{subdir}/{stem}"))
+    return sorted(targets)
+
+
+def _lammps_generated_test_command(generated_patch: str) -> str | None:
+    targets = _lammps_generated_test_targets(generated_patch)
+    if targets:
+        return " && ".join(binary for _target, binary in targets)
+    files, nodeids = _generated_python_test_nodeids(generated_patch)
+    test_files = [path for path in files if _is_test_path(path)]
+    if test_files:
+        selected = [node for node in nodeids if node.split("::", 1)[0] in test_files]
+        return (
+            "PYTHONPATH=/testbed:${PYTHONPATH:-} python3 -m pytest -rA --tb=long "
+            "-p no:cacheprovider " + " ".join(selected or test_files)
+        )
+    return None
+
+
 def _test_command(instance: dict, generated_patch: str) -> str:
     """Choose the command that runs the generated test patch."""
     if isinstance(get_test_cmds(instance), list):
@@ -537,6 +616,16 @@ def _test_command(instance: dict, generated_patch: str) -> str:
 
     generated_instance = {**instance, "test_patch": generated_patch}
     directives = get_test_directives(generated_instance)
+
+    if instance["repo"] == "biopython/biopython":
+        isolated = _biopython_generated_test_command(generated_patch)
+        if isolated:
+            return isolated
+
+    if instance["repo"] == "lammps/lammps":
+        isolated = _lammps_generated_test_command(generated_patch)
+        if isolated:
+            return isolated
 
     if instance["repo"] == "rdkit/rdkit":
         isolated_python = _rdkit_isolated_python_commands(commands, generated_patch)
@@ -625,9 +714,22 @@ def _build_script(instance: dict, generated_patch: str, apply_gold: bool) -> str
     if "build" in specs:
         lines += [f"{cmd} || {{ echo {BUILD_FAIL}; exit 13; }}" for cmd in specs["build"]]
     if "build_after_test_patch" in specs:
+        build_commands = list(specs["build_after_test_patch"])
+        if instance["repo"] == "lammps/lammps":
+            targets = [target for target, _binary in _lammps_generated_test_targets(generated_patch)]
+            if targets:
+                build_commands = [
+                    (
+                        "cmake --build build --parallel $(nproc) --target "
+                        + " ".join(targets)
+                    )
+                    if cmd.startswith("cmake --build build")
+                    else cmd
+                    for cmd in build_commands
+                ]
         lines += [
             f"{cmd} || {{ echo {BUILD_FAIL}; exit 13; }}"
-            for cmd in specs["build_after_test_patch"]
+            for cmd in build_commands
         ]
     lines += [
         f": '{START_TEST_OUTPUT}'",

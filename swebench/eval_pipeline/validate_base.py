@@ -61,6 +61,7 @@ def validate_buildable(
     cache_path: str | Path,
     max_workers: int = 4,
     force: bool = False,
+    clean_images: bool = False,
 ) -> dict[str, dict]:
     """For each instance, build env+instance image at base_commit. Return id→{buildable, error}.
 
@@ -190,16 +191,43 @@ def validate_buildable(
             # requested. Force only the per-instance images here; rebuilding
             # the shared ancestry a second time can invalidate Docker's cached
             # parents while parallel instance builds start.
-            successful, _ = build_instance_images(
-                client=client,
-                dataset=instance_todo_p2,
-                force_rebuild=force,
-                max_workers=max_workers,
-                tag="latest",
-                env_image_tag="latest",
-                force_rebuild_env=False,
-                nocache=force,
-            )
+            # With report-first cleanup enabled, validate in bounded batches
+            # and immediately remove successful instance images. Evaluation
+            # will rebuild one batch at a time and remove them after reports
+            # are persisted. This prevents validation from retaining the full
+            # cohort's large repository layers before evaluation starts.
+            batch_size = max(1, max_workers) if clean_images else len(instance_todo_p2)
+            successful = []
+            for start in range(0, len(instance_todo_p2), batch_size):
+                batch = instance_todo_p2[start : start + batch_size]
+                batch_successful, _ = build_instance_images(
+                    client=client,
+                    dataset=batch,
+                    force_rebuild=force,
+                    max_workers=max_workers,
+                    tag="latest",
+                    env_image_tag="latest",
+                    force_rebuild_env=False,
+                    nocache=force,
+                )
+                successful.extend(batch_successful)
+                if clean_images:
+                    for spec, *_rest in batch_successful:
+                        try:
+                            client.images.remove(spec.instance_image_key, force=True)
+                            logger.info(
+                                "Validation passed for %s; removed instance image %s",
+                                spec.instance_id,
+                                spec.instance_image_key,
+                            )
+                        except docker.errors.NotFound:
+                            pass
+                        except Exception as exc:
+                            logger.warning(
+                                "Validation passed for %s, but instance image cleanup failed: %s",
+                                spec.instance_id,
+                                exc,
+                            )
             ok_ids = {s[0].instance_id for s in successful}
 
             for inst in instance_todo_p2:

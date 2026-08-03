@@ -1724,17 +1724,20 @@ def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
     """Build LAMMPS after applying an agent-generated regression-test patch."""
     package_flags = " ".join(f"-D PKG_{package}=ON" for package in packages)
     kokkos_flags = "-D BUILD_KOKKOS=ON -D Kokkos_ENABLE_SERIAL=ON" if kokkos else ""
+    mpi_enabled = "GPU" in packages
+    mpi_packages = " libopenmpi-dev openmpi-bin" if mpi_enabled else ""
+    mpi_flag = "ON" if mpi_enabled else "OFF"
     return {
         "pre_install": [
             "apt-get update -q",
             "apt-get install -y --no-install-recommends cmake g++ make ninja-build "
             "python3 libfftw3-dev libjpeg-dev libpng-dev libgtest-dev "
-            "ocl-icd-opencl-dev",
+            f"ocl-icd-opencl-dev{mpi_packages}",
         ],
         "build_after_test_patch": [
             *(["git submodule update --init --recursive lib/kokkos"] if kokkos else []),
             "cmake -S cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=Release "
-            "-D BUILD_MPI=OFF -D BUILD_TESTING=ON "
+            f"-D BUILD_MPI={mpi_flag} -D ENABLE_TESTING=ON "
             f"{kokkos_flags} {package_flags}",
             "cmake --build build --parallel $(nproc)",
         ],

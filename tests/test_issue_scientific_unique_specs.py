@@ -110,7 +110,7 @@ def test_issues_no_tests_v1_generated_test_specs_are_registered():
         text = _spec_text(spec)
         assert spec["oracle_kind"] == "generated_test", pr
         assert spec["test_generation_use_spec_cmd"] is True, pr
-        assert "BUILD_TESTING=ON" in text, pr
+        assert "ENABLE_TESTING=ON" in text, pr
         assert "cmake --build build" in text, pr
         assert "ctest --test-dir build --output-on-failure" in text, pr
         assert "source_invariant" not in text, pr

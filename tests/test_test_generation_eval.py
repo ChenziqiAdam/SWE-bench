@@ -12,8 +12,10 @@ from swebench.eval_pipeline.test_generation_eval import (
     _exclude_gold_test_files,
     _evaluate_one,
     _infrastructure_failure_output,
+    _lammps_generated_test_targets,
     _no_tests_selected,
     _prepare_gold_patch,
+    _biopython_generated_test_command,
     _qgis_isolated_python_command,
     _rdkit_isolated_cpp_commands,
     _rdkit_generated_unittest_targets,
@@ -570,6 +572,63 @@ def test_rdkit_test_generation_isolates_added_unittest_method(monkeypatch):
         "python3 Code/GraphMol/FMCS/Wrap/testFMCS.py "
         "TestCase.testGithubCompleteRingsOnlyMemory"
     )
+
+
+def test_biopython_test_generation_runs_only_added_nodeid(monkeypatch):
+    patch = """diff --git a/Tests/test_SeqUtils.py b/Tests/test_SeqUtils.py
+--- a/Tests/test_SeqUtils.py
++++ b/Tests/test_SeqUtils.py
+@@ -228,6 +228,9 @@ class SeqUtilsTests(unittest.TestCase):
++    def test_Tm_NN_terminal_mismatch(self):
++        assert True
+"""
+    command = _biopython_generated_test_command(patch)
+
+    assert command is not None
+    assert command.startswith("cd /testbed/Tests && PYTHONPATH=/testbed")
+    assert command.endswith(
+        "test_SeqUtils.py::SeqUtilsTests::test_Tm_NN_terminal_mismatch"
+    )
+
+
+def test_lammps_test_generation_builds_and_runs_touched_binary(monkeypatch):
+    patch = """diff --git a/unittest/commands/test_regions.cpp b/unittest/commands/test_regions.cpp
+--- a/unittest/commands/test_regions.cpp
++++ b/unittest/commands/test_regions.cpp
+@@ -278,3 +278,6 @@ TEST_F(RegionTest, Counts)
++TEST_F(RegionTest, EllipsoidSurfaceContact) {}
+"""
+    specs = {
+        "build_after_test_patch": [
+            "cmake -S cmake -B build -D ENABLE_TESTING=ON",
+            "cmake --build build --parallel $(nproc)",
+        ],
+        "test_cmd": ["ctest --test-dir build --output-on-failure"],
+        "test_generation_use_spec_cmd": True,
+    }
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.MAP_REPO_VERSION_TO_SPECS",
+        {"lammps/lammps": {"3931": specs}},
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.get_test_cmds",
+        lambda _instance: specs["test_cmd"],
+    )
+    instance = {
+        "instance_id": "lammps__lammps-3931",
+        "repo": "lammps/lammps",
+        "version": "3931",
+        "base_commit": "abc",
+        "test_patch": "",
+    }
+
+    assert _lammps_generated_test_targets(patch) == [
+        ("test_regions", "build/unittest/commands/test_regions")
+    ]
+    assert _test_command(instance, patch) == "build/unittest/commands/test_regions"
+    script = _build_script(instance, patch, apply_gold=False)
+    assert "cmake --build build --parallel $(nproc) --target test_regions" in script
+    assert "ctest --test-dir build" not in script
 
 
 def test_rdkit_test_generation_isolates_touched_cpp_target(monkeypatch):
