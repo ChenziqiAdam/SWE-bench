@@ -1246,6 +1246,7 @@ _BIOPYTHON_TEST_GENERATION_SPEC = {
     "install": "python -m pip install --no-build-isolation -e .",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
 }
 
 SPECS_BIOPYTHON = {

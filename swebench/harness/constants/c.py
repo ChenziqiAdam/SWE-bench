@@ -1720,6 +1720,45 @@ SPECS_RDKIT = _RDKitSpecs({
 })
 
 
+# Every no-test spec must be able to build whichever canonical test language a
+# generated patch selects, independent of the original PR's authored test.
+for _spec in SPECS_OPENMM.values():
+    _spec["test_generation_capabilities"] = ("cpp", "python")
+    _pre_install = _spec.setdefault("pre_install", [])
+    _toolchain = (
+        "apt-get update -q && apt-get install -y --no-install-recommends "
+        "cmake g++ make swig doxygen python3-dev"
+    )
+    if _toolchain not in _pre_install:
+        _pre_install.append(_toolchain)
+    _python_deps = (
+        "python -m pip install --no-cache-dir 'numpy<2' scipy cython pytest "
+        "setuptools wheel"
+    )
+    if _python_deps not in _pre_install:
+        _pre_install.append(_python_deps)
+
+for _spec in SPECS_RDKIT.values():
+    _spec["test_generation_capabilities"] = ("cpp", "python")
+    _pre_install = _spec.setdefault("pre_install", [])
+    _python_deps = (
+        "apt-get install -y --no-install-recommends python3-dev python3-numpy "
+        "python3-pytest"
+    )
+    if _python_deps not in _pre_install:
+        _pre_install.append(_python_deps)
+    for _command_group in ("build", "build_after_test_patch"):
+        _spec[_command_group] = [
+            command.replace(
+                "-DRDK_BUILD_CPP_TESTS=OFF", "-DRDK_BUILD_CPP_TESTS=ON"
+            ).replace(
+                "-DRDK_BUILD_PYTHON_WRAPPERS=OFF",
+                "-DRDK_BUILD_PYTHON_WRAPPERS=ON",
+            )
+            for command in _spec.get(_command_group, [])
+        ]
+
+
 def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
     """Build LAMMPS after applying an agent-generated regression-test patch."""
     package_flags = " ".join(f"-D PKG_{package}=ON" for package in packages)
@@ -1731,7 +1770,7 @@ def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
         "pre_install": [
             "apt-get update -q",
             "apt-get install -y --no-install-recommends cmake g++ make ninja-build "
-            "python3 libfftw3-dev libjpeg-dev libpng-dev libgtest-dev "
+            "python3 python3-pytest libfftw3-dev libjpeg-dev libpng-dev libgtest-dev "
             f"ocl-icd-opencl-dev{mpi_packages}",
         ],
         "build_after_test_patch": [
@@ -1744,6 +1783,7 @@ def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
         "test_cmd": ["ctest --test-dir build --output-on-failure"],
         "test_generation_use_spec_cmd": True,
         "oracle_kind": "generated_test",
+        "test_generation_capabilities": ("cpp", "python"),
     }
 
 

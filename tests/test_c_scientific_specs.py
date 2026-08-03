@@ -301,11 +301,11 @@ def test_issues_testgen_rdkit_rows_have_concrete_specs():
         assert "not evaluable" not in spec_text
 
 
-def test_rdkit_python_wrapper_specs_do_not_build_cpp_tests():
+def test_rdkit_python_wrapper_specs_enable_both_generated_test_languages():
     for pr in ("6506", "6646", "6948", "7426", "8376", "8999"):
         cmake = SPECS_RDKIT[pr]["build"][1]
         assert "-DRDK_BUILD_PYTHON_WRAPPERS=ON" in cmake
-        assert "-DRDK_BUILD_CPP_TESTS=OFF" in cmake
+        assert "-DRDK_BUILD_CPP_TESTS=ON" in cmake
 
 
 def test_sci_cc_001_excluded_specs_have_concrete_fallbacks():

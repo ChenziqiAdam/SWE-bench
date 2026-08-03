@@ -518,20 +518,9 @@ def test_openmm_test_generation_runs_touched_pytest_file_not_fixed_selector(monk
         patch,
     )
 
-    assert "python -m pip install --no-cache-dir openmm numpy scipy pytest" in command
-    assert "mkdir -p \"$SIMTK_SITE\"" in command
-    assert "rm -rf \"$SIMTK_SITE/app\"" in command
-    assert "compiled*" in command
-    assert "from openmm.vec3 import *" in command
-    assert "from openmm.unit import *" in command
-    assert "wrappers/python/openmm/*.py" not in command
-    assert "wrappers/python/simtk/openmm/*.py" not in command
-    assert "wrappers/python/simtk/unit" not in command
-    assert "import openmm, simtk.openmm" in command
-    assert "python -m lib2to3 -w -n \"$SIMTK_SITE/app\"" in command
-    assert command.index("/testbed/wrappers/python/openmm/app") < command.index(
-        "/testbed/wrappers/python/simtk/openmm/app"
-    )
+    assert "pip install" not in command
+    assert "LD_LIBRARY_PATH=$PWD/build" in command
+    assert "OPENMM_PLUGIN_DIR=$PWD/build" in command
     assert command.endswith(
         "cd wrappers/python/tests && python -m pytest -xvs "
         "TestForceField.py::test_generated_regression"
@@ -569,8 +558,8 @@ def test_rdkit_test_generation_isolates_added_unittest_method(monkeypatch):
     }
     assert isolated is not None
     assert selected.endswith(
-        "python3 Code/GraphMol/FMCS/Wrap/testFMCS.py "
-        "TestCase.testGithubCompleteRingsOnlyMemory"
+        "Code/GraphMol/FMCS/Wrap/testFMCS.py::TestCase::"
+        "testGithubCompleteRingsOnlyMemory"
     )
 
 
@@ -655,10 +644,10 @@ def test_rdkit_test_generation_isolates_touched_cpp_target(monkeypatch):
     )
 
     assert isolated == [commands[1]]
-    assert selected == commands[1]
+    assert selected.endswith(commands[1])
 
 
-def test_openmm_test_generation_can_force_native_spec_command(monkeypatch):
+def test_openmm_test_generation_uses_patch_language_over_fixed_spec(monkeypatch):
     monkeypatch.setattr(
         "swebench.eval_pipeline.test_generation_eval.MAP_REPO_VERSION_TO_SPECS",
         {
@@ -685,7 +674,8 @@ def test_openmm_test_generation_can_force_native_spec_command(monkeypatch):
         {"repo": "openmm/openmm", "version": "1", "test_patch": ""}, patch
     )
 
-    assert command == "./build/TestReferenceCustomIntegrator"
+    assert "TestIntegrators.py::test_generated" in command
+    assert "TestReferenceCustomIntegrator" not in command
 
 
 def test_openmm_source_spec_requires_generated_pytest(monkeypatch):
@@ -710,7 +700,7 @@ def test_openmm_source_spec_requires_generated_pytest(monkeypatch):
         "diff --git a/docs/file.rst b/docs/file.rst\n",
     )
 
-    assert "no curated generated pytest target" in command
+    assert "NO_GENERATED_TESTS_SELECTED" in command
     assert command.endswith("&& false")
     assert "fixed source oracle" not in command
 

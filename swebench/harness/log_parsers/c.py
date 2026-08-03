@@ -189,6 +189,7 @@ def parse_log_catch2(log: str, test_spec: TestSpec) -> dict[str, str]:
     # Keep parsing after CTest rows because a generated patch can add both C++
     # and Python tests, and test-generation evaluation must retain both.
     test_status_map.update(_parse_python_unittest_summary(log))
+    test_status_map.update(parse_log_pytest_nodeid(log, test_spec))
     return test_status_map
 
 
@@ -234,6 +235,7 @@ def parse_log_qgis(log: str, test_spec: TestSpec) -> dict[str, str]:
         if match:
             test_status_map[match.group(1).strip()] = TestStatus.FAILED.value
     test_status_map.update(_parse_python_unittest_summary(log))
+    test_status_map.update(parse_log_pytest_nodeid(log, test_spec))
     return test_status_map
 
 
@@ -330,15 +332,13 @@ def _reconcile_nodeids(status_map: dict, test_spec: TestSpec) -> dict:
 
 
 def parse_log_openmm(log: str, test_spec: TestSpec) -> dict[str, str]:
-    """OpenMM has both pytest (Python PRs) and GoogleTest (C++ PRs) instances.
-    Dispatch by detecting pytest nodeids; fall back to GoogleTest otherwise."""
-    pytest_map = parse_log_pytest_nodeid(log, test_spec)
-    if pytest_map:
-        return _reconcile_nodeids(pytest_map, test_spec)
-    gtest_map = parse_log_googletest(log, test_spec)
-    if gtest_map:
-        return gtest_map
-    return parse_log_openmm_binary_done(log, test_spec)
+    """Combine Python and native statuses from OpenMM mixed patches."""
+    status_map = parse_log_openmm_binary_done(log, test_spec)
+    status_map.update(parse_log_googletest(log, test_spec))
+    status_map.update(
+        _reconcile_nodeids(parse_log_pytest_nodeid(log, test_spec), test_spec)
+    )
+    return status_map
 
 
 MAP_REPO_TO_PARSER_C = {

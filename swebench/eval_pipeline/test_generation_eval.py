@@ -11,6 +11,7 @@ import logging
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 
 import docker
@@ -19,6 +20,7 @@ from swebench.eval_pipeline.instance_builder import _is_test_path
 from swebench.eval_pipeline.prediction_utils import read_prediction_rows
 from swebench.harness.constants import (
     END_TEST_OUTPUT,
+    MAP_REPO_TO_TEST_GENERATION_CAPABILITIES,
     MAP_REPO_VERSION_TO_SPECS,
     START_TEST_OUTPUT,
     TestStatus,
@@ -44,6 +46,20 @@ GEN_APPLY_FAIL = "GENERATED_TEST_PATCH_FAILED"
 GOLD_APPLY_PASS = "GOLD_PATCH_APPLIED"
 GOLD_APPLY_FAIL = "GOLD_PATCH_FAILED"
 BUILD_FAIL = "GENERATED_TEST_BUILD_FAILED"
+UNSUPPORTED_GENERATED_TEST = "UNSUPPORTED_GENERATED_TEST"
+NO_TESTS_SELECTED = "NO_GENERATED_TESTS_SELECTED"
+
+
+@dataclass(frozen=True)
+class GeneratedTestExecutionPlan:
+    """Auditable commands selected from a generated test patch."""
+
+    languages: tuple[str, ...] = ()
+    paths: tuple[str, ...] = ()
+    commands: tuple[str, ...] = ()
+    build_targets: tuple[str, ...] = ()
+    failure_reason: str | None = None
+    evidence: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
 
 def _passed(status: str | None) -> bool:
@@ -70,6 +86,7 @@ def classify_test_generation_result(
     build_failed: bool = False,
     base_build_failed: bool = False,
     gold_build_failed: bool = False,
+    unsupported_generated_test: bool = False,
 ) -> dict:
     """Classify strict SWT-Bench-style test-generation results."""
     failure_reason = ""
@@ -111,6 +128,9 @@ def classify_test_generation_result(
     elif collection_failed:
         status = "unresolved"
         failure_reason = "generated_test_collection_failed"
+    elif unsupported_generated_test:
+        status = "not_exercised"
+        failure_reason = "unsupported_generated_test"
     elif no_tests_selected:
         status = "not_exercised"
         failure_reason = "no_tests_selected"
@@ -218,6 +238,7 @@ def _no_tests_selected(output: str) -> bool:
             "collected 0 items",
             "No tests were found!!!",
             "has no curated generated-test target",
+            NO_TESTS_SELECTED,
         )
     )
 
@@ -296,41 +317,10 @@ def _openmm_generated_pytest_command(
     pytest_targets: list[str],
     pytest_filter: str | None = None,
 ) -> str:
-    setup = (
-        "python -m pip install --no-cache-dir openmm numpy scipy pytest && "
-        "OPENMM_SITE=$(python -c 'import openmm, os; print(os.path.dirname(openmm.__file__))') && "
-        "SIMTK_SITE=$(python -c 'import simtk.openmm, os; print(os.path.dirname(simtk.openmm.__file__))' 2>/dev/null || "
-        "python -c 'import site; print(site.getsitepackages()[0] + \"/simtk/openmm\")') && "
-        "mkdir -p \"$SIMTK_SITE\" && "
-        "if [ ! -f \"$(dirname \"$SIMTK_SITE\")/__init__.py\" ]; then echo '' > \"$(dirname \"$SIMTK_SITE\")/__init__.py\"; fi && "
-        "if [ ! -f \"$SIMTK_SITE/__init__.py\" ]; then echo 'from openmm import *' > \"$SIMTK_SITE/__init__.py\"; fi && "
-        # Keep pip's complete top-level packages (compiled extension, version
-        # module, and simtk compatibility shim).  Old source trees frequently
-        # lack generated version.py; copying their __init__.py over the wheel
-        # creates a circular/partially-initialized import during collection.
-        "if [ -d /testbed/wrappers/python/openmm/app ]; then cp -r /testbed/wrappers/python/openmm/app \"$OPENMM_SITE/\"; fi && "
-        "rm -rf \"$SIMTK_SITE/app\" && "
-        "if [ -d /testbed/wrappers/python/openmm/app ]; then "
-        "cp -r /testbed/wrappers/python/openmm/app \"$SIMTK_SITE/\"; "
-        "elif [ -d /testbed/wrappers/python/simtk/openmm/app ]; then "
-        "cp -r /testbed/wrappers/python/simtk/openmm/app \"$SIMTK_SITE/\"; "
-        "python -m lib2to3 -w -n \"$SIMTK_SITE/app\" >/dev/null 2>&1 || true; "
-        "fi && "
-        "if [ -d \"$OPENMM_SITE/app/internal\" ] && [ -d \"$SIMTK_SITE/app/internal\" ]; then "
-        "cp -n \"$OPENMM_SITE\"/app/internal/compiled* \"$SIMTK_SITE/app/internal/\" 2>/dev/null || true; "
-        "fi && "
-        "for name in vec3 unit; do "
-        "if [ -e \"$OPENMM_SITE/$name.py\" ]; then cp \"$OPENMM_SITE/$name.py\" \"$SIMTK_SITE/\"; fi; "
-        "if [ -d \"$OPENMM_SITE/$name\" ]; then cp -r \"$OPENMM_SITE/$name\" \"$SIMTK_SITE/\"; fi; "
-        "done; "
-        "if [ ! -e \"$SIMTK_SITE/vec3.py\" ]; then echo 'from openmm.vec3 import *' > \"$SIMTK_SITE/vec3.py\"; fi && "
-        "if [ ! -e \"$SIMTK_SITE/unit.py\" ] && [ ! -d \"$SIMTK_SITE/unit\" ]; then echo 'from openmm.unit import *' > \"$SIMTK_SITE/unit.py\"; fi && "
-        "python -c 'import openmm, simtk.openmm' && "
-        "export PYTHONPATH=\"$SIMTK_SITE/app:${PYTHONPATH:-}\""
-    )
     command = (
-        setup
-        + " && cd wrappers/python/tests && python -m pytest -xvs "
+        "export LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
+        "OPENMM_PLUGIN_DIR=$PWD/build && "
+        "cd wrappers/python/tests && python -m pytest -xvs "
         + " ".join(pytest_targets)
     )
     if pytest_filter:
@@ -594,51 +584,263 @@ def _lammps_generated_test_targets(generated_patch: str) -> list[tuple[str, str]
 
 def _lammps_generated_test_command(generated_patch: str) -> str | None:
     targets = _lammps_generated_test_targets(generated_patch)
-    if targets:
-        return " && ".join(binary for _target, binary in targets)
+    commands = [binary for _target, binary in targets]
     files, nodeids = _generated_python_test_nodeids(generated_patch)
     test_files = [path for path in files if _is_test_path(path)]
     if test_files:
         selected = [node for node in nodeids if node.split("::", 1)[0] in test_files]
-        return (
+        commands.append(
             "PYTHONPATH=/testbed:${PYTHONPATH:-} python3 -m pytest -rA --tb=long "
             "-p no:cacheprovider " + " ".join(selected or test_files)
         )
-    return None
+    return " && ".join(commands) if commands else None
+
+
+def _patch_paths(generated_patch: str) -> list[str]:
+    return sorted(
+        set(
+            re.findall(
+                r"^diff --git a/(\S+) b/\S+", generated_patch, re.MULTILINE
+            )
+        )
+    )
+
+
+def _cmake_registered_cpp_targets(generated_patch: str) -> dict[str, str]:
+    """Return source basename -> CTest/build target from added registrations."""
+    registrations: dict[str, str] = {}
+    added = "\n".join(
+        line[1:] for line in generated_patch.splitlines()
+        if line.startswith("+") and not line.startswith("+++")
+    )
+    for match in re.finditer(
+        r"rdkit_(?:catch_)?test\s*\(\s*([\w.-]+)\s+([^)]*)\)",
+        added,
+        re.DOTALL,
+    ):
+        target, sources = match.groups()
+        for source in re.findall(r"[\w./+-]+\.(?:cc|cpp|cxx)", sources):
+            registrations[PurePosixPath(source).name] = target
+    executables: dict[str, list[str]] = {}
+    for match in re.finditer(
+        r"add_executable\s*\(\s*([\w.-]+)\s+([^)]*)\)", added, re.DOTALL
+    ):
+        executable, sources = match.groups()
+        executables[executable] = re.findall(
+            r"[\w./+-]+\.(?:cc|cpp|cxx)", sources
+        )
+    ctest_names: dict[str, str] = {}
+    for match in re.finditer(
+        r"add_test\s*\(\s*(?:NAME\s+)?([\w.-]+)"
+        r"(?:\s+COMMAND)?\s+([\w.-]+)",
+        added,
+        re.DOTALL,
+    ):
+        test_name, executable = match.groups()
+        ctest_names[executable] = test_name
+    for executable, sources in executables.items():
+        target = ctest_names.get(executable, executable)
+        for source in sources:
+            registrations[PurePosixPath(source).name] = target
+    return registrations
+
+
+def _configured_ctest_targets(commands: list[str]) -> dict[frozenset[str], str]:
+    result = {}
+    for command in commands:
+        match = re.search(r"-R\s+['\"]?\^([^$'\"]+)\$['\"]?", command)
+        if match:
+            target = match.group(1).replace("\\", "")
+            result[_rdkit_test_name_tokens(target)] = target
+    return result
+
+
+def _combine_selected_commands(commands: tuple[str, ...]) -> str:
+    if len(commands) <= 1:
+        return commands[0] if commands else ""
+    parts = ["_sweb_test_rc=0"]
+    parts.extend(f"( {command} ) || _sweb_test_rc=1" for command in commands)
+    parts.append("( exit $_sweb_test_rc )")
+    return "; ".join(parts)
+
+
+def _special_repo_execution_plan(
+    instance: dict, generated_patch: str, commands: list[str]
+) -> GeneratedTestExecutionPlan | None:
+    """Create a language-complete plan for the four no-test repositories."""
+    repo = instance["repo"]
+    capabilities = MAP_REPO_TO_TEST_GENERATION_CAPABILITIES.get(repo)
+    if capabilities is None:
+        return None
+    if any("not evaluable:" in command for command in commands):
+        return GeneratedTestExecutionPlan(
+            failure_reason="non_evaluable_spec",
+            evidence={"spec_commands": tuple(commands)},
+        )
+
+    paths = _patch_paths(generated_patch)
+    accepted: dict[str, list[str]] = {"cpp": [], "python": []}
+    rejected: list[str] = []
+    for path in paths:
+        suffix = PurePosixPath(path).suffix.lower()
+        basename = PurePosixPath(path).name
+        language = "python" if suffix == ".py" else (
+            "cpp" if suffix in {".cc", ".cpp", ".cxx"} else None
+        )
+        canonical = False
+        if repo == "openmm/openmm":
+            canonical = (
+                language == "python"
+                and path.startswith("wrappers/python/tests/")
+                and re.match(r"(?:Test|test).*\.py$", basename) is not None
+            ) or (
+                language == "cpp" and _is_test_path(path) and basename.startswith("Test")
+            )
+        elif repo == "rdkit/rdkit":
+            canonical = bool(
+                language
+                and path.startswith(("Code/", "rdkit/", "External/"))
+                and _is_test_path(path)
+            )
+        elif repo == "lammps/lammps":
+            canonical = (
+                language == "cpp" and re.match(r"unittest/.+/[^/]+\.cpp$", path)
+                is not None
+            ) or (
+                language == "python"
+                and path.startswith(("unittest/", "python/tests/"))
+                and _is_test_path(path)
+            )
+        elif repo == "biopython/biopython":
+            canonical = (
+                language == "python"
+                and path.startswith("Tests/")
+                and _is_test_path(path)
+            )
+        if canonical and language in capabilities:
+            accepted[language].append(path)
+        elif _is_test_path(path) or language is not None:
+            rejected.append(path)
+
+    selected_paths = tuple(sorted(accepted["cpp"] + accepted["python"]))
+    evidence = {
+        "patch_paths": tuple(paths),
+        "accepted_paths": selected_paths,
+        "rejected_paths": tuple(sorted(rejected)),
+    }
+    if rejected:
+        return GeneratedTestExecutionPlan(
+            paths=selected_paths,
+            failure_reason="unsupported_generated_test",
+            evidence=evidence,
+        )
+    if not selected_paths:
+        return GeneratedTestExecutionPlan(
+            failure_reason="no_tests_selected", evidence=evidence
+        )
+
+    selected_commands: list[str] = []
+    build_targets: list[str] = []
+    if accepted["cpp"]:
+        if repo == "openmm/openmm":
+            registrations = _cmake_registered_cpp_targets(generated_patch)
+            build_targets = sorted(
+                {
+                    registrations.get(
+                        PurePosixPath(path).name, PurePosixPath(path).stem
+                    )
+                    for path in accepted["cpp"]
+                }
+            )
+            selected_commands.extend(
+                "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
+                "OPENMM_PLUGIN_DIR=$PWD/build ./build/" + target
+                for target in build_targets
+            )
+        elif repo == "lammps/lammps":
+            targets = _lammps_generated_test_targets(generated_patch)
+            build_targets = [target for target, _binary in targets]
+            selected_commands.extend(binary for _target, binary in targets)
+        elif repo == "rdkit/rdkit":
+            registrations = _cmake_registered_cpp_targets(generated_patch)
+            configured = _configured_ctest_targets(commands)
+            sole_configured = (
+                next(iter(configured.values())) if len(configured) == 1 else None
+            )
+            for path in accepted["cpp"]:
+                target = registrations.get(PurePosixPath(path).name)
+                if target is None:
+                    target = configured.get(
+                        _rdkit_test_name_tokens(PurePosixPath(path).stem)
+                    )
+                target = target or sole_configured
+                if target is None:
+                    return GeneratedTestExecutionPlan(
+                        languages=("cpp",),
+                        paths=selected_paths,
+                        failure_reason="unsupported_generated_test",
+                        evidence={**evidence, "unresolved_cpp_target": (path,)},
+                    )
+                build_targets.append(target)
+            build_targets = sorted(set(build_targets))
+            selected_commands.extend(
+                "RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
+                f"ctest --test-dir build -V -R '^{re.escape(target)}$'"
+                for target in build_targets
+            )
+
+    if accepted["python"]:
+        if repo == "openmm/openmm":
+            targets, pytest_filter = _openmm_generated_pytest_targets(generated_patch)
+            selected_commands.append(
+                _openmm_generated_pytest_command(targets, pytest_filter)
+            )
+        elif repo == "biopython/biopython":
+            selected_commands.append(_biopython_generated_test_command(generated_patch) or "")
+        else:
+            files, nodeids = _generated_python_test_nodeids(generated_patch)
+            selected = [
+                node for node in nodeids
+                if node.split("::", 1)[0] in accepted["python"]
+            ]
+            prefix = (
+                "RDBASE=$PWD PYTHONPATH=$PWD "
+                "LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
+                if repo == "rdkit/rdkit"
+                else "PYTHONPATH=/testbed:${PYTHONPATH:-} "
+            )
+            selected_commands.append(
+                prefix + "python3 -m pytest -rA --tb=long -p no:cacheprovider "
+                + " ".join(selected or accepted["python"])
+            )
+
+    languages = tuple(language for language in ("cpp", "python") if accepted[language])
+    return GeneratedTestExecutionPlan(
+        languages=languages,
+        paths=selected_paths,
+        commands=tuple(command for command in selected_commands if command),
+        build_targets=tuple(build_targets),
+        evidence=evidence,
+    )
 
 
 def _test_command(instance: dict, generated_patch: str) -> str:
     """Choose the command that runs the generated test patch."""
-    if isinstance(get_test_cmds(instance), list):
-        commands = get_test_cmds(instance)
-    else:
-        commands = [get_test_cmds(instance)]
+    raw_commands = get_test_cmds(instance)
+    commands = raw_commands if isinstance(raw_commands, list) else [raw_commands]
+
+    plan = _special_repo_execution_plan(instance, generated_patch, commands)
+    if plan is not None:
+        if plan.failure_reason == "unsupported_generated_test":
+            return f"echo {UNSUPPORTED_GENERATED_TEST} && false"
+        if plan.failure_reason == "no_tests_selected":
+            return f"echo {NO_TESTS_SELECTED} && false"
+        if plan.failure_reason == "non_evaluable_spec":
+            return "echo 'not evaluable: generated test requires unavailable hardware' && false"
+        return _combine_selected_commands(plan.commands)
 
     generated_instance = {**instance, "test_patch": generated_patch}
     directives = get_test_directives(generated_instance)
-
-    if instance["repo"] == "biopython/biopython":
-        isolated = _biopython_generated_test_command(generated_patch)
-        if isolated:
-            return isolated
-
-    if instance["repo"] == "lammps/lammps":
-        isolated = _lammps_generated_test_command(generated_patch)
-        if isolated:
-            return isolated
-
-    if instance["repo"] == "rdkit/rdkit":
-        isolated_python = _rdkit_isolated_python_commands(commands, generated_patch)
-        isolated_cpp = _rdkit_isolated_cpp_commands(commands, generated_patch)
-        if isolated_python and isolated_cpp:
-            selected_python = [
-                command for command in isolated_python if re.search(r"\bpython3?\s+", command)
-            ]
-            return " && ".join([*isolated_cpp, *selected_python])
-        if isolated_python:
-            return " && ".join(isolated_python)
-        if isolated_cpp:
-            return " && ".join(isolated_cpp)
 
     # Scientific OpenMM specs normally contain a fixed selector for the
     # original PR test.  In test-generation mode that selector can silently
@@ -652,20 +854,6 @@ def _test_command(instance: dict, generated_patch: str) -> str:
         isolated_command = _qgis_isolated_python_command(specs, generated_patch)
         if isolated_command:
             return isolated_command
-    if (
-        instance["repo"] == "openmm/openmm"
-        and not specs.get("test_generation_use_spec_cmd")
-    ):
-        pytest_targets, pytest_filter = _openmm_generated_pytest_targets(generated_patch)
-        if pytest_targets:
-            return _openmm_generated_pytest_command(pytest_targets, pytest_filter)
-        if specs.get("test_generation_requires_generated_pytest"):
-            version = instance.get("version", "unknown")
-            return (
-                f"echo 'openmm#{version} has no curated generated pytest target' "
-                "&& false"
-            )
-
     raw = commands[0] if len(commands) == 1 else None
     if raw and specs.get("test_generation_use_spec_cmd"):
         return raw
@@ -678,10 +866,110 @@ def _test_command(instance: dict, generated_patch: str) -> str:
     return " && ".join(commands)
 
 
+def _patch_driven_build_commands(
+    repo: str, specs: dict, plan: GeneratedTestExecutionPlan | None
+) -> list[str]:
+    """Retarget configured builds to every language selected from the patch."""
+    original = [*specs.get("build", []), *specs.get("build_after_test_patch", [])]
+    if plan is None:
+        return original
+    if plan.failure_reason:
+        return []
+    if repo == "lammps/lammps":
+        return [
+            (
+                "cmake --build build --parallel $(nproc) --target "
+                + " ".join(plan.build_targets)
+            )
+            if command.startswith("cmake --build build") and plan.build_targets
+            else command
+            for command in original
+        ]
+    if repo not in {"openmm/openmm", "rdkit/rdkit"}:
+        return original
+
+    configure = next(
+        (command for command in original if command.startswith("cmake ") and " -B " in command),
+        None,
+    )
+    retained = [
+        command for command in original
+        if not command.startswith("cmake --build ") and command != configure
+    ]
+    if repo == "rdkit/rdkit":
+        configure = configure or (
+            "cmake -B build -S . -DCMAKE_BUILD_TYPE=Release "
+            "-DRDK_INSTALL_INTREE=ON -DRDK_BUILD_CPP_TESTS=ON "
+            "-DRDK_BUILD_PYTHON_WRAPPERS=ON"
+        )
+        configure = re.sub(
+            r"-DRDK_BUILD_CPP_TESTS=(?:ON|OFF)",
+            "-DRDK_BUILD_CPP_TESTS=ON",
+            configure,
+        )
+        configure = re.sub(
+            r"-DRDK_BUILD_PYTHON_WRAPPERS=(?:ON|OFF)",
+            "-DRDK_BUILD_PYTHON_WRAPPERS=ON",
+            configure,
+        )
+        build = (
+            "cmake --build build --parallel $(nproc)"
+            if "python" in plan.languages
+            else "cmake --build build --parallel $(nproc) --target "
+            + " ".join(plan.build_targets)
+        )
+        return [configure, *retained, build]
+
+    configure = configure or (
+        "cmake -B build -S . -DCMAKE_BUILD_TYPE=Release "
+        "-DOPENMM_BUILD_CUDA_LIB=OFF -DOPENMM_BUILD_OPENCL_LIB=OFF "
+        "-DOPENMM_BUILD_HIP_LIB=OFF -DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF"
+    )
+    retained = [
+        command for command in retained
+        if "OPENMM_SITE=" not in command and "SIMTK_SITE=" not in command
+    ]
+    wrapper_flag = "ON" if "python" in plan.languages else "OFF"
+    if "-DOPENMM_BUILD_PYTHON_WRAPPERS=" in configure:
+        configure = re.sub(
+            r"-DOPENMM_BUILD_PYTHON_WRAPPERS=(?:ON|OFF)",
+            f"-DOPENMM_BUILD_PYTHON_WRAPPERS={wrapper_flag}",
+            configure,
+        )
+    else:
+        configure += f" -DOPENMM_BUILD_PYTHON_WRAPPERS={wrapper_flag}"
+    if "python" in plan.languages:
+        retained.append(
+            "if [ -f build/python/src/swig_lib/python/extend.i ]; then "
+            "sed -i 's/^# Look/\\/\\/ Look/' "
+            "build/python/src/swig_lib/python/extend.i; fi"
+        )
+    targets = list(plan.build_targets)
+    if "python" in plan.languages:
+        targets.insert(0, "install")
+    build_commands = [
+        "cmake --build build --parallel $(nproc) --target " + " ".join(targets)
+    ] if targets else []
+    if "python" in plan.languages:
+        build_commands.append(
+            "cmake --build build --parallel $(nproc) --target PythonInstall && "
+            "python -c 'import openmm, simtk.openmm'"
+        )
+    source_setup = (
+        ["python -m pip uninstall -y openmm || true"]
+        if "python" in plan.languages
+        else []
+    )
+    return [*source_setup, configure, *retained, *build_commands]
+
+
 def _build_script(instance: dict, generated_patch: str, apply_gold: bool) -> str:
     specs = MAP_REPO_VERSION_TO_SPECS[instance["repo"]][instance["version"]]
     repo_dir = "/testbed"
     base_commit = instance["base_commit"]
+    raw_commands = get_test_cmds(instance)
+    commands = raw_commands if isinstance(raw_commands, list) else [raw_commands]
+    plan = _special_repo_execution_plan(instance, generated_patch, commands)
     test_cmd = _test_command(instance, generated_patch)
     lines = [
         "#!/bin/bash",
@@ -711,26 +999,10 @@ def _build_script(instance: dict, generated_patch: str, apply_gold: bool) -> str
             f"echo {GOLD_APPLY_PASS}",
         ]
     lines += generated_apply
-    if "build" in specs:
-        lines += [f"{cmd} || {{ echo {BUILD_FAIL}; exit 13; }}" for cmd in specs["build"]]
-    if "build_after_test_patch" in specs:
-        build_commands = list(specs["build_after_test_patch"])
-        if instance["repo"] == "lammps/lammps":
-            targets = [target for target, _binary in _lammps_generated_test_targets(generated_patch)]
-            if targets:
-                build_commands = [
-                    (
-                        "cmake --build build --parallel $(nproc) --target "
-                        + " ".join(targets)
-                    )
-                    if cmd.startswith("cmake --build build")
-                    else cmd
-                    for cmd in build_commands
-                ]
-        lines += [
-            f"{cmd} || {{ echo {BUILD_FAIL}; exit 13; }}"
-            for cmd in build_commands
-        ]
+    build_commands = _patch_driven_build_commands(instance["repo"], specs, plan)
+    lines += [
+        f"{cmd} || {{ echo {BUILD_FAIL}; exit 13; }}" for cmd in build_commands
+    ]
     lines += [
         f": '{START_TEST_OUTPUT}'",
         test_cmd,
@@ -845,6 +1117,9 @@ def _evaluate_one(
                 "gold_patch_applied": False,
                 "base_failed_tests": [],
                 "gold_passed_tests": [],
+                "selected_test_languages": [],
+                "selected_test_paths": [],
+                "selected_test_commands": [],
                 "inference_metrics": (prediction or {}).get("metrics", {}),
                 "evaluation_wall_time_seconds": round(
                     time.perf_counter() - evaluation_started, 6
@@ -872,6 +1147,9 @@ def _evaluate_one(
                 "gold_patch_applied": False,
                 "base_failed_tests": [],
                 "gold_passed_tests": [],
+                "selected_test_languages": [],
+                "selected_test_paths": [],
+                "selected_test_commands": [],
                 "inference_metrics": prediction.get("metrics", {}),
                 "evaluation_wall_time_seconds": round(
                     time.perf_counter() - evaluation_started, 6
@@ -888,8 +1166,14 @@ def _evaluate_one(
     base_duration = None
     gold_duration = None
     evaluation_stage = "resolve_test_spec"
+    selected_plan: GeneratedTestExecutionPlan | None = None
     try:
         spec = make_test_spec(instance)
+        raw_commands = get_test_cmds(instance)
+        commands = raw_commands if isinstance(raw_commands, list) else [raw_commands]
+        selected_plan = _special_repo_execution_plan(
+            instance, generated_patch, commands
+        )
         evaluation_stage = "build_instance_image"
         stale_name = spec.get_instance_container_name(run_id)
         try:
@@ -961,6 +1245,10 @@ def _evaluate_one(
             or _infrastructure_failure_output(gold_output),
             base_build_failed=BUILD_FAIL in base_output,
             gold_build_failed=BUILD_FAIL in gold_output,
+            unsupported_generated_test=(
+                UNSUPPORTED_GENERATED_TEST in base_output
+                or UNSUPPORTED_GENERATED_TEST in gold_output
+            ),
         )
         report = {
             instance_id: {
@@ -973,6 +1261,18 @@ def _evaluate_one(
                 "gold_timed_out": gold_timed_out,
                 "excluded_gold_test_paths": excluded_gold_test_paths,
                 "excluded_gold_binary_paths": excluded_gold_binary_paths,
+                "selected_test_languages": list(
+                    selected_plan.languages if selected_plan else ()
+                ),
+                "selected_test_paths": list(
+                    selected_plan.paths if selected_plan else ()
+                ),
+                "selected_test_commands": list(
+                    selected_plan.commands if selected_plan else ()
+                ),
+                "selected_test_evidence": (
+                    selected_plan.evidence if selected_plan else {}
+                ),
                 "base_test_wall_time_seconds": round(base_duration, 6),
                 "gold_test_wall_time_seconds": round(gold_duration, 6),
                 "inference_metrics": prediction.get("metrics", {}),
@@ -995,6 +1295,15 @@ def _evaluate_one(
                 "gold_patch_applied": False,
                 "base_failed_tests": [],
                 "gold_passed_tests": [],
+                "selected_test_languages": list(
+                    selected_plan.languages if selected_plan else ()
+                ),
+                "selected_test_paths": list(
+                    selected_plan.paths if selected_plan else ()
+                ),
+                "selected_test_commands": list(
+                    selected_plan.commands if selected_plan else ()
+                ),
                 "base_test_wall_time_seconds": (
                     round(base_duration, 6) if base_duration is not None else None
                 ),

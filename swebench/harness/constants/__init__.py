@@ -1,3 +1,5 @@
+# ruff: noqa: F403, F405
+
 from enum import Enum
 from pathlib import Path
 from typing import TypedDict
@@ -169,6 +171,16 @@ MAP_REPO_TO_EXT = {
     **{k: "py" for k in MAP_REPO_VERSION_TO_SPECS_PY.keys()},
     **{k: "rb" for k in MAP_REPO_VERSION_TO_SPECS_RUBY.keys()},
     **{k: "rs" for k in MAP_REPO_VERSION_TO_SPECS_RUST.keys()},
+}
+
+# Test-generation is patch-driven and may exercise more languages than the
+# repository's harness/base-image language.  Keep this separate from
+# ``MAP_REPO_TO_EXT``, which remains the image-selection compatibility map.
+MAP_REPO_TO_TEST_GENERATION_CAPABILITIES = {
+    "openmm/openmm": frozenset({"cpp", "python"}),
+    "rdkit/rdkit": frozenset({"cpp", "python"}),
+    "lammps/lammps": frozenset({"cpp", "python"}),
+    "biopython/biopython": frozenset({"python"}),
 }
 
 LATEST = "latest"
