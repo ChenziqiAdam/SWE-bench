@@ -484,15 +484,45 @@ def build_instance_image(
     env_image_name = test_spec.env_image_key
     dockerfile = test_spec.instance_dockerfile
 
-    # Check that the env. image the instance image is based on exists
+    # Check that the env. image the instance image is based on exists. It is
+    # a shared, deterministically-built layer (keyed by a hash of its setup
+    # script/dockerfile), so if something external removed it mid-run
+    # (e.g. a concurrent prune on a shared host), rebuild it here rather than
+    # failing every remaining instance that depends on it.
     try:
         client.images.get(env_image_name)
-    except docker.errors.ImageNotFound as e:
-        raise BuildImageError(
-            test_spec.instance_id,
-            f"Environment image {env_image_name} not found for {test_spec.instance_id}",
-            logger,
-        ) from e
+    except docker.errors.ImageNotFound:
+        logger.info(
+            f"Environment image {env_image_name} not found for {test_spec.instance_id}; "
+            "rebuilding it before continuing."
+        )
+        try:
+            client.images.get(test_spec.base_image_key)
+        except docker.errors.ImageNotFound:
+            build_image(
+                image_name=test_spec.base_image_key,
+                setup_scripts={},
+                dockerfile=test_spec.base_dockerfile,
+                platform=test_spec.platform,
+                client=client,
+                build_dir=BASE_IMAGE_BUILD_DIR / test_spec.base_image_key.replace(":", "__"),
+            )
+        try:
+            build_image(
+                image_name=env_image_name,
+                setup_scripts={"setup_env.sh": test_spec.setup_env_script},
+                dockerfile=test_spec.env_dockerfile,
+                platform=test_spec.platform,
+                client=client,
+                build_dir=ENV_IMAGE_BUILD_DIR / env_image_name.replace(":", "__"),
+            )
+        except Exception as e:
+            raise BuildImageError(
+                test_spec.instance_id,
+                f"Environment image {env_image_name} was missing and could not be "
+                f"rebuilt for {test_spec.instance_id}: {e}",
+                logger,
+            ) from e
     logger.info(
         f"Environment image {env_image_name} found for {test_spec.instance_id}\n"
         f"Building instance image {image_name} for {test_spec.instance_id}"

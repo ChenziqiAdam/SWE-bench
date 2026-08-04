@@ -686,12 +686,35 @@ def _special_repo_execution_plan(
     paths = _patch_paths(generated_patch)
     accepted: dict[str, list[str]] = {"cpp": [], "python": []}
     rejected: list[str] = []
+    openmm_header_targets: dict[str, str] = {}
     for path in paths:
         suffix = PurePosixPath(path).suffix.lower()
         basename = PurePosixPath(path).name
         language = "python" if suffix == ".py" else (
             "cpp" if suffix in {".cc", ".cpp", ".cxx"} else None
         )
+        # OpenMM's per-force/integrator C++ tests are shared header files
+        # (tests/TestX.h, plugins/<name>/tests/TestX.h) included by a thin
+        # TestReferenceX.cpp wrapper that CMake already builds. A patch that
+        # only touches the shared header is a complete, buildable regression
+        # test once retargeted at that existing "TestReference<Name>" target.
+        if (
+            repo == "openmm/openmm"
+            and suffix == ".h"
+            and _is_test_path(path)
+            and basename.startswith("Test")
+        ):
+            language = "cpp"
+            openmm_header_targets[path] = "TestReference" + basename[len("Test"):-len(".h")]
+        # Non-source fixtures shipped alongside a generated Python test
+        # (e.g. wrappers/python/tests/systems/*.gro/*.top/*.pdb) are not
+        # themselves tests and must not veto an otherwise-valid accepted test.
+        if (
+            repo == "openmm/openmm"
+            and language is None
+            and path.startswith("wrappers/python/tests/")
+        ):
+            continue
         canonical = False
         if repo == "openmm/openmm":
             canonical = (
@@ -751,7 +774,8 @@ def _special_repo_execution_plan(
             registrations = _cmake_registered_cpp_targets(generated_patch)
             build_targets = sorted(
                 {
-                    registrations.get(
+                    openmm_header_targets.get(path)
+                    or registrations.get(
                         PurePosixPath(path).name, PurePosixPath(path).stem
                     )
                     for path in accepted["cpp"]

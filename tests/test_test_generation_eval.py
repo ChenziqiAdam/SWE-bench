@@ -23,6 +23,7 @@ from swebench.eval_pipeline.test_generation_eval import (
     _test_collection_failed,
     _test_execution_failed,
     _openmm_generated_pytest_targets,
+    _special_repo_execution_plan,
     _test_command,
     _write_report_and_cleanup_instance_image,
     classify_test_generation_result,
@@ -809,6 +810,76 @@ def test_openmm_test_generation_keeps_definition_scope_for_added_body_lines():
         ["TestForceField.py::TestForceField::test_Disulfides"],
         None,
     )
+
+
+def test_openmm_shared_header_cpp_test_targets_reference_wrapper():
+    # OpenMM's per-force/integrator C++ tests are shared header files
+    # (tests/TestX.h) included by a pre-existing TestReferenceX.cpp wrapper
+    # that CMake already builds; a patch that only touches the header must
+    # resolve to that existing target instead of being rejected outright.
+    patch = """diff --git a/tests/TestNonbondedForce.h b/tests/TestNonbondedForce.h
+--- a/tests/TestNonbondedForce.h
++++ b/tests/TestNonbondedForce.h
+@@ -1,3 +1,4 @@
++void testNewCase() {}
+ void runPlatformTests();
+"""
+
+    plan = _special_repo_execution_plan({"repo": "openmm/openmm"}, patch, [])
+
+    assert plan.failure_reason is None
+    assert plan.paths == ("tests/TestNonbondedForce.h",)
+    assert plan.build_targets == ("TestReferenceNonbondedForce",)
+    assert plan.commands == (
+        "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
+        "OPENMM_PLUGIN_DIR=$PWD/build ./build/TestReferenceNonbondedForce",
+    )
+
+
+def test_openmm_plugin_shared_header_cpp_test_targets_reference_wrapper():
+    patch = """diff --git a/plugins/rpmd/tests/TestRpmd.h b/plugins/rpmd/tests/TestRpmd.h
+--- a/plugins/rpmd/tests/TestRpmd.h
++++ b/plugins/rpmd/tests/TestRpmd.h
+@@ -1,3 +1,4 @@
++void testNewCase() {}
+ void runPlatformTests();
+"""
+
+    plan = _special_repo_execution_plan({"repo": "openmm/openmm"}, patch, [])
+
+    assert plan.failure_reason is None
+    assert plan.build_targets == ("TestReferenceRpmd",)
+
+
+def test_openmm_python_test_fixtures_do_not_veto_accepted_test():
+    # Non-source data fixtures shipped alongside a generated Python test
+    # (e.g. wrappers/python/tests/systems/*.gro/*.top) are not tests
+    # themselves and must not cause the whole plan to be rejected.
+    patch = """diff --git a/wrappers/python/tests/TestGromacsTopFile.py b/wrappers/python/tests/TestGromacsTopFile.py
+--- a/wrappers/python/tests/TestGromacsTopFile.py
++++ b/wrappers/python/tests/TestGromacsTopFile.py
+@@ -1 +1,2 @@
++def test_generated(): pass
+ pass
+diff --git a/wrappers/python/tests/systems/tip4p.gro b/wrappers/python/tests/systems/tip4p.gro
+new file mode 100644
+--- /dev/null
++++ b/wrappers/python/tests/systems/tip4p.gro
+@@ -0,0 +1 @@
++data
+diff --git a/wrappers/python/tests/systems/tip4p.top b/wrappers/python/tests/systems/tip4p.top
+new file mode 100644
+--- /dev/null
++++ b/wrappers/python/tests/systems/tip4p.top
+@@ -0,0 +1 @@
++data
+"""
+
+    plan = _special_repo_execution_plan({"repo": "openmm/openmm"}, patch, [])
+
+    assert plan.failure_reason is None
+    assert plan.paths == ("wrappers/python/tests/TestGromacsTopFile.py",)
+    assert plan.evidence["rejected_paths"] == ()
 
 
 def test_openmm_test_generation_falls_back_to_touched_pytest_file():
