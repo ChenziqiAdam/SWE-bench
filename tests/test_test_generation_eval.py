@@ -8,12 +8,14 @@ from swebench.eval_pipeline.test_generation_eval import (
     GOLD_APPLY_PASS,
     GEN_APPLY_PASS,
     START_TEST_OUTPUT,
+    GeneratedTestExecutionPlan,
     _build_script,
     _exclude_gold_test_files,
     _evaluate_one,
     _infrastructure_failure_output,
     _lammps_generated_test_targets,
     _no_tests_selected,
+    _patch_driven_build_commands,
     _prepare_gold_patch,
     _biopython_generated_test_command,
     _qgis_isolated_python_command,
@@ -290,6 +292,48 @@ def test_every_openmm_opencl_spec_has_runtime_and_header_compatibility():
             "/tmp/swebench_pocl_cpu_compat.so" in command
             for command in spec["test_cmd"]
         )
+
+
+def test_openmm_opencl_retarget_writes_compat_header_before_configure():
+    # SPECS_OPENMM["1382"] declares the compat-header printf before its cmake
+    # configure line, but the patch-driven retargeting used to reorder
+    # configure to the front, so CMAKE_CXX_FLAGS' forced include pointed at a
+    # file that didn't exist yet. The header write must stay ahead of the
+    # cmake -B command that force-includes it.
+    spec = SPECS_OPENMM["1382"]
+    plan = GeneratedTestExecutionPlan(
+        languages=("cpp",), build_targets=("TestOpenCLSomething",)
+    )
+    commands = _patch_driven_build_commands("openmm/openmm", spec, plan)
+
+    header_index = next(
+        i for i, c in enumerate(commands) if "swebench_opencl_compat.h" in c and "printf" in c
+    )
+    configure_index = next(
+        i for i, c in enumerate(commands)
+        if c.startswith("cmake ") and " -B " in c
+    )
+    assert header_index < configure_index
+
+
+def test_openmm_pip_based_python_spec_is_not_rebuilt_from_source():
+    # SPECS_OPENMM["1540"] installs openmm from PyPI (no cmake build at all)
+    # and its `build` step assumes `import openmm` already works. Forcing a
+    # from-source cmake+PythonInstall retarget here uninstalls the working
+    # pip package first, breaking the import that the original spec relied
+    # on. A python-only plan against a spec with no configure command must
+    # leave the spec's build list untouched.
+    spec = SPECS_OPENMM["1540"]
+    assert not any(
+        command.startswith("cmake ") and " -B " in command
+        for command in spec.get("build", []) + spec.get("build_after_test_patch", [])
+    )
+    plan = GeneratedTestExecutionPlan(languages=("python",), build_targets=())
+
+    commands = _patch_driven_build_commands("openmm/openmm", spec, plan)
+
+    assert commands == spec["build"]
+    assert not any("pip uninstall" in command for command in commands)
 
 
 def test_test_generation_marks_zero_selected_not_exercised():
@@ -849,6 +893,86 @@ def test_openmm_plugin_shared_header_cpp_test_targets_reference_wrapper():
 
     assert plan.failure_reason is None
     assert plan.build_targets == ("TestReferenceRpmd",)
+
+
+def test_openmm_plugin_test_enables_matching_plugin_cmake_flag():
+    # A generated test under plugins/<name>/tests/ resolves to a
+    # TestReference<Name> build target, but that target only exists once the
+    # plugin's own CMake option is turned on. The default configure line
+    # doesn't enable any plugin, so "cmake --build ... --target
+    # TestReferenceAmoebaVdwForce" used to fail with "No rule to make
+    # target". The retargeted configure command must turn the matching
+    # -DOPENMM_BUILD_<NAME>_PLUGIN=ON flag on.
+    spec = {
+        "build_after_test_patch": [
+            "cmake -B build -S . -DCMAKE_BUILD_TYPE=Release "
+            "-DOPENMM_BUILD_CUDA_LIB=OFF -DOPENMM_BUILD_OPENCL_LIB=OFF "
+            "-DOPENMM_BUILD_HIP_LIB=OFF -DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF",
+            "cmake --build build --parallel $(nproc) --target TestReferenceAmoebaVdwForce",
+        ],
+    }
+    plan = GeneratedTestExecutionPlan(
+        languages=("cpp",),
+        paths=("plugins/amoeba/tests/TestAmoebaVdwForce.h",),
+        build_targets=("TestReferenceAmoebaVdwForce",),
+    )
+
+    commands = _patch_driven_build_commands("openmm/openmm", spec, plan)
+
+    configure = next(
+        c for c in commands if c.startswith("cmake ") and " -B " in c
+    )
+    assert "-DOPENMM_BUILD_AMOEBA_PLUGIN=ON" in configure
+
+
+def test_openmm_cuda_only_generated_test_is_non_evaluable():
+    # This eval environment has no GPU, so CUDA is always configured with
+    # -DOPENMM_BUILD_CUDA_LIB=OFF. A generated test that only touches
+    # platforms/cuda/ can never produce a buildable target here.
+    patch = """diff --git a/platforms/cuda/tests/TestCudaMultipleForces.cpp b/platforms/cuda/tests/TestCudaMultipleForces.cpp
+--- a/platforms/cuda/tests/TestCudaMultipleForces.cpp
++++ b/platforms/cuda/tests/TestCudaMultipleForces.cpp
+@@ -1,3 +1,4 @@
++void testNewCase() {}
+ void runPlatformTests();
+"""
+
+    plan = _special_repo_execution_plan({"repo": "openmm/openmm"}, patch, [])
+
+    assert plan.failure_reason == "non_evaluable_spec"
+
+
+def test_openmm_native_python_spec_patches_swig_source_not_build_copy():
+    # CMake copies wrappers/python/src/swig_doxygen/swig_lib/python/extend.i
+    # fresh into the build tree on every configure/build. The old sed target
+    # (build/python/src/swig_lib/python/extend.i) was both the wrong path
+    # (missing the swig_doxygen segment) and gets overwritten by that copy
+    # even when corrected, so SWIG still saw the unpatched '# Look' line.
+    # Patching the source copy survives the CMake-copy step.
+    commands = SPECS_OPENMM["3923"]["build_after_test_patch"]
+    sed_command = next(c for c in commands if "extend.i" in c and "sed -i" in c)
+
+    assert "wrappers/python/src/swig_doxygen/swig_lib/python/extend.i" in sed_command
+    assert "build/python/src/swig_lib/python/extend.i" not in sed_command
+
+
+def test_openmm_python_plan_retarget_patches_swig_source_not_build_copy():
+    spec = {
+        "build_after_test_patch": [
+            "cmake -B build -S . -DCMAKE_BUILD_TYPE=Release "
+            "-DOPENMM_BUILD_CUDA_LIB=OFF -DOPENMM_BUILD_OPENCL_LIB=OFF "
+            "-DOPENMM_BUILD_HIP_LIB=OFF -DOPENMM_BUILD_PYTHON_WRAPPERS=ON "
+            "-DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF",
+            "cmake --build build --parallel $(nproc) --target install",
+        ],
+    }
+    plan = GeneratedTestExecutionPlan(languages=("python",), build_targets=())
+
+    commands = _patch_driven_build_commands("openmm/openmm", spec, plan)
+
+    sed_command = next(c for c in commands if "extend.i" in c and "sed -i" in c)
+    assert "wrappers/python/src/swig_doxygen/swig_lib/python/extend.i" in sed_command
+    assert "build/python/src/swig_lib/python/extend.i" not in sed_command
 
 
 def test_openmm_python_test_fixtures_do_not_veto_accepted_test():

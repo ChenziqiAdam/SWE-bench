@@ -396,7 +396,12 @@ def render_test_generation_table(
     for row in rows:
         counts[row["status"]] = counts.get(row["status"], 0) + 1
     total = len(rows)
-    scorable = total - counts["excluded"]
+    # Only resolved/unresolved were actually built, run, and adjudicated.
+    # not_exercised/errored/no-pred mean the generated test never reached a
+    # fair verdict (rejected pre-build, harness/infra failure, or no patch),
+    # so counting them in the denominator would penalise the model for
+    # instances it was never judged on. Mirrors render_evaluation_table.
+    scorable = counts["resolved"] + counts["unresolved"]
     rate = counts["resolved"] / scorable if scorable else 0.0
 
     print("\n" + "=" * 78)

@@ -474,9 +474,14 @@ def _openmm_native_python_spec(
             "-DOPENMM_BUILD_EXAMPLES=OFF",
             # OpenMM 7.0's generated SWIG input contains a prose line beginning
             # with '# Look'. Modern SWIG treats it as an unknown directive.
-            "if [ -f build/python/src/swig_lib/python/extend.i ]; then "
+            # CMake copies this file fresh from the source tree
+            # (wrappers/python/src/swig_doxygen/swig_lib/python/extend.i) into
+            # build/python/src/swig_doxygen/swig_lib/python/extend.i on every
+            # build, so the source copy must be patched -- sed'ing only the
+            # build-tree copy is silently overwritten before SWIG runs.
+            "if [ -f wrappers/python/src/swig_doxygen/swig_lib/python/extend.i ]; then "
             "sed -i 's/^# Look/\\/\\/ Look/' "
-            "build/python/src/swig_lib/python/extend.i; fi",
+            "wrappers/python/src/swig_doxygen/swig_lib/python/extend.i; fi",
             # PythonInstall links against the configured install prefix.  Some
             # OpenMM versions incorrectly return success when setup.py linking
             # failed, so install the native libraries first and verify import.

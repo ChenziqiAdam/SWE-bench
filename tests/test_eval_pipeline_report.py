@@ -220,6 +220,34 @@ def test_test_generation_report_excludes_base_image_infrastructure_failure(
     assert "0/0 scorable; 1 total" in capsys.readouterr().out
 
 
+def test_test_generation_report_denominator_excludes_unadjudicated_statuses(
+    tmp_path, capsys
+):
+    # not_exercised/errored/no-pred mean the generated test never reached a
+    # fair build-run-adjudicate cycle (rejected pre-build, harness/infra
+    # failure, or no patch at all). They must not inflate the denominator,
+    # mirroring render_evaluation_table's resolved+unresolved-only rate.
+    output_csv = tmp_path / "results.csv"
+    render_test_generation_table(
+        results={
+            "demo__repo-1": {"status": "resolved"},
+            "demo__repo-2": {"status": "unresolved"},
+            "demo__repo-3": {"status": "not_exercised"},
+            "demo__repo-4": {"status": "errored"},
+            "demo__repo-5": {"status": "no-pred"},
+        },
+        instances=[
+            {"instance_id": f"demo__repo-{i}", "repo": "demo/repo"}
+            for i in range(1, 6)
+        ],
+        output_csv=str(output_csv),
+    )
+
+    out = capsys.readouterr().out
+    assert "50.0%" in out
+    assert "1/2 scorable; 5 total" in out
+
+
 def test_test_generation_report_does_not_exclude_invalid_spec(tmp_path):
     output_csv = tmp_path / "results.csv"
     render_test_generation_table(

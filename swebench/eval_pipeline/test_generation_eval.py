@@ -587,6 +587,50 @@ def _lammps_generated_test_targets(generated_patch: str) -> list[tuple[str, str]
     return sorted(targets)
 
 
+# unittest/force-styles/CMakeLists.txt file(GLOB ... CONFIGURE_DEPENDS) rules:
+# each YAML fixture under unittest/force-styles/tests/<prefix>-<name>.yaml is
+# auto-registered (at configure time, no per-file CMake edits needed) as a
+# ctest named "<CTestPrefix>:<name>" run via a single shared driver binary.
+# (source: https://github.com/lammps/lammps/blob/develop/unittest/force-styles/CMakeLists.txt)
+_LAMMPS_FORCE_STYLE_YAML_RULES: tuple[tuple[str, str, str], ...] = (
+    ("mol-pair-", "MolPairStyle", "test_pair_style"),
+    ("atomic-pair-", "AtomicPairStyle", "test_pair_style"),
+    ("manybody-pair-", "ManybodyPairStyle", "test_pair_style"),
+    ("ellipsoid-pair-", "EllipsoidPairStyle", "test_pair_style"),
+    ("spin-pair-", "SpinPairStyle", "test_pair_style"),
+    ("sph-pair-", "SPHPairStyle", "test_pair_style"),
+    ("meso-pair-", "MesoPairStyle", "test_pair_style"),
+    ("kspace-", "KSpaceStyle", "test_pair_style"),
+    ("bond-", "BondStyle", "test_bond_style"),
+    ("angle-", "AngleStyle", "test_angle_style"),
+    ("fix-timestep-", "FixTimestep", "test_fix_timestep"),
+    ("min-", "MinStyle", "test_min_style"),
+    ("compute-", "OutputStyle", "test_output_style"),
+    ("fix-output-", "OutputStyle", "test_output_style"),
+    ("dihedral-", "DihedralStyle", "test_dihedral_style"),
+    ("improper-", "ImproperStyle", "test_improper_style"),
+)
+
+
+def _lammps_force_style_yaml_test(path: str) -> tuple[str, str] | None:
+    """Return (ctest_name, driver_binary) for a force-styles YAML fixture path.
+
+    Returns None if `path` isn't a recognized unittest/force-styles/tests/*.yaml
+    fixture (or the filename doesn't match any known `<prefix>-<name>.yaml`
+    convention), so callers can tell "recognized LAMMPS YAML test" apart from
+    "unrelated YAML file in the patch".
+    """
+    match = re.match(r"unittest/force-styles/tests/([^/]+)\.yaml$", path)
+    if not match:
+        return None
+    filename = match.group(1)
+    for prefix, ctest_prefix, binary in _LAMMPS_FORCE_STYLE_YAML_RULES:
+        if filename.startswith(prefix):
+            name = filename[len(prefix):]
+            return (f"{ctest_prefix}:{name}", binary)
+    return None
+
+
 def _lammps_generated_test_command(generated_patch: str) -> str | None:
     targets = _lammps_generated_test_targets(generated_patch)
     commands = [binary for _target, binary in targets]
@@ -684,9 +728,26 @@ def _special_repo_execution_plan(
         )
 
     paths = _patch_paths(generated_patch)
+    # This eval environment has no GPU, so the CUDA platform is always built
+    # with -DOPENMM_BUILD_CUDA_LIB=OFF. A generated test that only touches
+    # platforms/cuda/ can never produce a buildable target here, regardless
+    # of which C++ target name it would otherwise resolve to.
+    if repo == "openmm/openmm" and any(
+        path.startswith("platforms/cuda/") for path in paths
+    ):
+        return GeneratedTestExecutionPlan(
+            failure_reason="non_evaluable_spec",
+            evidence={
+                "spec_commands": tuple(commands),
+                "patch_paths": tuple(paths),
+            },
+        )
+
     accepted: dict[str, list[str]] = {"cpp": [], "python": []}
     rejected: list[str] = []
+    rejected_noise: list[str] = []
     openmm_header_targets: dict[str, str] = {}
+    lammps_yaml_tests: dict[str, tuple[str, str]] = {}
     for path in paths:
         suffix = PurePosixPath(path).suffix.lower()
         basename = PurePosixPath(path).name
@@ -706,6 +767,16 @@ def _special_repo_execution_plan(
         ):
             language = "cpp"
             openmm_header_targets[path] = "TestReference" + basename[len("Test"):-len(".h")]
+        # LAMMPS's force-styles suite is data-driven: a YAML fixture under
+        # unittest/force-styles/tests/<prefix>-<name>.yaml is a complete,
+        # runnable regression test on its own (file(GLOB CONFIGURE_DEPENDS)
+        # auto-registers it as a ctest against an existing shared driver
+        # binary) -- it never needs an accompanying .cpp file.
+        if repo == "lammps/lammps" and suffix == ".yaml":
+            yaml_test = _lammps_force_style_yaml_test(path)
+            if yaml_test is not None:
+                language = "cpp"
+                lammps_yaml_tests[path] = yaml_test
         # Non-source fixtures shipped alongside a generated Python test
         # (e.g. wrappers/python/tests/systems/*.gro/*.top/*.pdb) are not
         # themselves tests and must not veto an otherwise-valid accepted test.
@@ -732,8 +803,11 @@ def _special_repo_execution_plan(
             )
         elif repo == "lammps/lammps":
             canonical = (
-                language == "cpp" and re.match(r"unittest/.+/[^/]+\.cpp$", path)
-                is not None
+                language == "cpp"
+                and (
+                    re.match(r"unittest/.+/[^/]+\.cpp$", path) is not None
+                    or path in lammps_yaml_tests
+                )
             ) or (
                 language == "python"
                 and path.startswith(("unittest/", "python/tests/"))
@@ -747,14 +821,26 @@ def _special_repo_execution_plan(
             )
         if canonical and language in capabilities:
             accepted[language].append(path)
-        elif _is_test_path(path) or language is not None:
+        elif _is_test_path(path):
+            # Looks like a test (test-ish path/filename) but failed the
+            # repo's canonical-location/format check: a real signal the
+            # agent wrote a test the harness can't run, so it vetoes the
+            # whole patch rather than being silently dropped.
             rejected.append(path)
+        elif language is not None:
+            # A source file with a recognized suffix that doesn't look like
+            # a test at all (e.g. a root-level "hello.py"/"repro.py" scratch
+            # script) is very likely debug noise left in the diff, not an
+            # attempted-but-broken test. Don't let it veto an otherwise
+            # valid test elsewhere in the same patch.
+            rejected_noise.append(path)
 
     selected_paths = tuple(sorted(accepted["cpp"] + accepted["python"]))
     evidence = {
         "patch_paths": tuple(paths),
         "accepted_paths": selected_paths,
         "rejected_paths": tuple(sorted(rejected)),
+        "ignored_noise_paths": tuple(sorted(rejected_noise)),
     }
     if rejected:
         return GeneratedTestExecutionPlan(
@@ -790,6 +876,24 @@ def _special_repo_execution_plan(
             targets = _lammps_generated_test_targets(generated_patch)
             build_targets = [target for target, _binary in targets]
             selected_commands.extend(binary for _target, binary in targets)
+            # YAML fixtures run through a shared driver binary (e.g.
+            # test_pair_style) that CMake already builds; the fixture itself
+            # needs no per-file build target, only the driver + a scoped
+            # ctest -R selecting the fixture's auto-registered test name.
+            yaml_binaries = sorted(
+                {binary for path, (_name, binary) in lammps_yaml_tests.items()
+                 if path in accepted["cpp"]}
+            )
+            yaml_ctest_names = sorted(
+                name for path, (name, _binary) in lammps_yaml_tests.items()
+                if path in accepted["cpp"]
+            )
+            build_targets.extend(yaml_binaries)
+            if yaml_ctest_names:
+                pattern = "|".join(re.escape(name) for name in yaml_ctest_names)
+                selected_commands.append(
+                    f"ctest --test-dir build --output-on-failure -R '^({pattern})$'"
+                )
         elif repo == "rdkit/rdkit":
             registrations = _cmake_registered_cpp_targets(generated_patch)
             configured = _configured_ctest_targets(commands)
@@ -917,6 +1021,22 @@ def _patch_driven_build_commands(
     if repo not in {"openmm/openmm", "rdkit/rdkit"}:
         return original
 
+    # Some OpenMM specs (pure-Python app-package tests) install openmm from
+    # PyPI and never build from source at all. If the plan only selected
+    # Python tests, forcing a from-source cmake+PythonInstall rebuild here
+    # would uninstall the working pip package and rebuild it into a location
+    # that isn't importable, breaking a test the pip-based spec would have
+    # passed untouched. Leave such specs alone.
+    has_configure_command = any(
+        command.startswith("cmake ") and " -B " in command for command in original
+    )
+    if (
+        repo == "openmm/openmm"
+        and not has_configure_command
+        and plan.languages == ("python",)
+    ):
+        return original
+
     configure = next(
         (command for command in original if command.startswith("cmake ") and " -B " in command),
         None,
@@ -925,6 +1045,17 @@ def _patch_driven_build_commands(
         command for command in original
         if not command.startswith("cmake --build ") and command != configure
     ]
+    # Commands that only prepare inputs the configure step reads (e.g. writing
+    # a header that configure force-includes via CMAKE_CXX_FLAGS) must run
+    # before `configure`, not after, or configure fails looking for a file
+    # that hasn't been written yet.
+    pre_configure = [
+        command for command in retained
+        if configure and any(
+            path in configure for path in re.findall(r"/tmp/\S+?\.(?:h|hpp|cpp)", command)
+        )
+    ]
+    retained = [command for command in retained if command not in pre_configure]
     if repo == "rdkit/rdkit":
         configure = configure or (
             "cmake -B build -S . -DCMAKE_BUILD_TYPE=Release "
@@ -947,13 +1078,29 @@ def _patch_driven_build_commands(
             else "cmake --build build --parallel $(nproc) --target "
             + " ".join(plan.build_targets)
         )
-        return [configure, *retained, build]
+        return [*pre_configure, configure, *retained, build]
 
     configure = configure or (
         "cmake -B build -S . -DCMAKE_BUILD_TYPE=Release "
         "-DOPENMM_BUILD_CUDA_LIB=OFF -DOPENMM_BUILD_OPENCL_LIB=OFF "
         "-DOPENMM_BUILD_HIP_LIB=OFF -DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF"
     )
+    # A generated test under plugins/<name>/tests/ only builds if that
+    # plugin's CMake option is enabled; the default configure lines above
+    # don't turn any plugin on, so TestReference<Name> would otherwise have
+    # no rule to build it.
+    plugin_names = {
+        PurePosixPath(path).parts[1].upper()
+        for path in plan.paths
+        if PurePosixPath(path).parts[:1] == ("plugins",)
+        and len(PurePosixPath(path).parts) > 1
+    }
+    for plugin_name in sorted(plugin_names):
+        flag = f"-DOPENMM_BUILD_{plugin_name}_PLUGIN="
+        if flag in configure:
+            configure = re.sub(flag + r"(?:ON|OFF)", flag + "ON", configure)
+        else:
+            configure += f" {flag}ON"
     retained = [
         command for command in retained
         if "OPENMM_SITE=" not in command and "SIMTK_SITE=" not in command
@@ -968,10 +1115,14 @@ def _patch_driven_build_commands(
     else:
         configure += f" -DOPENMM_BUILD_PYTHON_WRAPPERS={wrapper_flag}"
     if "python" in plan.languages:
+        # CMake copies this file fresh from the source tree into the build
+        # tree on every configure/build, so patching only the build-tree
+        # copy (as the original spec command does) gets silently overwritten
+        # before SWIG runs. Patch the source copy instead.
         retained.append(
-            "if [ -f build/python/src/swig_lib/python/extend.i ]; then "
+            "if [ -f wrappers/python/src/swig_doxygen/swig_lib/python/extend.i ]; then "
             "sed -i 's/^# Look/\\/\\/ Look/' "
-            "build/python/src/swig_lib/python/extend.i; fi"
+            "wrappers/python/src/swig_doxygen/swig_lib/python/extend.i; fi"
         )
     targets = list(plan.build_targets)
     if "python" in plan.languages:
@@ -989,7 +1140,7 @@ def _patch_driven_build_commands(
         if "python" in plan.languages
         else []
     )
-    return [*source_setup, configure, *retained, *build_commands]
+    return [*source_setup, *pre_configure, configure, *retained, *build_commands]
 
 
 def _build_script(instance: dict, generated_patch: str, apply_gold: bool) -> str:
