@@ -262,7 +262,20 @@ def test_openmm_826_builds_matching_amoeba_python_bindings():
     )
     assert "OPENMM_PLUGIN_DIR=$PWD/build" in spec["test_cmd"][0]
     assert "test_RigidWater" in spec["test_cmd"][0]
-    assert "s/^# Look/\\/\\/ Look/" in spec["build_after_test_patch"][1]
+    # Must tolerate the offending "# Look" line being indented (as it is in
+    # some OpenMM revisions), not just at column 0.
+    import re as _re
+    import subprocess as _subprocess
+
+    sed_command = next(
+        part for part in spec["build_after_test_patch"][1].split(" && ") if "sed -i" in part
+    )
+    sed_expr = _re.search(r"sed -i '([^']*)'", sed_command).group(1)
+    sample = "      # Look for the first tag to figure out what type of object it is.\n"
+    patched = _subprocess.run(
+        ["sed", sed_expr], input=sample, capture_output=True, text=True, check=True
+    ).stdout
+    assert patched == "      // Look for the first tag to figure out what type of object it is.\n"
 
 
 def test_openmm_5137_runs_cmake_runtime_output():

@@ -479,8 +479,11 @@ def _openmm_native_python_spec(
             # build/python/src/swig_doxygen/swig_lib/python/extend.i on every
             # build, so the source copy must be patched -- sed'ing only the
             # build-tree copy is silently overwritten before SWIG runs.
+            # The offending line is indented (it sits inside a Python method
+            # body), so the pattern must allow leading whitespace -- an
+            # anchor of '^# Look' misses it and silently no-ops.
             "if [ -f wrappers/python/src/swig_doxygen/swig_lib/python/extend.i ]; then "
-            "sed -i 's/^# Look/\\/\\/ Look/' "
+            "sed -i 's/^\\([ \\t]*\\)# Look/\\1\\/\\/ Look/' "
             "wrappers/python/src/swig_doxygen/swig_lib/python/extend.i; fi",
             # PythonInstall links against the configured install prefix.  Some
             # OpenMM versions incorrectly return success when setup.py linking

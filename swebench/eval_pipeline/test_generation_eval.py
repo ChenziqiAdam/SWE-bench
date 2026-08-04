@@ -730,10 +730,14 @@ def _special_repo_execution_plan(
     paths = _patch_paths(generated_patch)
     # This eval environment has no GPU, so the CUDA platform is always built
     # with -DOPENMM_BUILD_CUDA_LIB=OFF. A generated test that only touches
-    # platforms/cuda/ can never produce a buildable target here, regardless
-    # of which C++ target name it would otherwise resolve to.
-    if repo == "openmm/openmm" and any(
-        path.startswith("platforms/cuda/") for path in paths
+    # a platforms/cuda/ path -- top-level (platforms/cuda/...) or nested
+    # under a plugin (plugins/<name>/platforms/cuda/...) -- can never
+    # produce a buildable target here, regardless of which C++ target name
+    # it would otherwise resolve to.
+    if repo == "openmm/openmm" and paths and all(
+        "cuda" in PurePosixPath(path).parts
+        and "platforms" in PurePosixPath(path).parts
+        for path in paths
     ):
         return GeneratedTestExecutionPlan(
             failure_reason="non_evaluable_spec",
@@ -788,6 +792,20 @@ def _special_repo_execution_plan(
             continue
         canonical = False
         if repo == "openmm/openmm":
+            # This eval environment has no GPU, so CUDA is always built with
+            # -DOPENMM_BUILD_CUDA_LIB=OFF (see the platforms/cuda/ whole-patch
+            # veto above). A per-file CUDA test binary is therefore never
+            # buildable here even when the same patch also touches a
+            # buildable OpenCL/reference variant or shared header -- treat it
+            # as ignorable noise rather than a canonical accepted test so it
+            # doesn't get selected as (and fail on) an unbuildable target.
+            _cuda_parts = PurePosixPath(path).parts
+            if (
+                language == "cpp"
+                and "cuda" in _cuda_parts
+                and "platforms" in _cuda_parts
+            ):
+                continue
             canonical = (
                 language == "python"
                 and path.startswith("wrappers/python/tests/")
@@ -942,8 +960,17 @@ def _special_repo_execution_plan(
                 if repo == "rdkit/rdkit"
                 else "PYTHONPATH=/testbed:${PYTHONPATH:-} "
             )
+            # RDKit's CMake build places the compiled Python extension
+            # (rdBase, etc.) under build/rdkit/; it must be copied into the
+            # in-tree rdkit/ package before import, mirroring
+            # _rdkit_python_wrapper_spec's test_cmd, or `import rdkit` fails
+            # with a circular-import ImportError for rdBase.
+            copy_prefix = (
+                "cp -a build/rdkit/. rdkit/ && " if repo == "rdkit/rdkit" else ""
+            )
             selected_commands.append(
-                prefix + "python3 -m pytest -rA --tb=long -p no:cacheprovider "
+                copy_prefix + prefix
+                + "python3 -m pytest -rA --tb=long -p no:cacheprovider "
                 + " ".join(selected or accepted["python"])
             )
 
@@ -1119,9 +1146,12 @@ def _patch_driven_build_commands(
         # tree on every configure/build, so patching only the build-tree
         # copy (as the original spec command does) gets silently overwritten
         # before SWIG runs. Patch the source copy instead.
+        # The offending line is indented (it sits inside a Python method
+        # body) in some OpenMM revisions, so the pattern must allow leading
+        # whitespace -- an anchor of '^# Look' misses it and silently no-ops.
         retained.append(
             "if [ -f wrappers/python/src/swig_doxygen/swig_lib/python/extend.i ]; then "
-            "sed -i 's/^# Look/\\/\\/ Look/' "
+            "sed -i 's/^\\([ \\t]*\\)# Look/\\1\\/\\/ Look/' "
             "wrappers/python/src/swig_doxygen/swig_lib/python/extend.i; fi"
         )
     targets = list(plan.build_targets)

@@ -258,6 +258,12 @@ def parse_log_openmm_binary_done(log: str, test_spec: TestSpec) -> dict[str, str
         elif (
             re.match(r"^\+?\s*exception:", line.strip())
             or "No such file or directory" in line
+            # An uncaught C++ exception (e.g. a raw std::runtime_error the
+            # test doesn't wrap in OpenMM's own "exception:"-prefixed
+            # printer) aborts the process via std::terminate instead of
+            # printing "exception:" or "Done". Recognize that crash text too,
+            # or a genuine test failure is left unparseable.
+            or "terminate called after throwing an instance of" in line
         ):
             test_status_map[test_name or "OpenMMBinary"] = TestStatus.FAILED.value
 
