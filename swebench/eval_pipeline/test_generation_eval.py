@@ -571,14 +571,19 @@ def _biopython_generated_test_command(generated_patch: str) -> str | None:
 
 
 def _lammps_generated_test_targets(generated_patch: str) -> list[tuple[str, str]]:
-    """Map touched LAMMPS unit-test sources to CMake targets and binaries."""
+    """Map touched LAMMPS unit-test sources to CMake targets and binaries.
+
+    LAMMPS's top-level CMakeLists.txt sets CMAKE_RUNTIME_OUTPUT_DIRECTORY to
+    CMAKE_BINARY_DIR, so every executable (including unittest/* gtest
+    binaries) lands flat in build/, not nested under build/unittest/<subdir>/.
+    """
     targets: set[tuple[str, str]] = set()
     paths = re.findall(r"^diff --git a/(\S+) b/\S+", generated_patch, re.MULTILINE)
     for path in paths:
         match = re.match(r"unittest/(.+)/([^/]+)\.cpp$", path)
         if match and _is_test_path(path):
-            subdir, stem = match.groups()
-            targets.add((stem, f"build/unittest/{subdir}/{stem}"))
+            _subdir, stem = match.groups()
+            targets.add((stem, f"build/{stem}"))
     return sorted(targets)
 
 

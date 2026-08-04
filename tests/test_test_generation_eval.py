@@ -612,9 +612,9 @@ def test_lammps_test_generation_builds_and_runs_touched_binary(monkeypatch):
     }
 
     assert _lammps_generated_test_targets(patch) == [
-        ("test_regions", "build/unittest/commands/test_regions")
+        ("test_regions", "build/test_regions")
     ]
-    assert _test_command(instance, patch) == "build/unittest/commands/test_regions"
+    assert _test_command(instance, patch) == "build/test_regions"
     script = _build_script(instance, patch, apply_gold=False)
     assert "cmake --build build --parallel $(nproc) --target test_regions" in script
     assert "ctest --test-dir build" not in script
