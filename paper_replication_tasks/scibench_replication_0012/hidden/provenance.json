@@ -1,14 +1,351 @@
 {
+  "cases": [
+    {
+      "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+      "case_id": "case_01",
+      "checkout_commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0012 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+      "independent_error": {
+        "max_abs": 2.5091040356528538e-14,
+        "per_field_max_abs": {
+          "effective_field": 2.5091040356528538e-14,
+          "hamiltonian": 9.992007221626409e-16,
+          "orientation": 0.0,
+          "temperature": 0.0
+        },
+        "rmse": 1.9761924586762502e-15
+      },
+      "input_sha256": "e82e4fbdd1b4485808cf632dfb3a2744c980f662d10eec5e87ca15a22d531387",
+      "normalized_output_sha256": "11d85f1af0e0b7e791be0c82dadb5b64528cbf443447bc5323fb91a46c06263e",
+      "output_sha256": "11d85f1af0e0b7e791be0c82dadb5b64528cbf443447bc5323fb91a46c06263e",
+      "raw_official_sha256": "de4491bae83a1271b9ddbae8df39653ff1af7ee69925445fd3b936973432f941",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+      "case_id": "case_02",
+      "checkout_commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0012 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+      "independent_error": {
+        "max_abs": 3.552713678800501e-14,
+        "per_field_max_abs": {
+          "effective_field": 3.552713678800501e-14,
+          "hamiltonian": 2.6645352591003757e-15,
+          "orientation": 0.0,
+          "temperature": 0.0
+        },
+        "rmse": 2.7996674903189286e-15
+      },
+      "input_sha256": "332bdbd13f754517e5ffef591f0dca87bbc41fbc9d930780787067aa0d2fe8a2",
+      "normalized_output_sha256": "f31e363e863446a0a0ae6a814ec41a4ab441a4c97a262ce4c66ebc59b020a8d2",
+      "output_sha256": "f31e363e863446a0a0ae6a814ec41a4ab441a4c97a262ce4c66ebc59b020a8d2",
+      "raw_official_sha256": "af0c03a347c9df1b282579dc3612346e8ef0b691f9f6f15438964cb60d6b06b7",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+      "case_id": "case_03",
+      "checkout_commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0012 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+      "independent_error": {
+        "max_abs": 5.773159728050814e-15,
+        "per_field_max_abs": {
+          "effective_field": 5.773159728050814e-15,
+          "hamiltonian": 2.6645352591003757e-15,
+          "orientation": 0.0,
+          "temperature": 0.0
+        },
+        "rmse": 1.0678538020540791e-15
+      },
+      "input_sha256": "d3184608ac32c820b5cc96ae39580a7be22f3bddfe55e3bc16d776ee571b2512",
+      "normalized_output_sha256": "10bdeed392dba438fc2c0a0943a3bb67b64d2f6506d986b7c70def7a2e9fe8c7",
+      "output_sha256": "10bdeed392dba438fc2c0a0943a3bb67b64d2f6506d986b7c70def7a2e9fe8c7",
+      "raw_official_sha256": "50fffc0c8c0a3314e62eff69db01dc61fcf88e2fffd52f58f10e178c7b7a528b",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+      "case_id": "case_04",
+      "checkout_commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0012 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+      "independent_error": {
+        "max_abs": 2.8199664825478976e-14,
+        "per_field_max_abs": {
+          "effective_field": 2.8199664825478976e-14,
+          "hamiltonian": 2.6645352591003757e-15,
+          "orientation": 0.0,
+          "temperature": 0.0
+        },
+        "rmse": 2.4335786216790315e-15
+      },
+      "input_sha256": "64d08c0f3cb754f9143acefe2d1d764c305eb51de5239d8e9e9d88884290b6d2",
+      "normalized_output_sha256": "3037d08b6daab2bcaf123049017e0e87287123c771e5f5dc89bd2ddba404b91d",
+      "output_sha256": "3037d08b6daab2bcaf123049017e0e87287123c771e5f5dc89bd2ddba404b91d",
+      "raw_official_sha256": "0848afb90403fe33c9153be5bab82e4e53e3255810e0ce9ac915aea21320357e",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+      "case_id": "case_05",
+      "checkout_commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0012 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+      "independent_error": {
+        "max_abs": 1.8207657603852567e-14,
+        "per_field_max_abs": {
+          "effective_field": 1.8207657603852567e-14,
+          "hamiltonian": 1.7763568394002505e-15,
+          "orientation": 0.0,
+          "temperature": 0.0
+        },
+        "rmse": 1.7737588120840083e-15
+      },
+      "input_sha256": "c67539ae6cb17ecc874d94d7f4dc2a42e12052a734982881fcf3f30ba180aedb",
+      "normalized_output_sha256": "5dae0531815f060ef5cc97167496b1e706dc717eb42a0f83f19c6842afa45159",
+      "output_sha256": "5dae0531815f060ef5cc97167496b1e706dc717eb42a0f83f19c6842afa45159",
+      "raw_official_sha256": "59bf6d9994fadb8232d04b6f9f6bad0b9b22fef2ba0495b7711f003f798de1b9",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+      "case_id": "case_06",
+      "checkout_commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0012 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+      "independent_error": {
+        "max_abs": 1.4377388168895777e-14,
+        "per_field_max_abs": {
+          "effective_field": 1.4377388168895777e-14,
+          "hamiltonian": 1.3322676295501878e-15,
+          "orientation": 0.0,
+          "temperature": 0.0
+        },
+        "rmse": 1.3811863767272813e-15
+      },
+      "input_sha256": "63c0014102b6481ec701ad1ae16430b86c07ba23ce9ae71e0a13cdb75d235d85",
+      "normalized_output_sha256": "df7757b4370fa10c57047e355dff30f9cf1b2744831376a6680718a87bc49c56",
+      "output_sha256": "df7757b4370fa10c57047e355dff30f9cf1b2744831376a6680718a87bc49c56",
+      "raw_official_sha256": "0279212811e59783ce9fc26ec8fb465f296bdcb1a13ed2c367e141b4e09d65f3",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+      "case_id": "case_07",
+      "checkout_commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0012 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+      "independent_error": {
+        "max_abs": 1.2434497875801753e-14,
+        "per_field_max_abs": {
+          "effective_field": 1.2434497875801753e-14,
+          "hamiltonian": 2.6645352591003757e-15,
+          "orientation": 0.0,
+          "temperature": 0.0
+        },
+        "rmse": 1.8880820176761315e-15
+      },
+      "input_sha256": "61cb527b0639083be0609c8f0d94045ec1af6bfdb21d2ddcba11491713e7b4fd",
+      "normalized_output_sha256": "24207ddeaf4fe9eb8d7e62edd1436435f88c5736d532efd3b77f98f5a5fac477",
+      "output_sha256": "24207ddeaf4fe9eb8d7e62edd1436435f88c5736d532efd3b77f98f5a5fac477",
+      "raw_official_sha256": "082f6ef3519a9f4f0e84ac4a70185407d0aa8c3d04901fa5b8cb424a64b55688",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+      "case_id": "case_08",
+      "checkout_commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0012 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+      "independent_error": {
+        "max_abs": 2.5757174171303632e-14,
+        "per_field_max_abs": {
+          "effective_field": 2.5757174171303632e-14,
+          "hamiltonian": 7.993605777301127e-15,
+          "orientation": 0.0,
+          "temperature": 0.0
+        },
+        "rmse": 3.301893406536778e-15
+      },
+      "input_sha256": "0e6759bee410e6fe51883e2be65fa41bcf8aa7f59b715af09cea778da7f51a7d",
+      "normalized_output_sha256": "10ef9d3a6f6fd6c4712c53c4e2888448884496b0efe9c1f43e9424d5366f2a3d",
+      "output_sha256": "10ef9d3a6f6fd6c4712c53c4e2888448884496b0efe9c1f43e9424d5366f2a3d",
+      "raw_official_sha256": "1103ac98ddb8ff110da6437336b11b8a6048d4f08f90fd840d29a5534c129197",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+      "case_id": "case_01",
+      "checkout_commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0012 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+      "independent_error": {
+        "max_abs": 2.886579864025407e-15,
+        "per_field_max_abs": {
+          "effective_field": 2.886579864025407e-15,
+          "hamiltonian": 4.440892098500626e-16,
+          "orientation": 0.0,
+          "temperature": 0.0
+        },
+        "rmse": 5.782119101083479e-16
+      },
+      "input_sha256": "0828101cfe1cbce485c50c3bce783db55077071c6a9c368a40ad4f0fa1d4faba",
+      "normalized_output_sha256": "5f338e3ee2e548c75a1495aa580afee0b212eeb342d1aee4ba70ad86b67004fb",
+      "output_sha256": "5f338e3ee2e548c75a1495aa580afee0b212eeb342d1aee4ba70ad86b67004fb",
+      "raw_official_sha256": "52e0677178fd438938eb687414d99713668f1fc54ad48490f3b498916c6c19c8",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+      "case_id": "case_02",
+      "checkout_commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0012 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+      "independent_error": {
+        "max_abs": 1.3322676295501878e-15,
+        "per_field_max_abs": {
+          "effective_field": 1.3322676295501878e-15,
+          "hamiltonian": 5.551115123125783e-16,
+          "orientation": 0.0,
+          "temperature": 0.0
+        },
+        "rmse": 4.3281017102101295e-16
+      },
+      "input_sha256": "9a4c262d3912580ab74b2472aed767d4c4cad72b6af7fa34a2a014fb8619328f",
+      "normalized_output_sha256": "00c9efad0ae5c92fe481358d0ecc13f9efdb845bb8ac635e40b52763244c4f4d",
+      "output_sha256": "00c9efad0ae5c92fe481358d0ecc13f9efdb845bb8ac635e40b52763244c4f4d",
+      "raw_official_sha256": "7db8e1e1c9b265a9868a248d0698f03d528e9fd1eeef57810e005d0ca8562fa9",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+      "case_id": "case_03",
+      "checkout_commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0012 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+      "independent_error": {
+        "max_abs": 2.531308496145357e-14,
+        "per_field_max_abs": {
+          "effective_field": 2.531308496145357e-14,
+          "hamiltonian": 6.217248937900877e-15,
+          "orientation": 0.0,
+          "temperature": 0.0
+        },
+        "rmse": 4.884010617523046e-15
+      },
+      "input_sha256": "f10606bc1902b627c054d45566b151397478230a5b67ecd8f8fb28eb7b8efba7",
+      "normalized_output_sha256": "508dc061d44305a32be13dad9bf0ebe14bf89d267ddc66b230db587ad7d230a8",
+      "output_sha256": "508dc061d44305a32be13dad9bf0ebe14bf89d267ddc66b230db587ad7d230a8",
+      "raw_official_sha256": "afdf912983262957002522095e13cb3c8c340889c4b805596f981de8be9e3c8b",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+      "case_id": "case_04",
+      "checkout_commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0012 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+      "independent_error": {
+        "max_abs": 1.1546319456101628e-14,
+        "per_field_max_abs": {
+          "effective_field": 1.1546319456101628e-14,
+          "hamiltonian": 3.552713678800501e-15,
+          "orientation": 0.0,
+          "temperature": 0.0
+        },
+        "rmse": 2.651389815435303e-15
+      },
+      "input_sha256": "dfc496863bf25e4e68ab4450c51f4c8b185fb71f4f09e4983d3ed6754901321a",
+      "normalized_output_sha256": "f62b237a33e8b0c761ef8f2fb3160698d21cfea5a71c4d029d6588f52bec1054",
+      "output_sha256": "f62b237a33e8b0c761ef8f2fb3160698d21cfea5a71c4d029d6588f52bec1054",
+      "raw_official_sha256": "a840a1d3255250c332dc28df9ceb103c500717d007ecbefd0a79c5fbdc0aff21",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+      "case_id": "case_05",
+      "checkout_commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0012 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+      "independent_error": {
+        "max_abs": 1.687538997430238e-14,
+        "per_field_max_abs": {
+          "effective_field": 1.687538997430238e-14,
+          "hamiltonian": 1.0658141036401503e-14,
+          "orientation": 0.0,
+          "temperature": 0.0
+        },
+        "rmse": 3.684009629922665e-15
+      },
+      "input_sha256": "36af7145c867c9a2eede316866cd4a9e4494357f599edda03e8768f01761b03b",
+      "normalized_output_sha256": "fcea2f77ac1afd614f69b3816f0611c7fd5bc6b9a01f23fc1520c4c5119eb328",
+      "output_sha256": "fcea2f77ac1afd614f69b3816f0611c7fd5bc6b9a01f23fc1520c4c5119eb328",
+      "raw_official_sha256": "07dd400a03f62b9c036ee60ce8e3a26dd968aa3b2571d50383608e49cfd16a95",
+      "split": "hidden"
+    }
+  ],
   "commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
-  "official_entrypoint": "python/analytic.py exact logarithmic Hamiltonian/effective-field functions mapped to python/figure2_*.py and python/figure3_*.py",
-  "paper": "Path Integral Spin Dynamics for Quantum Paramagnets",
-  "paper_source": "arXiv:2404.19539v2, main1.tex",
-  "reference_generation": {
-    "path": "gold_artifacts/reference_generation.json",
-    "sha256": "30b680fadcf2be5b03515467fda50a69db5a03f5aa31118f76abef9b8446d7bb"
+  "dependency_artifact_sha256": null,
+  "environment": {
+    "numba": "0.59.0",
+    "numpy": "1.23.5",
+    "python": "3.10.12",
+    "scipy": "1.9.3",
+    "sympy": "1.11.1"
   },
-  "release": "Zenodo v1.0.8",
+  "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+  "generation_command": "python curation_tools/promote_official.py --task ... --checkout ... --environment ...",
+  "gold_source": "pinned_official_checkout",
+  "independent_audit": {
+    "derived_tolerances": {
+      "max_abs": 1e-11,
+      "rmse": 1e-12
+    },
+    "implementation": "scientific.py clean-room formulation (not used for gold generation)",
+    "maximum_max_abs": 3.552713678800501e-14,
+    "maximum_rmse": 4.884010617523046e-15,
+    "status": "passed"
+  },
+  "lifecycle": "validated",
+  "official_adapter": "python/analytic.py exact Hamiltonian and field functions with dimensionless JSON grids",
+  "official_reproduction": {
+    "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+    "clean_checkout_bundle_sha256": [
+      "b3d69a54fa154a177590ad47bd56ec57a7d15cf2fab5ef69c57e66ff62773ca5",
+      "b3d69a54fa154a177590ad47bd56ec57a7d15cf2fab5ef69c57e66ff62773ca5"
+    ],
+    "commands": [
+      "<environment>/bin/python curation_tools/official_adapter.py --task 0012 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>"
+    ],
+    "dependency_artifact_sha256": null,
+    "environment": {
+      "numba": "0.59.0",
+      "numpy": "1.23.5",
+      "python": "3.10.12",
+      "scipy": "1.9.3",
+      "sympy": "1.11.1"
+    },
+    "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+    "raw_and_normalized_outputs": "curation_reports/official_runs/0012"
+  },
+  "parameter_patch": "Dimensionless A1=1, beta=1/T, and g*mu_B=1 values are injected into pinned exact symbolic Hamiltonian and field functions; only JSON normalization is added.",
   "repository": "https://github.com/stonerlab/PIQSD-SingleSpinAnisotropy",
-  "schema_version": 1,
+  "schema_version": 4,
   "task_id": "scibench_replication_0012"
 }

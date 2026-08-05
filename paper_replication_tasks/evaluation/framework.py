@@ -1,387 +1,191 @@
-#!/usr/bin/env python3
-"""Common, deterministic evaluation and safety utilities."""
+"""v4 functional-case evaluator and safety checks."""
 
 from __future__ import annotations
 
-import argparse
 import hashlib
 import json
 import math
-import re
-import sys
-from dataclasses import asdict, dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Any, Callable, Iterable
+from typing import Any
 
+import numpy as np
+from scipy.optimize import linear_sum_assignment
 
-MAX_JSON_BYTES = 2 * 1024 * 1024
-HASH_CHUNK_BYTES = 8 * 1024 * 1024
-CATEGORIES = {"scientific", "protocol", "artifacts"}
+MAX_JSON_BYTES = 16 * 1024 * 1024
 
 
 class EvaluationInputError(ValueError):
-    """The evaluator invocation or submission interface is malformed."""
-
-
-@dataclass
-class Check:
-    id: str
-    category: str
-    passed: bool
-    critical: bool = True
-    message: str = ""
-    diagnostics: dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class Context:
-    task_id: str
-    submission_dir: Path
-    gold_path: Path
-    manifest_path: Path
-    results: dict[str, Any]
-    gold: dict[str, Any]
-    manifest: dict[str, Any]
-    artifacts: dict[str, dict[str, Any]]
-    checks: list[Check] = field(default_factory=list)
-
-    def check(
-        self,
-        check_id: str,
-        category: str,
-        passed: bool,
-        message: str = "",
-        *,
-        critical: bool = True,
-        diagnostics: dict[str, Any] | None = None,
-    ) -> bool:
-        if category not in CATEGORIES:
-            raise RuntimeError(f"unknown check category: {category}")
-        self.checks.append(
-            Check(
-                id=check_id,
-                category=category,
-                passed=bool(passed),
-                critical=critical,
-                message=message,
-                diagnostics=diagnostics or {},
-            )
-        )
-        return bool(passed)
-
-    def artifact_path(self, artifact_id: str) -> Path | None:
-        record = self.artifacts.get(artifact_id)
-        return None if record is None else safe_submission_path(
-            self.submission_dir, record["path"]
-        )
-
-
-Plugin = Callable[[Context], None]
-
-
-def read_json(path: Path, *, max_bytes: int = MAX_JSON_BYTES) -> dict[str, Any]:
-    try:
-        size = path.stat().st_size
-    except OSError as exc:
-        raise EvaluationInputError(f"cannot stat JSON input {path}: {exc}") from exc
-    if size > max_bytes:
-        raise EvaluationInputError(f"JSON input exceeds {max_bytes} bytes: {path}")
-    try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise EvaluationInputError(f"invalid JSON input {path}: {exc}") from exc
-    if not isinstance(value, dict):
-        raise EvaluationInputError(f"JSON root must be an object: {path}")
-    return value
-
-
-def safe_submission_path(root: Path, relative: str) -> Path:
-    if not isinstance(relative, str) or not relative:
-        raise EvaluationInputError("artifact path must be a non-empty string")
-    posix = PurePosixPath(relative)
-    if posix.is_absolute() or ".." in posix.parts or "." in posix.parts:
-        raise EvaluationInputError(f"unsafe artifact path: {relative!r}")
-    if "\\" in relative:
-        raise EvaluationInputError(f"artifact path must use POSIX separators: {relative!r}")
-    root_real = root.resolve()
-    candidate = root.joinpath(*posix.parts)
-    current = root
-    for part in posix.parts:
-        current = current / part
-        if current.is_symlink():
-            raise EvaluationInputError(f"artifact path contains a symlink: {relative!r}")
-    try:
-        resolved = candidate.resolve(strict=False)
-        resolved.relative_to(root_real)
-    except (OSError, ValueError) as exc:
-        raise EvaluationInputError(f"artifact escapes submission root: {relative!r}") from exc
-    return candidate
+    pass
 
 
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
-        while chunk := handle.read(HASH_CHUNK_BYTES):
+        while chunk := handle.read(1024 * 1024):
             digest.update(chunk)
     return digest.hexdigest()
 
 
-def _validate_results(task_id: str, results: dict[str, Any], root: Path) -> dict[str, dict[str, Any]]:
-    expected_keys = {
-        "schema_version",
-        "task_id",
-        "entrypoint",
-        "protocol",
-        "checkpoints",
-        "artifacts",
-    }
-    unexpected_keys = set(results) - expected_keys
-    missing_keys = expected_keys - set(results)
-    if unexpected_keys or missing_keys:
-        raise EvaluationInputError(
-            "results.json fields do not match the public schema: "
-            f"missing={sorted(missing_keys)}, unexpected={sorted(unexpected_keys)}"
-        )
-    if results.get("schema_version") != 1:
-        raise EvaluationInputError("results.json schema_version must be 1")
-    if results.get("task_id") != task_id:
-        raise EvaluationInputError("results.json task_id does not match gold")
-    if not isinstance(results.get("entrypoint"), str) or not results["entrypoint"].strip():
-        raise EvaluationInputError("results.json entrypoint must be a non-empty string")
-    for key in ("protocol", "checkpoints"):
-        if not isinstance(results.get(key), dict):
-            raise EvaluationInputError(f"results.json {key} must be an object")
-    rows = results.get("artifacts")
-    if not isinstance(rows, list):
-        raise EvaluationInputError("results.json artifacts must be an array")
-    indexed: dict[str, dict[str, Any]] = {}
-    for row in rows:
-        if not isinstance(row, dict):
-            raise EvaluationInputError("each artifact must be an object")
-        if set(row) != {"id", "path", "media_type"}:
-            raise EvaluationInputError(
-                "artifact fields must be exactly id, path, and media_type"
+def read_json(path: Path) -> dict[str, Any]:
+    try:
+        if path.stat().st_size > MAX_JSON_BYTES:
+            raise EvaluationInputError(f"JSON too large: {path}")
+        value = json.loads(path.read_text(encoding="utf-8"), parse_constant=lambda token: (_ for _ in ()).throw(ValueError(token)))
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+        raise EvaluationInputError(f"invalid JSON {path}: {exc}") from exc
+    if not isinstance(value, dict):
+        raise EvaluationInputError(f"JSON root must be an object: {path}")
+    return value
+
+
+def safe_relative(root: Path, relative: str) -> Path:
+    if not isinstance(relative, str) or not relative or "\\" in relative:
+        raise EvaluationInputError("path must be a non-empty POSIX relative path")
+    parts = PurePosixPath(relative)
+    if parts.is_absolute() or any(part in (".", "..") for part in parts.parts):
+        raise EvaluationInputError(f"unsafe path: {relative}")
+    candidate = root.joinpath(*parts.parts)
+    cursor = root
+    for part in parts.parts:
+        cursor /= part
+        if cursor.is_symlink():
+            raise EvaluationInputError(f"symlink rejected: {relative}")
+    try:
+        candidate.resolve(strict=False).relative_to(root.resolve())
+    except (OSError, ValueError) as exc:
+        raise EvaluationInputError(f"path escapes root: {relative}") from exc
+    return candidate
+
+
+def _errors(actual: Any, expected: Any, path: str = "$") -> tuple[list[float], list[str]]:
+    errors: list[float] = []
+    structural: list[str] = []
+    if isinstance(expected, dict):
+        if not isinstance(actual, dict) or set(actual) != set(expected):
+            return errors, [f"{path}: object keys/type differ"]
+        for key in expected:
+            child_errors, child_structural = _errors(actual[key], expected[key], f"{path}.{key}")
+            errors.extend(child_errors)
+            structural.extend(child_structural)
+    elif isinstance(expected, list):
+        if not isinstance(actual, list) or len(actual) != len(expected):
+            return errors, [f"{path}: array length/type differ"]
+        if path.endswith(".eigenvalues") and all(
+            isinstance(item, list) and len(item) == 2 for item in expected
+        ):
+            try:
+                actual_complex = np.asarray([complex(float(item[0]), float(item[1])) for item in actual])
+                expected_complex = np.asarray([complex(float(item[0]), float(item[1])) for item in expected])
+            except (TypeError, ValueError, IndexError):
+                return errors, [f"{path}: invalid complex-pair eigenvalues"]
+            if not np.isfinite(actual_complex).all():
+                return errors, [f"{path}: expected finite eigenvalues"]
+            rows, columns = linear_sum_assignment(
+                np.abs(actual_complex[:, None] - expected_complex[None, :])
             )
-        artifact_id = row.get("id")
-        if not isinstance(artifact_id, str) or not re.fullmatch(r"[a-zA-Z0-9_.-]+", artifact_id):
-            raise EvaluationInputError(f"invalid artifact id: {artifact_id!r}")
-        if artifact_id in indexed:
-            raise EvaluationInputError(f"duplicate artifact id: {artifact_id}")
-        safe_submission_path(root, row.get("path"))
-        media_type = row.get("media_type")
-        if not isinstance(media_type, str) or "/" not in media_type:
-            raise EvaluationInputError(f"invalid media_type for {artifact_id}")
-        indexed[artifact_id] = row
-    return indexed
+            for actual_index, expected_index in zip(rows, columns):
+                errors.extend([
+                    abs(actual_complex[actual_index].real - expected_complex[expected_index].real),
+                    abs(actual_complex[actual_index].imag - expected_complex[expected_index].imag),
+                ])
+            return errors, structural
+        for index, target in enumerate(expected):
+            child_errors, child_structural = _errors(actual[index], target, f"{path}[{index}]")
+            errors.extend(child_errors)
+            structural.extend(child_structural)
+    elif isinstance(expected, (int, float)) and not isinstance(expected, bool):
+        if not isinstance(actual, (int, float)) or isinstance(actual, bool) or not math.isfinite(float(actual)):
+            structural.append(f"{path}: expected finite number")
+        else:
+            errors.append(abs(float(actual) - float(expected)))
+    elif actual != expected:
+        structural.append(f"{path}: value differs")
+    return errors, structural
 
 
-def validate_execution(ctx: Context) -> bool:
-    manifest = ctx.manifest
-    failures: list[str] = []
-    if manifest.get("schema_version") != 1:
-        failures.append("manifest schema_version must be 1")
-    if manifest.get("task_id") != ctx.task_id:
-        failures.append("manifest task_id mismatch")
-    if not isinstance(manifest.get("attempt_id"), str) or not manifest.get("attempt_id"):
-        failures.append("missing attempt_id")
-    if manifest.get("exit_code") != 0:
-        failures.append("submission execution exit_code is not zero")
-    for key in ("command", "cwd", "started_at", "ended_at"):
-        if not isinstance(manifest.get(key), str) or not manifest.get(key):
-            failures.append(f"missing manifest field {key}")
-    usage = manifest.get("resource_usage")
-    if not isinstance(usage, dict) or any(
-        not isinstance(usage.get(key), (int, float)) or usage.get(key) < 0
-        for key in ("cpu_seconds", "wall_seconds", "peak_memory_bytes")
-    ):
-        failures.append("invalid resource_usage")
-    before = manifest.get("before_files")
-    after = manifest.get("after_files")
-    final = manifest.get("artifacts")
-    if not isinstance(before, dict) or not isinstance(after, dict) or not isinstance(final, dict):
-        failures.append("manifest file-hash maps are missing")
-        before, after, final = {}, {}, {}
-    required = set(ctx.gold.get("required_artifact_ids", ctx.artifacts))
-    for artifact_id in sorted(required - set(ctx.artifacts)):
-        failures.append(f"required artifact absent from results.json: {artifact_id}")
-    for artifact_id, row in ctx.artifacts.items():
-        expected_media = ctx.gold.get("required_artifacts", {}).get(artifact_id)
-        if expected_media is not None and row.get("media_type") != expected_media:
-            failures.append(f"media type mismatch: {artifact_id}")
-        relative = row["path"]
-        path = safe_submission_path(ctx.submission_dir, relative)
-        if not path.is_file():
-            failures.append(f"missing artifact file: {artifact_id}")
-            continue
-        actual = sha256_file(path)
-        final_row = final.get(artifact_id)
-        if not isinstance(final_row, dict):
-            failures.append(f"artifact absent from manifest: {artifact_id}")
-            continue
-        if final_row.get("path") != relative or final_row.get("sha256") != actual:
-            failures.append(f"manifest final hash mismatch: {artifact_id}")
-        if after.get(relative) != actual:
-            failures.append(f"manifest after hash mismatch: {artifact_id}")
-        if before.get(relative) == actual:
-            failures.append(f"artifact was not newly created or modified: {artifact_id}")
-    passed = not failures
-    ctx.check(
-        "trusted_execution",
-        "protocol",
-        passed,
-        "trusted execution manifest is valid" if passed else "; ".join(failures),
-    )
-    return passed
+def compare_output(actual: dict[str, Any], expected: dict[str, Any], tolerance: dict[str, float]) -> dict[str, Any]:
+    errors, structural = _errors(actual, expected)
+    maximum = max(errors, default=0.0)
+    rmse = float(np.sqrt(np.mean(np.square(errors)))) if errors else 0.0
+    passed = not structural and maximum <= tolerance["max_abs"] and rmse <= tolerance["rmse"]
+    return {"passed": passed, "max_abs": maximum, "rmse": rmse, "structural_errors": structural[:10]}
 
 
-def valid_pdf(path: Path) -> tuple[bool, str]:
-    try:
-        size = path.stat().st_size
-        if size < 64:
-            return False, "PDF is too small"
-        with path.open("rb") as handle:
-            head = handle.read(8)
-            handle.seek(max(0, size - 2048))
-            tail = handle.read()
-        if not head.startswith(b"%PDF-"):
-            return False, "missing PDF header"
-        if b"%%EOF" not in tail:
-            return False, "missing PDF EOF marker"
-        return True, ""
-    except OSError as exc:
-        return False, str(exc)
-
-
-def finite_number(value: Any) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
-
-
-def close_scalar(actual: Any, expected: float, atol: float, rtol: float = 0.0) -> bool:
-    return finite_number(actual) and math.isclose(
-        float(actual), float(expected), abs_tol=atol, rel_tol=rtol
-    )
-
-
-def cross_check_scalar(
-    ctx: Context, key: str, recomputed: float, *, atol: float, rtol: float = 0.0
-) -> None:
-    claimed = ctx.results["checkpoints"].get(key)
-    ctx.check(
-        f"reported_{key}",
-        "scientific",
-        close_scalar(claimed, recomputed, atol, rtol),
-        f"reported {key} must agree with the value recomputed from artifacts",
-        diagnostics={"reported": claimed, "recomputed": recomputed},
-    )
-
-
-def check_required_artifacts(ctx: Context, required: Iterable[str]) -> None:
-    required_set = set(required)
-    actual_set = set(ctx.artifacts)
-    missing = sorted(required_set - actual_set)
-    extra = sorted(actual_set - required_set)
-    ctx.check(
-        "artifact_index",
-        "artifacts",
-        not missing and not extra,
-        "artifact index is complete" if not missing and not extra else "artifact index mismatch",
-        diagnostics={"missing": missing, "unexpected": extra},
-    )
-    for artifact_id in sorted(required_set & actual_set):
-        path = ctx.artifact_path(artifact_id)
-        ctx.check(
-            f"artifact_present_{artifact_id}",
-            "artifacts",
-            bool(path and path.is_file()),
-            f"required artifact {artifact_id} exists",
-        )
-
-
-def score_checks(
-    checks: list[Check], valid_execution: bool, weights: dict[str, float]
-) -> float:
-    if not valid_execution:
-        return 0.0
-    if checks and all(check.passed for check in checks):
-        return 1.0
-    if (
-        not isinstance(weights, dict)
-        or set(weights) - CATEGORIES
-        or any(
-            not finite_number(weight) or float(weight) < 0.0
-            for weight in weights.values()
-        )
-        or not math.isclose(sum(map(float, weights.values())), 1.0, abs_tol=1e-12)
-    ):
-        raise EvaluationInputError("gold scoring weights must be nonnegative and sum to 1")
-    total = 0.0
-    for category, weight in weights.items():
-        selected = [check for check in checks if check.category == category]
-        fraction = (
-            sum(1 for check in selected if check.passed) / len(selected)
-            if selected
-            else 0.0
-        )
-        total += weight * fraction
-    return round(min(1.0, max(0.0, total)), 12)
-
-
-def evaluate(
-    submission_dir: Path,
-    gold_path: Path,
-    manifest_path: Path,
-    plugin: Plugin,
-) -> dict[str, Any]:
-    root = submission_dir.resolve()
-    if not root.is_dir():
-        raise EvaluationInputError(f"submission directory does not exist: {root}")
-    gold = read_json(gold_path)
-    task_id = gold.get("task_id")
-    if not isinstance(task_id, str) or not task_id:
-        raise EvaluationInputError("gold task_id is missing")
-    results = read_json(root / "results.json")
-    artifacts = _validate_results(task_id, results, root)
-    manifest = read_json(manifest_path)
-    ctx = Context(
-        task_id=task_id,
-        submission_dir=root,
-        gold_path=gold_path.resolve(),
-        manifest_path=manifest_path.resolve(),
-        results=results,
-        gold=gold,
-        manifest=manifest,
-        artifacts=artifacts,
-    )
-    valid_execution = validate_execution(ctx)
-    plugin(ctx)
-    score = score_checks(ctx.checks, valid_execution, gold.get("scoring", {}))
-    full_success = valid_execution and all(
-        check.passed for check in ctx.checks if check.critical
-    )
+def _file_map(root: Path) -> dict[str, str]:
     return {
-        "schema_version": 1,
-        "task_id": task_id,
-        "valid_execution": valid_execution,
-        "score": score,
-        "full_success": full_success,
-        "checks": [asdict(check) for check in ctx.checks],
+        path.relative_to(root).as_posix(): sha256_file(path)
+        for path in sorted(root.rglob("*")) if path.is_file()
     }
 
 
-def run_cli(plugin: Plugin, argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--submission-dir", type=Path, required=True)
-    parser.add_argument("--gold", type=Path, required=True)
-    parser.add_argument("--run-manifest", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
-    args = parser.parse_args(argv)
-    try:
-        report = evaluate(args.submission_dir, args.gold, args.run_manifest, plugin)
-        args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
-        return 0
-    except EvaluationInputError as exc:
-        print(f"evaluation input error: {exc}", file=sys.stderr)
-        return 2
-    except Exception as exc:  # evaluator defect or corrupt trusted gold
-        print(f"evaluator error: {type(exc).__name__}: {exc}", file=sys.stderr)
-        return 3
+def _validate_bundle_integrity(task_dir: Path) -> None:
+    manifest = read_json(task_dir.parent / "manifest.json")
+    rows = [row for row in manifest.get("tasks", []) if isinstance(row, dict) and row.get("task_id") == task_dir.name]
+    if len(rows) != 1 or rows[0].get("lifecycle") != "validated":
+        raise EvaluationInputError("task manifest is missing, duplicated, or not validated")
+    row = rows[0]
+    if row.get("public_files") != _file_map(task_dir / "public") or row.get("hidden_files") != _file_map(task_dir / "hidden"):
+        raise EvaluationInputError("task bundle hash mismatch")
+
+
+def evaluate(task_dir: Path, execution_report: Path) -> dict[str, Any]:
+    task_dir = task_dir.resolve()
+    _validate_bundle_integrity(task_dir)
+    provenance = read_json(task_dir / "hidden/provenance.json")
+    if (
+        provenance.get("lifecycle") != "validated"
+        or provenance.get("gold_source") != "pinned_official_checkout"
+    ):
+        raise EvaluationInputError(
+            f"task is not eligible for scoring: {provenance.get('lifecycle', 'unknown')}"
+        )
+    report = read_json(execution_report)
+    if report.get("schema_version") != 4 or report.get("task_id") != task_dir.name:
+        raise EvaluationInputError("execution report schema/task mismatch")
+    tolerance = read_json(task_dir / "hidden/tolerances.json")
+    checks = []
+    split_scores: dict[str, float] = {}
+    valid_execution = True
+    for split in ("public", "hidden"):
+        cases = report.get("cases", {}).get(split)
+        if not isinstance(cases, list):
+            raise EvaluationInputError(f"missing {split} case reports")
+        expected_dirs = sorted(path for path in (task_dir / split / "cases").iterdir() if path.is_dir())
+        indexed = {row.get("case_id"): row for row in cases if isinstance(row, dict)}
+        passed_count = 0
+        for case_dir in expected_dirs:
+            row = indexed.get(case_dir.name)
+            passed = False
+            diagnostics: dict[str, Any] = {}
+            if not row or row.get("exit_code") != 0 or row.get("timed_out") is not False:
+                valid_execution = False
+                diagnostics["execution"] = "missing, failed, or timed out"
+            else:
+                output_root = safe_relative(execution_report.parent, row.get("output_dir"))
+                output_path = safe_relative(output_root, "output.json")
+                try:
+                    actual = read_json(output_path)
+                    expected = read_json(case_dir / "output.json")
+                    if sha256_file(output_path) != row.get("output_sha256"):
+                        raise EvaluationInputError("output hash mismatch")
+                    diagnostics = compare_output(actual, expected, tolerance)
+                    passed = diagnostics["passed"]
+                except EvaluationInputError as exc:
+                    valid_execution = False
+                    diagnostics = {"error": str(exc)}
+            passed_count += int(passed)
+            checks.append({"id": f"{split}:{case_dir.name}", "split": split, "critical": True, "passed": passed, "diagnostics": diagnostics})
+        split_scores[split] = passed_count / len(expected_dirs) if expected_dirs else 0.0
+    score = 0.4 * split_scores["public"] + 0.6 * split_scores["hidden"]
+    if not valid_execution:
+        score = 0.0
+    return {
+        "schema_version": 4,
+        "task_id": task_dir.name,
+        "valid_execution": valid_execution,
+        "public_score": split_scores["public"],
+        "hidden_score": split_scores["hidden"],
+        "score": float(score),
+        "full_success": valid_execution and all(check["passed"] for check in checks),
+        "checks": checks,
+    }

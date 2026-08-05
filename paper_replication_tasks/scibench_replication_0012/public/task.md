@@ -1,16 +1,28 @@
 # scibench_replication_0012
 
-Reproduce the deterministic effective Hamiltonian and effective field used by the paper's anisotropic single-spin dynamics method.
+Implement the paper's core method as a general command-line program: evaluate the exact anisotropic coherent-state effective Hamiltonian and field.
 
-Implement the scientific method from scratch in the offline workspace. Recover the scientific parameters and experiment definition from the anonymized replication dossier; they are intentionally not repeated in `input.json`. You may use equivalent numerical algorithms and locally available scientific libraries.
+Use the following dimensionless convention:
 
-Run your implementation and write `results.json` at the submission root. Set `entrypoint` to the command used to run your implementation. The `protocol` and `checkpoints` objects may be empty; scientific values are read directly from the required artifacts. All artifact paths must be relative to that root and must not traverse through a symlink or `..`.
+- energies are measured in units of `A1`, with `A1 = 1`;
+- `anisotropy_ratio = A2 / A1`;
+- temperatures are measured in units of `A1 / kB`, hence `beta = 1 / T`;
+- `g mu_B = 1`;
+- `orientation_grid` contains `n_z` and every value must lie strictly in
+  `(-1, 1)`.
 
-## Required logical artifacts
+Return `hamiltonian = H_eff / A1` and the corresponding dimensionless
+longitudinal `effective_field`. Both arrays have shape
+`len(temperature_grid) × len(orientation_grid)`. `spin` must be a positive
+integer or half-integer; all temperatures must be positive.
 
-- `temperature` (`application/x-npy`)
-- `orientation` (`application/x-npy`)
-- `figure2_hamiltonian` (`application/x-npy`)
-- `figure2_field` (`application/x-npy`)
-- `figure3_hamiltonian` (`application/x-npy`)
-- `figure3_field` (`application/x-npy`)
+The runner invokes the declared entrypoint once per case as:
+
+```text
+<entrypoint> --input <case/input.json> --output <case-output-dir>
+```
+
+Write one finite JSON object with exactly `temperature`, `orientation`,
+`hamiltonian`, and `effective_field` to `<case-output-dir>/output.json`. Public
+cases and expected outputs are under `cases/`; five additional cases are hidden.
+Submit `submission.json` matching `interface.schema.json`.

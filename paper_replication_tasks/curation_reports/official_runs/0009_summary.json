@@ -1,0 +1,24 @@
+{
+  "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+  "clean_checkout_bundle_sha256": [
+    "f621f1da35cc81f81d36f7eccd33cc808e4aeabc4eb4e6af684b58d8c4c86fc7",
+    "f621f1da35cc81f81d36f7eccd33cc808e4aeabc4eb4e6af684b58d8c4c86fc7"
+  ],
+  "commit": "8678a7ae99b66554654e13ec5ec0075607c2f44b",
+  "dependency_artifact_sha256": "f39934ba350284aa2850e90922debcba6eca62c30526fd6af5e54800c0167875",
+  "environment": {
+    "dmdlab": "0.1.1",
+    "numpy": "1.23.5",
+    "python": "3.10.20",
+    "scipy": "1.9.3"
+  },
+  "environment_lock_sha256": "e4d8f1721dce4cb7cc4a2f6e182c876343ac005a1289ca6ba46e3bdb44d6c2c0",
+  "independent_max_abs": 2.220446049250313e-16,
+  "independent_rmse": 6.130645534712005e-17,
+  "status": "validated",
+  "task_id": "scibench_replication_0009",
+  "tolerances": {
+    "max_abs": 1e-10,
+    "rmse": 1e-11
+  }
+}

@@ -1,13 +1,149 @@
 {
+  "cases": [
+    {
+      "case_id": "case_01",
+      "independent_error": {
+        "max_abs": 1.6736612096224235e-14,
+        "per_field_max_abs": {
+          "diffusion": 1.6736612096224235e-14,
+          "mean_msd": 0.0,
+          "time": 0.0
+        },
+        "rmse": 2.0694765441062865e-15
+      },
+      "input_sha256": "9e61416a925aaf72b27b0ce751dfab82ee41893882c19a0ba43dd81023b21603",
+      "normalized_output_sha256": "7d36996c55d8075aeb31bcd821c09f9796cbd79fcbad6d9b2e5b075a9a893362",
+      "output_sha256": "7d36996c55d8075aeb31bcd821c09f9796cbd79fcbad6d9b2e5b075a9a893362",
+      "raw_official_sha256": "2460da5403d0c2b3563602086ed411aee7f11d04967edceaa79180d067d611a0",
+      "split": "public"
+    },
+    {
+      "case_id": "case_01",
+      "independent_error": {
+        "max_abs": 1.457167719820518e-16,
+        "per_field_max_abs": {
+          "diffusion": 1.457167719820518e-16,
+          "mean_msd": 0.0,
+          "time": 0.0
+        },
+        "rmse": 2.3365042770586634e-17
+      },
+      "input_sha256": "d6378167b84f10bd43727000e1298b171a7800bf557599dcdba1197ba29078f2",
+      "normalized_output_sha256": "180a2e0f08bfa1c4bdf124a23f139bd237b25589040ad3ecb20db3fed2f35e36",
+      "output_sha256": "180a2e0f08bfa1c4bdf124a23f139bd237b25589040ad3ecb20db3fed2f35e36",
+      "raw_official_sha256": "b39bfcb4b3080af4956de4d5090ca7413f627944554339f8a2141aa68f1928b4",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_02",
+      "independent_error": {
+        "max_abs": 6.827871601444713e-15,
+        "per_field_max_abs": {
+          "diffusion": 6.827871601444713e-15,
+          "mean_msd": 0.0,
+          "time": 0.0
+        },
+        "rmse": 1.1491923647395911e-15
+      },
+      "input_sha256": "5369aafceb933d3fcbb237a1b7c99d75816747c3707157229b6cd3240c7f1921",
+      "normalized_output_sha256": "74682020037bc69526a12b08543331f426438e1a2068b30ab5ce132590d9fdfb",
+      "output_sha256": "74682020037bc69526a12b08543331f426438e1a2068b30ab5ce132590d9fdfb",
+      "raw_official_sha256": "a11f3a264dbe388728041deaacb17f07763f8730b5fd954850196792355cb37c",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_03",
+      "independent_error": {
+        "max_abs": 7.66053886991358e-15,
+        "per_field_max_abs": {
+          "diffusion": 7.66053886991358e-15,
+          "mean_msd": 0.0,
+          "time": 0.0
+        },
+        "rmse": 1.03435129087681e-15
+      },
+      "input_sha256": "888ec23ed5ad373bc619f7f6dd84e04c7757bd60b19cd5291f409d90b9d9f864",
+      "normalized_output_sha256": "302274813538c96df78caceec25adc569644caa926e75e4ce8a40a9b55479a37",
+      "output_sha256": "302274813538c96df78caceec25adc569644caa926e75e4ce8a40a9b55479a37",
+      "raw_official_sha256": "dbb7a0d52a92c5520d5e1c55a24bb612dc582bd91cee81b5debed0873068701c",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_04",
+      "independent_error": {
+        "max_abs": 2.248201624865942e-15,
+        "per_field_max_abs": {
+          "diffusion": 2.248201624865942e-15,
+          "mean_msd": 0.0,
+          "time": 0.0
+        },
+        "rmse": 2.937934869363009e-16
+      },
+      "input_sha256": "f5ba82325c39efece145d205ef508e20f82251fce80fe1d443ae331ed62879ab",
+      "normalized_output_sha256": "135d4a1a732263dae0f2659f17de6157f09ce1f9d8ca91dc1f579b96bfbf3e94",
+      "output_sha256": "135d4a1a732263dae0f2659f17de6157f09ce1f9d8ca91dc1f579b96bfbf3e94",
+      "raw_official_sha256": "53bb3fccbf2f9f21f094eabd2d7d85d86529c4630386555ccc07b652e5b69075",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_05",
+      "independent_error": {
+        "max_abs": 3.219646771412954e-15,
+        "per_field_max_abs": {
+          "diffusion": 3.219646771412954e-15,
+          "mean_msd": 0.0,
+          "time": 0.0
+        },
+        "rmse": 3.325149525356911e-16
+      },
+      "input_sha256": "6a3a4a52bcac773e332a6a832a01464b74564c31c0f133d44b66ed770200cfe1",
+      "normalized_output_sha256": "46df15eb017ce4f7a3030d41ae04ff85d71eaf5cf9af06181763448633b4a6e4",
+      "output_sha256": "46df15eb017ce4f7a3030d41ae04ff85d71eaf5cf9af06181763448633b4a6e4",
+      "raw_official_sha256": "47905594b6b7444c29089c7bdffb08fb39045aa186bba167986da0652cca4a16",
+      "split": "hidden"
+    }
+  ],
   "commit": "9141e4edcddc386cdf10a9201d70aba1abaeb66c",
-  "official_entrypoint": "showyourwork Figure 1 workflow: numerical_rw.py, glswlsols.py, and src/scripts/glswlsols.py",
-  "paper": "Capturing Time Correlations in Mean-Squared-Displacement Regression",
-  "reference_generation": {
-    "path": "gold_artifacts/reference_generation.json",
-    "sha256": "9454a494b77f596ef2031091523dfcec49481027a53f1418baadd4f3ea9f035d"
+  "environment": {
+    "numpy": "1.26.4",
+    "python": "3.10.20",
+    "scipy": "1.12.0"
   },
-  "release": "1.0.0",
+  "environment_lock_sha256": "8d9c31364697298812f929068224f64662d5965b19b204d7420dccb82211b3df",
+  "generation_command": "python curation_tools/promote_official.py --task ... --checkout ... --environment ...",
+  "gold_source": "pinned_official_checkout",
+  "independent_audit": {
+    "derived_tolerances": {
+      "max_abs": 1e-10,
+      "rmse": 2e-11
+    },
+    "implementation": "scientific.py clean-room formulation (not used for gold generation)",
+    "maximum_max_abs": 1.6736612096224235e-14,
+    "maximum_rmse": 2.0694765441062865e-15,
+    "status": "passed"
+  },
+  "lifecycle": "validated",
+  "official_adapter": "walk(), get_disp3d(), and glswlsols.py regression block with JSON sizes/seeds",
+  "official_reproduction": {
+    "adapter_sha256": "047d8cbadc4ed60a8b097368781c399466d28f731027aa975a4486e263b94c9e",
+    "clean_checkout_bundle_sha256": [
+      "71fd26ee27a2c5d9e11c7521616f1aea53156992f59e762c571ec2bfbe8cd562",
+      "71fd26ee27a2c5d9e11c7521616f1aea53156992f59e762c571ec2bfbe8cd562"
+    ],
+    "commands": [
+      "<environment>/bin/python curation_tools/official_adapter.py --task 0011 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>"
+    ],
+    "environment": {
+      "numpy": "1.26.4",
+      "python": "3.10.20",
+      "scipy": "1.12.0"
+    },
+    "environment_lock_sha256": "8d9c31364697298812f929068224f64662d5965b19b204d7420dccb82211b3df",
+    "raw_and_normalized_outputs": "curation_reports/official_runs/0011"
+  },
+  "parameter_patch": "JSON parameters and JSON output only; plotting/file-output tails are disabled; pinned numerical statements execute unchanged except the documented SciPy pinv compatibility rule for 0011.",
+  "rank_deficiency_note": "Some empirical covariance matrices are singular. SciPy 1.12.0 scipy.linalg.pinv rank selection is an intentional part of the task definition.",
   "repository": "https://github.com/arm61/msd-errors",
-  "schema_version": 1,
+  "schema_version": 4,
   "task_id": "scibench_replication_0011"
 }

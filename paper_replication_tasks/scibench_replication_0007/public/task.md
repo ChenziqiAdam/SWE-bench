@@ -1,16 +1,11 @@
 # scibench_replication_0007
 
-Reproduce the OLS and WLS regression summaries from scratch.
+Implement the paper's core method as a general command-line program: simulate first-order kinetics and compare linear OLS, transformed WLS, and nonlinear fits.
 
-Implement the scientific method from scratch in the offline workspace. Recover the scientific parameters and experiment definition from the anonymized replication dossier; they are intentionally not repeated in `input.json`. You may use equivalent numerical algorithms and locally available scientific libraries.
+The runner invokes the declared entrypoint once per case as:
 
-Run your implementation and write `results.json` at the submission root. Set `entrypoint` to the command used to run your implementation. The `protocol` and `checkpoints` objects may be empty; scientific values are read directly from the required artifacts. All artifact paths must be relative to that root and must not traverse through a symlink or `..`.
+```text
+<entrypoint> --input <case/input.json> --output <case-output-dir>
+```
 
-## Required logical artifacts
-
-- `metric_lin_mean_ols` (`text/plain`)
-- `metric_non_mean_ols` (`text/plain`)
-- `metric_lin_ci_ols` (`text/plain`)
-- `metric_non_ci_ols` (`text/plain`)
-- `metric_lin_mean_wls` (`text/plain`)
-- `metric_non_mean_wls` (`text/plain`)
+Write one finite JSON object to `<case-output-dir>/output.json`. Public cases and expected outputs are under `cases/`; five additional cases are hidden. Submit `submission.json` matching `interface.schema.json`. Random inputs explicitly declare their RNG and seed protocol.

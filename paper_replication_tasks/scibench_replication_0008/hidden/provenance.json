@@ -1,8 +1,494 @@
 {
+  "cases": [
+    {
+      "case_id": "case_01",
+      "independent_error": {
+        "max_abs": 2.220446049250313e-16,
+        "per_field_max_abs": {
+          "curves": 2.220446049250313e-16,
+          "temperature": 0.0
+        },
+        "rmse": 5.10815469693578e-17
+      },
+      "input_sha256": "26e8f5dfd8507eee629199b1c5197c932989d4b63a14c869979e9356934994e0",
+      "normalized_output_sha256": "8ee5778c6e4a49eaeb6648f8c2665ba9355a9268486d2dfe2100c16cf1d48630",
+      "output_sha256": "8ee5778c6e4a49eaeb6648f8c2665ba9355a9268486d2dfe2100c16cf1d48630",
+      "raw_official_sha256": "8ee5778c6e4a49eaeb6648f8c2665ba9355a9268486d2dfe2100c16cf1d48630",
+      "split": "public"
+    },
+    {
+      "case_id": "case_02",
+      "independent_error": {
+        "max_abs": 4.111294638065033e-15,
+        "per_field_max_abs": {
+          "curves": 4.111294638065033e-15,
+          "temperature": 0.0
+        },
+        "rmse": 9.483016923745878e-16
+      },
+      "input_sha256": "a781fc2061390944f4b194710daeb44f40e511b6325c95168c44251501b5a1d9",
+      "normalized_output_sha256": "a95439521699aca47bab79f2d02459ebf0a734a399935de35b647a3994d5a329",
+      "output_sha256": "a95439521699aca47bab79f2d02459ebf0a734a399935de35b647a3994d5a329",
+      "raw_official_sha256": "a95439521699aca47bab79f2d02459ebf0a734a399935de35b647a3994d5a329",
+      "split": "public"
+    },
+    {
+      "case_id": "case_03",
+      "independent_error": {
+        "max_abs": 4.111294638065033e-15,
+        "per_field_max_abs": {
+          "curves": 4.111294638065033e-15,
+          "temperature": 0.0
+        },
+        "rmse": 7.754076021471075e-16
+      },
+      "input_sha256": "723d9a10b0184627375d7a4fc8592bc45a6a28a157ac1e057be7b84deeef459d",
+      "normalized_output_sha256": "edd9c85c8931732326cf4d2ef78933ef07cea4e6a88f468e408ac64374429920",
+      "output_sha256": "edd9c85c8931732326cf4d2ef78933ef07cea4e6a88f468e408ac64374429920",
+      "raw_official_sha256": "edd9c85c8931732326cf4d2ef78933ef07cea4e6a88f468e408ac64374429920",
+      "split": "public"
+    },
+    {
+      "case_id": "case_04",
+      "independent_error": {
+        "max_abs": 1.1102230246251565e-16,
+        "per_field_max_abs": {
+          "curves": 1.1102230246251565e-16,
+          "temperature": 0.0
+        },
+        "rmse": 3.709592981245894e-17
+      },
+      "input_sha256": "68ef6f0c613f2c5acc8c42af74e839c45fedd13778d71bd7305fd437524ae484",
+      "normalized_output_sha256": "f4b3a28e00a9584f3143a93e941440e2a47d704c42f6fd5288c24c306a438c52",
+      "output_sha256": "f4b3a28e00a9584f3143a93e941440e2a47d704c42f6fd5288c24c306a438c52",
+      "raw_official_sha256": "f4b3a28e00a9584f3143a93e941440e2a47d704c42f6fd5288c24c306a438c52",
+      "split": "public"
+    },
+    {
+      "case_id": "case_05",
+      "independent_error": {
+        "max_abs": 1.7486012637846216e-15,
+        "per_field_max_abs": {
+          "curves": 1.7486012637846216e-15,
+          "temperature": 0.0
+        },
+        "rmse": 3.432801848386883e-16
+      },
+      "input_sha256": "e8ab83bdebd82513430c6665959ffd7a647c7194a51279d6f75fcefa4c544ca2",
+      "normalized_output_sha256": "965ec8a5a7d7ac1387c5790fff58de437cdd81db3d78a8708d75e4799e962070",
+      "output_sha256": "965ec8a5a7d7ac1387c5790fff58de437cdd81db3d78a8708d75e4799e962070",
+      "raw_official_sha256": "965ec8a5a7d7ac1387c5790fff58de437cdd81db3d78a8708d75e4799e962070",
+      "split": "public"
+    },
+    {
+      "case_id": "case_06",
+      "independent_error": {
+        "max_abs": 1.7486012637846216e-15,
+        "per_field_max_abs": {
+          "curves": 1.7486012637846216e-15,
+          "temperature": 0.0
+        },
+        "rmse": 2.819188929598191e-16
+      },
+      "input_sha256": "eee1be91b6661c5b8898cbc1ad95422a4e84919cb9966cc678f742fe8ad60796",
+      "normalized_output_sha256": "b6fce12f49c4fc789d4a8e87af48a9361bda0b9fbb7ddfec2edeaaafa21c12bb",
+      "output_sha256": "b6fce12f49c4fc789d4a8e87af48a9361bda0b9fbb7ddfec2edeaaafa21c12bb",
+      "raw_official_sha256": "b6fce12f49c4fc789d4a8e87af48a9361bda0b9fbb7ddfec2edeaaafa21c12bb",
+      "split": "public"
+    },
+    {
+      "case_id": "case_07",
+      "independent_error": {
+        "max_abs": 1.1102230246251565e-16,
+        "per_field_max_abs": {
+          "curves": 1.1102230246251565e-16,
+          "temperature": 0.0
+        },
+        "rmse": 4.4308080615470005e-17
+      },
+      "input_sha256": "23d1717d1e31b929579bea070f50b9b714b764df01ddbfd23cbd4f3b80ef9787",
+      "normalized_output_sha256": "0eee5eea2b33934d60014e4d3ac170e617bcf14646361428974902cb3feeaa15",
+      "output_sha256": "0eee5eea2b33934d60014e4d3ac170e617bcf14646361428974902cb3feeaa15",
+      "raw_official_sha256": "0eee5eea2b33934d60014e4d3ac170e617bcf14646361428974902cb3feeaa15",
+      "split": "public"
+    },
+    {
+      "case_id": "case_08",
+      "independent_error": {
+        "max_abs": 1.3322676295501878e-15,
+        "per_field_max_abs": {
+          "curves": 1.3322676295501878e-15,
+          "temperature": 0.0
+        },
+        "rmse": 3.1206861757468433e-16
+      },
+      "input_sha256": "c42a9830835b7e8518eb42667c0167e7a4323a5874f76e5a46760a6e9b5ee13a",
+      "normalized_output_sha256": "cc7bdbfa1cad178d5d22841c5b9733fcf33d6aa53dbdf8087e8d8484130fd8be",
+      "output_sha256": "cc7bdbfa1cad178d5d22841c5b9733fcf33d6aa53dbdf8087e8d8484130fd8be",
+      "raw_official_sha256": "cc7bdbfa1cad178d5d22841c5b9733fcf33d6aa53dbdf8087e8d8484130fd8be",
+      "split": "public"
+    },
+    {
+      "case_id": "case_09",
+      "independent_error": {
+        "max_abs": 1.3322676295501878e-15,
+        "per_field_max_abs": {
+          "curves": 1.3322676295501878e-15,
+          "temperature": 0.0
+        },
+        "rmse": 2.57358411665912e-16
+      },
+      "input_sha256": "ab44859ab167514968cbed8c25b3376d0b94498bbde53a9f40366424e1e6e04f",
+      "normalized_output_sha256": "880f0ccde9b6ee75cc6186a765c75d51d8c3a9fa3f65b2dbb7e8eef9172067ee",
+      "output_sha256": "880f0ccde9b6ee75cc6186a765c75d51d8c3a9fa3f65b2dbb7e8eef9172067ee",
+      "raw_official_sha256": "880f0ccde9b6ee75cc6186a765c75d51d8c3a9fa3f65b2dbb7e8eef9172067ee",
+      "split": "public"
+    },
+    {
+      "case_id": "case_10",
+      "independent_error": {
+        "max_abs": 1.1102230246251565e-16,
+        "per_field_max_abs": {
+          "curves": 1.1102230246251565e-16,
+          "temperature": 0.0
+        },
+        "rmse": 3.7137775206262146e-17
+      },
+      "input_sha256": "0770278c70553d6f7e04362a33ed9082d1d28c91800cb7ac733916b32506472a",
+      "normalized_output_sha256": "dba2e8bcd2360ffae5eb6d0799823748ff4dde9525a3a4f90e4e456edf875575",
+      "output_sha256": "dba2e8bcd2360ffae5eb6d0799823748ff4dde9525a3a4f90e4e456edf875575",
+      "raw_official_sha256": "dba2e8bcd2360ffae5eb6d0799823748ff4dde9525a3a4f90e4e456edf875575",
+      "split": "public"
+    },
+    {
+      "case_id": "case_11",
+      "independent_error": {
+        "max_abs": 6.800116025829084e-16,
+        "per_field_max_abs": {
+          "curves": 6.800116025829084e-16,
+          "temperature": 0.0
+        },
+        "rmse": 1.5458674912003817e-16
+      },
+      "input_sha256": "20a9fdd7b7909efda4e19c3239b3ef8b983a06603f2d037fe6e2be055b2a697c",
+      "normalized_output_sha256": "b65318651489953df54c5ba99d09a4e6214d50d1b5b7718ecde928ff72929f82",
+      "output_sha256": "b65318651489953df54c5ba99d09a4e6214d50d1b5b7718ecde928ff72929f82",
+      "raw_official_sha256": "b65318651489953df54c5ba99d09a4e6214d50d1b5b7718ecde928ff72929f82",
+      "split": "public"
+    },
+    {
+      "case_id": "case_12",
+      "independent_error": {
+        "max_abs": 6.800116025829084e-16,
+        "per_field_max_abs": {
+          "curves": 6.800116025829084e-16,
+          "temperature": 0.0
+        },
+        "rmse": 1.2981082993025526e-16
+      },
+      "input_sha256": "a30ec5c78a4b13d56dd455f3f5f1283376aa95ed3b16e3de1ff574b0a05c2c85",
+      "normalized_output_sha256": "9ee875141bbb62166e670d3aae26ebc24b85735c41563c38ff785a3485af9d54",
+      "output_sha256": "9ee875141bbb62166e670d3aae26ebc24b85735c41563c38ff785a3485af9d54",
+      "raw_official_sha256": "9ee875141bbb62166e670d3aae26ebc24b85735c41563c38ff785a3485af9d54",
+      "split": "public"
+    },
+    {
+      "case_id": "case_13",
+      "independent_error": {
+        "max_abs": 1.1102230246251565e-16,
+        "per_field_max_abs": {
+          "curves": 1.1102230246251565e-16,
+          "temperature": 0.0
+        },
+        "rmse": 2.8853054433707406e-17
+      },
+      "input_sha256": "cf78d971fc1a48b98c8615159719320c8385ceafc565f85ccb5ff4c63bae074d",
+      "normalized_output_sha256": "581221b4690946e9b0497574333b280e8d6d2bf3267f3f7c5d9418e92f594b3b",
+      "output_sha256": "581221b4690946e9b0497574333b280e8d6d2bf3267f3f7c5d9418e92f594b3b",
+      "raw_official_sha256": "581221b4690946e9b0497574333b280e8d6d2bf3267f3f7c5d9418e92f594b3b",
+      "split": "public"
+    },
+    {
+      "case_id": "case_14",
+      "independent_error": {
+        "max_abs": 3.885780586188048e-16,
+        "per_field_max_abs": {
+          "curves": 3.885780586188048e-16,
+          "temperature": 0.0
+        },
+        "rmse": 1.5703891971105939e-16
+      },
+      "input_sha256": "e8a8ee2367f28c6138890b012a2b15829ca61e81a9d4b7d2bc06fe91ad3fd5e0",
+      "normalized_output_sha256": "bb86624a42071fed1a63bb69edf1dd0e00edabbe487c9dc93f63aed0d4e17521",
+      "output_sha256": "bb86624a42071fed1a63bb69edf1dd0e00edabbe487c9dc93f63aed0d4e17521",
+      "raw_official_sha256": "bb86624a42071fed1a63bb69edf1dd0e00edabbe487c9dc93f63aed0d4e17521",
+      "split": "public"
+    },
+    {
+      "case_id": "case_15",
+      "independent_error": {
+        "max_abs": 3.885780586188048e-16,
+        "per_field_max_abs": {
+          "curves": 3.885780586188048e-16,
+          "temperature": 0.0
+        },
+        "rmse": 1.3036799467704498e-16
+      },
+      "input_sha256": "03217151348d4546398f46dc8ee6c0737bc43436dbdb87a544de23c577644831",
+      "normalized_output_sha256": "3abfd3b702f07d08c9e3e48de24e0e591e650a63799bd48786379ccc4b6434f8",
+      "output_sha256": "3abfd3b702f07d08c9e3e48de24e0e591e650a63799bd48786379ccc4b6434f8",
+      "raw_official_sha256": "3abfd3b702f07d08c9e3e48de24e0e591e650a63799bd48786379ccc4b6434f8",
+      "split": "public"
+    },
+    {
+      "case_id": "case_16",
+      "independent_error": {
+        "max_abs": 2.220446049250313e-16,
+        "per_field_max_abs": {
+          "curves": 2.220446049250313e-16,
+          "temperature": 0.0
+        },
+        "rmse": 4.273788844278452e-17
+      },
+      "input_sha256": "cb11dacba76d33e22aa9e5c216664b987135c7e194180a255878101c09d6522a",
+      "normalized_output_sha256": "073e6601e58a40f8a022a98904a39fb12b567dadcb5ca09bf7ad7d9b97f97f6e",
+      "output_sha256": "073e6601e58a40f8a022a98904a39fb12b567dadcb5ca09bf7ad7d9b97f97f6e",
+      "raw_official_sha256": "073e6601e58a40f8a022a98904a39fb12b567dadcb5ca09bf7ad7d9b97f97f6e",
+      "split": "public"
+    },
+    {
+      "case_id": "case_17",
+      "independent_error": {
+        "max_abs": 6.938893903907228e-16,
+        "per_field_max_abs": {
+          "curves": 6.938893903907228e-16,
+          "temperature": 0.0
+        },
+        "rmse": 1.6435547036634032e-16
+      },
+      "input_sha256": "6df210e9aa7e4a6f3a76ab49df80d2b404ac1c78d3c889207fff2d4b849d553e",
+      "normalized_output_sha256": "761d9f63fb0afc9e4d2aa1ef6322af93ca17c4f685bcbcfb529d6795ea5826a1",
+      "output_sha256": "761d9f63fb0afc9e4d2aa1ef6322af93ca17c4f685bcbcfb529d6795ea5826a1",
+      "raw_official_sha256": "761d9f63fb0afc9e4d2aa1ef6322af93ca17c4f685bcbcfb529d6795ea5826a1",
+      "split": "public"
+    },
+    {
+      "case_id": "case_18",
+      "independent_error": {
+        "max_abs": 6.938893903907228e-16,
+        "per_field_max_abs": {
+          "curves": 6.938893903907228e-16,
+          "temperature": 0.0
+        },
+        "rmse": 1.386584478683475e-16
+      },
+      "input_sha256": "f43ff0b9741bd0434a9d838b3076d24e06ca8cc5d9f035670d8f4684cfc8de19",
+      "normalized_output_sha256": "1310b6c40ec3df3361e46953128b95ec686940315a8b713e61fad63735d2844e",
+      "output_sha256": "1310b6c40ec3df3361e46953128b95ec686940315a8b713e61fad63735d2844e",
+      "raw_official_sha256": "1310b6c40ec3df3361e46953128b95ec686940315a8b713e61fad63735d2844e",
+      "split": "public"
+    },
+    {
+      "case_id": "case_19",
+      "independent_error": {
+        "max_abs": 1.1102230246251565e-16,
+        "per_field_max_abs": {
+          "curves": 1.1102230246251565e-16,
+          "temperature": 0.0
+        },
+        "rmse": 3.6970109450621616e-17
+      },
+      "input_sha256": "c0807eea15f323b5a7b328e65889d904e1cc0467821dedb386fb4302352cb4ed",
+      "normalized_output_sha256": "43a97eaa657e8d40ab38150fde1cb5dc368d37fef1be4543c540ce7706443d56",
+      "output_sha256": "43a97eaa657e8d40ab38150fde1cb5dc368d37fef1be4543c540ce7706443d56",
+      "raw_official_sha256": "43a97eaa657e8d40ab38150fde1cb5dc368d37fef1be4543c540ce7706443d56",
+      "split": "public"
+    },
+    {
+      "case_id": "case_20",
+      "independent_error": {
+        "max_abs": 4.440892098500626e-16,
+        "per_field_max_abs": {
+          "curves": 4.440892098500626e-16,
+          "temperature": 0.0
+        },
+        "rmse": 1.2724086170461397e-16
+      },
+      "input_sha256": "decaaf2fa738cba99421f47514b0d927ab3df35664c0a8e8f64ced2c5e265baf",
+      "normalized_output_sha256": "d883ae629264a0202ad3594f4d0b814016e4ae04f1d97717ed9b8e5f1408146a",
+      "output_sha256": "d883ae629264a0202ad3594f4d0b814016e4ae04f1d97717ed9b8e5f1408146a",
+      "raw_official_sha256": "d883ae629264a0202ad3594f4d0b814016e4ae04f1d97717ed9b8e5f1408146a",
+      "split": "public"
+    },
+    {
+      "case_id": "case_21",
+      "independent_error": {
+        "max_abs": 4.440892098500626e-16,
+        "per_field_max_abs": {
+          "curves": 4.440892098500626e-16,
+          "temperature": 0.0
+        },
+        "rmse": 1.0818818752563714e-16
+      },
+      "input_sha256": "a274602826e08580939dd3b35889a42b0c10bea06e25feabddf1c8316ee9a144",
+      "normalized_output_sha256": "0a6f4391df67b70a5f455018417954b538c9ed274d8549bfd862dc4a12803b76",
+      "output_sha256": "0a6f4391df67b70a5f455018417954b538c9ed274d8549bfd862dc4a12803b76",
+      "raw_official_sha256": "0a6f4391df67b70a5f455018417954b538c9ed274d8549bfd862dc4a12803b76",
+      "split": "public"
+    },
+    {
+      "case_id": "case_22",
+      "independent_error": {
+        "max_abs": 2.220446049250313e-16,
+        "per_field_max_abs": {
+          "curves": 2.220446049250313e-16,
+          "temperature": 0.0
+        },
+        "rmse": 6.176231719531513e-17
+      },
+      "input_sha256": "e448200f64116927efa5fa7783174696617af6c40576cf1511149ca26fd614a6",
+      "normalized_output_sha256": "b49021b588907fdd9eb1d95651d9d1e21ef71afd29b96dda8856f0317b05be53",
+      "output_sha256": "b49021b588907fdd9eb1d95651d9d1e21ef71afd29b96dda8856f0317b05be53",
+      "raw_official_sha256": "b49021b588907fdd9eb1d95651d9d1e21ef71afd29b96dda8856f0317b05be53",
+      "split": "public"
+    },
+    {
+      "case_id": "case_23",
+      "independent_error": {
+        "max_abs": 5.828670879282072e-16,
+        "per_field_max_abs": {
+          "curves": 5.828670879282072e-16,
+          "temperature": 0.0
+        },
+        "rmse": 1.3329762528373204e-16
+      },
+      "input_sha256": "ff35bfe2053cca4647e0b078f2861d2cd68ec389a05fafd022b5f844c8ab4a19",
+      "normalized_output_sha256": "9091fe35cb291ae5312f07ec15dec541db352a2f41425b05189d57f6b6bd1a9b",
+      "output_sha256": "9091fe35cb291ae5312f07ec15dec541db352a2f41425b05189d57f6b6bd1a9b",
+      "raw_official_sha256": "9091fe35cb291ae5312f07ec15dec541db352a2f41425b05189d57f6b6bd1a9b",
+      "split": "public"
+    },
+    {
+      "case_id": "case_01",
+      "independent_error": {
+        "max_abs": 1.4988010832439613e-15,
+        "per_field_max_abs": {
+          "curves": 1.4988010832439613e-15,
+          "temperature": 0.0
+        },
+        "rmse": 5.268931407002171e-16
+      },
+      "input_sha256": "b6c72aedb77111f45a8bf9c82c61820a899eab72e307de2b4fad89c64dd99ff1",
+      "normalized_output_sha256": "7e8ed4161b07b9ff5e49d0676cff04a71130bc49303ae64faa535193bfb3de99",
+      "output_sha256": "7e8ed4161b07b9ff5e49d0676cff04a71130bc49303ae64faa535193bfb3de99",
+      "raw_official_sha256": "7e8ed4161b07b9ff5e49d0676cff04a71130bc49303ae64faa535193bfb3de99",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_02",
+      "independent_error": {
+        "max_abs": 5.551115123125783e-17,
+        "per_field_max_abs": {
+          "curves": 5.551115123125783e-17,
+          "temperature": 0.0
+        },
+        "rmse": 2.7755575615628914e-17
+      },
+      "input_sha256": "56b2163241b0d4239ea96360c0e8185bbea8b4bfb3fb15bc2ed63c3d2bb6b14c",
+      "normalized_output_sha256": "06d357671b57d08297ce2015d448e14d425636917702ab951f8e480176f78635",
+      "output_sha256": "06d357671b57d08297ce2015d448e14d425636917702ab951f8e480176f78635",
+      "raw_official_sha256": "06d357671b57d08297ce2015d448e14d425636917702ab951f8e480176f78635",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_03",
+      "independent_error": {
+        "max_abs": 2.220446049250313e-16,
+        "per_field_max_abs": {
+          "curves": 2.220446049250313e-16,
+          "temperature": 0.0
+        },
+        "rmse": 9.614813431917819e-17
+      },
+      "input_sha256": "a680fb45057cac6702791a519f2f174aad728e1082bac7014129e4f5d4b06dfc",
+      "normalized_output_sha256": "45bde5f21d332f8d4ee1b8a4a6bf4bb562ce30b6718a1095e9274690ba3a841f",
+      "output_sha256": "45bde5f21d332f8d4ee1b8a4a6bf4bb562ce30b6718a1095e9274690ba3a841f",
+      "raw_official_sha256": "45bde5f21d332f8d4ee1b8a4a6bf4bb562ce30b6718a1095e9274690ba3a841f",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_04",
+      "independent_error": {
+        "max_abs": 2.7755575615628914e-16,
+        "per_field_max_abs": {
+          "curves": 2.7755575615628914e-16,
+          "temperature": 0.0
+        },
+        "rmse": 1.0007415106216802e-16
+      },
+      "input_sha256": "992b21542a30bb5ddb5b083806734e8af37768046d27bc4ed685d42ede7c1c49",
+      "normalized_output_sha256": "05c8cd0aa94d2cb1f5108092ffe30b18bcf50566bc172c27009e4207be2f662d",
+      "output_sha256": "05c8cd0aa94d2cb1f5108092ffe30b18bcf50566bc172c27009e4207be2f662d",
+      "raw_official_sha256": "05c8cd0aa94d2cb1f5108092ffe30b18bcf50566bc172c27009e4207be2f662d",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_05",
+      "independent_error": {
+        "max_abs": 2.220446049250313e-16,
+        "per_field_max_abs": {
+          "curves": 2.220446049250313e-16,
+          "temperature": 0.0
+        },
+        "rmse": 8.326672684688674e-17
+      },
+      "input_sha256": "32c291c69ab07a212758f093799ba06709221468b397d257fb7e8be818303bc8",
+      "normalized_output_sha256": "313317ae7911381367a12a5d14ec746ead0d956f61c5c1e4d6a05925bc464700",
+      "output_sha256": "313317ae7911381367a12a5d14ec746ead0d956f61c5c1e4d6a05925bc464700",
+      "raw_official_sha256": "313317ae7911381367a12a5d14ec746ead0d956f61c5c1e4d6a05925bc464700",
+      "split": "hidden"
+    }
+  ],
   "commit": "5697c290660572012c59c579ca4b99feafd159b8",
-  "official_entrypoint": "make clean && make",
-  "paper": "Numerical Simulations of a Spin Dynamics Model Based on a Path Integral Approach",
+  "environment": {
+    "numpy": "1.23.5",
+    "python": "3.10.20",
+    "scipy": "1.9.3"
+  },
+  "environment_lock_sha256": "aa96a1deb18cbf4b584a31a5caaa6acd810a05b4904d5769e674b0abe3a3f7d7",
+  "generation_command": "python curation_tools/promote_official.py --task ... --checkout ... --environment ...",
+  "gold_source": "pinned_official_checkout",
+  "independent_audit": {
+    "derived_tolerances": {
+      "max_abs": 1e-10,
+      "rmse": 2e-11
+    },
+    "implementation": "scientific.py clean-room formulation (not used for gold generation)",
+    "maximum_max_abs": 4.111294638065033e-15,
+    "maximum_rmse": 9.483016923745878e-16,
+    "status": "passed"
+  },
+  "lifecycle": "validated",
+  "official_adapter": "python/analytic.py functions with JSON temperature/spin injection",
+  "official_reproduction": {
+    "adapter_sha256": "047d8cbadc4ed60a8b097368781c399466d28f731027aa975a4486e263b94c9e",
+    "clean_checkout_bundle_sha256": [
+      "e9d62888f2bd4096e8e5bec4845af64acb01619e58e91ee2c776650794bd8081",
+      "e9d62888f2bd4096e8e5bec4845af64acb01619e58e91ee2c776650794bd8081"
+    ],
+    "commands": [
+      "<environment>/bin/python curation_tools/official_adapter.py --task 0008 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>"
+    ],
+    "environment": {
+      "numpy": "1.23.5",
+      "python": "3.10.20",
+      "scipy": "1.9.3"
+    },
+    "environment_lock_sha256": "aa96a1deb18cbf4b584a31a5caaa6acd810a05b4904d5769e674b0abe3a3f7d7",
+    "raw_and_normalized_outputs": "curation_reports/official_runs/0008"
+  },
+  "parameter_patch": "JSON parameters and JSON output only; plotting/file-output tails are disabled; pinned numerical statements execute unchanged except the documented SciPy pinv compatibility rule for 0011.",
   "repository": "https://github.com/stonerlab/PIQSD-SingleSpinBz",
-  "schema_version": 1,
+  "schema_version": 4,
   "task_id": "scibench_replication_0008"
 }

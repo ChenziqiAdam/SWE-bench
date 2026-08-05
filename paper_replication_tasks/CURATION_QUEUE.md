@@ -13,14 +13,17 @@ scientific audit.
 | `Ariel-Norambuena/Quantum-Dynamics-in-MATLAB` | Two deterministic open-system trajectories at commit `f0b375a4962342c2c56eea2974e01f6e29d9bbb0` | Independent SciPy evolution passes the paper's analytical checks, but licensed MATLAB reproduction is pending and the repository light-bath coherence expression disagrees with the paper. See [`curation_reports/quantum_dynamics_matlab.json`](curation_reports/quantum_dynamics_matlab.json). |
 | `paezha/Accessibility-Sobi-Hamilton` | Deterministic BFCA/2SFCA calculations using the archived travel-time matrix | Restore the pinned R environment and reproduce selected accessibility summaries from a clean checkout |
 
-## Validated
-
-| Repository | Task ID | Validated scope |
-|---|---|---|
-| `arm61/msd-errors` | `scibench_replication_0011` | Full fixed-seed Figure 1 random-walk ensemble; MSD covariance and intercept-inclusive OLS/WLS/GLS estimates |
-| `stonerlab/PIQSD-SingleSpinAnisotropy` | `scibench_replication_0012` | Deterministic paper core method: gauge-fixed exact logarithmic effective Hamiltonian and effective field over the Figure 2/3 parameter groups; stochastic ASD is explicitly excluded |
-
 Identifier `scibench_replication_0010` is retired and is not reusable.
+
+## Validated official functional tasks
+
+| Repository | Task ID | Validation evidence |
+|---|---|---|
+| `arm61/linearization-issues` | `scibench_replication_0007` | Pinned OLS/WLS blocks rerun twice with complete-column rejection sampling; all six cases independently audited. |
+| `stonerlab/PIQSD-SingleSpinBz` | `scibench_replication_0008` | All 28 parameterized cases imported from pinned `python/analytic.py`, rerun twice, and independently audited. The 23 public cases are valid core-function tests; checked-in TSV replacement is not required. |
+| `andgoldschmidt/biDMD-for-quantum` | `scibench_replication_0009` | Six generalized snapshot-block cases executed twice through pinned `dmdlab==0.1.1`; projected eigenvalues and predictions pass the clean-room exact-DMD audit. |
+| `arm61/msd-errors` | `scibench_replication_0011` | Official `walk()`, `get_disp3d()`, and regression block rerun twice for all six cases with SciPy 1.12.0 pseudoinverse semantics. |
+| `stonerlab/PIQSD-SingleSpinAnisotropy` | `scibench_replication_0012` | Thirteen dimensionless parameter cases imported from pinned `python/analytic.py` exact Hamiltonian/field functions, rerun twice, and independently audited. |
 
 ## Blocked
 
@@ -44,8 +47,8 @@ formal task:
 
 1. The pinned official code reproduces the selected paper results from a clean
    checkout using CPU resources within the benchmark budget.
-2. The selected outputs correspond to named paper figures, tables, or central
-   quantitative claims.
+2. The selected outputs correspond to named paper figures, tables, central
+   quantitative claims, or a clearly documented central scientific kernel.
 3. Public inputs contain only raw or model-independent processed data, never
    fitted values or result-derived features.
 4. Gold artifacts are regenerated from the official workflow and independently
@@ -53,9 +56,8 @@ formal task:
    formulation.
 5. Stochastic outputs have explicit seeds, sufficient sample sizes, and
    empirically justified cross-run tolerances. Otherwise they are removed.
-6. The anonymized dossier passes identity, bibliographic, implementation, and
-   result-leakage review while retaining enough information for a public-only
-   clean-room implementation.
+6. The complete public paper is valid, and the bundle contains no official
+   source code, hidden cases, or provenance leakage.
 7. An official reference submission receives `score=1.0` and
    `full_success=true`, and a separate public-only implementation passes within
    the resource budget.

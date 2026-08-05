@@ -1,0 +1,13 @@
+{
+  "approximations": [
+    "classical"
+  ],
+  "field_scale_kelvin": 1.1,
+  "spin": 2.5,
+  "temperature_grid": [
+    0.8,
+    1.7,
+    3.5,
+    7.0
+  ]
+}

@@ -258,8 +258,30 @@ def test_issue_sheet_groups_multiple_issues_for_one_pr(tmp_path):
 
     assert len(rows) == 2
     rdkit = next(row for row in rows if row["Repo"] == "rdkit/rdkit")
-    assert rdkit["Issue Number"] == [5411, 5440]
+    # No URL column present -> issue repo falls back to the PR's own repo.
+    assert rdkit["Issue Number"] == [("rdkit/rdkit", 5411), ("rdkit/rdkit", 5440)]
     assert rdkit["Title"] == "one | two"
+
+
+def test_issue_sheet_uses_url_repo_when_it_differs_from_pr_repo(tmp_path):
+    """A PR's 'Repo' column names the PR's own repo, but the issue it closes
+    can live in a different repo (e.g. "Fixes org/other-repo#194"). Using the
+    PR's repo to fetch the issue silently pulls whatever issue happens to
+    share that number in the wrong repo -- the issue's own URL must win."""
+    path = tmp_path / "issues.xlsx"
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Repo", "Issue Number", "URL", "Closing PR #", "Title", "Type"])
+    ws.append([
+        "openmm/openmm", 194, "https://github.com/openmm/pdbfixer/issues/194",
+        2563, "cross-repo issue", "1",
+    ])
+    wb.save(path)
+
+    rows = load_spreadsheet_issues(str(path))
+
+    assert len(rows) == 1
+    assert rows[0]["Issue Number"] == [("openmm/pdbfixer", 194)]
 
 
 def test_split_patches_handles_unittest_without_stereo_false_positive():

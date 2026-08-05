@@ -1,0 +1,12 @@
+name: scibench-0009-curator
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10.20
+  - numpy=1.23.5
+  - scipy=1.9.3
+  # dmdlab imports its plotting module at package import time.
+  - matplotlib=3.6.2
+  - pip
+  - pip:
+      - dmdlab==0.1.1

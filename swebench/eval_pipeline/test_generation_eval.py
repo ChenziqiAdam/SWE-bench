@@ -1161,9 +1161,16 @@ def _patch_driven_build_commands(
         "cmake --build build --parallel $(nproc) --target " + " ".join(targets)
     ] if targets else []
     if "python" in plan.languages:
+        # Pre-7.0 OpenMM revisions ship only the legacy `simtk.openmm`
+        # package -- there is no top-level `openmm` module to import.
+        # Require simtk.openmm always, and the modern `openmm` package
+        # only when it actually exists on disk.
         build_commands.append(
             "cmake --build build --parallel $(nproc) --target PythonInstall && "
-            "python -c 'import openmm, simtk.openmm'"
+            "python -c 'import simtk.openmm; "
+            "import importlib.util as u, os; "
+            "assert not os.path.isdir(\"wrappers/python/openmm\") "
+            "or u.find_spec(\"openmm\") is not None'"
         )
     source_setup = (
         ["python -m pip uninstall -y openmm || true"]

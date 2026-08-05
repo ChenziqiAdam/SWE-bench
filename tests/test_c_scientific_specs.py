@@ -1,3 +1,4 @@
+from swebench.eval_pipeline.test_generation_eval import _special_repo_execution_plan
 from swebench.harness.constants.c import SPECS_OPENMM, SPECS_QGIS, SPECS_RDKIT
 
 
@@ -192,6 +193,38 @@ def test_rdkit_python_wrapper_specs_build_wrappers_once():
         ]
 
 
+def test_rdkit_generated_python_test_plan_copies_built_extension():
+    # Regression test for the batch2 run (2026-08-04 15:24-16:38): generated
+    # Python tests for rdkit/rdkit were executed with PYTHONPATH=$PWD but no
+    # prior copy of the CMake-built extension (rdBase, etc.) from build/rdkit/
+    # into the in-tree rdkit/ package, so `import rdkit` hit a circular-import
+    # ImportError for rdBase on every affected instance (rdkit-5103, -5261,
+    # -7814, -8166, -8796). Fixed in 84c826f; this pins the fix in place.
+    instance = {"repo": "rdkit/rdkit", "version": ""}
+    generated_patch = (
+        "diff --git a/rdkit/Chem/UnitTestPandasTools.py "
+        "b/rdkit/Chem/UnitTestPandasTools.py\n"
+        "index 1111111..2222222 100644\n"
+        "--- a/rdkit/Chem/UnitTestPandasTools.py\n"
+        "+++ b/rdkit/Chem/UnitTestPandasTools.py\n"
+        "@@ -1,3 +1,10 @@\n"
+        " import unittest\n"
+        "+class TestPandasTools(unittest.TestCase):\n"
+        "+    def test_moleculeImagesInReprHtml(self):\n"
+        "+        pass\n"
+    )
+    commands = [
+        "RDBASE=$PWD PYTHONPATH=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
+        "python3 rdkit/Chem/UnitTestPandasTools.py"
+    ]
+    plan = _special_repo_execution_plan(instance, generated_patch, commands)
+
+    assert plan is not None
+    assert plan.failure_reason is None
+    assert len(plan.commands) == 1
+    assert plan.commands[0].startswith("cp -a build/rdkit/. rdkit/ && ")
+
+
 def test_current_testgen_openmm_placeholders_have_concrete_specs():
     expected_targets = {
         "1495": "TestReferenceCustomExternalForce",
@@ -247,7 +280,12 @@ def test_openmm_native_python_api_spec_builds_wrappers():
     assert "-DBUILD_TESTING=OFF" in spec["build_after_test_patch"][0]
     assert "--target install" in spec["build_after_test_patch"][2]
     assert "PythonInstall" in spec["build_after_test_patch"][3]
-    assert "import openmm, simtk.openmm" in spec["build_after_test_patch"][3]
+    import_check = spec["build_after_test_patch"][3]
+    assert "import simtk.openmm" in import_check
+    # Pre-7.0 OpenMM revisions ship only `simtk.openmm`, with no top-level
+    # `openmm` package on disk -- the check must not hard-require `import
+    # openmm` unconditionally, only when wrappers/python/openmm exists.
+    assert "wrappers/python/openmm" in import_check
     assert SPECS_OPENMM["1837"]["test_generation_use_spec_cmd"] is True
 
 

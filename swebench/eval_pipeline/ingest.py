@@ -13,7 +13,7 @@ from swebench.collect.utils import Repo, PR_KEYWORDS
 from swebench.eval_pipeline.constants import (
     COL_REPO, COL_PR_NUMBER, COL_TITLE,
     COL_CATEGORY, COL_ALGORITHM_NAME, COL_PAPER_REFERENCE,
-    COL_HAS_TEST, COL_TEST_LINKS, COL_HAS_ISSUE,
+    COL_HAS_TEST, COL_TEST_LINKS, COL_HAS_ISSUE, COL_URL,
 )
 
 logger = logging.getLogger(__name__)
@@ -67,6 +67,23 @@ def load_spreadsheet(path: str, sheet: Optional[str] = None) -> list[dict]:
 # Issues_v1.xlsx column names
 _COL_ISSUE_NUMBER = "Issue Number"
 _COL_CLOSING_PR = "Closing PR #"
+_ISSUE_URL_RE = re.compile(r"github\.com/([^/\s]+/[^/\s]+)/issues/(\d+)")
+
+
+def _issue_repo_from_url(url, fallback_repo: str) -> str:
+    """The issue's own repo, parsed from its GitHub URL.
+
+    The 'Repo' column always names the PR's repo. An issue can live in a
+    different repo than the PR that closes it (e.g. a cross-repo "Fixes
+    org/other-repo#N" reference) -- using the PR's repo to fetch the issue
+    silently pulls whatever issue happens to share that number in the wrong
+    repo. Fall back to the PR's repo only when the URL is missing/unparseable.
+    """
+    if url:
+        match = _ISSUE_URL_RE.search(str(url))
+        if match:
+            return match.group(1)
+    return fallback_repo
 
 
 def load_spreadsheet_issues(path: str, sheet: Optional[str] = None) -> list[dict]:
@@ -77,8 +94,8 @@ def load_spreadsheet_issues(path: str, sheet: Optional[str] = None) -> list[dict
 
     The returned rows use the standard pipeline column keys so fetch_all() can
     process them identically to PRs.xlsx rows.  The issue number is stored under
-    COL_ISSUE_NUMBER so instance_builder can fetch it directly instead of
-    discovering it via PR body keyword matching.
+    COL_ISSUE_NUMBER (as (repo, number) pairs) so instance_builder can fetch it
+    directly instead of discovering it via PR body keyword matching.
     """
     wb = openpyxl.load_workbook(path)
     ws = wb[sheet] if sheet else wb.active
@@ -98,6 +115,12 @@ def load_spreadsheet_issues(path: str, sheet: Optional[str] = None) -> list[dict
             )
             skipped += 1
             continue
+        issue_repo = _issue_repo_from_url(row.get(COL_URL), str(repo))
+        if issue_repo != repo:
+            logger.info(
+                f"  Issue #{issue_number} URL points to {issue_repo}, not the "
+                f"PR's repo {repo} -- fetching from {issue_repo}."
+            )
         # One closing PR can resolve multiple issue rows. Merge them before the
         # PR-keyed ingest cache is consulted so no issue body is overwritten.
         key = (str(repo), int(closing_pr))
@@ -115,7 +138,7 @@ def load_spreadsheet_issues(path: str, sheet: Optional[str] = None) -> list[dict
                 COL_TEST_LINKS: "",
             }
         grouped = rows_by_pr[key]
-        grouped[_COL_ISSUE_NUMBER].append(int(issue_number))
+        grouped[_COL_ISSUE_NUMBER].append((issue_repo, int(issue_number)))
         if row.get("Title"):
             grouped[COL_TITLE].append(str(row["Title"]))
     rows = list(rows_by_pr.values())
@@ -335,7 +358,10 @@ def fetch_all(
             continue
 
         # If the row already has a direct issue number (Issues_v1.xlsx), use it;
-        # otherwise mine it from the PR body via keyword matching.
+        # otherwise mine it from the PR body via keyword matching. Direct
+        # entries may be bare numbers (issue lives in the PR's own repo) or
+        # (issue_repo, number) pairs (issue lives in a different repo, as
+        # recorded by load_spreadsheet_issues from the row's URL column).
         direct_issue = row.get(_COL_ISSUE_NUMBER)
         if direct_issue is not None:
             direct_issues = (
@@ -343,20 +369,37 @@ def fetch_all(
                 if isinstance(direct_issue, (list, tuple, set))
                 else [direct_issue]
             )
-            issue_numbers = [str(int(number)) for number in direct_issues]
+            issue_refs = [
+                entry
+                if isinstance(entry, (list, tuple))
+                else (repo_full, int(entry))
+                for entry in direct_issues
+            ]
             logger.debug(
-                f"  Using direct issue numbers {issue_numbers} for "
+                f"  Using direct issue numbers {issue_refs} for "
                 f"{repo_full}#{pr_number}"
             )
         else:
-            issue_numbers = find_linked_issue_numbers(pull)
+            issue_refs = [(repo_full, int(n)) for n in find_linked_issue_numbers(pull)]
+        issue_numbers = [str(inum) for _, inum in issue_refs]
         row["issue_numbers"] = issue_numbers
 
         issue_data = {}
-        for inum in issue_numbers:
-            issue = fetch_issue_data(repo, inum)
+        for issue_repo, inum in issue_refs:
+            if issue_repo == repo_full:
+                issue_repo_obj = repo
+            else:
+                if issue_repo not in repo_cache:
+                    owner_i, name_i = issue_repo.split("/", 1)
+                    try:
+                        repo_cache[issue_repo] = Repo(owner_i, name_i, token=github_token)
+                    except Exception as e:
+                        logger.error(f"Failed to init Repo for {issue_repo}: {e}")
+                        continue
+                issue_repo_obj = repo_cache[issue_repo]
+            issue = fetch_issue_data(issue_repo_obj, inum)
             if issue is not None:
-                issue_data[inum] = issue
+                issue_data[str(inum)] = issue
         row["issue_data"] = issue_data
 
         if not issue_numbers:

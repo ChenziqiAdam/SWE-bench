@@ -1,18 +1,27 @@
 #!/usr/bin/env python3
-"""Select a task evaluator from the trusted gold task ID."""
-
 from __future__ import annotations
 
-import sys
+import argparse
+import json
+from pathlib import Path
 
-from .framework import run_cli
-from .plugins import PLUGINS
+from .framework import EvaluationInputError, evaluate
 
 
-def run_for_task(task_id: str) -> int:
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--task-dir", type=Path, required=True)
+    parser.add_argument("--execution-report", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
     try:
-        plugin = PLUGINS[task_id]
-    except KeyError:
-        print(f"evaluation input error: unsupported task {task_id}", file=sys.stderr)
-        return 2
-    return run_cli(plugin)
+        result = evaluate(args.task_dir, args.execution_report)
+    except EvaluationInputError as exc:
+        parser.error(str(exc))
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

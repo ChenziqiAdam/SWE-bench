@@ -1,0 +1,25 @@
+{
+  "adapter_sha256": "fc28e5a2d6be1b0633538d498d5597d7e4ccc3c7d0c1111b12509e932e40ac31",
+  "clean_checkout_bundle_sha256": [
+    "b3d69a54fa154a177590ad47bd56ec57a7d15cf2fab5ef69c57e66ff62773ca5",
+    "b3d69a54fa154a177590ad47bd56ec57a7d15cf2fab5ef69c57e66ff62773ca5"
+  ],
+  "commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
+  "dependency_artifact_sha256": null,
+  "environment": {
+    "numba": "0.59.0",
+    "numpy": "1.23.5",
+    "python": "3.10.12",
+    "scipy": "1.9.3",
+    "sympy": "1.11.1"
+  },
+  "environment_lock_sha256": "020d090b09e67a93af31271de1ae74b6f97357ea7b9339fbe296cf496fb770e4",
+  "independent_max_abs": 3.552713678800501e-14,
+  "independent_rmse": 4.884010617523046e-15,
+  "status": "validated",
+  "task_id": "scibench_replication_0012",
+  "tolerances": {
+    "max_abs": 1e-11,
+    "rmse": 1e-12
+  }
+}

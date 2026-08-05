@@ -1,13 +1,23 @@
 # scibench_replication_0009
 
-Reproduce the deterministic Floquet-DMD experiment and its extrapolation.
+Implement the paper's generalized exact-DMD core method: fit a rank-truncated
+model to one or more snapshot blocks and extrapolate from the final snapshot.
 
-Implement the scientific method from scratch in the offline workspace. Recover the scientific parameters and experiment definition from the anonymized replication dossier; they are intentionally not repeated in `input.json`. You may use equivalent numerical algorithms and locally available scientific libraries.
+`snapshot_blocks` has shape `block × state_dimension × snapshots`. For every
+block, pair adjacent columns and concatenate those pairs across blocks to form
+`X1` and `X2`. Fit exact DMD at the requested `dmd_rank`. Return the projected
+DMD eigenvalues as unordered `[real, imaginary]` pairs. Starting from the final
+snapshot of the final block, return predictions at discrete times
+`1..prediction_steps` as a finite real array of shape
+`state_dimension × prediction_steps`.
 
-Run your implementation and write `results.json` at the submission root. Set `entrypoint` to the command used to run your implementation. The `protocol` and `checkpoints` objects may be empty; scientific values are read directly from the required artifacts. All artifact paths must be relative to that root and must not traverse through a symlink or `..`.
+The runner invokes the declared entrypoint once per case as:
 
-## Required logical artifacts
+```text
+<entrypoint> --input <case/input.json> --output <case-output-dir>
+```
 
-- `floquet_eigenvalues` (`application/x-npy`)
-- `prediction_times` (`application/x-npy`)
-- `prediction_trajectory` (`application/x-npy`)
+Write one finite JSON object with exactly `eigenvalues` and `prediction` to
+`<case-output-dir>/output.json`. Public cases and expected outputs are under
+`cases/`; five additional cases are hidden. Submit `submission.json` matching
+`interface.schema.json`.

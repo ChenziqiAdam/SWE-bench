@@ -1,7 +1,7 @@
 {
   "candidate": "stonerlab/PIQSD-SingleSpinAnisotropy",
   "commit": "ba6f6cbbc665ea55e48f852b2205fda07f0f760e",
-  "decision": "validated_core_method_redesign",
+  "decision": "validated_core_method_task",
   "paper": {
     "source": "arXiv:2404.19539v2",
     "source_file": "main1.tex",
@@ -84,8 +84,8 @@
       "dimensionless longitudinal effective field as its orientation derivative"
     ],
     "why_enforceable": "These orientation-dependent arrays cannot be obtained by copying the scalar partition magnetization.",
-    "reference_submission_score": 1.0,
-    "reference_submission_full_success": true,
+    "candidate_reference_submission_score": 1.0,
+    "candidate_reference_submission_full_success": true,
     "reference_wall_seconds": 0.466
   },
   "core_method_reference": {
@@ -107,7 +107,8 @@
     "assigned": true
   },
   "conclusion": {
-    "status": "validated_core_method_redesign",
-    "formal_task_created": true
+    "status": "validated",
+    "formal_task_created": true,
+    "reason": "Gold was generated twice by the pinned official analytic.py exact functions under the explicit dimensionless A1=kB=g mu_B=1 contract and passed an independent stable-sum audit for all 13 cases."
   }
 }

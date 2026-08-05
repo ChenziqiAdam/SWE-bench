@@ -489,8 +489,15 @@ def _openmm_native_python_spec(
             # OpenMM versions incorrectly return success when setup.py linking
             # failed, so install the native libraries first and verify import.
             "cmake --build build --parallel $(nproc) --target install",
+            # Pre-7.0 OpenMM revisions ship only the legacy `simtk.openmm`
+            # package -- there is no top-level `openmm` module to import.
+            # Require simtk.openmm always, and the modern `openmm` package
+            # only when it actually exists on disk.
             "cmake --build build --parallel $(nproc) --target PythonInstall && "
-            "python -c 'import openmm, simtk.openmm'",
+            "python -c 'import simtk.openmm; "
+            "import importlib.util as u, os; "
+            "assert not os.path.isdir(\"wrappers/python/openmm\") "
+            "or u.find_spec(\"openmm\") is not None'",
         ],
         "test_cmd": [
             "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "

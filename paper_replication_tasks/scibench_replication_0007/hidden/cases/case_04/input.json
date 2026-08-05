@@ -1,0 +1,15 @@
+{
+  "initial_concentration": 12.0,
+  "noise_std": 0.18,
+  "rate_constant": 0.3,
+  "replicates": 128,
+  "rng": "numpy.random.Generator.PCG64",
+  "seed": 404,
+  "time_grid": [
+    1,
+    2,
+    3,
+    5,
+    7
+  ]
+}
