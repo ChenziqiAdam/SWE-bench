@@ -30,10 +30,7 @@ except ImportError:  # Direct script execution.
     from evaluation.framework import EvaluationInputError, read_json  # type: ignore
     from task_registry import select_validated  # type: ignore
 
-from swebench.eval_pipeline.claude_code_inference import (
-    _claude_bin,
-    _extract_claude_error,
-)
+from swebench.eval_pipeline.claude_code_inference import _extract_claude_error
 from swebench.eval_pipeline.inference_metrics import (
     metrics_from_stream_json,
     with_wall_time,
@@ -234,7 +231,7 @@ def validate_loopback_endpoint(endpoint: str) -> str:
 
 def _command_for_backend(model: str) -> list[str]:
     return [
-        _claude_bin(),
+        "claude",
         "-p",
         "--output-format",
         "stream-json",

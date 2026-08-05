@@ -942,6 +942,68 @@ def test_openmm_cuda_only_generated_test_is_non_evaluable():
     assert plan.failure_reason == "non_evaluable_spec"
 
 
+def test_openmm_gold_fix_confined_to_gpu_platforms_is_non_evaluable():
+    # A generated tests/TestX.h patch always gets retargeted onto the
+    # Reference-platform "TestReference<Name>" build target (see
+    # test_openmm_shared_header_cpp_test_targets_reference_wrapper), since
+    # that's the only variant buildable in this no-GPU environment. If the
+    # *gold* patch that actually fixes the issue only touches
+    # platforms/common|cuda|opencl/ (GPU-only code with no Reference
+    # equivalent), the Reference binary's behavior is identical before and
+    # after the fix, so the generated test can never distinguish base from
+    # gold regardless of what it asserts -- this must be flagged
+    # non_evaluable_spec up front rather than surfacing as a spurious
+    # base_did_not_fail/gold_did_not_pass "model failure".
+    generated_patch = """diff --git a/tests/TestCustomNonbondedForce.h b/tests/TestCustomNonbondedForce.h
+--- a/tests/TestCustomNonbondedForce.h
++++ b/tests/TestCustomNonbondedForce.h
+@@ -1,3 +1,4 @@
++void testNewCase() {}
+ void runPlatformTests();
+"""
+    gold_patch = """diff --git a/platforms/common/src/kernels/customNonbondedGroups.cc b/platforms/common/src/kernels/customNonbondedGroups.cc
+--- a/platforms/common/src/kernels/customNonbondedGroups.cc
++++ b/platforms/common/src/kernels/customNonbondedGroups.cc
+@@ -1,2 +1,2 @@
+-old kernel code
++fixed kernel code
+"""
+
+    plan = _special_repo_execution_plan(
+        {"repo": "openmm/openmm", "patch": gold_patch}, generated_patch, []
+    )
+
+    assert plan.failure_reason == "non_evaluable_spec"
+
+
+def test_openmm_gold_fix_touching_reference_platform_is_still_evaluable():
+    # Sanity check for the veto above: when the gold fix also touches
+    # platforms/reference/ (or any non-GPU-only path), the Reference build
+    # target genuinely changes behavior between base and gold, so the
+    # generated test must still be run normally.
+    generated_patch = """diff --git a/tests/TestNonbondedForce.h b/tests/TestNonbondedForce.h
+--- a/tests/TestNonbondedForce.h
++++ b/tests/TestNonbondedForce.h
+@@ -1,3 +1,4 @@
++void testNewCase() {}
+ void runPlatformTests();
+"""
+    gold_patch = """diff --git a/platforms/reference/src/ReferenceKernels.cpp b/platforms/reference/src/ReferenceKernels.cpp
+--- a/platforms/reference/src/ReferenceKernels.cpp
++++ b/platforms/reference/src/ReferenceKernels.cpp
+@@ -1,2 +1,2 @@
+-old code
++fixed code
+"""
+
+    plan = _special_repo_execution_plan(
+        {"repo": "openmm/openmm", "patch": gold_patch}, generated_patch, []
+    )
+
+    assert plan.failure_reason is None
+    assert plan.build_targets == ("TestReferenceNonbondedForce",)
+
+
 def test_openmm_native_python_spec_patches_swig_source_not_build_copy():
     # CMake copies wrappers/python/src/swig_doxygen/swig_lib/python/extend.i
     # fresh into the build tree on every configure/build. The old sed target
