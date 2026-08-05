@@ -7,12 +7,8 @@ import pytest
 
 from paper_replication_tasks import run_pipeline as pipeline
 from paper_replication_tasks import container_runtime
-from paper_replication_tasks.evaluation.framework import EvaluationInputError
 from swebench.eval_pipeline.linux_network_guard import _bubblewrap_command
-from swebench.eval_pipeline.network_isolation import (
-    NetworkIsolationError,
-    guard_command,
-)
+from swebench.eval_pipeline.network_isolation import guard_command
 
 
 def test_task_defaults_and_invalid_lifecycle(monkeypatch):
@@ -21,18 +17,20 @@ def test_task_defaults_and_invalid_lifecycle(monkeypatch):
         "getaddrinfo",
         lambda *args, **kwargs: [(2, 1, 6, "", ("127.0.0.1", 4000))],
     )
+    monkeypatch.setenv("ANTHROPIC_AUTH_TOKEN", "gateway-secret")
     args = pipeline.parse_args(
         [
-            "--backend", "codex", "--model", "m",
+            "--model", "m",
             "--endpoint", "http://localhost:4000",
             "--container-image", "paper-agent:test",
         ]
     )
     assert "scibench_replication_0007" in args.task_ids
+    assert args.backend == "claude_code"
     with pytest.raises(SystemExit):
         pipeline.parse_args(
             [
-                "--backend", "codex", "--model", "m",
+                "--model", "m",
                 "--endpoint", "http://localhost:4000",
                 "--container-image", "paper-agent:test",
                 "--task-id", "scibench_replication_0010",
@@ -63,7 +61,6 @@ def test_claude_auth_uses_environment_without_mounting_host_login(monkeypatch):
     ):
         monkeypatch.delenv(name, raising=False)
     base = [
-        "--backend", "claude_code",
         "--model", "m",
         "--endpoint", "http://localhost:4000",
         "--container-image", "paper-agent:test",
@@ -119,34 +116,6 @@ def test_literal_credentials_are_scrubbed_from_persisted_tree(tmp_path):
     pipeline.redact_tree_credentials(tmp_path, ["secret-key"])
     assert "secret-key" not in (tmp_path / "source.py").read_text()
     assert b"secret-key" not in (tmp_path / "binary.bin").read_bytes()
-
-
-def test_entrypoint_parsing_has_no_shell():
-    assert pipeline.parse_entrypoint('python "reproduce file.py" --seed 1') == [
-        "python", "reproduce file.py", "--seed", "1"
-    ]
-    with pytest.raises(EvaluationInputError, match="quoting"):
-        pipeline.parse_entrypoint("python 'unterminated")
-
-
-def test_execution_copy_removes_only_declared_outputs(tmp_path):
-    raw = tmp_path / "raw"
-    raw.mkdir()
-    (raw / "reproduce.py").write_text("pass")
-    (raw / "keep.txt").write_text("keep")
-    (raw / "artifact.npy").write_bytes(b"old")
-    (raw / "results.json").write_text("{}")
-    results = {
-        "artifacts": [
-            {"id": "array", "path": "artifact.npy", "media_type": "application/x-npy"}
-        ]
-    }
-    executed = tmp_path / "executed"
-    pipeline.prepare_execution_copy(raw, executed, results)
-    assert (executed / "reproduce.py").is_file()
-    assert (executed / "keep.txt").read_text() == "keep"
-    assert not (executed / "artifact.npy").exists()
-    assert not (executed / "results.json").exists()
 
 
 def test_hidden_path_is_forwarded_to_linux_guard(tmp_path, monkeypatch):
@@ -297,23 +266,79 @@ def test_podman_runtime_uses_no_network_and_hardened_container(
     ]
 
 
-def test_hidden_evaluator_runs_offline_with_read_only_submission(
-    tmp_path, monkeypatch
-):
+def test_trusted_execution_wraps_run_submission_read_only(tmp_path, monkeypatch):
     observed = {}
+
+    def fake_container(**kwargs):
+        observed.update(kwargs)
+        report = {
+            "schema_version": 4,
+            "task_id": "scibench_replication_0007",
+            "entrypoint": ["python3", "solution.py"],
+            "cases": {"public": [], "hidden": []},
+        }
+        pipeline.write_json(
+            kwargs["runtime_home"] / "execution_report.json", report
+        )
+        return {
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": "",
+            "timed_out": False,
+            "container_id": "execution-container",
+        }
 
     class FakeClient:
         def close(self):
             observed["closed"] = True
+
+    monkeypatch.setattr(pipeline, "podman_client", lambda: FakeClient())
+    monkeypatch.setattr(pipeline, "run_podman_container", fake_container)
+
+    task_id = "scibench_replication_0007"
+    (pipeline.ROOT / task_id / "public").exists()  # sanity: real task bundle exists
+    submission_dir = tmp_path / "submission"
+    submission_dir.mkdir()
+    manifest_path = tmp_path / "execution_report.json"
+
+    result = pipeline.run_trusted_execution(
+        task_id=task_id,
+        submission_dir=submission_dir,
+        manifest_path=manifest_path,
+        timeout=30,
+        container_image="paper:test",
+        container_python="python3",
+        container_memory="8g",
+        container_cpus=2,
+        container_pids=128,
+        container_tmpfs_size="1g",
+    )
+    assert result["runner_exit_code"] == 0
+    assert result["report"]["task_id"] == task_id
+    assert observed["gateway_endpoint"] is None
+    assert observed["workspace_mode"] == "ro,Z"
+    assert observed["command"][-6:] == [
+        "--task-dir", f"/runner/{task_id}",
+        "--output", "/agent-home/execution_report.json",
+        "--timeout-seconds", "30",
+    ]
+    assert (observed["runtime_dir"] / "run_submission.py").is_file()
+    assert (observed["runtime_dir"] / task_id / "public").is_dir()
+
+
+def test_evaluator_runs_offline_with_read_only_bundle(tmp_path, monkeypatch):
+    observed = {}
 
     def fake_container(**kwargs):
         observed.update(kwargs)
         pipeline.write_json(
             kwargs["runtime_home"] / "evaluation.json",
             {
-                "schema_version": 1,
+                "schema_version": 4,
                 "task_id": "scibench_replication_0007",
                 "valid_execution": True,
+                "public_score": 1.0,
+                "hidden_score": 1.0,
                 "score": 1.0,
                 "full_success": True,
                 "checks": [],
@@ -326,17 +351,20 @@ def test_hidden_evaluator_runs_offline_with_read_only_submission(
             "container_id": "evaluator-container",
         }
 
+    class FakeClient:
+        def close(self):
+            observed["closed"] = True
+
     monkeypatch.setattr(pipeline, "podman_client", lambda: FakeClient())
     monkeypatch.setattr(pipeline, "run_podman_container", fake_container)
-    submission = tmp_path / "submission"
-    submission.mkdir()
-    manifest = tmp_path / "manifest.json"
-    manifest.write_text("{}")
+
+    task_id = "scibench_replication_0007"
+    manifest_path = tmp_path / "execution_report.json"
+    manifest_path.write_text("{}")
     output = tmp_path / "evaluation.json"
     result = pipeline.run_evaluator(
-        "scibench_replication_0007",
-        submission,
-        manifest,
+        task_id,
+        manifest_path,
         output,
         30,
         container_image="paper:test",
@@ -351,14 +379,15 @@ def test_hidden_evaluator_runs_offline_with_read_only_submission(
     assert observed["gateway_endpoint"] is None
     assert observed["workspace_mode"] == "ro,Z"
     assert observed["environment"]["PYTHONPATH"] == "/runner"
-    assert (observed["runtime_dir"] / "evaluation/plugins.py").is_file()
-    assert (observed["runtime_dir"] / "task_hidden/gold_output.json").is_file()
+    assert (observed["runtime_dir"] / "evaluation" / "framework.py").is_file()
+    assert (observed["runtime_dir"] / task_id / "manifest.json").exists() is False
+    assert (observed["runtime_dir"] / "manifest.json").is_file()
+    assert (observed["runtime_dir"] / task_id / "hidden" / "tolerances.json").is_file()
 
 
 def test_reports_preserve_nonfinite_and_structured_diagnostics(tmp_path):
     records = [{
         "task_id": "task",
-        "backend": "codex",
         "model": "m",
         "status": "completed",
         "failure_type": None,
@@ -366,30 +395,21 @@ def test_reports_preserve_nonfinite_and_structured_diagnostics(tmp_path):
         "full_success": False,
         "valid_execution": True,
         "agent": {"usage": {"total_tokens": 10, "cost_usd": 0.1}},
-        "execution": {
-            "manifest": {
-                "resource_usage": {
-                    "wall_seconds": 2,
-                    "cpu_seconds": 1,
-                    "peak_memory_bytes": 3,
-                }
-            }
-        },
         "evaluator": {
             "report": {
+                "public_score": 1.0,
+                "hidden_score": 0.2,
                 "checks": [{
-                    "id": "difference",
-                    "category": "scientific",
+                    "id": "hidden:case_01",
+                    "split": "hidden",
                     "passed": False,
                     "critical": True,
-                    "message": "mismatch",
                     "diagnostics": {
                         "max_abs": float("inf"),
-                        "actual": [1, 2],
-                        "expected": {"value": 3},
-                        "atol": 0.01,
+                        "rmse": 0.5,
+                        "structural_errors": ["$.value: value differs"],
                     },
-                }]
+                }],
             }
         },
     }]
@@ -399,8 +419,11 @@ def test_reports_preserve_nonfinite_and_structured_diagnostics(tmp_path):
     with (tmp_path / "difference_metrics.csv").open() as handle:
         row = next(csv.DictReader(handle))
     assert row["max_abs"] == "Infinity"
-    assert json.loads(row["actual"]) == [1, 2]
-    assert json.loads(row["expected"]) == {"value": 3}
+    assert json.loads(row["structural_errors"]) == ["$.value: value differs"]
+    with (tmp_path / "results.csv").open() as handle:
+        result_row = next(csv.DictReader(handle))
+    assert result_row["public_score"] == "1.0"
+    assert result_row["hidden_score"] == "0.2"
 
 
 def test_process_task_mocked_end_to_end_keeps_scientific_mismatch_completed(
@@ -411,73 +434,51 @@ def test_process_task_mocked_end_to_end_keeps_scientific_mismatch_completed(
     public.mkdir(parents=True)
     for name, content in {
         "task.md": "task",
-        "input.json": "{}",
-        "submission_schema.json": "{}",
+        "paper.pdf": "%PDF-1.4",
+        "interface.schema.json": "{}",
     }.items():
         (public / name).write_text(content)
     monkeypatch.setattr(pipeline, "ROOT", benchmark)
 
     def fake_agent(**kwargs):
         workspace = kwargs["workspace"]
-        script = """\
-import json
-from pathlib import Path
-Path("artifact.txt").write_text("1")
-Path("results.json").write_text(json.dumps({
-    "schema_version": 1,
-    "task_id": "task_1",
-    "entrypoint": "python reproduce.py",
-    "protocol": {},
-    "checkpoints": {},
-    "artifacts": [{"id": "value", "path": "artifact.txt", "media_type": "text/plain"}],
-}))
-"""
-        (workspace / "reproduce.py").write_text(script)
-        (workspace / "artifact.txt").write_text("1")
-        (workspace / "results.json").write_text(json.dumps({
-            "schema_version": 1,
+        (workspace / "solution.py").write_text("pass")
+        (workspace / "submission.json").write_text(json.dumps({
+            "schema_version": 4,
             "task_id": "task_1",
-            "entrypoint": "python reproduce.py",
-            "protocol": {},
-            "checkpoints": {},
-            "artifacts": [
-                {"id": "value", "path": "artifact.txt", "media_type": "text/plain"}
-            ],
+            "entrypoint": ["python3", "solution.py"],
         }))
         return {
-            "backend": "codex",
+            "backend": "claude_code",
             "model": "m",
             "exit_code": 0,
             "usage": {"total_tokens": 4},
         }
 
     def fake_execution(**kwargs):
-        from paper_replication_tasks.run_submission import execute
+        report = {
+            "schema_version": 4,
+            "task_id": "task_1",
+            "entrypoint": ["python3", "solution.py"],
+            "cases": {"public": [], "hidden": []},
+        }
+        pipeline.write_json(kwargs["manifest_path"], report)
+        return {"runner_exit_code": 0, "stderr": "", "timed_out": False, "report": report}
 
-        manifest = execute(
-            kwargs["execution_dir"],
-            kwargs["task_id"],
-            kwargs["command"],
-            kwargs["timeout"],
-        )
-        pipeline.write_json(kwargs["manifest_path"], manifest)
-        return {"runner_exit_code": 0, "stderr": "", "manifest": manifest}
-
-    def fake_evaluator(
-        task_id, execution_dir, manifest_path, output_path, timeout, **kwargs
-    ):
+    def fake_evaluator(task_id, manifest_path, output_path, timeout, **kwargs):
         report = {
             "task_id": task_id,
             "valid_execution": True,
+            "public_score": 1.0,
+            "hidden_score": 0.0,
             "score": 0.4,
             "full_success": False,
             "checks": [{
-                "id": "value",
-                "category": "scientific",
+                "id": "hidden:case_01",
+                "split": "hidden",
                 "passed": False,
                 "critical": True,
-                "message": "numerical mismatch",
-                "diagnostics": {"max_abs": 1.0, "limit": 0.1},
+                "diagnostics": {"max_abs": 1.0, "rmse": 0.5, "structural_errors": []},
             }],
         }
         pipeline.write_json(output_path, report)
@@ -487,7 +488,6 @@ Path("results.json").write_text(json.dumps({
     monkeypatch.setattr(pipeline, "run_trusted_execution", fake_execution)
     monkeypatch.setattr(pipeline, "run_evaluator", fake_evaluator)
     args = SimpleNamespace(
-        backend="codex",
         model="m",
         endpoint="http://127.0.0.1:4000",
         api_key=None,
@@ -512,5 +512,4 @@ Path("results.json").write_text(json.dumps({
     assert record["status"] == "completed"
     assert record["failure_type"] is None
     assert record["score"] == 0.4
-    assert (tmp_path / "run/tasks/task_1/raw_submission/results.json").is_file()
-    assert (tmp_path / "run/tasks/task_1/executed_submission/artifact.txt").is_file()
+    assert (tmp_path / "run/tasks/task_1/raw_submission/submission.json").is_file()
