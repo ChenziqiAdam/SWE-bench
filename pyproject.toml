@@ -22,7 +22,8 @@ classifiers = [
 ]
 dependencies = [
     "beautifulsoup4",
-    "chardet",
+    "chardet==5.2.0",
+    "charset-normalizer>=3.4.9",
     "datasets",
     "docker",
     "ghapi",
