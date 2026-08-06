@@ -271,11 +271,25 @@ def test_trusted_execution_wraps_run_submission_read_only(tmp_path, monkeypatch)
 
     def fake_container(**kwargs):
         observed.update(kwargs)
+        case_output_dir = (
+            kwargs["runtime_home"] / "execution_report_case_outputs" / "public" / "case_01"
+        )
+        case_output_dir.mkdir(parents=True)
+        (case_output_dir / "output.json").write_text("{}")
         report = {
             "schema_version": 4,
             "task_id": "scibench_replication_0007",
             "entrypoint": ["python3", "solution.py"],
-            "cases": {"public": [], "hidden": []},
+            "cases": {
+                "public": [{
+                    "case_id": "case_01",
+                    "exit_code": 0,
+                    "timed_out": False,
+                    "output_dir": "execution_report_case_outputs/public/case_01",
+                    "output_sha256": pipeline.hash_file(case_output_dir / "output.json"),
+                }],
+                "hidden": [],
+            },
         }
         pipeline.write_json(
             kwargs["runtime_home"] / "execution_report.json", report
@@ -324,6 +338,14 @@ def test_trusted_execution_wraps_run_submission_read_only(tmp_path, monkeypatch)
     ]
     assert (observed["runtime_dir"] / "run_submission.py").is_file()
     assert (observed["runtime_dir"] / task_id / "public").is_dir()
+    copied_output = (
+        manifest_path.parent
+        / "execution_report_case_outputs" / "public" / "case_01" / "output.json"
+    )
+    assert copied_output.is_file(), (
+        "run_trusted_execution must copy the case output tree alongside "
+        "execution_report.json so run_evaluator can mount it"
+    )
 
 
 def test_evaluator_runs_offline_with_read_only_bundle(tmp_path, monkeypatch):
@@ -361,6 +383,9 @@ def test_evaluator_runs_offline_with_read_only_bundle(tmp_path, monkeypatch):
     task_id = "scibench_replication_0007"
     manifest_path = tmp_path / "execution_report.json"
     manifest_path.write_text("{}")
+    case_outputs = tmp_path / "execution_report_case_outputs" / "public" / "case_01"
+    case_outputs.mkdir(parents=True)
+    (case_outputs / "output.json").write_text("{}")
     output = tmp_path / "evaluation.json"
     result = pipeline.run_evaluator(
         task_id,
@@ -383,6 +408,13 @@ def test_evaluator_runs_offline_with_read_only_bundle(tmp_path, monkeypatch):
     assert (observed["runtime_dir"] / task_id / "manifest.json").exists() is False
     assert (observed["runtime_dir"] / "manifest.json").is_file()
     assert (observed["runtime_dir"] / task_id / "hidden" / "tolerances.json").is_file()
+    assert (
+        observed["runtime_dir"]
+        / "execution_report_case_outputs" / "public" / "case_01" / "output.json"
+    ).is_file(), (
+        "run_evaluator must mount the case output tree alongside "
+        "execution_report.json inside the container"
+    )
 
 
 def test_reports_preserve_nonfinite_and_structured_diagnostics(tmp_path):

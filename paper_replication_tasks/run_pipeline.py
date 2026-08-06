@@ -440,6 +440,12 @@ def run_trusted_execution(
     if container_report.is_file():
         shutil.copy2(container_report, manifest_path)
         result["report"] = read_json(manifest_path)
+        container_case_outputs = runtime_home / "execution_report_case_outputs"
+        host_case_outputs = manifest_path.parent / "execution_report_case_outputs"
+        if host_case_outputs.exists():
+            shutil.rmtree(host_case_outputs)
+        if container_case_outputs.is_dir():
+            shutil.copytree(container_case_outputs, host_case_outputs)
     return result
 
 
@@ -465,6 +471,9 @@ def run_evaluator(
     shutil.copytree(ROOT / task_id, runtime_dir / task_id)
     shutil.copy2(ROOT / "manifest.json", runtime_dir / "manifest.json")
     shutil.copy2(manifest_path, runtime_dir / "execution_report.json")
+    case_outputs = manifest_path.parent / f"{manifest_path.stem}_case_outputs"
+    if case_outputs.is_dir():
+        shutil.copytree(case_outputs, runtime_dir / f"{manifest_path.stem}_case_outputs")
     runtime_home = output_path.parent / "evaluator_output"
     runtime_home.mkdir(parents=True, exist_ok=True)
     container_output = runtime_home / "evaluation.json"
