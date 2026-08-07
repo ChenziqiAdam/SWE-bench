@@ -319,11 +319,61 @@ def test_gold_patch_gpu_veto_yields_to_a_real_curated_spec():
 
 
 def test_gold_patch_gpu_veto_still_fires_with_no_curated_spec():
-    # No curated spec exists for this synthetic (repo, version) key, so the
-    # veto must still protect against an unresolvable GPU-only gold patch.
+    # "999999" is a numeric PR-shaped version string (as every real OpenMM
+    # instance's version is) that is guaranteed absent from SPECS_OPENMM's
+    # curated entries. Using a numeric key here (rather than a non-numeric
+    # placeholder like the previous "synthetic-no-spec") is required: only a
+    # numeric key exercises the real production code path, where
+    # _OpenMMSpecs.__missing__ fabricates a placeholder spec instead of
+    # raising KeyError. A non-numeric version can never occur for a real
+    # OpenMM instance and previously let this test pass for the wrong reason.
     instance = {
         "repo": "openmm/openmm",
-        "version": "synthetic-no-spec",
+        "version": "999999",
+        "patch": (
+            "diff --git a/platforms/opencl/src/kernels/nonbonded.cl "
+            "b/platforms/opencl/src/kernels/nonbonded.cl\n"
+            "--- a/platforms/opencl/src/kernels/nonbonded.cl\n"
+            "+++ b/platforms/opencl/src/kernels/nonbonded.cl\n"
+            "@@ -1 +1 @@\n-old\n+new\n"
+        ),
+    }
+    generated_patch = (
+        "diff --git a/wrappers/python/tests/TestNonbondedForce.py "
+        "b/wrappers/python/tests/TestNonbondedForce.py\n"
+        "--- a/wrappers/python/tests/TestNonbondedForce.py\n"
+        "+++ b/wrappers/python/tests/TestNonbondedForce.py\n"
+        "@@ -0,0 +1,2 @@\n"
+        "+def test_generated():\n"
+        "+    assert True\n"
+    )
+    plan = _special_repo_execution_plan(instance, generated_patch, [])
+
+    assert plan is not None
+    assert plan.failure_reason == "non_evaluable_spec"
+
+
+def test_gold_patch_gpu_veto_still_fires_after_build_script_caches_placeholder():
+    # Regression test for the exact bug the final review flagged: SPECS_OPENMM
+    # is an _OpenMMSpecs(dict) subclass whose __missing__ fabricates AND
+    # CACHES ("self[pr] = spec") a non-evaluable placeholder the first time a
+    # numeric, uncurated PR key is looked up via __getitem__. In production,
+    # _build_script performs exactly that lookup
+    # (MAP_REPO_VERSION_TO_SPECS[instance["repo"]][instance["version"]])
+    # before calling _special_repo_execution_plan for the same instance. A
+    # has_curated_spec check based on mere presence (dict.get(...) truthiness)
+    # would see the now-cached placeholder and incorrectly treat it as a real
+    # curated spec, permanently defeating this veto. Simulate that exact
+    # call order here -- trigger the cache first, then assert the veto still
+    # fires -- to prove the fix is immune to caching/call order.
+    version = "999998"
+    # Force _OpenMMSpecs.__missing__ to fabricate and cache a placeholder for
+    # this key, exactly as _build_script's `[...][...]` lookup does.
+    MAP_REPO_VERSION_TO_SPECS["openmm/openmm"][version]
+
+    instance = {
+        "repo": "openmm/openmm",
+        "version": version,
         "patch": (
             "diff --git a/platforms/opencl/src/kernels/nonbonded.cl "
             "b/platforms/opencl/src/kernels/nonbonded.cl\n"

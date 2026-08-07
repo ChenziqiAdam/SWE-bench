@@ -763,8 +763,31 @@ def _special_repo_execution_plan(
     # exists for this (repo, version) at all -- in both cases there is no
     # real command this harness could run regardless of GPU availability.
     gold_patch_paths = _patch_paths(instance.get("patch", "") or "")
-    has_curated_spec = bool(
-        MAP_REPO_VERSION_TO_SPECS.get(repo, {}).get(str(instance.get("version", "")))
+    # NOTE: this must NOT be a simple `dict.get(...)` truthiness check on
+    # MAP_REPO_VERSION_TO_SPECS. For openmm/openmm, SPECS_OPENMM is an
+    # _OpenMMSpecs(dict) subclass (see swebench/harness/constants/c.py)
+    # whose __missing__ fabricates AND CACHES ("self[pr] = spec") a
+    # non-evaluable placeholder spec the first time any numeric,
+    # uncurated PR key is looked up via __getitem__/`[]`. In the real
+    # pipeline, `_build_script` does exactly that lookup
+    # (`MAP_REPO_VERSION_TO_SPECS[instance["repo"]][instance["version"]]`)
+    # before calling this function for the very same instance -- so by
+    # the time we get here, a `.get()`-based presence check would already
+    # see the cached placeholder and (incorrectly) report a curated spec
+    # as existing, permanently defeating this veto for every OpenMM
+    # instance. Instead, resolve the spec (cache or no cache -- it does
+    # not matter) and inspect its content for the same
+    # "has no curated generated-test target" marker _OpenMMSpecs.__missing__
+    # uses to build its placeholder -- mirroring the "not evaluable:"
+    # stub-detection pattern used earlier in this function. This is
+    # immune to caching/call order since it checks content, not presence.
+    resolved_spec = MAP_REPO_VERSION_TO_SPECS.get(repo, {}).get(
+        str(instance.get("version", "")), {}
+    )
+    resolved_test_cmd = resolved_spec.get("test_cmd", []) if resolved_spec else []
+    has_curated_spec = bool(resolved_spec) and not any(
+        "has no curated generated-test target" in command
+        for command in resolved_test_cmd
     )
     if (
         repo == "openmm/openmm"
