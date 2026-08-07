@@ -749,20 +749,31 @@ def _special_repo_execution_plan(
 
     # OpenMM's per-force/integrator C++ regression tests are shared
     # tests/TestX.h headers that this harness always retargets onto the
-    # Reference-platform build target "TestReference<Name>" (see
-    # openmm_header_targets below), since that's the only variant this
-    # no-GPU environment can build. If the *gold* patch that actually fixes
-    # the issue touches only platforms/cuda/, platforms/opencl/, or
+    # Reference-platform build target "TestReference<Name>". Historically
+    # this environment had no GPU, so if the *gold* patch that fixes the
+    # issue touched only platforms/cuda/, platforms/opencl/, or
     # platforms/common/ (GPU-only shared kernel code with no Reference
-    # equivalent), the Reference binary's observable behavior never changes
-    # between base and gold: the generated test is structurally incapable
-    # of proving anything regardless of what it asserts. Without this check
-    # such cases surface as spurious "base_did_not_fail"/"gold_did_not_pass"
-    # model failures instead of the hardware-capability gap they really are.
+    # equivalent), the Reference binary's observable behavior would never
+    # change between base and gold and the generated test would be
+    # structurally incapable of proving anything. A real GPU is now
+    # available (see docker_specs.run_args.gpu on the curated specs in
+    # c.py), so this only remains a hard veto when the instance's curated
+    # spec is itself still a non-evaluable stub (`commands` already carries
+    # a "not evaluable:" marker, caught above) or when no curated spec
+    # exists for this (repo, version) at all -- in both cases there is no
+    # real command this harness could run regardless of GPU availability.
     gold_patch_paths = _patch_paths(instance.get("patch", "") or "")
-    if repo == "openmm/openmm" and gold_patch_paths and all(
-        re.search(r"(?:^|/)platforms/(?:cuda|opencl|common)/", path) is not None
-        for path in gold_patch_paths
+    has_curated_spec = bool(
+        MAP_REPO_VERSION_TO_SPECS.get(repo, {}).get(str(instance.get("version", "")))
+    )
+    if (
+        repo == "openmm/openmm"
+        and gold_patch_paths
+        and not has_curated_spec
+        and all(
+            re.search(r"(?:^|/)platforms/(?:cuda|opencl|common)/", path) is not None
+            for path in gold_patch_paths
+        )
     ):
         return GeneratedTestExecutionPlan(
             failure_reason="non_evaluable_spec",
