@@ -1,3 +1,4 @@
+import itertools
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -68,7 +69,9 @@ def test_create_eval_container_without_gpu_request_omits_gpu_kwargs():
     assert "devices" not in kwargs
 
 
-def test_create_eval_container_requests_gpu_on_docker():
+def test_create_eval_container_requests_gpu_on_docker(monkeypatch):
+    monkeypatch.setenv("SWEBENCH_GPU_COUNT", "4")
+    monkeypatch.setattr(docker_build, "_gpu_assignment_counter", iter([0]))
     client = _client(version={"Engine": "docker"})
     spec = _spec(docker_specs={"run_args": {"gpu": True}})
 
@@ -77,12 +80,14 @@ def test_create_eval_container_requests_gpu_on_docker():
     kwargs = client.containers.create.call_args.kwargs
     assert "devices" not in kwargs
     [device_request] = kwargs["device_requests"]
-    assert device_request["Count"] == -1
+    assert device_request["DeviceIDs"] == ["0"]
     assert device_request["Capabilities"] == [["gpu"]]
 
 
 def test_create_eval_container_requests_gpu_on_podman(monkeypatch):
     monkeypatch.delenv("DOCKER_HOST", raising=False)
+    monkeypatch.setenv("SWEBENCH_GPU_COUNT", "4")
+    monkeypatch.setattr(docker_build, "_gpu_assignment_counter", iter([2]))
     client = _client(version={"Platform": {"Name": "Podman Engine"}})
     spec = _spec(docker_specs={"run_args": {"gpu": True}})
 
@@ -90,18 +95,58 @@ def test_create_eval_container_requests_gpu_on_podman(monkeypatch):
 
     kwargs = client.containers.create.call_args.kwargs
     assert "device_requests" not in kwargs
-    assert kwargs["devices"] == ["nvidia.com/gpu=all"]
+    assert kwargs["devices"] == ["nvidia.com/gpu=2"]
 
 
 def test_create_eval_container_detects_podman_via_docker_host(monkeypatch):
     monkeypatch.setenv("DOCKER_HOST", "unix:///run/user/1000/podman/podman.sock")
+    monkeypatch.setenv("SWEBENCH_GPU_COUNT", "4")
+    monkeypatch.setattr(docker_build, "_gpu_assignment_counter", iter([1]))
     client = _client(version={"Engine": "docker"})
     spec = _spec(docker_specs={"run_args": {"gpu": True}})
 
     _create_eval_container(client, spec, "run", Mock())
 
     kwargs = client.containers.create.call_args.kwargs
-    assert kwargs["devices"] == ["nvidia.com/gpu=all"]
+    assert kwargs["devices"] == ["nvidia.com/gpu=1"]
+
+
+def test_create_eval_container_logs_gpu_details_on_api_error(monkeypatch):
+    monkeypatch.setenv("SWEBENCH_GPU_COUNT", "4")
+    monkeypatch.setattr(docker_build, "_gpu_assignment_counter", iter([3]))
+    error = docker.errors.APIError("no such device")
+    error.response = SimpleNamespace(status_code=500)
+    containers = SimpleNamespace(create=Mock(side_effect=error))
+    client = _client(containers=containers, version={"Engine": "docker"})
+    spec = _spec(docker_specs={"run_args": {"gpu": True}})
+    logger = Mock()
+
+    try:
+        _create_eval_container(client, spec, "run", logger)
+        assert False, "expected docker.errors.APIError to propagate"
+    except docker.errors.APIError:
+        pass
+
+    logger.error.assert_called_once()
+    log_args = logger.error.call_args.args
+    assert "GPU container create failed" in log_args[0]
+    assert spec.instance_id in log_args
+    assert 3 in log_args
+
+
+def test_create_eval_container_gpu_assignment_round_robins_across_cards(monkeypatch):
+    monkeypatch.setenv("SWEBENCH_GPU_COUNT", "4")
+    monkeypatch.setattr(docker_build, "_gpu_assignment_counter", itertools.count())
+    client = _client(version={"Engine": "docker"})
+    spec = _spec(docker_specs={"run_args": {"gpu": True}})
+
+    assigned = []
+    for _ in range(6):
+        _create_eval_container(client, spec, "run", Mock())
+        [device_request] = client.containers.create.call_args.kwargs["device_requests"]
+        assigned.append(device_request["DeviceIDs"][0])
+
+    assert assigned == ["0", "1", "2", "3", "0", "1"]
 
 
 def test_force_instance_rebuild_can_preserve_prebuilt_environment(monkeypatch):

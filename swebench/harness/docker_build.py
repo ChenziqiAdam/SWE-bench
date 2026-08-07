@@ -3,10 +3,12 @@ from __future__ import annotations
 import docker
 import docker.errors
 import docker.types
+import itertools
 import json
 import logging
 import os
 import sys
+import threading
 import time
 import traceback
 
@@ -55,6 +57,17 @@ def _client_is_podman(client) -> bool:
     return "podman" in engine_identity or "podman" in docker_host
 
 
+_gpu_assignment_counter = itertools.count()
+_gpu_assignment_lock = threading.Lock()
+
+
+def _next_gpu_index(gpu_count: int) -> int:
+    """Round-robin the next GPU index, so concurrent eval containers spread
+    across the host's GPUs instead of all landing on every card at once."""
+    with _gpu_assignment_lock:
+        return next(_gpu_assignment_counter) % gpu_count
+
+
 def _create_eval_container(client, test_spec: TestSpec, run_id: str, logger):
     """Create an eval container, recovering when a loaded daemon answers late."""
     run_args = test_spec.docker_specs.get("run_args", {})
@@ -68,16 +81,29 @@ def _create_eval_container(client, test_spec: TestSpec, run_id: str, logger):
         "platform": test_spec.platform,
         "cap_add": run_args.get("cap_add", []),
     }
-    if run_args.get("gpu", False):
-        if _client_is_podman(client):
+    requests_gpu = run_args.get("gpu", False)
+    if requests_gpu:
+        gpu_count = int(os.environ.get("SWEBENCH_GPU_COUNT", "1"))
+        gpu_index = _next_gpu_index(gpu_count)
+        is_podman = _client_is_podman(client)
+        if is_podman:
             # docker-py's device_requests (NVIDIA Container Toolkit's
             # "--gpus" equivalent) isn't reliably honored by Podman's
             # Docker-compatible API; Podman expects CDI device names instead.
-            kwargs["devices"] = ["nvidia.com/gpu=all"]
+            kwargs["devices"] = [f"nvidia.com/gpu={gpu_index}"]
         else:
             kwargs["device_requests"] = [
-                docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
+                docker.types.DeviceRequest(
+                    device_ids=[str(gpu_index)], capabilities=[["gpu"]]
+                )
             ]
+        logger.info(
+            "Assigning GPU %s to %s (engine=%s, SWEBENCH_GPU_COUNT=%s)",
+            gpu_index,
+            test_spec.instance_id,
+            "podman" if is_podman else "docker",
+            gpu_count,
+        )
     for attempt in range(1, 4):
         try:
             return client.containers.create(**kwargs)
@@ -96,6 +122,18 @@ def _create_eval_container(client, test_spec: TestSpec, run_id: str, logger):
                     raise
         except docker.errors.APIError as error:
             if error.status_code != 409:
+                if requests_gpu:
+                    logger.error(
+                        "GPU container create failed for %s (gpu=%s, "
+                        "devices=%s, device_requests=%s): %s. Verify the host "
+                        "has a GPU at that index and the NVIDIA Container "
+                        "Toolkit / CDI is configured for this container engine.",
+                        test_spec.instance_id,
+                        gpu_index,
+                        kwargs.get("devices"),
+                        kwargs.get("device_requests"),
+                        error,
+                    )
                 raise
             # A create request that timed out can still complete server-side and
             # make the retry report a name conflict.
