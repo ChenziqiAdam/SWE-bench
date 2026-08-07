@@ -223,3 +223,21 @@ def test_failed_environment_payload_excludes_dependent_instances(monkeypatch):
     assert payloads_seen == []
     assert successful == []
     assert failed == []
+
+
+def test_next_gpu_index_round_robins_across_gpu_count(monkeypatch):
+    from swebench.harness.docker_build import _next_gpu_index
+
+    # Reset the counter to a known state
+    monkeypatch.setattr(docker_build, "_gpu_assignment_counter", itertools.count())
+
+    # Call _next_gpu_index 30 times with gpu_count=3
+    indices = [_next_gpu_index(3) for _ in range(30)]
+
+    # Verify that all three GPU indices (0, 1, 2) are used
+    assert len(set(indices)) == 3, f"Expected all 3 GPU indices to be used, got {set(indices)}"
+
+    # Verify round-robin pattern: for every gpu_count calls, we should see each index once
+    for i in range(0, 30, 3):
+        batch = indices[i : i + 3]
+        assert len(set(batch)) == 3, f"Batch {batch} does not contain all 3 indices"
