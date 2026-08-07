@@ -83,6 +83,15 @@ def _create_eval_container(client, test_spec: TestSpec, run_id: str, logger):
     }
     requests_gpu = run_args.get("gpu", False)
     if requests_gpu:
+        if "SWEBENCH_GPU_COUNT" not in os.environ:
+            logger.warning(
+                "SWEBENCH_GPU_COUNT is not set for a GPU-requesting spec (%s); "
+                "GPU assignment will default to a single GPU (index 0) instead "
+                "of spreading concurrent eval containers across the host's "
+                "GPUs. Export SWEBENCH_GPU_COUNT to the number of GPUs "
+                "available on this host for multi-GPU hosts.",
+                test_spec.instance_id,
+            )
         gpu_count = int(os.environ.get("SWEBENCH_GPU_COUNT", "1"))
         gpu_index = _next_gpu_index(gpu_count)
         is_podman = _client_is_podman(client)

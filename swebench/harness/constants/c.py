@@ -388,6 +388,26 @@ def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False, gpu: bool =
     Recent bundled ``opencl.hpp`` revisions also use ``CL_MAKE_VERSION`` while
     Jammy's C OpenCL headers can expose the extension without that macro.  A
     forced compatibility header supplies the Khronos-defined encoding.
+
+    OPEN RISK (documented, not fixed, in this pass -- see the OpenMM GPU
+    eval design doc and the final whole-branch review): specs built here
+    with ``gpu=True`` request a real GPU be attached to the container
+    (docker_specs.run_args.gpu), but this function only installs the POCL
+    CPU OpenCL ICD (``pocl-opencl-icd``) -- no NVIDIA/vendor OpenCL ICD
+    package -- and every ``test_cmd`` unconditionally LD_PRELOADs the POCL
+    CPU-baseline compatibility shim (``_OPENMM_POCL_TEST_ENV`` /
+    ``/tmp/swebench_pocl_cpu_compat.so``). With no vendor ICD installed,
+    OpenCL's runtime ICD loader will very likely still resolve to POCL
+    (CPU) rather than the attached GPU, silently continuing to run these
+    "gpu=True" targets on CPU. This is known-deferred pending a real-GPU
+    validation run (e.g. PR 2829 is an AMD-specific memory-scale bug that
+    POCL CPU emulation likely cannot reproduce, so it needs this verified,
+    not assumed). A future engineer running the first real GPU eval should
+    explicitly confirm OpenCL targets are actually binding to the GPU
+    (e.g. via ``clinfo`` inside the container, or by checking which
+    platform/device the test bound to at runtime, possibly requiring
+    ``OPENCL_VENDOR_PATH`` pinning) rather than assuming ``gpu=True`` alone
+    guarantees it.
     """
     cmake_targets = " ".join(targets)
     spec = {
@@ -989,8 +1009,16 @@ SPECS_OPENMM = _OpenMMSpecs({
         }.items()
     },
     # ── Issues_No_Tests_split.xlsx: Common/OpenCL regression families ──────
-    # POCL provides a CPU OpenCL device, allowing the common/OpenCL kernels to
-    # be exercised in the evaluation container without requiring a GPU.
+    # These specs pass gpu=True, requesting a real GPU device be attached to
+    # the evaluation container (see docker_specs.run_args.gpu). POCL
+    # (pocl-opencl-icd) remains installed here as part of the OpenCL
+    # toolchain/build dependencies -- it is not what is meant to service
+    # these kernels at runtime once a GPU is attached. See the open risk
+    # recorded at _openmm_opencl_targets_spec above: since no vendor OpenCL
+    # ICD is installed and the POCL CPU-baseline compatibility shim
+    # (_OPENMM_POCL_TEST_ENV) stays unconditionally active in every
+    # test_cmd, the OpenCL ICD loader may still silently resolve to POCL
+    # (CPU) instead of the attached GPU even though gpu=True requests one.
     **{
         pr: _openmm_opencl_targets_spec(*targets, amoeba=amoeba, gpu=True)
         for pr, targets, amoeba in [
