@@ -572,3 +572,16 @@ def test_pr_2255_stays_non_evaluable_pending_follow_up():
 
     spec_text = "\n".join(SPECS_OPENMM["2255"].get("test_cmd", []))
     assert "not evaluable" in spec_text
+
+
+def test_part2_curated_opencl_specs_request_real_gpu():
+    from swebench.harness.constants.c import SPECS_OPENMM
+
+    part2_prs = [
+        "1382", "1679", "1682", "1924", "2257", "2318", "2322", "2819",
+        "3057", "3428", "3460", "3771", "4079", "4090", "4119", "4148",
+        "4249", "4618", "5069", "5117", "5346",
+    ]
+    for pr in part2_prs:
+        spec = SPECS_OPENMM[pr]
+        assert spec.get("docker_specs", {}).get("run_args", {}).get("gpu") is True, pr

@@ -821,16 +821,16 @@ SPECS_OPENMM = _OpenMMSpecs({
         "docs-source/usersguide/theory/04_integrators.rst",
     ),
     "4618": _openmm_opencl_targets_spec(
-        "TestOpenCLMonteCarloFlexibleBarostat"
+        "TestOpenCLMonteCarloFlexibleBarostat", gpu=True
     ),
-    "2318": _openmm_opencl_targets_spec("TestOpenCLNonbondedForce"),
+    "2318": _openmm_opencl_targets_spec("TestOpenCLNonbondedForce", gpu=True),
     "5219": _openmm_source_check_spec(
         "cm_motion_remover_documentation",
         "grep -Fq 'not a rigorous constraint' "
         "docs-source/usersguide/theory/02_standard_forces.rst",
     ),
-    "2322": _openmm_opencl_targets_spec("TestOpenCLCustomCentroidBondForce"),
-    "2257": _openmm_opencl_targets_spec("TestOpenCLNonbondedForce"),
+    "2322": _openmm_opencl_targets_spec("TestOpenCLCustomCentroidBondForce", gpu=True),
+    "2257": _openmm_opencl_targets_spec("TestOpenCLNonbondedForce", gpu=True),
     "4440": _openmm_cpp_targets_spec(
         "TestReferenceLangevinIntegrator",
         "TestReferenceVariableLangevinIntegrator",
@@ -992,7 +992,7 @@ SPECS_OPENMM = _OpenMMSpecs({
     # POCL provides a CPU OpenCL device, allowing the common/OpenCL kernels to
     # be exercised in the evaluation container without requiring a GPU.
     **{
-        pr: _openmm_opencl_targets_spec(*targets, amoeba=amoeba)
+        pr: _openmm_opencl_targets_spec(*targets, amoeba=amoeba, gpu=True)
         for pr, targets, amoeba in [
             ("2819", ("TestOpenCLNonbondedForce",), False),
             ("5069", ("TestOpenCLNonbondedForce",), False),
