@@ -839,8 +839,8 @@ SPECS_OPENMM = _OpenMMSpecs({
     "3151": _openmm_python_app_spec(
         "TestModeller.py", "test_addSolventPeriodicBox"
     ),
-    "5302": _openmm_gpu_non_evaluable_spec(
-        "Amoeba molecule-reordering regression requires a supported GPU runtime"
+    "5302": _openmm_cuda_targets_spec(
+        "TestCudaAmoebaMultipoleForce", plugin="amoeba"
     ),
     "4760": _openmm_source_check_spec(
         "absinth_force_field_removed",
@@ -1052,24 +1052,20 @@ SPECS_OPENMM = _OpenMMSpecs({
     "3923": _openmm_native_python_spec(
         "TestAPIUnits.py", "testAmoebaVdwForce", amoeba=True
     ),
-    # These regressions depend on CUDA behavior, GPU atom reordering, or memory
-    # sizes that POCL cannot faithfully emulate.  Treating POCL failures as
-    # model failures would corrupt the benchmark result.
-    "1640": _openmm_gpu_non_evaluable_spec(
-        "CUDA Amoeba DIIS regression requires a CUDA runtime"
+    # These regressions depend on CUDA/OpenCL kernel behavior; they now run
+    # against the real GPU devices available on the eval host instead of the
+    # POCL CPU-emulation path used for other OpenCL targets.
+    "1640": _openmm_cuda_targets_spec(
+        "TestCudaAmoebaMultipoleForce", plugin="amoeba"
     ),
-    "2152": _openmm_gpu_non_evaluable_spec(
-        "CUDA Amoeba PME regression requires a CUDA runtime"
+    "2152": _openmm_cuda_targets_spec(
+        "TestCudaAmoebaMultipoleForce", plugin="amoeba"
     ),
     "2255": _openmm_gpu_non_evaluable_spec(
         "GPU minimizer performance regression requires a supported GPU runtime"
     ),
-    "2829": _openmm_gpu_non_evaluable_spec(
-        "large AMD OpenCL regression requires a GPU with sufficient device memory"
-    ),
-    "4364": _openmm_gpu_non_evaluable_spec(
-        "GPU atom-reordering/barostat regression requires a supported GPU runtime"
-    ),
+    "2829": _openmm_opencl_targets_spec("TestOpenCLNonbondedForce", gpu=True),
+    "4364": _openmm_cuda_targets_spec("TestCudaCustomNonbondedForce"),
     # ── Exact Python wrapper tests ───────────────────────────────────────────
     # These PRs add or modify focused Python app tests. Use pip's compiled
     # OpenMM package for native libraries, then overlay the patched pure-Python

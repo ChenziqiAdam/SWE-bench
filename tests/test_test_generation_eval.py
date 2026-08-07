@@ -261,10 +261,18 @@ def test_openmm_opencl_specs_supply_cl_make_version_compatibility():
 
 
 def test_openmm_gpu_only_specs_are_explicitly_non_evaluable():
-    for pr in ("1640", "2152", "2255", "2829", "4364", "5302"):
+    for pr in ("2255",):
         spec_text = "\n".join(SPECS_OPENMM[pr]["test_cmd"])
         assert "not evaluable:" in spec_text
         assert "GPU" in spec_text or "CUDA" in spec_text
+
+
+def test_openmm_real_gpu_specs_request_gpu_docker_run_args():
+    for pr in ("1640", "2152", "2829", "4364", "5302"):
+        spec = SPECS_OPENMM[pr]
+        spec_text = "\n".join(spec["test_cmd"])
+        assert "not evaluable" not in spec_text, pr
+        assert spec["docker_specs"]["run_args"]["gpu"] is True, pr
 
 
 def test_openmm_native_python_specs_pin_numpy_one_x():

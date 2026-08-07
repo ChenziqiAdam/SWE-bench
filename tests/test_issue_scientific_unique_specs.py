@@ -144,7 +144,7 @@ def test_current_scientific_issues_sheet_specs_are_concrete():
             "4440": "TestReferenceLangevinIntegrator",
             "1100": "TestReferenceSettle",
             "3151": "test_addSolventPeriodicBox",
-            "5302": "GPU runtime",
+            "5302": "TestCudaAmoebaMultipoleForce",
             "4760": "absinth_force_field_removed",
             "4161": "test_IgnoreExternalBonds",
             "3851": "test_CharmmPolar",
@@ -190,10 +190,7 @@ def test_current_scientific_issues_sheet_specs_are_concrete():
             text = _spec_text(spec)
             assert spec.get("fail_to_pass"), (repo, pr)
             assert marker in text, (repo, pr, marker)
-            if repo == "openmm/openmm" and pr == "5302":
-                assert "not evaluable:" in text
-            else:
-                assert "not evaluable" not in text
+            assert "not evaluable" not in text
             assert "no curated" not in text
 
 

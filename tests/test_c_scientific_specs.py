@@ -460,7 +460,7 @@ def test_sci_cc_001_rdkit_specs_use_registered_ctest_targets():
 
 
 def test_issues_no_tests_batches_have_concrete_specs():
-    gpu_only = {"1640", "2152", "2255", "2829", "4364", "5302"}
+    gpu_only = {"2255"}
     batch_1_openmm = {
         "4138", "2819", "2255", "4294", "4618", "4079", "5069",
         "1640", "1540", "3326", "3923", "2318", "1679", "2781",
@@ -542,3 +542,33 @@ def test_openmm_opencl_targets_spec_gpu_flag_sets_run_args():
 
     assert "docker_specs" not in cpu_spec
     assert gpu_spec["docker_specs"] == {"run_args": {"gpu": True}}
+
+
+def test_hardcoded_gpu_stubs_converted_to_real_specs():
+    from swebench.harness.constants.c import SPECS_OPENMM
+
+    expected = {
+        "1640": "TestCudaAmoebaMultipoleForce",
+        "2152": "TestCudaAmoebaMultipoleForce",
+        "2829": "TestOpenCLNonbondedForce",
+        "4364": "TestCudaCustomNonbondedForce",
+        "5302": "TestCudaAmoebaMultipoleForce",
+    }
+    for pr, target in expected.items():
+        spec = SPECS_OPENMM[pr]
+        spec_text = "\n".join(
+            spec.get("pre_install", [])
+            + spec.get("build", [])
+            + spec.get("build_after_test_patch", [])
+            + spec.get("test_cmd", [])
+        )
+        assert "not evaluable" not in spec_text, pr
+        assert target in spec_text, pr
+        assert spec["docker_specs"]["run_args"]["gpu"] is True, pr
+
+
+def test_pr_2255_stays_non_evaluable_pending_follow_up():
+    from swebench.harness.constants.c import SPECS_OPENMM
+
+    spec_text = "\n".join(SPECS_OPENMM["2255"].get("test_cmd", []))
+    assert "not evaluable" in spec_text
