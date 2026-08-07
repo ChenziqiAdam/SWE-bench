@@ -532,3 +532,13 @@ def test_openmm_cuda_targets_spec_enables_plugin():
 
     build = "\n".join(spec["build_after_test_patch"])
     assert "-DOPENMM_BUILD_AMOEBA_PLUGIN=ON" in build
+
+
+def test_openmm_opencl_targets_spec_gpu_flag_sets_run_args():
+    from swebench.harness.constants.c import _openmm_opencl_targets_spec
+
+    cpu_spec = _openmm_opencl_targets_spec("TestOpenCLNonbondedForce")
+    gpu_spec = _openmm_opencl_targets_spec("TestOpenCLNonbondedForce", gpu=True)
+
+    assert "docker_specs" not in cpu_spec
+    assert gpu_spec["docker_specs"] == {"run_args": {"gpu": True}}

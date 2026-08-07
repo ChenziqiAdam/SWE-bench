@@ -377,7 +377,7 @@ _OPENMM_POCL_TEST_ENV = (
 )
 
 
-def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False) -> dict:
+def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False, gpu: bool = False) -> dict:
     """Build OpenCL tests against POCL so GPU-kernel fixes remain CPU-evaluable.
 
     Ubuntu 22.04's POCL/LLVM combination reports ``generic`` for CPUs newer
@@ -390,7 +390,7 @@ def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False) -> dict:
     forced compatibility header supplies the Khronos-defined encoding.
     """
     cmake_targets = " ".join(targets)
-    return {
+    spec = {
         "pre_install": [
             "apt-get update -q",
             "apt-get install -y --no-install-recommends "
@@ -421,6 +421,9 @@ def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False) -> dict:
         "fail_to_pass": list(targets),
         "test_generation_use_spec_cmd": True,
     }
+    if gpu:
+        spec["docker_specs"] = {"run_args": {"gpu": True}}
+    return spec
 
 
 _OPENMM_CUDA_TOOLKIT_INSTALL_COMMAND = (
