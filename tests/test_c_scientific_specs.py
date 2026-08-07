@@ -500,3 +500,35 @@ def test_issues_no_tests_batches_have_concrete_specs():
             else:
                 assert "not evaluable" not in text, pr
             assert "no curated" not in text, pr
+
+
+def test_openmm_cuda_targets_spec_requests_gpu_and_installs_toolkit():
+    from swebench.harness.constants.c import _openmm_cuda_targets_spec
+
+    spec = _openmm_cuda_targets_spec("TestCudaAmoebaMultipoleForce")
+
+    assert spec["docker_specs"] == {"run_args": {"gpu": True}}
+    assert spec["test_generation_use_spec_cmd"] is True
+    pre_install = "\n".join(spec["pre_install"])
+    assert "cuda-keyring" in pre_install
+    assert "cuda-nvcc-12-4" in pre_install
+    assert "cuda-cudart-dev-12-4" in pre_install
+    build = "\n".join(spec["build_after_test_patch"])
+    assert "-DOPENMM_BUILD_CUDA_LIB=ON" in build
+    assert "-DOPENMM_BUILD_OPENCL_LIB=OFF" in build
+    assert "TestCudaAmoebaMultipoleForce" in build
+    assert spec["test_cmd"] == [
+        "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
+        "OPENMM_PLUGIN_DIR=$PWD/build "
+        "./build/TestCudaAmoebaMultipoleForce"
+    ]
+    assert spec["fail_to_pass"] == ["TestCudaAmoebaMultipoleForce"]
+
+
+def test_openmm_cuda_targets_spec_enables_plugin():
+    from swebench.harness.constants.c import _openmm_cuda_targets_spec
+
+    spec = _openmm_cuda_targets_spec("TestCudaAmoebaMultipoleForce", plugin="amoeba")
+
+    build = "\n".join(spec["build_after_test_patch"])
+    assert "-DOPENMM_BUILD_AMOEBA_PLUGIN=ON" in build

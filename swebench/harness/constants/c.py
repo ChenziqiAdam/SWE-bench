@@ -423,6 +423,53 @@ def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False) -> dict:
     }
 
 
+_OPENMM_CUDA_TOOLKIT_INSTALL_COMMAND = (
+    "apt-get install -y --no-install-recommends wget gnupg ca-certificates && "
+    "wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb "
+    "-O /tmp/cuda-keyring_1.1-1_all.deb && "
+    "dpkg -i /tmp/cuda-keyring_1.1-1_all.deb && "
+    "apt-get update -q && "
+    "apt-get install -y --no-install-recommends cuda-nvcc-12-4 cuda-cudart-dev-12-4"
+)
+
+
+def _openmm_cuda_targets_spec(*targets: str, plugin: str | None = None) -> dict:
+    """Build OpenMM with the CUDA platform and run selected C++ test executables
+    against a real GPU device (attached at container-run time via
+    docker_specs.run_args.gpu -- see docker_build.py's _create_eval_container).
+    """
+    cmake_targets = " ".join(targets)
+    return {
+        "pre_install": [
+            "apt-get update -q",
+            "apt-get install -y --no-install-recommends cmake g++ make",
+            _OPENMM_CUDA_TOOLKIT_INSTALL_COMMAND,
+        ],
+        "build_after_test_patch": [
+            "export PATH=/usr/local/cuda/bin:$PATH && "
+            "cmake -B build -S . "
+            "-DCMAKE_BUILD_TYPE=Release "
+            "-DOPENMM_BUILD_CUDA_LIB=ON "
+            "-DOPENMM_BUILD_OPENCL_LIB=OFF "
+            "-DOPENMM_BUILD_HIP_LIB=OFF "
+            "-DOPENMM_BUILD_PYTHON_WRAPPERS=OFF "
+            "-DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF "
+            + (f"-DOPENMM_BUILD_{plugin.upper()}_PLUGIN=ON " if plugin else "")
+            + "-DOPENMM_BUILD_EXAMPLES=OFF",
+            f"cmake --build build --parallel $(nproc) --target {cmake_targets}",
+        ],
+        "test_cmd": [
+            f"LD_LIBRARY_PATH=$PWD/build:${{LD_LIBRARY_PATH:-}} "
+            f"OPENMM_PLUGIN_DIR=$PWD/build "
+            f"./build/{target}"
+            for target in targets
+        ],
+        "fail_to_pass": list(targets),
+        "test_generation_use_spec_cmd": True,
+        "docker_specs": {"run_args": {"gpu": True}},
+    }
+
+
 def _openmm_gpu_non_evaluable_spec(reason: str) -> dict:
     """Exclude a GPU-only regression when no faithful GPU runtime is available."""
     return {
