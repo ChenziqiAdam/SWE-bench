@@ -1341,6 +1341,22 @@ SPECS_QGIS = {
         bindings=True,
         postgres=True,
     ),
+    # Issues_No_Tests_v2.xlsx additions: native:concavehull / native:xyztiles
+    # are both exercised by python/plugins/processing/tests/QgisAlgorithmsTest4.py
+    # (testdata/qgis_algorithm_tests4.yaml), registered as CTest target
+    # ProcessingQgisAlgorithmsTestPt4.
+    "64781": _qgis_spec(
+        ("ProcessingQgisAlgorithmsTestPt4",),
+        ctest_regex="^ProcessingQgisAlgorithmsTestPt4$",
+        base_image=_QGIS_QT6_BUILD_IMAGE,
+        bindings=True,
+    ),
+    "66606": _qgis_spec(
+        ("ProcessingQgisAlgorithmsTestPt4",),
+        ctest_regex="^ProcessingQgisAlgorithmsTestPt4$",
+        base_image=_QGIS_QT6_BUILD_IMAGE,
+        bindings=True,
+    ),
 }
 
 class _RDKitSpecs(dict):
@@ -1908,6 +1924,19 @@ SPECS_LAMMPS = {
     "3941": _lammps_test_generation_spec("MANYBODY", "KOKKOS", kokkos=True),
     "4407": _lammps_test_generation_spec("EXTRA-FIX", "BPM", "GRANULAR"),
     "3930": _lammps_test_generation_spec("KOKKOS", kokkos=True),
+    # Issues_No_Tests_v2.xlsx additions
+    "4715": _lammps_test_generation_spec(
+        "DIELECTRIC", "DIPOLE", "KOKKOS", "SPIN", kokkos=True
+    ),
+    "4507": _lammps_test_generation_spec("REAXFF", "OPENMP"),
+    "4485": _lammps_test_generation_spec("EXTRA-PAIR"),
+    "3129": _lammps_test_generation_spec("GPU"),
+    "597": _lammps_test_generation_spec("GPU"),
+    "4319": _lammps_test_generation_spec("GPU"),
+    "4370": _lammps_test_generation_spec("BPM", "GRANULAR", "SPH"),
+    "4291": _lammps_test_generation_spec("REPLICA"),
+    "4152": _lammps_test_generation_spec(),
+    "3898": _lammps_test_generation_spec("KOKKOS", kokkos=True),
 }
 
 MAP_REPO_VERSION_TO_SPECS_C = {

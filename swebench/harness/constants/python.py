@@ -666,6 +666,24 @@ for k in ["4.1", "4.2", "4.3", "5.0", "5.1", "5.2", "v5.3"]:
 for k in ["v5.3"]:
     SPECS_ASTROPY[k]["python"] = "3.10"
 
+# Issues_No_Tests_v2.xlsx additions: recent (2024-2025) PRs against main,
+# built with modern astropy's own [test] extra rather than the old pinned
+# dep sets above (which target much older astropy commits).
+_ASTROPY_TEST_GENERATION_SPEC = {
+    "python": "3.11",
+    "install": "python -m pip install -e .[test] --verbose",
+    "pip_packages": ["pytest"],
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+SPECS_ASTROPY.update(
+    {
+        pr: dict(_ASTROPY_TEST_GENERATION_SPEC)
+        for pr in ("16366", "17850", "17209")
+    }
+)
+
 SPECS_SYMPY = {
     k: {
         "python": "3.9",
@@ -1251,7 +1269,93 @@ _BIOPYTHON_TEST_GENERATION_SPEC = {
 
 SPECS_BIOPYTHON = {
     pr: dict(_BIOPYTHON_TEST_GENERATION_SPEC)
-    for pr in ("4439", "3846", "3281", "2283")
+    for pr in ("4439", "3846", "3281", "2283", "3761")
+}
+
+
+# Issues_No_Tests_v2.xlsx: PRs 2620/2132/1896/1769 only touch
+# deepchem/{hyper,dock,metrics,feat,data} -- none require the heavy optional
+# torch/tensorflow/jax/dqc extras, so the plain base install is sufficient.
+_DEEPCHEM_TEST_GENERATION_SPEC = {
+    "python": "3.8",
+    "install": "python -m pip install -e .",
+    "pip_packages": ["pytest"],
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+SPECS_DEEPCHEM = {
+    pr: dict(_DEEPCHEM_TEST_GENERATION_SPEC)
+    for pr in ("2620", "2132", "1896", "1769")
+}
+
+
+# Issues_No_Tests_v2.xlsx: qutip PRs span 3 build eras.
+# - "modern" (PRs 1436 through 2582, 2021-2024): setuptools.build_meta +
+#   Cython-built C extensions (qutip/cy/*.pyx or qutip/core/data/*.pyx),
+#   needs a C compiler but otherwise a normal `pip install -e .`.
+# - "ancient" (PRs 259, 428, 2014-2016): pre-setuptools numpy.distutils
+#   build (qutip 3.x), requires old numpy/Python since numpy.distutils was
+#   removed in numpy>=1.26 and Python 3.12.
+_QUTIP_MODERN_TEST_GENERATION_SPEC = {
+    "python": "3.11",
+    "pre_install": ["apt-get update -q", "apt-get install -y --no-install-recommends gcc g++"],
+    "install": "python -m pip install -e .",
+    "pip_packages": ["pytest", "cython"],
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+_QUTIP_ANCIENT_TEST_GENERATION_SPEC = {
+    "python": "3.7",
+    "pre_install": ["apt-get update -q", "apt-get install -y --no-install-recommends gcc g++"],
+    "install": "python -m pip install -e .",
+    "pip_packages": ["pytest", "cython<3", "numpy<1.20", "scipy<1.8"],
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+SPECS_QUTIP = {
+    **{
+        pr: dict(_QUTIP_MODERN_TEST_GENERATION_SPEC)
+        for pr in (
+            "2582", "2541", "2493", "2466", "2371", "2303", "2011",
+            "1195", "1475", "1452", "1436",
+        )
+    },
+    **{
+        pr: dict(_QUTIP_ANCIENT_TEST_GENERATION_SPEC)
+        for pr in ("428", "259")
+    },
+}
+
+
+# Issues_No_Tests_v2.xlsx: qiskit-terra's core is a PyO3/Rust extension
+# (qiskit._accelerate) built via setuptools-rust; both target PRs (2024-era,
+# rust-version = "1.70" per Cargo.toml) need a Rust toolchain regardless of
+# which Python files they touch, since the package must import cleanly.
+# Use rustup rather than the distro-packaged rustc to guarantee a
+# sufficiently recent compiler.
+_QISKIT_TEST_GENERATION_SPEC = {
+    "python": "3.11",
+    "pre_install": [
+        "apt-get update -q",
+        "apt-get install -y --no-install-recommends curl build-essential",
+        "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | "
+        "sh -s -- -y --default-toolchain stable",
+    ],
+    "install": (
+        '. "$HOME/.cargo/env" && '
+        "python -m pip install -e . --no-build-isolation"
+    ),
+    "pip_packages": ["pytest", "setuptools-rust"],
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+SPECS_QISKIT = {
+    pr: dict(_QISKIT_TEST_GENERATION_SPEC)
+    for pr in ("13379", "12387")
 }
 
 # Constants - Task Instance Instllation Environment
@@ -1281,6 +1385,9 @@ MAP_REPO_VERSION_TO_SPECS_PY = {
     "sympy/sympy": SPECS_SYMPY,
     "mdtraj/mdtraj": SPECS_MDTRAJ,
     "biopython/biopython": SPECS_BIOPYTHON,
+    "deepchem/deepchem": SPECS_DEEPCHEM,
+    "qutip/qutip": SPECS_QUTIP,
+    "qiskit/qiskit": SPECS_QISKIT,
 }
 
 # Constants - Repository Specific Installation Instructions
