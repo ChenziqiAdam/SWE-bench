@@ -513,6 +513,8 @@ def test_openmm_cuda_targets_spec_requests_gpu_and_installs_toolkit():
     assert "cuda-keyring" in pre_install
     assert "cuda-nvcc-12-4" in pre_install
     assert "cuda-cudart-dev-12-4" in pre_install
+    assert "cuda-nvrtc-dev-12-4" in pre_install
+    assert "libcufft-dev-12-4" in pre_install
     build = "\n".join(spec["build_after_test_patch"])
     assert "-DOPENMM_BUILD_CUDA_LIB=ON" in build
     assert "-DOPENMM_BUILD_OPENCL_LIB=OFF" in build
@@ -523,6 +525,21 @@ def test_openmm_cuda_targets_spec_requests_gpu_and_installs_toolkit():
         "./build/TestCudaAmoebaMultipoleForce"
     ]
     assert spec["fail_to_pass"] == ["TestCudaAmoebaMultipoleForce"]
+
+
+def test_openmm_source_check_python_overlay_replaces_installed_app():
+    spec = SPECS_OPENMM["4760"]
+
+    assert any("pip install --no-cache-dir openmm" in c for c in spec["pre_install"])
+    overlay = "\n".join(spec["build"])
+    assert 'rm -rf "$OPENMM_SITE/app"' in overlay
+
+
+def test_rdkit_pandas_tools_spec_installs_pillow():
+    from swebench.harness.constants.c import SPECS_RDKIT
+
+    pre_install = "\n".join(SPECS_RDKIT["5103"]["pre_install"])
+    assert "python3-pil" in pre_install
 
 
 def test_openmm_cuda_targets_spec_enables_plugin():

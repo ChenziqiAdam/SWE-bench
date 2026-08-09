@@ -287,7 +287,8 @@ def _openmm_python_app_spec(
             "mkdir -p \"$SIMTK_SITE\" && "
             "if [ ! -f \"$(dirname \"$SIMTK_SITE\")/__init__.py\" ]; then echo '' > \"$(dirname \"$SIMTK_SITE\")/__init__.py\"; fi && "
             "if [ ! -f \"$SIMTK_SITE/__init__.py\" ]; then echo 'from openmm import *' > \"$SIMTK_SITE/__init__.py\"; fi && "
-            "if [ -d /testbed/wrappers/python/openmm/app ]; then cp -r /testbed/wrappers/python/openmm/app \"$OPENMM_SITE/\"; fi && "
+            "if [ -d /testbed/wrappers/python/openmm/app ]; then "
+            "rm -rf \"$OPENMM_SITE/app\" && cp -r /testbed/wrappers/python/openmm/app \"$OPENMM_SITE/\"; fi && "
             "rm -rf \"$SIMTK_SITE/app\" && "
             "if [ -d /testbed/wrappers/python/openmm/app ]; then "
             "cp -r /testbed/wrappers/python/openmm/app \"$SIMTK_SITE/\"; "
@@ -376,9 +377,21 @@ _OPENMM_POCL_TEST_ENV = (
     "/tmp/swebench_pocl_cpu_compat.so "
 )
 
+_OPENMM_NVIDIA_ICD_DIR = "/tmp/swebench-opencl-vendors"
+_OPENMM_NVIDIA_ICD_SETUP = (
+    f"mkdir -p {_OPENMM_NVIDIA_ICD_DIR} && "
+    f"printf '%s\\n' 'libnvidia-opencl.so.1' > {_OPENMM_NVIDIA_ICD_DIR}/nvidia.icd"
+)
+_OPENMM_NVIDIA_TEST_ENV = f"OCL_ICD_VENDORS={_OPENMM_NVIDIA_ICD_DIR} "
+_OPENMM_NVIDIA_OPENCL_CHECK = (
+    _OPENMM_NVIDIA_TEST_ENV
+    + "clinfo -l 2>&1 | grep -qi NVIDIA || "
+    "{ echo NVIDIA_OPENCL_UNAVAILABLE; exit 86; }; "
+)
+
 
 def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False, gpu: bool = False) -> dict:
-    """Build OpenCL tests against POCL so GPU-kernel fixes remain CPU-evaluable.
+    """Build OpenCL tests against either NVIDIA OpenCL or portable POCL.
 
     Ubuntu 22.04's POCL/LLVM combination reports ``generic`` for CPUs newer
     than its LLVM release (for example Zen 4), but ``generic`` is not a valid
@@ -389,36 +402,25 @@ def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False, gpu: bool =
     Jammy's C OpenCL headers can expose the extension without that macro.  A
     forced compatibility header supplies the Khronos-defined encoding.
 
-    OPEN RISK (documented, not fixed, in this pass -- see the OpenMM GPU
-    eval design doc and the final whole-branch review): specs built here
-    with ``gpu=True`` request a real GPU be attached to the container
-    (docker_specs.run_args.gpu), but this function only installs the POCL
-    CPU OpenCL ICD (``pocl-opencl-icd``) -- no NVIDIA/vendor OpenCL ICD
-    package -- and every ``test_cmd`` unconditionally LD_PRELOADs the POCL
-    CPU-baseline compatibility shim (``_OPENMM_POCL_TEST_ENV`` /
-    ``/tmp/swebench_pocl_cpu_compat.so``). With no vendor ICD installed,
-    OpenCL's runtime ICD loader will very likely still resolve to POCL
-    (CPU) rather than the attached GPU, silently continuing to run these
-    "gpu=True" targets on CPU. This is known-deferred pending a real-GPU
-    validation run (e.g. PR 2829 is an AMD-specific memory-scale bug that
-    POCL CPU emulation likely cannot reproduce, so it needs this verified,
-    not assumed). A future engineer running the first real GPU eval should
-    explicitly confirm OpenCL targets are actually binding to the GPU
-    (e.g. via ``clinfo`` inside the container, or by checking which
-    platform/device the test bound to at runtime, possibly requiring
-    ``OPENCL_VENDOR_PATH`` pinning) rather than assuming ``gpu=True`` alone
-    guarantees it.
+    GPU specs pin the ICD loader to an NVIDIA-only vendor directory and verify
+    it with ``clinfo`` before running a test. CPU specs retain the POCL shim.
+    This prevents a GPU-marked benchmark from silently executing on POCL.
     """
     cmake_targets = " ".join(targets)
     spec = {
         "pre_install": [
             "apt-get update -q",
             "apt-get install -y --no-install-recommends "
-            "cmake g++ make libgl1-mesa-dev ocl-icd-opencl-dev pocl-opencl-icd",
+            "cmake g++ make libgl1-mesa-dev ocl-icd-opencl-dev "
+            "pocl-opencl-icd clinfo",
         ],
         "build_after_test_patch": [
             _OPENMM_OPENCL_COMPAT_HEADER_COMMAND,
-            _OPENMM_POCL_CPU_COMPAT_COMMAND,
+            *(
+                [_OPENMM_NVIDIA_ICD_SETUP]
+                if gpu
+                else [_OPENMM_POCL_CPU_COMPAT_COMMAND]
+            ),
             "cmake -B build -S . "
             "-DCMAKE_BUILD_TYPE=Release "
             "-DCMAKE_CXX_FLAGS='-include /tmp/swebench_opencl_compat.h' "
@@ -432,7 +434,11 @@ def _openmm_opencl_targets_spec(*targets: str, amoeba: bool = False, gpu: bool =
             f"cmake --build build --parallel $(nproc) --target {cmake_targets}",
         ],
         "test_cmd": [
-            _OPENMM_POCL_TEST_ENV
+            (
+                _OPENMM_NVIDIA_OPENCL_CHECK + _OPENMM_NVIDIA_TEST_ENV
+                if gpu
+                else _OPENMM_POCL_TEST_ENV
+            )
             + "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
             "OPENMM_PLUGIN_DIR=$PWD/build "
             f"./build/{target}"
@@ -452,7 +458,8 @@ _OPENMM_CUDA_TOOLKIT_INSTALL_COMMAND = (
     "-O /tmp/cuda-keyring_1.1-1_all.deb && "
     "dpkg -i /tmp/cuda-keyring_1.1-1_all.deb && "
     "apt-get update -q && "
-    "apt-get install -y --no-install-recommends cuda-nvcc-12-4 cuda-cudart-dev-12-4"
+    "apt-get install -y --no-install-recommends cuda-nvcc-12-4 cuda-cudart-dev-12-4 "
+    "cuda-nvrtc-dev-12-4 libcufft-dev-12-4"
 )
 
 
@@ -504,10 +511,12 @@ def _openmm_gpu_non_evaluable_spec(reason: str) -> dict:
     }
 
 
-def _openmm_source_check_spec(name: str, condition: str) -> dict:
+def _openmm_source_check_spec(
+    name: str, condition: str, python_app_overlay: bool = False
+) -> dict:
     """Expose a source/data/documentation-only correction as a parsed test."""
     nodeid = f"scientific_spec::{name}"
-    return {
+    spec = {
         "pre_install": [],
         "build": [],
         "test_cmd": [
@@ -519,6 +528,11 @@ def _openmm_source_check_spec(name: str, condition: str) -> dict:
         # do not let this fixed source check resolve an empty/irrelevant patch.
         "test_generation_requires_generated_pytest": True,
     }
+    if python_app_overlay:
+        app_spec = _openmm_python_app_spec("TestForceField.py", "generated")
+        spec["pre_install"] = app_spec["pre_install"]
+        spec["build"] = app_spec["build"]
+    return spec
 
 
 def _openmm_native_python_spec(
@@ -866,6 +880,7 @@ SPECS_OPENMM = _OpenMMSpecs({
         "absinth_force_field_removed",
         "test ! -e wrappers/python/openmm/app/data/absinth.xml "
         "-a ! -e wrappers/python/simtk/openmm/app/data/absinth.xml",
+        python_app_overlay=True,
     ),
     "4161": _openmm_python_app_spec(
         "TestForceField.py", "test_IgnoreExternalBonds"
@@ -1009,16 +1024,8 @@ SPECS_OPENMM = _OpenMMSpecs({
         }.items()
     },
     # ── Issues_No_Tests_split.xlsx: Common/OpenCL regression families ──────
-    # These specs pass gpu=True, requesting a real GPU device be attached to
-    # the evaluation container (see docker_specs.run_args.gpu). POCL
-    # (pocl-opencl-icd) remains installed here as part of the OpenCL
-    # toolchain/build dependencies -- it is not what is meant to service
-    # these kernels at runtime once a GPU is attached. See the open risk
-    # recorded at _openmm_opencl_targets_spec above: since no vendor OpenCL
-    # ICD is installed and the POCL CPU-baseline compatibility shim
-    # (_OPENMM_POCL_TEST_ENV) stays unconditionally active in every
-    # test_cmd, the OpenCL ICD loader may still silently resolve to POCL
-    # (CPU) instead of the attached GPU even though gpu=True requests one.
+    # These specs request a real GPU and pin OpenCL to the NVIDIA ICD. POCL
+    # remains installed only for the separately curated CPU-emulation specs.
     **{
         pr: _openmm_opencl_targets_spec(*targets, amoeba=amoeba, gpu=True)
         for pr, targets, amoeba in [
@@ -1608,6 +1615,7 @@ SPECS_RDKIT = _RDKitSpecs({
             "python3-pandas",
             "python3-openpyxl",
             "python3-xlsxwriter",
+            "python3-pil",
         ),
     ),
     "4793": _rdkit_python_wrapper_spec(

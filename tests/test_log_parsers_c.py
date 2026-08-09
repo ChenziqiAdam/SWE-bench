@@ -217,3 +217,16 @@ def test_parse_log_openmm_binary_done_reads_missing_binary():
     assert parse_log_openmm_binary_done(log, None) == {
         "TestOpenCLFFT": TestStatus.FAILED.value,
     }
+
+
+def test_parse_log_openmm_binary_done_reads_process_crash():
+    log = """
++ LD_LIBRARY_PATH=/testbed/build:
++ OPENMM_PLUGIN_DIR=/testbed/build
++ ./build/TestCpuCustomNonbondedForce
+/base_generated_tests.sh: line 13: 1317 Segmentation fault ./build/TestCpuCustomNonbondedForce
+"""
+
+    assert parse_log_openmm_binary_done(log, None) == {
+        "TestCpuCustomNonbondedForce": TestStatus.FAILED.value,
+    }

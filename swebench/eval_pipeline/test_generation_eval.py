@@ -203,6 +203,7 @@ def _infrastructure_failure_output(output: str) -> bool:
             "size of array 'altStackMem' is not an integral constant-expression",
             "call to non-'constexpr' function 'long int sysconf(int)'",
             "CMake 3.23.0 or higher is required",
+            "NVIDIA_OPENCL_UNAVAILABLE",
             "pocl_llvm_build.cc:",
             "LLVM ERROR: Cannot select:",
             "error: cannot convert ‘PyObject*’",
@@ -728,17 +729,29 @@ def _special_repo_execution_plan(
         )
 
     paths = _patch_paths(generated_patch)
-    # This eval environment has no GPU, so the CUDA platform is always built
-    # with -DOPENMM_BUILD_CUDA_LIB=OFF. A generated test that only touches
-    # a platforms/cuda/ path -- top-level (platforms/cuda/...) or nested
-    # under a plugin (plugins/<name>/platforms/cuda/...) -- can never
-    # produce a buildable target here, regardless of which C++ target name
-    # it would otherwise resolve to.
+    resolved_spec = MAP_REPO_VERSION_TO_SPECS.get(repo, {}).get(
+        str(instance.get("version", "")), {}
+    )
+    resolved_build_commands = [
+        *resolved_spec.get("build", []),
+        *resolved_spec.get("build_after_test_patch", []),
+    ] if resolved_spec else []
+    cuda_enabled = any(
+        "-DOPENMM_BUILD_CUDA_LIB=ON" in command
+        for command in resolved_build_commands
+    )
+    opencl_enabled = any(
+        "-DOPENMM_BUILD_OPENCL_LIB=ON" in command
+        for command in resolved_build_commands
+    )
+    # CUDA-only generated tests are evaluable when the curated spec enables
+    # CUDA and requests a GPU. Keep the veto only for CPU/OpenCL specs, where
+    # no CUDA target can be produced.
     if repo == "openmm/openmm" and paths and all(
         "cuda" in PurePosixPath(path).parts
         and "platforms" in PurePosixPath(path).parts
         for path in paths
-    ):
+    ) and not cuda_enabled:
         return GeneratedTestExecutionPlan(
             failure_reason="non_evaluable_spec",
             evidence={
@@ -781,9 +794,6 @@ def _special_repo_execution_plan(
     # uses to build its placeholder -- mirroring the "not evaluable:"
     # stub-detection pattern used earlier in this function. This is
     # immune to caching/call order since it checks content, not presence.
-    resolved_spec = MAP_REPO_VERSION_TO_SPECS.get(repo, {}).get(
-        str(instance.get("version", "")), {}
-    )
     resolved_test_cmd = resolved_spec.get("test_cmd", []) if resolved_spec else []
     has_curated_spec = bool(resolved_spec) and not any(
         "has no curated generated-test target" in command
@@ -851,18 +861,21 @@ def _special_repo_execution_plan(
             continue
         canonical = False
         if repo == "openmm/openmm":
-            # This eval environment has no GPU, so CUDA is always built with
-            # -DOPENMM_BUILD_CUDA_LIB=OFF (see the platforms/cuda/ whole-patch
-            # veto above). A per-file CUDA test binary is therefore never
-            # buildable here even when the same patch also touches a
-            # buildable OpenCL/reference variant or shared header -- treat it
-            # as ignorable noise rather than a canonical accepted test so it
-            # doesn't get selected as (and fail on) an unbuildable target.
-            _cuda_parts = PurePosixPath(path).parts
+            # Ignore CUDA test files only when this instance's curated build
+            # disables CUDA. Real-GPU specs must retain and execute them.
+            backend_parts = PurePosixPath(path).parts
             if (
                 language == "cpp"
-                and "cuda" in _cuda_parts
-                and "platforms" in _cuda_parts
+                and "cuda" in backend_parts
+                and "platforms" in backend_parts
+                and not cuda_enabled
+            ):
+                continue
+            if (
+                language == "cpp"
+                and "opencl" in backend_parts
+                and "platforms" in backend_parts
+                and not opencl_enabled
             ):
                 continue
             canonical = (
@@ -944,8 +957,20 @@ def _special_repo_execution_plan(
                     for path in accepted["cpp"]
                 }
             )
+            # Preserve spec-defined runtime environment prefixes. In
+            # particular, OpenCL/POCL specs require an LD_PRELOAD shim; the
+            # old retargeting path silently discarded it.
+            runtime_prefix = next(
+                (
+                    command.split("LD_LIBRARY_PATH=", 1)[0]
+                    for command in commands
+                    if "LD_LIBRARY_PATH=" in command and "./build/" in command
+                ),
+                "",
+            )
             selected_commands.extend(
-                "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
+                runtime_prefix
+                + "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
                 "OPENMM_PLUGIN_DIR=$PWD/build ./build/" + target
                 for target in build_targets
             )
@@ -1113,9 +1138,10 @@ def _patch_driven_build_commands(
     # would uninstall the working pip package and rebuild it into a location
     # that isn't importable, breaking a test the pip-based spec would have
     # passed untouched. Leave such specs alone.
-    has_configure_command = any(
-        command.startswith("cmake ") and " -B " in command for command in original
-    )
+    def is_configure_command(command: str) -> bool:
+        return re.search(r"(?:^|&&\s*)cmake\s+-B\s+", command) is not None
+
+    has_configure_command = any(is_configure_command(command) for command in original)
     if (
         repo == "openmm/openmm"
         and not has_configure_command
@@ -1124,7 +1150,7 @@ def _patch_driven_build_commands(
         return original
 
     configure = next(
-        (command for command in original if command.startswith("cmake ") and " -B " in command),
+        (command for command in original if is_configure_command(command)),
         None,
     )
     retained = [
@@ -1171,6 +1197,13 @@ def _patch_driven_build_commands(
         "-DOPENMM_BUILD_CUDA_LIB=OFF -DOPENMM_BUILD_OPENCL_LIB=OFF "
         "-DOPENMM_BUILD_HIP_LIB=OFF -DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF"
     )
+    if "cpp" in plan.languages:
+        if "-DBUILD_TESTING=" in configure:
+            configure = re.sub(
+                r"-DBUILD_TESTING=(?:ON|OFF)", "-DBUILD_TESTING=ON", configure
+            )
+        else:
+            configure += " -DBUILD_TESTING=ON"
     # A generated test under plugins/<name>/tests/ only builds if that
     # plugin's CMake option is enabled; the default configure lines above
     # don't turn any plugin on, so TestReference<Name> would otherwise have
@@ -1511,8 +1544,11 @@ def _evaluate_one(
             gold_patch_applied=gold_patch_applied,
             base_timed_out=base_timed_out,
             gold_timed_out=gold_timed_out,
-            test_execution_failed=_test_execution_failed(base_output)
-            or _test_execution_failed(gold_output),
+            test_execution_failed=(
+                _test_execution_failed(base_output) and not base_status
+            ) or (
+                _test_execution_failed(gold_output) and not gold_status
+            ),
             no_tests_selected=_no_tests_selected(base_output) or _no_tests_selected(gold_output),
             collection_failed=_test_collection_failed(base_output)
             or _test_collection_failed(gold_output),

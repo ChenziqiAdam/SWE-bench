@@ -264,6 +264,9 @@ def parse_log_openmm_binary_done(log: str, test_spec: TestSpec) -> dict[str, str
             # printing "exception:" or "Done". Recognize that crash text too,
             # or a genuine test failure is left unparseable.
             or "terminate called after throwing an instance of" in line
+            or "Segmentation fault" in line
+            or "Illegal instruction" in line
+            or "Aborted" in line
         ):
             test_status_map[test_name or "OpenMMBinary"] = TestStatus.FAILED.value
 

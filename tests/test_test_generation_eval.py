@@ -231,7 +231,9 @@ def test_openmm_pocl_runtime_crashes_are_infrastructure_failures():
 
 
 def test_openmm_opencl_specs_apply_portable_pocl_cpu_compatibility():
-    spec = SPECS_OPENMM["1382"]
+    from swebench.harness.constants.c import _openmm_opencl_targets_spec
+
+    spec = _openmm_opencl_targets_spec("TestOpenCLExample")
 
     assert any(
         "getHostCPUName()" in command
@@ -295,11 +297,18 @@ def test_every_openmm_opencl_spec_has_runtime_and_header_compatibility():
     for spec in opencl_specs:
         build_commands = spec["build_after_test_patch"]
         assert any("swebench_opencl_compat.h" in command for command in build_commands)
-        assert any("swebench_pocl_cpu_compat.cpp" in command for command in build_commands)
-        assert all(
-            "/tmp/swebench_pocl_cpu_compat.so" in command
-            for command in spec["test_cmd"]
-        )
+        if spec.get("docker_specs", {}).get("run_args", {}).get("gpu"):
+            assert any("libnvidia-opencl.so.1" in command for command in build_commands)
+            assert all("clinfo -l" in command for command in spec["test_cmd"])
+        else:
+            assert any(
+                "swebench_pocl_cpu_compat.cpp" in command
+                for command in build_commands
+            )
+            assert all(
+                "/tmp/swebench_pocl_cpu_compat.so" in command
+                for command in spec["test_cmd"]
+            )
 
 
 def test_openmm_opencl_retarget_writes_compat_header_before_configure():
@@ -933,10 +942,25 @@ def test_openmm_plugin_test_enables_matching_plugin_cmake_flag():
     assert "-DOPENMM_BUILD_AMOEBA_PLUGIN=ON" in configure
 
 
-def test_openmm_cuda_only_generated_test_is_non_evaluable():
-    # This eval environment has no GPU, so CUDA is always configured with
-    # -DOPENMM_BUILD_CUDA_LIB=OFF. A generated test that only touches
-    # platforms/cuda/ can never produce a buildable target here.
+def test_openmm_cuda_only_generated_test_uses_real_gpu_spec():
+    patch = """diff --git a/platforms/cuda/tests/TestCudaMultipleForces.cpp b/platforms/cuda/tests/TestCudaMultipleForces.cpp
+--- a/platforms/cuda/tests/TestCudaMultipleForces.cpp
++++ b/platforms/cuda/tests/TestCudaMultipleForces.cpp
+@@ -1,3 +1,4 @@
++void testNewCase() {}
+ void runPlatformTests();
+"""
+
+    spec = SPECS_OPENMM["4364"]
+    plan = _special_repo_execution_plan(
+        {"repo": "openmm/openmm", "version": "4364"}, patch, spec["test_cmd"]
+    )
+
+    assert plan.failure_reason is None
+    assert plan.build_targets == ("TestCudaMultipleForces",)
+
+
+def test_openmm_cuda_only_generated_test_without_cuda_spec_is_non_evaluable():
     patch = """diff --git a/platforms/cuda/tests/TestCudaMultipleForces.cpp b/platforms/cuda/tests/TestCudaMultipleForces.cpp
 --- a/platforms/cuda/tests/TestCudaMultipleForces.cpp
 +++ b/platforms/cuda/tests/TestCudaMultipleForces.cpp
@@ -948,6 +972,98 @@ def test_openmm_cuda_only_generated_test_is_non_evaluable():
     plan = _special_repo_execution_plan({"repo": "openmm/openmm"}, patch, [])
 
     assert plan.failure_reason == "non_evaluable_spec"
+
+
+def test_openmm_opencl_retarget_preserves_runtime_prefix():
+    patch = """diff --git a/platforms/opencl/tests/TestOpenCLCustomExternalForce.cpp b/platforms/opencl/tests/TestOpenCLCustomExternalForce.cpp
+--- a/platforms/opencl/tests/TestOpenCLCustomExternalForce.cpp
++++ b/platforms/opencl/tests/TestOpenCLCustomExternalForce.cpp
+@@ -1,3 +1,4 @@
++void testNewCase() {}
+ void runPlatformTests();
+"""
+    spec = SPECS_OPENMM["1382"]
+
+    plan = _special_repo_execution_plan(
+        {"repo": "openmm/openmm", "version": "1382"}, patch, spec["test_cmd"]
+    )
+
+    assert "OCL_ICD_VENDORS=/tmp/swebench-opencl-vendors" in plan.commands[0]
+    assert "NVIDIA_OPENCL_UNAVAILABLE" in plan.commands[0]
+
+
+def test_openmm_gpu_opencl_spec_pins_and_validates_nvidia_icd():
+    spec = SPECS_OPENMM["1382"]
+
+    setup = "\n".join(spec["build_after_test_patch"])
+    command = spec["test_cmd"][0]
+    assert "libnvidia-opencl.so.1" in setup
+    assert "OCL_ICD_VENDORS=/tmp/swebench-opencl-vendors" in command
+    assert "clinfo -l" in command
+    assert "grep -qi NVIDIA" in command
+    assert "/tmp/swebench_pocl_cpu_compat.so" not in command
+
+
+def test_openmm_cpp_retarget_forces_build_testing_on():
+    spec = {
+        "build_after_test_patch": [
+            "cmake -B build -S . -DBUILD_TESTING=OFF",
+            "cmake --build build --target Existing",
+        ]
+    }
+    plan = GeneratedTestExecutionPlan(
+        languages=("cpp",), build_targets=("Generated",)
+    )
+
+    commands = _patch_driven_build_commands("openmm/openmm", spec, plan)
+
+    configure = next(command for command in commands if command.startswith("cmake -B"))
+    assert "-DBUILD_TESTING=ON" in configure
+    assert "-DBUILD_TESTING=OFF" not in configure
+
+
+def test_openmm_cuda_retarget_recognizes_export_prefixed_configure():
+    spec = {
+        "build_after_test_patch": [
+            "export PATH=/usr/local/cuda/bin:$PATH && "
+            "cmake -B build -S . -DOPENMM_BUILD_CUDA_LIB=ON -DBUILD_TESTING=OFF",
+            "cmake --build build --target Existing",
+        ]
+    }
+    plan = GeneratedTestExecutionPlan(
+        languages=("cpp",), build_targets=("Generated",)
+    )
+
+    commands = _patch_driven_build_commands("openmm/openmm", spec, plan)
+
+    configure_commands = [command for command in commands if "cmake -B build" in command]
+    assert len(configure_commands) == 1
+    assert "-DOPENMM_BUILD_CUDA_LIB=ON" in configure_commands[0]
+    assert "-DBUILD_TESTING=ON" in configure_commands[0]
+
+
+def test_openmm_cuda_plan_ignores_unbuilt_opencl_variant():
+    patch = """diff --git a/platforms/cuda/tests/TestCudaForce.cpp b/platforms/cuda/tests/TestCudaForce.cpp
+--- a/platforms/cuda/tests/TestCudaForce.cpp
++++ b/platforms/cuda/tests/TestCudaForce.cpp
+@@ -1 +1,2 @@
++void generated() {}
+ void existing();
+diff --git a/platforms/opencl/tests/TestOpenCLForce.cpp b/platforms/opencl/tests/TestOpenCLForce.cpp
+--- a/platforms/opencl/tests/TestOpenCLForce.cpp
++++ b/platforms/opencl/tests/TestOpenCLForce.cpp
+@@ -1 +1,2 @@
++void generated() {}
+ void existing();
+"""
+    spec = SPECS_OPENMM["4364"]
+
+    plan = _special_repo_execution_plan(
+        {"repo": "openmm/openmm", "version": "4364"}, patch, spec["test_cmd"]
+    )
+
+    assert plan.build_targets == ("TestCudaForce",)
+    assert plan.paths == ("platforms/cuda/tests/TestCudaForce.cpp",)
 
 
 def test_openmm_gold_fix_confined_to_gpu_platforms_is_non_evaluable():
