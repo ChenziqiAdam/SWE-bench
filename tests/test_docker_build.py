@@ -90,12 +90,20 @@ def test_create_eval_container_requests_gpu_on_podman(monkeypatch):
     monkeypatch.setattr(docker_build, "_gpu_assignment_counter", iter([2]))
     client = _client(version={"Platform": {"Name": "Podman Engine"}})
     spec = _spec(docker_specs={"run_args": {"gpu": True}})
+    created = object()
+    client.containers.get = Mock(return_value=created)
+    run = Mock(return_value=SimpleNamespace(returncode=0, stdout="id\n", stderr=""))
+    monkeypatch.setattr(docker_build.subprocess, "run", run)
 
-    _create_eval_container(client, spec, "run", Mock())
+    result = _create_eval_container(client, spec, "run", Mock())
 
-    kwargs = client.containers.create.call_args.kwargs
-    assert "device_requests" not in kwargs
-    assert kwargs["devices"] == ["nvidia.com/gpu=2"]
+    assert result is created
+    client.containers.create.assert_not_called()
+    client.containers.get.assert_called_once_with("demo.run")
+    command = run.call_args.args[0]
+    assert command[:2] == ["podman", "create"]
+    assert command[command.index("--device") + 1] == "nvidia.com/gpu=2"
+    assert command[command.index("--security-opt") + 1] == "label=disable"
 
 
 def test_create_eval_container_detects_podman_via_docker_host(monkeypatch):
@@ -104,11 +112,47 @@ def test_create_eval_container_detects_podman_via_docker_host(monkeypatch):
     monkeypatch.setattr(docker_build, "_gpu_assignment_counter", iter([1]))
     client = _client(version={"Engine": "docker"})
     spec = _spec(docker_specs={"run_args": {"gpu": True}})
+    created = object()
+    client.containers.get = Mock(return_value=created)
+    run = Mock(return_value=SimpleNamespace(returncode=0, stdout="id\n", stderr=""))
+    monkeypatch.setattr(docker_build.subprocess, "run", run)
 
-    _create_eval_container(client, spec, "run", Mock())
+    result = _create_eval_container(client, spec, "run", Mock())
 
-    kwargs = client.containers.create.call_args.kwargs
-    assert kwargs["devices"] == ["nvidia.com/gpu=1"]
+    assert result is created
+    command = run.call_args.args[0]
+    assert command[:3] == [
+        "podman",
+        "--url",
+        "unix:///run/user/1000/podman/podman.sock",
+    ]
+    assert command[command.index("--device") + 1] == "nvidia.com/gpu=1"
+
+
+def test_create_eval_container_reports_podman_cli_failure(monkeypatch):
+    monkeypatch.delenv("DOCKER_HOST", raising=False)
+    monkeypatch.setenv("SWEBENCH_GPU_COUNT", "1")
+    client = _client(version={"Platform": {"Name": "Podman Engine"}})
+    spec = _spec(docker_specs={"run_args": {"gpu": True}})
+    monkeypatch.setattr(
+        docker_build.subprocess,
+        "run",
+        Mock(
+            return_value=SimpleNamespace(
+                returncode=125,
+                stdout="",
+                stderr="Error: unresolvable CDI device nvidia.com/gpu=0\n",
+            )
+        ),
+    )
+
+    try:
+        _create_eval_container(client, spec, "run", Mock())
+        assert False, "expected Podman create failure"
+    except RuntimeError as error:
+        assert "unresolvable CDI device" in str(error)
+
+    client.containers.create.assert_not_called()
 
 
 def test_create_eval_container_logs_gpu_details_on_api_error(monkeypatch):

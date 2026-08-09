@@ -7,6 +7,7 @@ import itertools
 import json
 import logging
 import os
+import subprocess
 import sys
 import threading
 import time
@@ -68,6 +69,66 @@ def _next_gpu_index(gpu_count: int) -> int:
         return next(_gpu_assignment_counter) % gpu_count
 
 
+def _create_podman_gpu_container(
+    client,
+    test_spec: TestSpec,
+    name: str,
+    run_args: dict,
+    gpu_index: int,
+):
+    """Create a CDI-backed GPU container through Podman's native CLI.
+
+    docker-py serializes its ``devices`` argument as Docker
+    ``HostConfig.Devices`` entries.  Podman's Docker-compatible endpoint then
+    treats a CDI name such as ``nvidia.com/gpu=0`` as a host filesystem path
+    instead of resolving it as CDI.  Podman's native ``--device`` parser does
+    resolve CDI device names, so use it for this one Podman-specific case.
+    """
+    command = ["podman"]
+    docker_host = os.environ.get("DOCKER_HOST", "")
+    if docker_host:
+        # Keep the CLI on the same Podman service selected by docker.from_env().
+        command.extend(["--url", docker_host])
+    command.extend(
+        [
+            "create",
+            "--name",
+            name,
+            "--user",
+            DOCKER_USER,
+            "--platform",
+            test_spec.platform,
+            "--device",
+            f"nvidia.com/gpu={gpu_index}",
+            "--security-opt",
+            "label=disable",
+        ]
+    )
+    for capability in run_args.get("cap_add", []):
+        command.extend(["--cap-add", capability])
+    command.extend([test_spec.instance_image_key, "tail", "-f", "/dev/null"])
+
+    try:
+        completed = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as error:
+        raise RuntimeError(
+            "Podman-backed GPU evaluation requires the podman CLI, but it was "
+            "not found on PATH"
+        ) from error
+    if completed.returncode != 0:
+        detail = completed.stderr.strip() or completed.stdout.strip()
+        raise RuntimeError(
+            f"Podman failed to create GPU container {name} "
+            f"(exit {completed.returncode}): {detail}"
+        )
+    return client.containers.get(name)
+
+
 def _create_eval_container(client, test_spec: TestSpec, run_id: str, logger):
     """Create an eval container, recovering when a loaded daemon answers late."""
     run_args = test_spec.docker_specs.get("run_args", {})
@@ -82,6 +143,7 @@ def _create_eval_container(client, test_spec: TestSpec, run_id: str, logger):
         "cap_add": run_args.get("cap_add", []),
     }
     requests_gpu = run_args.get("gpu", False)
+    is_podman = _client_is_podman(client)
     if requests_gpu:
         if "SWEBENCH_GPU_COUNT" not in os.environ:
             logger.warning(
@@ -94,13 +156,7 @@ def _create_eval_container(client, test_spec: TestSpec, run_id: str, logger):
             )
         gpu_count = int(os.environ.get("SWEBENCH_GPU_COUNT", "1"))
         gpu_index = _next_gpu_index(gpu_count)
-        is_podman = _client_is_podman(client)
-        if is_podman:
-            # docker-py's device_requests (NVIDIA Container Toolkit's
-            # "--gpus" equivalent) isn't reliably honored by Podman's
-            # Docker-compatible API; Podman expects CDI device names instead.
-            kwargs["devices"] = [f"nvidia.com/gpu={gpu_index}"]
-        else:
+        if not is_podman:
             kwargs["device_requests"] = [
                 docker.types.DeviceRequest(
                     device_ids=[str(gpu_index)], capabilities=[["gpu"]]
@@ -112,6 +168,10 @@ def _create_eval_container(client, test_spec: TestSpec, run_id: str, logger):
             test_spec.instance_id,
             "podman" if is_podman else "docker",
             gpu_count,
+        )
+    if requests_gpu and is_podman:
+        return _create_podman_gpu_container(
+            client, test_spec, name, run_args, gpu_index
         )
     for attempt in range(1, 4):
         try:
