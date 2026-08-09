@@ -94,8 +94,9 @@ def test_issues_no_tests_v1_generated_test_specs_are_registered():
     }
     biopython_prs = {"4439", "3846", "3281", "2283"}
 
-    assert set(SPECS_LAMMPS) == lammps_prs
-    assert set(SPECS_BIOPYTHON) == biopython_prs
+    # The registries also contain the newer v2 spreadsheet cohort.
+    assert lammps_prs <= set(SPECS_LAMMPS)
+    assert biopython_prs <= set(SPECS_BIOPYTHON)
     assert MAP_REPO_VERSION_TO_SPECS["lammps/lammps"] is SPECS_LAMMPS
     assert MAP_REPO_VERSION_TO_SPECS["biopython/biopython"] is SPECS_BIOPYTHON
     assert MAP_REPO_TO_EXT["lammps/lammps"] == "c"
@@ -106,7 +107,8 @@ def test_issues_no_tests_v1_generated_test_specs_are_registered():
     for pr in map(int, biopython_prs):
         assert _PR_VERSION_OVERRIDES[("biopython/biopython", pr)] == str(pr)
 
-    for pr, spec in SPECS_LAMMPS.items():
+    for pr in lammps_prs:
+        spec = SPECS_LAMMPS[pr]
         text = _spec_text(spec)
         assert spec["oracle_kind"] == "generated_test", pr
         assert spec["test_generation_use_spec_cmd"] is True, pr
@@ -115,7 +117,8 @@ def test_issues_no_tests_v1_generated_test_specs_are_registered():
         assert "ctest --test-dir build --output-on-failure" in text, pr
         assert "source_invariant" not in text, pr
 
-    for pr, spec in SPECS_BIOPYTHON.items():
+    for pr in biopython_prs:
+        spec = SPECS_BIOPYTHON[pr]
         assert spec["oracle_kind"] == "generated_test", pr
         assert spec["test_cmd"].startswith("pytest "), pr
         assert spec["install"].endswith("-e ."), pr
@@ -130,6 +133,19 @@ def test_issues_no_tests_v1_parsers_read_generated_test_results():
     assert MAP_REPO_TO_PARSER["biopython/biopython"](pytest_log, None) == {
         "Tests/test_generated.py::test_regression": "PASSED"
     }
+
+
+def test_scientific_python_parsers_read_ansi_pytest_results():
+    log = (
+        "\x1b[32mPASSED\x1b[0m tests/test_generated.py::test_ok\n"
+        "\x1b[31mFAILED\x1b[0m tests/test_generated.py::test_bad - AssertionError"
+    )
+    expected = {
+        "tests/test_generated.py::test_ok": "PASSED",
+        "tests/test_generated.py::test_bad": "FAILED",
+    }
+    for repo in ("deepchem/deepchem", "qiskit/qiskit", "qutip/qutip"):
+        assert MAP_REPO_TO_PARSER[repo](log, None) == expected
 
 
 def test_current_scientific_issues_sheet_specs_are_concrete():

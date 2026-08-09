@@ -50,10 +50,40 @@ def _spec_hash(inst: dict) -> str:
             "env_script": spec.setup_env_script,
             "install_script": spec.install_repo_script,
             "eval_script": spec.eval_script,
+            "validation_cmd": _validation_command(inst),
         },
         sort_keys=True,
     )
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
+def _validation_command(inst: dict) -> str | None:
+    """Return an optional post-build import/smoke command for an instance."""
+    repo_specs = MAP_REPO_VERSION_TO_SPECS.get(inst.get("repo", ""), {})
+    spec = repo_specs.get(str(inst.get("version", "")), {})
+    command = spec.get("validation_cmd")
+    return command.strip() if isinstance(command, str) and command.strip() else None
+
+
+def _smoke_validate_image(client, image_name: str, command: str) -> tuple[bool, str]:
+    """Run a lightweight readiness check inside a newly built instance image."""
+    shell_command = (
+        "source /opt/miniconda3/bin/activate && conda activate testbed && "
+        f"cd /testbed && {command}"
+    )
+    try:
+        client.containers.run(
+            image_name,
+            command=["/bin/bash", "-lc", shell_command],
+            remove=True,
+        )
+        return True, ""
+    except Exception as exc:
+        stderr = getattr(exc, "stderr", b"") or b""
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode(errors="replace")
+        detail = str(stderr).strip() or str(exc)
+        return False, f"post-build validation failed: {detail[-2000:]}"
 
 
 def validate_buildable(
@@ -198,6 +228,7 @@ def validate_buildable(
             # cohort's large repository layers before evaluation starts.
             batch_size = max(1, max_workers) if clean_images else len(instance_todo_p2)
             successful = []
+            smoke_failures: dict[str, str] = {}
             for start in range(0, len(instance_todo_p2), batch_size):
                 batch = instance_todo_p2[start : start + batch_size]
                 batch_successful, _ = build_instance_images(
@@ -210,7 +241,24 @@ def validate_buildable(
                     force_rebuild_env=False,
                     nocache=force,
                 )
-                successful.extend(batch_successful)
+                batch_by_id = {inst["instance_id"]: inst for inst in batch}
+                for built in batch_successful:
+                    built_spec = built[0]
+                    inst = batch_by_id[built_spec.instance_id]
+                    validation_cmd = _validation_command(inst)
+                    if validation_cmd:
+                        ok, error = _smoke_validate_image(
+                            client, built_spec.instance_image_key, validation_cmd
+                        )
+                        if not ok:
+                            smoke_failures[built_spec.instance_id] = error
+                            logger.error(
+                                "Post-build validation failed for %s: %s",
+                                built_spec.instance_id,
+                                error,
+                            )
+                            continue
+                    successful.append(built)
                 if clean_images:
                     for spec, *_rest in batch_successful:
                         try:
@@ -235,7 +283,7 @@ def validate_buildable(
                 if iid in ok_ids:
                     cache[iid] = {"buildable": True, "error": "", "spec_hash": spec_hashes[iid]}
                 else:
-                    reason = _read_build_log(spec_map[iid])
+                    reason = smoke_failures.get(iid) or _read_build_log(spec_map[iid])
                     cache[iid] = {"buildable": False, "error": reason or "instance image build failed", "spec_hash": spec_hashes[iid]}
 
         _write_cache(cache, cache_path)

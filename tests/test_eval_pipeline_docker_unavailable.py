@@ -40,6 +40,30 @@ def test_validate_buildable_caches_docker_unavailable(monkeypatch, tmp_path):
     assert json.loads(cache_path.read_text()) == result
 
 
+def test_post_build_validation_reports_import_failure():
+    class Containers:
+        def run(self, image, command, remove):
+            assert image == "instance:latest"
+            assert command[:2] == ["/bin/bash", "-lc"]
+            assert remove is True
+            raise docker.errors.ContainerError(
+                container=None,
+                exit_status=1,
+                command=command,
+                image=image,
+                stderr=b"ModuleNotFoundError: No module named 'dependency'",
+            )
+
+    client = type("Client", (), {"containers": Containers()})()
+    ok, error = validate_base._smoke_validate_image(
+        client, "instance:latest", "python -c 'import package'"
+    )
+
+    assert ok is False
+    assert "post-build validation failed" in error
+    assert "ModuleNotFoundError" in error
+
+
 def test_forced_validation_preserves_unselected_cached_results(monkeypatch, tmp_path):
     selected = {
         "instance_id": "repo__pkg-1",

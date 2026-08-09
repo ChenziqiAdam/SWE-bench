@@ -3,6 +3,7 @@ import os
 import subprocess
 
 from swebench.eval_pipeline.claude_code_inference import (
+    _claude_problem_text,
     _enforce_patch_size,
     _prepare_standalone_environment,
     run_claude_code_inference,
@@ -39,6 +40,16 @@ def test_enforce_patch_size_rejects_runaway_patch():
     assert patch == ""
     assert error == "patch_too_large:11>10"
     assert _enforce_patch_size("x" * 11, 0) == ("x" * 11, "")
+
+
+def test_test_generation_prompt_forbids_staging():
+    prompt = _claude_problem_text(
+        {"repo": "demo/repo", "problem_statement": "Regression"},
+        eval_mode="test_generation",
+    )
+
+    assert "Do not run git add" in prompt
+    assert "captures tracked and untracked edits" in prompt
 
 
 def test_cpp_environment_preparation_uses_container_helper(tmp_path, monkeypatch):

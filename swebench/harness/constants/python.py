@@ -672,7 +672,10 @@ for k in ["v5.3"]:
 _ASTROPY_TEST_GENERATION_SPEC = {
     "python": "3.11",
     "install": "python -m pip install -e .[test] --verbose",
-    "pip_packages": ["pytest"],
+    # NumPy 2.x removed np.in1d, which these base commits still use while
+    # importing Astropy's pytest support.
+    "pip_packages": ["pytest", "numpy==1.26.4"],
+    "validation_cmd": "python -c 'import astropy; import numpy'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
@@ -1279,7 +1282,19 @@ SPECS_BIOPYTHON = {
 _DEEPCHEM_TEST_GENERATION_SPEC = {
     "python": "3.8",
     "install": "python -m pip install -e .",
-    "pip_packages": ["pytest"],
+    # These old DeepChem setup.py files do not declare their runtime/test
+    # dependencies.  In particular, importing deepchem eagerly imports the
+    # TensorFlow-backed modules.
+    "pip_packages": [
+        "pytest",
+        "numpy==1.23.5",
+        "pandas==1.5.3",
+        "scipy==1.10.1",
+        "tensorflow-cpu==2.13.1",
+        "flaky==3.8.1",
+        "rdkit==2023.9.6",
+    ],
+    "validation_cmd": "python -c 'import deepchem'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
@@ -1301,7 +1316,15 @@ _QUTIP_MODERN_TEST_GENERATION_SPEC = {
     "python": "3.11",
     "pre_install": ["apt-get update -q", "apt-get install -y --no-install-recommends gcc g++"],
     "install": "python -m pip install -e .",
-    "pip_packages": ["pytest", "cython"],
+    # Keep the ABI/API versions used by the 2021-2024 QuTiP commits. Newer
+    # NumPy/SciPy releases removed numpy.__config__ fields and sph_harm.
+    "pip_packages": [
+        "pytest",
+        "cython<3.1",
+        "numpy==1.25.2",
+        "scipy==1.11.4",
+    ],
+    "validation_cmd": "python -c 'import qutip'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
@@ -1311,6 +1334,7 @@ _QUTIP_ANCIENT_TEST_GENERATION_SPEC = {
     "pre_install": ["apt-get update -q", "apt-get install -y --no-install-recommends gcc g++"],
     "install": "python -m pip install -e .",
     "pip_packages": ["pytest", "cython<3", "numpy<1.20", "scipy<1.8"],
+    "validation_cmd": "python -c 'import qutip'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
@@ -1348,7 +1372,8 @@ _QISKIT_TEST_GENERATION_SPEC = {
         '. "$HOME/.cargo/env" && '
         "python -m pip install -e . --no-build-isolation"
     ),
-    "pip_packages": ["pytest", "setuptools-rust"],
+    "pip_packages": ["pytest", "setuptools-rust", "ddt==1.7.2"],
+    "validation_cmd": "python -c 'import ddt; import qiskit'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),

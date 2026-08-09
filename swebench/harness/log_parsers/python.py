@@ -291,4 +291,10 @@ MAP_REPO_TO_PARSER_PY = {
     "sphinx-doc/sphinx": parse_log_sphinx,
     "sympy/sympy": parse_log_sympy,
     "biopython/biopython": parse_log_pytest,
+    # Scientific issue-test-generation repositories use normal pytest output.
+    # Use the ANSI-tolerant parser because their specs run with ``-rA`` and
+    # may emit either leading or trailing status tokens across pytest versions.
+    "deepchem/deepchem": parse_log_pytest_v2,
+    "qiskit/qiskit": parse_log_pytest_v2,
+    "qutip/qutip": parse_log_pytest_v2,
 }

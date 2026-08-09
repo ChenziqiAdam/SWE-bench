@@ -632,8 +632,8 @@ def parse_args():
                    choices=["acceptEdits", "auto", "bypassPermissions", "default", "dontAsk", "plan"],
                    help="Permission mode passed to `claude -p`. Only used with "
                         "--agent_backend claude_code.")
-    p.add_argument("--claude_code_max_turns", type=int, default=None,
-                   help="Optional Claude Code max-turns metadata/env value. Current local Claude "
+    p.add_argument("--claude_code_max_turns", type=int, default=60,
+                   help="Claude Code max-turns metadata/env value (default 60). Current local Claude "
                         "CLI versions may not expose a --max-turns flag, so the pipeline does "
                         "not pass it as a CLI argument.")
     p.add_argument("--claude_code_model", default=None,
@@ -1647,7 +1647,7 @@ def main():
                     if not build_validation.get(iid, {}).get("buildable", True))
         if n_bad:
             logger.info(f"{n_bad}/{len(instances)} instance(s) flagged non-buildable; "
-                        f"they will still run but be marked in the report.")
+                        f"inference will skip them and the report will mark them excluded.")
 
     # ── Stage 2.6: FAIL_TO_PASS / PASS_TO_PASS Mining ────────────────────────
     if not args.skip_mining and args.eval_mode == "fix" and not evaluation_failure:
@@ -1748,8 +1748,18 @@ def main():
             if pred_path.exists():
                 pred_path.unlink()
                 logger.info(f"--force_inference: removed {pred_path}")
+        inference_instances = [
+            instance for instance in instances
+            if build_validation.get(instance["instance_id"], {}).get("buildable", True)
+        ]
+        skipped_nonbuildable = len(instances) - len(inference_instances)
+        if skipped_nonbuildable:
+            logger.info(
+                "Skipping inference for %s non-buildable instance(s)",
+                skipped_nonbuildable,
+            )
         _run_agent_backend(
-            args, instances, agent_predictions_file, inference_model, github_token
+            args, inference_instances, agent_predictions_file, inference_model, github_token
         )
 
     # ── Stage 5: Docker Evaluation (agent-only) ───────────────────────────────

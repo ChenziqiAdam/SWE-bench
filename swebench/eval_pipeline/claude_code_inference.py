@@ -268,6 +268,7 @@ def _claude_problem_text(instance: dict, eval_mode: str = "fix") -> str:
             "Do not fix the bug or modify implementation/source files.",
             "Only add or modify tests and small test data files required by those tests.",
             "Prefer targeted inspection of relevant tests over broad repository scans.",
+            "Do not run git add, git commit, or otherwise stage files; the harness captures tracked and untracked edits.",
             "When finished, leave the test edits in the working tree; the evaluator will capture git diff.",
             _test_generation_instruction(),
         ]
@@ -440,7 +441,7 @@ def run_claude_code_inference(
     api_base: Optional[str] = None,
     api_key: Optional[str] = None,
     retry_empty_predictions: bool = False,
-    max_turns: Optional[int] = None,
+    max_turns: Optional[int] = 60,
     eval_mode: str = "fix",
     interrupt_retries: int = 1,
     network_policy: str = "unrestricted",
