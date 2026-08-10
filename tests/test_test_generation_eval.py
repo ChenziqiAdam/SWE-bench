@@ -150,6 +150,39 @@ def test_test_generation_classifies_strict_fail_then_pass():
     assert result["gold_passed_tests"] == ["tests/test_bug.py::test_bug"]
 
 
+def test_test_generation_accepts_base_process_crash_when_gold_passes():
+    result = classify_test_generation_result(
+        {},
+        {"generated_test": "PASSED"},
+        test_patch_applied=True,
+        gold_patch_applied=True,
+        test_execution_failed=True,
+        base_test_execution_failed=True,
+    )
+
+    assert result == {
+        "status": "resolved",
+        "failure_reason": "",
+        "base_failed_tests": ["generated_test_process"],
+        "gold_passed_tests": ["generated_test_process"],
+    }
+
+
+def test_test_generation_rejects_crash_when_gold_also_crashes():
+    result = classify_test_generation_result(
+        {},
+        {"generated_test": "PASSED"},
+        test_patch_applied=True,
+        gold_patch_applied=True,
+        test_execution_failed=True,
+        base_test_execution_failed=True,
+        gold_test_execution_failed=True,
+    )
+
+    assert result["status"] == "unresolved"
+    assert result["failure_reason"] == "gold_did_not_pass"
+
+
 def test_test_generation_rejects_pass_on_base():
     result = classify_test_generation_result(
         {"tests/test_bug.py::test_bug": "PASSED"},
@@ -262,11 +295,13 @@ def test_openmm_opencl_specs_supply_cl_make_version_compatibility():
     )
 
 
-def test_openmm_gpu_only_specs_are_explicitly_non_evaluable():
+def test_openmm_gpu_only_specs_request_real_gpu_runtime():
     for pr in ("2255",):
-        spec_text = "\n".join(SPECS_OPENMM[pr]["test_cmd"])
-        assert "not evaluable:" in spec_text
-        assert "GPU" in spec_text or "CUDA" in spec_text
+        spec = SPECS_OPENMM[pr]
+        assert spec["docker_specs"] == {"run_args": {"gpu": True}}
+        spec_text = "\n".join(spec["test_cmd"])
+        assert "not evaluable:" not in spec_text
+        assert "NVIDIA" in spec_text or "CUDA" in spec_text
 
 
 def test_openmm_real_gpu_specs_request_gpu_docker_run_args():
@@ -368,6 +403,7 @@ def test_test_generation_marks_zero_selected_not_exercised():
 
 def test_ctest_no_tests_output_is_detected():
     assert _no_tests_selected("Test project /testbed\nNo tests were found!!!")
+    assert _no_tests_selected("[  PASSED  ] 0 tests.")
 
 
 def test_test_generation_marks_collection_failure_as_generated_test_failure():
@@ -895,6 +931,125 @@ def test_openmm_shared_header_cpp_test_targets_reference_wrapper():
         "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
         "OPENMM_PLUGIN_DIR=$PWD/build ./build/TestReferenceNonbondedForce",
     )
+
+
+def test_openmm_shared_header_uses_curated_opencl_backend_target():
+    patch = """diff --git a/tests/TestNonbondedForce.h b/tests/TestNonbondedForce.h
+--- a/tests/TestNonbondedForce.h
++++ b/tests/TestNonbondedForce.h
+@@ -1 +1,2 @@
++void testRegression() {}
+"""
+    command = (
+        "OCL_ICD_VENDORS=/tmp/vendors "
+        "LD_LIBRARY_PATH=$PWD/build ./build/TestOpenCLNonbondedForce"
+    )
+
+    plan = _special_repo_execution_plan(
+        {"repo": "openmm/openmm"}, patch, [command]
+    )
+
+    assert plan.build_targets == ("TestOpenCLNonbondedForce",)
+    assert plan.commands[0].endswith("./build/TestOpenCLNonbondedForce")
+
+
+def test_openmm_cpp_test_accepts_companion_cmake_registration():
+    patch = """diff --git a/tests/CMakeLists.txt b/tests/CMakeLists.txt
+--- a/tests/CMakeLists.txt
++++ b/tests/CMakeLists.txt
+@@ -1 +1,2 @@
++target_compile_definitions(TestDocumentation PRIVATE SOURCE_DIR=\"/testbed\")
+diff --git a/tests/TestDocumentation.cpp b/tests/TestDocumentation.cpp
+new file mode 100644
+--- /dev/null
++++ b/tests/TestDocumentation.cpp
+@@ -0,0 +1 @@
++int main() { return 0; }
+"""
+
+    plan = _special_repo_execution_plan({"repo": "openmm/openmm"}, patch, [])
+
+    assert plan.failure_reason is None
+    assert plan.paths == ("tests/TestDocumentation.cpp",)
+    assert plan.build_targets == ("TestDocumentation",)
+
+
+def test_openmm_accepts_source_inspection_python_test_outside_wrapper_tree():
+    path = "platforms/reference/tests/TestReferencePMEComments.py"
+    patch = f"""diff --git a/{path} b/{path}
+new file mode 100644
+--- /dev/null
++++ b/{path}
+@@ -0,0 +1,2 @@
++def test_comments():
++    assert True
+"""
+
+    plan = _special_repo_execution_plan({"repo": "openmm/openmm"}, patch, [])
+
+    assert plan.failure_reason is None
+    assert plan.paths == (path,)
+    assert plan.commands == (
+        f"PYTHONPATH=/testbed:${{PYTHONPATH:-}} python -m pytest -xvs {path}",
+    )
+
+
+def test_openmm_source_inspection_python_test_does_not_build_wrappers():
+    path = "platforms/reference/tests/TestReferencePMEComments.py"
+    plan = GeneratedTestExecutionPlan(
+        languages=("python",), paths=(path,), commands=("python -m pytest",)
+    )
+    spec = {
+        "build_after_test_patch": [
+            "cmake -B build -S . -DOPENMM_BUILD_PYTHON_WRAPPERS=ON",
+            "cmake --build build --parallel $(nproc)",
+        ]
+    }
+
+    commands = _patch_driven_build_commands("openmm/openmm", spec, plan)
+
+    assert "-DOPENMM_BUILD_PYTHON_WRAPPERS=OFF" in commands[0]
+    assert not any("PythonInstall" in command for command in commands)
+
+
+def test_openmm_legacy_python_build_converts_python2_swig_output():
+    plan = GeneratedTestExecutionPlan(
+        languages=("python",),
+        paths=("wrappers/python/tests/TestForceField.py",),
+        commands=("python -m pytest",),
+    )
+    spec = {
+        "build_after_test_patch": [
+            "cmake -B build -S . -DOPENMM_BUILD_PYTHON_WRAPPERS=ON",
+            "cmake --build build --parallel $(nproc)",
+        ]
+    }
+
+    commands = _patch_driven_build_commands("openmm/openmm", spec, plan)
+
+    python_install = next(command for command in commands if "PythonInstall" in command)
+    assert "python -m lib2to3 -w -n" in python_install
+    assert "if [ ! -d wrappers/python/openmm ]" in python_install
+
+
+def test_rdkit_indented_method_with_unknown_class_uses_pytest_filter():
+    path = "Code/ForceField/Wrap/testConstraints.py"
+    patch = f"""diff --git a/{path} b/{path}
+--- a/{path}
++++ b/{path}
+@@ -308,2 +308,4 @@ existing_method(self):
++  def testMMFFZeroDisplacement(self):
++    assert True
+"""
+
+    plan = _special_repo_execution_plan(
+        {"repo": "rdkit/rdkit"}, patch, []
+    )
+
+    assert plan.failure_reason is None
+    assert f"{path}::testMMFFZeroDisplacement" not in plan.commands[0]
+    assert path in plan.commands[0]
+    assert "-k 'testMMFFZeroDisplacement'" in plan.commands[0]
 
 
 def test_openmm_plugin_shared_header_cpp_test_targets_reference_wrapper():

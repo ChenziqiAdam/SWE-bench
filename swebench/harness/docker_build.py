@@ -296,30 +296,49 @@ def build_image(
         logger.info(
             f"Building docker image {image_name} in {build_dir} with platform {platform}"
         )
-        response = client.api.build(
-            path=str(build_dir),
-            tag=image_name,
-            rm=True,
-            forcerm=True,
-            decode=True,
-            platform=platform,
-            nocache=nocache,
-        )
+        for attempt in range(2):
+            response = client.api.build(
+                path=str(build_dir),
+                tag=image_name,
+                rm=True,
+                forcerm=True,
+                decode=True,
+                platform=platform,
+                nocache=nocache,
+            )
 
-        # Log the build process continuously
-        buildlog = ""
-        for chunk in response:
-            if "stream" in chunk:
-                # Remove ANSI escape sequences from the log
-                chunk_stream = ansi_escape(chunk["stream"])
-                logger.info(chunk_stream.strip())
-                buildlog += chunk_stream
-            elif "errorDetail" in chunk:
-                # Decode error message, raise BuildError
-                logger.error(f"Error: {ansi_escape(chunk['errorDetail']['message'])}")
-                raise docker.errors.BuildError(
-                    chunk["errorDetail"]["message"], buildlog
-                )
+            # Log the build process continuously. Podman can briefly retain a
+            # stale cache reference after an image is removed, reporting
+            # "top layer info: layer not known" before any build step runs.
+            # Retrying once is safe and avoids turning that storage race into
+            # an instance-level evaluation error.
+            buildlog = ""
+            retry_stale_layer = False
+            for chunk in response:
+                if "stream" in chunk:
+                    # Remove ANSI escape sequences from the log
+                    chunk_stream = ansi_escape(chunk["stream"])
+                    logger.info(chunk_stream.strip())
+                    buildlog += chunk_stream
+                elif "errorDetail" in chunk:
+                    message = chunk["errorDetail"]["message"]
+                    if attempt == 0 and "layer not known" in message.lower():
+                        logger.warning(
+                            "Container storage cache was stale while building %s; "
+                            "retrying once",
+                            image_name,
+                        )
+                        retry_stale_layer = True
+                        break
+                    # Decode error message, raise BuildError
+                    logger.error(f"Error: {ansi_escape(message)}")
+                    raise docker.errors.BuildError(message, buildlog)
+            if not retry_stale_layer:
+                break
+            close = getattr(response, "close", None)
+            if close:
+                close()
+            response = None
         logger.info("Image built successfully!")
     except docker.errors.BuildError as e:
         logger.error(f"docker.errors.BuildError during {image_name}: {e}")

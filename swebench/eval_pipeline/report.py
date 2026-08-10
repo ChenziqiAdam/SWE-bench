@@ -300,16 +300,10 @@ def render_test_generation_table(
             status = "errored"
         validation = build_validation.get(instance_id, {})
         buildable = validation.get("buildable", True)
-        # A later successful evaluation is stronger evidence than an earlier
-        # transient validation failure. Only neutralise rows that still could
-        # not create their base image during evaluation.
-        infrastructure_failure = (
-            not buildable
-            and status == "errored"
-            and info.get("failure_reason") == "evaluation_exception"
-            and info.get("evaluation_stage", "build_instance_image")
-            == "build_instance_image"
-        )
+        # Validation includes a post-build import/readiness check. A failed
+        # validation is therefore authoritative even if a later test command
+        # happens to emit parseable output.
+        infrastructure_failure = not buildable
         if infrastructure_failure:
             status = "excluded"
         prediction = predictions.get(instance_id) or {}

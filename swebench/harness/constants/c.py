@@ -288,7 +288,11 @@ def _openmm_python_app_spec(
             "if [ ! -f \"$(dirname \"$SIMTK_SITE\")/__init__.py\" ]; then echo '' > \"$(dirname \"$SIMTK_SITE\")/__init__.py\"; fi && "
             "if [ ! -f \"$SIMTK_SITE/__init__.py\" ]; then echo 'from openmm import *' > \"$SIMTK_SITE/__init__.py\"; fi && "
             "if [ -d /testbed/wrappers/python/openmm/app ]; then "
-            "rm -rf \"$OPENMM_SITE/app\" && cp -r /testbed/wrappers/python/openmm/app \"$OPENMM_SITE/\"; fi && "
+            "rm -rf /tmp/swebench-openmm-internal && mkdir -p /tmp/swebench-openmm-internal && "
+            "{ cp \"$OPENMM_SITE\"/app/internal/*.so /tmp/swebench-openmm-internal/ 2>/dev/null || true; } && "
+            "rm -rf \"$OPENMM_SITE/app\" && cp -r /testbed/wrappers/python/openmm/app \"$OPENMM_SITE/\" && "
+            "if [ -d \"$OPENMM_SITE/app/internal\" ]; then "
+            "cp /tmp/swebench-openmm-internal/*.so \"$OPENMM_SITE/app/internal/\" 2>/dev/null || true; fi; fi && "
             "rm -rf \"$SIMTK_SITE/app\" && "
             "if [ -d /testbed/wrappers/python/openmm/app ]; then "
             "cp -r /testbed/wrappers/python/openmm/app \"$SIMTK_SITE/\"; "
@@ -296,7 +300,7 @@ def _openmm_python_app_spec(
             "cp -r /testbed/wrappers/python/simtk/openmm/app \"$SIMTK_SITE/\"; "
             "python -m lib2to3 -w -n \"$SIMTK_SITE/app\" >/dev/null 2>&1 || true; fi && "
             "if [ -d \"$OPENMM_SITE/app/internal\" ] && [ -d \"$SIMTK_SITE/app/internal\" ]; then "
-            "cp -n \"$OPENMM_SITE\"/app/internal/compiled* \"$SIMTK_SITE/app/internal/\" 2>/dev/null || true; fi && "
+            "cp -n \"$OPENMM_SITE\"/app/internal/*.so \"$SIMTK_SITE/app/internal/\" 2>/dev/null || true; fi && "
             "for name in vec3 unit; do "
             "if [ -e \"$OPENMM_SITE/$name.py\" ]; then cp \"$OPENMM_SITE/$name.py\" \"$SIMTK_SITE/\"; fi; "
             "if [ -d \"$OPENMM_SITE/$name\" ]; then cp -r \"$OPENMM_SITE/$name\" \"$SIMTK_SITE/\"; fi; done && "
@@ -459,7 +463,7 @@ _OPENMM_CUDA_TOOLKIT_INSTALL_COMMAND = (
     "dpkg -i /tmp/cuda-keyring_1.1-1_all.deb && "
     "apt-get update -q && "
     "apt-get install -y --no-install-recommends cuda-nvcc-12-4 cuda-cudart-dev-12-4 "
-    "cuda-nvrtc-dev-12-4 libcufft-dev-12-4"
+    "cuda-nvrtc-dev-12-4 cuda-profiler-api-12-4 libcufft-dev-12-4"
 )
 
 
@@ -751,6 +755,7 @@ def _rdkit_python_wrapper_spec(
     extra_cmake: str = "",
     legacy_boost_endian: bool = False,
     extra_apt_packages: tuple[str, ...] = (),
+    build_jobs: int | None = None,
 ) -> dict:
     """Build RDKit in-tree with Python wrappers and run a focused Python test."""
     test_paths = (test_path,) if isinstance(test_path, str) else test_path
@@ -773,7 +778,8 @@ def _rdkit_python_wrapper_spec(
             "apt-get install -y --no-install-recommends "
             + " ".join(extra_apt_packages)
         )
-    spec["build"][-1] = "cmake --build build --parallel $(nproc)"
+    parallelism = str(build_jobs) if build_jobs is not None else "$(nproc)"
+    spec["build"][-1] = f"cmake --build build --parallel {parallelism}"
     runtime = "RDBASE=$PWD PYTHONPATH=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
     spec["test_cmd"] = [
         ("cp -a build/rdkit/. rdkit/ && " if index == 0 else "")
@@ -1096,11 +1102,21 @@ SPECS_OPENMM = _OpenMMSpecs({
     "2152": _openmm_cuda_targets_spec(
         "TestCudaAmoebaMultipoleForce", plugin="amoeba"
     ),
-    "2255": _openmm_gpu_non_evaluable_spec(
-        "GPU minimizer performance regression requires a supported GPU runtime"
+    "2255": _openmm_opencl_targets_spec(
+        "TestOpenCLLocalEnergyMinimizer", gpu=True
     ),
     "2829": _openmm_opencl_targets_spec("TestOpenCLNonbondedForce", gpu=True),
     "4364": _openmm_cuda_targets_spec("TestCudaCustomNonbondedForce"),
+    # Generated tests for these GPU issues target CUDA specifically. The host
+    # now exposes real NVIDIA devices, so evaluate the requested backend
+    # instead of excluding the tests or silently substituting OpenCL.
+    "1924": _openmm_cuda_targets_spec("TestCudaLangevinIntegrator"),
+    "3057": _openmm_cuda_targets_spec("TestCudaNonbondedForce"),
+    "3428": _openmm_cuda_targets_spec("TestCudaNonbondedForce"),
+    "3771": _openmm_cuda_targets_spec("TestCudaNonbondedForce"),
+    "3834": _openmm_cuda_targets_spec("TestCudaMultipleForces"),
+    "5069": _openmm_cuda_targets_spec("TestCudaNonbondedForce"),
+    "5346": _openmm_cuda_targets_spec("TestCudaCustomCVForce"),
     # ── Exact Python wrapper tests ───────────────────────────────────────────
     # These PRs add or modify focused Python app tests. Use pip's compiled
     # OpenMM package for native libraries, then overlay the patched pure-Python
@@ -1589,7 +1605,9 @@ SPECS_RDKIT = _RDKitSpecs({
     "8796": _rdkit_python_wrapper_spec(
         "rdkit/Chem/UnitTestPandasTools.py",
         new_boost=True,
+        extra_cmake="-DRDK_BUILD_CAIRO_SUPPORT=ON ",
         extra_apt_packages=(
+            "libcairo2-dev",
             "python3-pandas",
             "python3-openpyxl",
             "python3-xlsxwriter",
@@ -1621,6 +1639,10 @@ SPECS_RDKIT = _RDKitSpecs({
     "4793": _rdkit_python_wrapper_spec(
         "rdkit/Chem/Draw/UnitTestDraw.py",
         extra_apt_packages=("python3-pil",),
+        # This older full-wrapper build has repeatedly failed when it is the
+        # final validation job on high-core hosts. Limit compiler fan-out to
+        # avoid an OOM-driven setup_repo.sh exit while retaining parallelism.
+        build_jobs=4,
     ),
     # ── issues_testgen_001 generated-test specs ────────────────────────────
     # These targets correspond to the test files touched by the generated

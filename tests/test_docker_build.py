@@ -1,4 +1,5 @@
 import itertools
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -7,6 +8,30 @@ import requests
 
 from swebench.harness import docker_build
 from swebench.harness.docker_build import _create_eval_container
+
+
+def test_build_image_retries_podman_stale_layer_once(monkeypatch, tmp_path):
+    responses = [
+        iter([{"errorDetail": {"message": "top layer info: layer not known"}}]),
+        iter([{"stream": "success\n"}]),
+    ]
+    api = SimpleNamespace(build=Mock(side_effect=responses))
+    client = SimpleNamespace(api=api)
+    logger = Mock()
+    monkeypatch.setattr(docker_build, "setup_logger", lambda *_args: logger)
+    monkeypatch.setattr(docker_build, "close_logger", lambda *_args: None)
+
+    docker_build.build_image(
+        image_name="sweb.eval.demo:latest",
+        setup_scripts={"setup.sh": "true"},
+        dockerfile="FROM scratch\nCOPY setup.sh /setup.sh",
+        platform="linux/x86_64",
+        client=client,
+        build_dir=Path(tmp_path),
+    )
+
+    assert api.build.call_count == 2
+    logger.warning.assert_called_once()
 
 
 def _spec(docker_specs=None):

@@ -248,7 +248,7 @@ def test_test_generation_report_denominator_excludes_unadjudicated_statuses(
     assert "1/2 scorable; 5 total" in out
 
 
-def test_test_generation_report_does_not_exclude_invalid_spec(tmp_path):
+def test_test_generation_report_excludes_failed_validation(tmp_path):
     output_csv = tmp_path / "results.csv"
     render_test_generation_table(
         results={
@@ -268,12 +268,12 @@ def test_test_generation_report_does_not_exclude_invalid_spec(tmp_path):
 
     with open(output_csv, newline="") as handle:
         row = next(csv.DictReader(handle))
-    assert row["status"] == "errored"
-    assert row["failure_reason"] == "invalid_test_spec"
+    assert row["status"] == "excluded"
+    assert row["failure_reason"] == "base_image_not_buildable"
     assert row["evaluation_error"] == "KeyError: '0'"
 
 
-def test_test_generation_report_keeps_successful_validation_retry(tmp_path):
+def test_test_generation_report_keeps_validation_failure_authoritative(tmp_path):
     output_csv = tmp_path / "results.csv"
     render_test_generation_table(
         results={"demo__repo-1": {"status": "resolved"}},
@@ -286,7 +286,8 @@ def test_test_generation_report_keeps_successful_validation_retry(tmp_path):
 
     with open(output_csv, newline="") as handle:
         row = next(csv.DictReader(handle))
-    assert row["status"] == "resolved"
+    assert row["status"] == "excluded"
+    assert row["failure_reason"] == "base_image_not_buildable"
     assert row["buildable"] == "no"
 
 

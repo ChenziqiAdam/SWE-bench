@@ -79,6 +79,8 @@ def classify_test_generation_result(
     base_timed_out: bool = False,
     gold_timed_out: bool = False,
     test_execution_failed: bool = False,
+    base_test_execution_failed: bool = False,
+    gold_test_execution_failed: bool = False,
     no_tests_selected: bool = False,
     collection_failed: bool = False,
     non_evaluable: bool = False,
@@ -147,6 +149,26 @@ def classify_test_generation_result(
             "base_failed_tests": ["generated_test_build"],
             "gold_passed_tests": (
                 ["generated_test_build"] if resolved else []
+            ),
+        }
+    elif base_test_execution_failed:
+        # A crash/abort is a valid base-side regression signal when the same
+        # generated process completes cleanly and all parsed tests pass with
+        # the gold patch. Use a stable synthetic identifier because a crashed
+        # process does not provide a parser-level test status.
+        gold_failed = sorted(t for t, s in gold_status_map.items() if _failed(s))
+        gold_passed = sorted(t for t, s in gold_status_map.items() if _passed(s))
+        resolved = (
+            bool(gold_passed)
+            and not gold_failed
+            and not gold_test_execution_failed
+        )
+        return {
+            "status": "resolved" if resolved else "unresolved",
+            "failure_reason": "" if resolved else "gold_did_not_pass",
+            "base_failed_tests": ["generated_test_process"],
+            "gold_passed_tests": (
+                ["generated_test_process"] if resolved else []
             ),
         }
     elif test_execution_failed and (not base_status_map or not gold_status_map):
@@ -232,7 +254,7 @@ def _infrastructure_failure_output(output: str) -> bool:
 
 
 def _no_tests_selected(output: str) -> bool:
-    return any(
+    return bool(re.search(r"\[\s*PASSED\s*\]\s+0 tests?\.", output)) or any(
         marker in output
         for marker in (
             " 0 selected",
@@ -553,8 +575,12 @@ def _generated_python_test_nodeids(
         if not test_match:
             continue
         path = current_file[len(prefix):] if prefix else current_file
-        if test_match.group(1) and current_class:
-            nodeids.add(f"{path}::{current_class}::{test_match.group(2)}")
+        if test_match.group(1):
+            if current_class:
+                nodeids.add(f"{path}::{current_class}::{test_match.group(2)}")
+            # A hunk can begin inside a class without naming that class in its
+            # header. Do not mislabel an indented method as a module function;
+            # the caller will isolate it with pytest -k instead.
         else:
             nodeids.add(f"{path}::{test_match.group(2)}")
     return sorted(files), sorted(nodeids)
@@ -839,7 +865,19 @@ def _special_repo_execution_plan(
             and basename.startswith("Test")
         ):
             language = "cpp"
-            openmm_header_targets[path] = "TestReference" + basename[len("Test"):-len(".h")]
+            family = basename[len("Test"):-len(".h")]
+            configured_targets = [
+                match
+                for command in commands
+                for match in re.findall(r"\./build/(Test[A-Za-z0-9_]+)", command)
+            ]
+            openmm_header_targets[path] = next(
+                (
+                    target for target in configured_targets
+                    if target.endswith(family)
+                ),
+                "TestReference" + family,
+            )
         # LAMMPS's force-styles suite is data-driven: a YAML fixture under
         # unittest/force-styles/tests/<prefix>-<name>.yaml is a complete,
         # runnable regression test on its own (file(GLOB CONFIGURE_DEPENDS)
@@ -858,6 +896,11 @@ def _special_repo_execution_plan(
             and language is None
             and path.startswith("wrappers/python/tests/")
         ):
+            continue
+        # Build-system metadata is often required to register a generated C++
+        # test target. It is not an independently runnable test and therefore
+        # must not veto the accompanying Test*.cpp source as "unsupported".
+        if repo == "openmm/openmm" and basename == "CMakeLists.txt":
             continue
         canonical = False
         if repo == "openmm/openmm":
@@ -880,7 +923,7 @@ def _special_repo_execution_plan(
                 continue
             canonical = (
                 language == "python"
-                and path.startswith("wrappers/python/tests/")
+                and _is_test_path(path)
                 and re.match(r"(?:Test|test).*\.py$", basename) is not None
             ) or (
                 language == "cpp" and _is_test_path(path) and basename.startswith("Test")
@@ -1026,10 +1069,26 @@ def _special_repo_execution_plan(
 
     if accepted["python"]:
         if repo == "openmm/openmm":
-            targets, pytest_filter = _openmm_generated_pytest_targets(generated_patch)
-            selected_commands.append(
-                _openmm_generated_pytest_command(targets, pytest_filter)
-            )
+            wrapper_paths = [
+                path for path in accepted["python"]
+                if path.startswith("wrappers/python/tests/")
+            ]
+            source_paths = [
+                path for path in accepted["python"]
+                if path not in wrapper_paths
+            ]
+            if wrapper_paths:
+                targets, pytest_filter = _openmm_generated_pytest_targets(
+                    generated_patch
+                )
+                selected_commands.append(
+                    _openmm_generated_pytest_command(targets, pytest_filter)
+                )
+            if source_paths:
+                selected_commands.append(
+                    "PYTHONPATH=/testbed:${PYTHONPATH:-} "
+                    "python -m pytest -xvs " + " ".join(source_paths)
+                )
         elif repo == "biopython/biopython":
             selected_commands.append(_biopython_generated_test_command(generated_patch) or "")
         else:
@@ -1052,10 +1111,26 @@ def _special_repo_execution_plan(
             copy_prefix = (
                 "cp -a build/rdkit/. rdkit/ && " if repo == "rdkit/rdkit" else ""
             )
+            added_test_names = sorted(
+                set(
+                    re.findall(
+                        r"^\+\s*def\s+(test[A-Za-z0-9_]*)\s*\(",
+                        generated_patch,
+                        re.MULTILINE,
+                    )
+                )
+            )
+            pytest_targets = selected or accepted["python"]
+            pytest_filter = (
+                " -k '" + " or ".join(added_test_names) + "'"
+                if not selected and added_test_names
+                else ""
+            )
             selected_commands.append(
                 copy_prefix + prefix
                 + "python3 -m pytest -rA --tb=long -p no:cacheprovider "
-                + " ".join(selected or accepted["python"])
+                + " ".join(pytest_targets)
+                + pytest_filter
             )
 
     languages = tuple(language for language in ("cpp", "python") if accepted[language])
@@ -1153,6 +1228,10 @@ def _patch_driven_build_commands(
         (command for command in original if is_configure_command(command)),
         None,
     )
+    configured_build = next(
+        (command for command in original if command.startswith("cmake --build ")),
+        "",
+    )
     retained = [
         command for command in original
         if not command.startswith("cmake --build ") and command != configure
@@ -1184,14 +1263,19 @@ def _patch_driven_build_commands(
             "-DRDK_BUILD_PYTHON_WRAPPERS=ON",
             configure,
         )
+        parallel_match = re.search(r"--parallel\s+(\S+)", configured_build)
+        parallelism = parallel_match.group(1) if parallel_match else "$(nproc)"
         build = (
-            "cmake --build build --parallel $(nproc)"
+            f"cmake --build build --parallel {parallelism}"
             if "python" in plan.languages
-            else "cmake --build build --parallel $(nproc) --target "
+            else f"cmake --build build --parallel {parallelism} --target "
             + " ".join(plan.build_targets)
         )
         return [*pre_configure, configure, *retained, build]
 
+    needs_openmm_python_wrappers = any(
+        path.startswith("wrappers/python/tests/") for path in plan.paths
+    ) or ("python" in plan.languages and not plan.paths)
     configure = configure or (
         "cmake -B build -S . -DCMAKE_BUILD_TYPE=Release "
         "-DOPENMM_BUILD_CUDA_LIB=OFF -DOPENMM_BUILD_OPENCL_LIB=OFF "
@@ -1224,7 +1308,7 @@ def _patch_driven_build_commands(
         command for command in retained
         if "OPENMM_SITE=" not in command and "SIMTK_SITE=" not in command
     ]
-    wrapper_flag = "ON" if "python" in plan.languages else "OFF"
+    wrapper_flag = "ON" if needs_openmm_python_wrappers else "OFF"
     if "-DOPENMM_BUILD_PYTHON_WRAPPERS=" in configure:
         configure = re.sub(
             r"-DOPENMM_BUILD_PYTHON_WRAPPERS=(?:ON|OFF)",
@@ -1233,7 +1317,7 @@ def _patch_driven_build_commands(
         )
     else:
         configure += f" -DOPENMM_BUILD_PYTHON_WRAPPERS={wrapper_flag}"
-    if "python" in plan.languages:
+    if needs_openmm_python_wrappers:
         # CMake copies this file fresh from the source tree into the build
         # tree on every configure/build, so patching only the build-tree
         # copy (as the original spec command does) gets silently overwritten
@@ -1247,18 +1331,24 @@ def _patch_driven_build_commands(
             "wrappers/python/src/swig_doxygen/swig_lib/python/extend.i; fi"
         )
     targets = list(plan.build_targets)
-    if "python" in plan.languages:
+    if needs_openmm_python_wrappers:
         targets.insert(0, "install")
     build_commands = [
         "cmake --build build --parallel $(nproc) --target " + " ".join(targets)
     ] if targets else []
-    if "python" in plan.languages:
+    if needs_openmm_python_wrappers:
         # Pre-7.0 OpenMM revisions ship only the legacy `simtk.openmm`
         # package -- there is no top-level `openmm` module to import.
         # Require simtk.openmm always, and the modern `openmm` package
         # only when it actually exists on disk.
         build_commands.append(
             "cmake --build build --parallel $(nproc) --target PythonInstall && "
+            # OpenMM 6.x's SWIG output is Python-2 syntax even when the native
+            # extension was compiled for Python 3. Convert only that legacy
+            # package before the import check; modern trees have openmm/.
+            "if [ ! -d wrappers/python/openmm ]; then "
+            "SIMTK_OPENMM_SITE=$(python -c 'import site; print(site.getsitepackages()[0] + \"/simtk/openmm\")') && "
+            "python -m lib2to3 -w -n \"$SIMTK_OPENMM_SITE\" >/dev/null; fi && "
             "python -c 'import simtk.openmm; "
             "import importlib.util as u, os; "
             "assert not os.path.isdir(\"wrappers/python/openmm\") "
@@ -1266,7 +1356,7 @@ def _patch_driven_build_commands(
         )
     source_setup = (
         ["python -m pip uninstall -y openmm || true"]
-        if "python" in plan.languages
+        if needs_openmm_python_wrappers
         else []
     )
     return [*source_setup, *pre_configure, configure, *retained, *build_commands]
@@ -1547,6 +1637,12 @@ def _evaluate_one(
             test_execution_failed=(
                 _test_execution_failed(base_output) and not base_status
             ) or (
+                _test_execution_failed(gold_output) and not gold_status
+            ),
+            base_test_execution_failed=(
+                _test_execution_failed(base_output) and not base_status
+            ),
+            gold_test_execution_failed=(
                 _test_execution_failed(gold_output) and not gold_status
             ),
             no_tests_selected=_no_tests_selected(base_output) or _no_tests_selected(gold_output),

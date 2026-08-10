@@ -674,7 +674,7 @@ _ASTROPY_TEST_GENERATION_SPEC = {
     "install": "python -m pip install -e .[test] --verbose",
     # NumPy 2.x removed np.in1d, which these base commits still use while
     # importing Astropy's pytest support.
-    "pip_packages": ["pytest", "numpy==1.26.4"],
+    "pip_packages": ["pytest", "numpy==1.26.4", "scipy==1.11.4"],
     "validation_cmd": "python -c 'import astropy; import numpy'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
@@ -1291,7 +1291,10 @@ _DEEPCHEM_TEST_GENERATION_SPEC = {
         "pandas==1.5.3",
         "scipy==1.10.1",
         "tensorflow-cpu==2.13.1",
+        "tensorflow-probability==0.21.0",
         "flaky==3.8.1",
+        "joblib==1.4.2",
+        "pyGPGO==0.1.2",
         "rdkit==2023.9.6",
     ],
     "validation_cmd": "python -c 'import deepchem'",
@@ -1351,6 +1354,17 @@ SPECS_QUTIP = {
         pr: dict(_QUTIP_ANCIENT_TEST_GENERATION_SPEC)
         for pr in ("428", "259")
     },
+}
+# PR 1436 is from the QuTiP 4.x build era. It still reads legacy NumPy
+# BLAS configuration attributes that are absent from NumPy 1.25+ wheels.
+SPECS_QUTIP["1436"] = {
+    **_QUTIP_MODERN_TEST_GENERATION_SPEC,
+    "pip_packages": [
+        "pytest",
+        "cython<3",
+        "numpy==1.23.5",
+        "scipy==1.10.1",
+    ],
 }
 
 

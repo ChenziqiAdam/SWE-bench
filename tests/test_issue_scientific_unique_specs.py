@@ -148,6 +148,18 @@ def test_scientific_python_parsers_read_ansi_pytest_results():
         assert MAP_REPO_TO_PARSER[repo](log, None) == expected
 
 
+def test_scientific_python_specs_pin_observed_missing_dependencies():
+    astropy = MAP_REPO_VERSION_TO_SPECS["astropy/astropy"]["17850"]
+    deepchem = MAP_REPO_VERSION_TO_SPECS["deepchem/deepchem"]["2620"]
+    qutip_1436 = MAP_REPO_VERSION_TO_SPECS["qutip/qutip"]["1436"]
+
+    assert "scipy==1.11.4" in astropy["pip_packages"]
+    assert "joblib==1.4.2" in deepchem["pip_packages"]
+    assert "tensorflow-probability==0.21.0" in deepchem["pip_packages"]
+    assert "pyGPGO==0.1.2" in deepchem["pip_packages"]
+    assert "numpy==1.23.5" in qutip_1436["pip_packages"]
+
+
 def test_current_scientific_issues_sheet_specs_are_concrete():
     expected = {
         "openmm/openmm": {

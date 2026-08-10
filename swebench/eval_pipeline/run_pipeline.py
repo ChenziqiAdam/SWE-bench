@@ -1797,6 +1797,20 @@ def main():
             skipped_eval_duplicates = len(instances) - len(unique_eval_instances)
             if skipped_eval_duplicates:
                 logger.info(f"Skipping {skipped_eval_duplicates} duplicate instance row(s) before eval")
+            if args.eval_mode == "test_generation" and build_validation:
+                before_validation_filter = len(unique_eval_instances)
+                unique_eval_instances = [
+                    instance for instance in unique_eval_instances
+                    if build_validation.get(
+                        instance["instance_id"], {}
+                    ).get("buildable", True)
+                ]
+                skipped_invalid = before_validation_filter - len(unique_eval_instances)
+                if skipped_invalid:
+                    logger.info(
+                        "Skipping evaluation for %s environment-invalid instance(s)",
+                        skipped_invalid,
+                    )
             eval_instance_ids = [i["instance_id"] for i in unique_eval_instances]
 
             # --force_eval: drop cached per-instance report dirs so run_evaluation

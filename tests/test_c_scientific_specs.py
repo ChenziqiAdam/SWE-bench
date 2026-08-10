@@ -11,7 +11,7 @@ def test_openmm_python_specs_install_with_test_interpreter():
         assert "openmm numpy scipy pytest" in pre_install
         assert "mkdir -p \"$SIMTK_SITE\"" in spec["build"][0]
         assert "rm -rf \"$SIMTK_SITE/app\"" in spec["build"][0]
-        assert "compiled*" in spec["build"][0]
+        assert "app/internal/*.so" in spec["build"][0]
         assert "from openmm.vec3 import *" in spec["build"][0]
         assert "python -m lib2to3 -w -n \"$SIMTK_SITE/app\"" in spec["build"][0]
         assert spec["build"][0].index("/testbed/wrappers/python/openmm/app") < spec[
@@ -460,7 +460,7 @@ def test_sci_cc_001_rdkit_specs_use_registered_ctest_targets():
 
 
 def test_issues_no_tests_batches_have_concrete_specs():
-    gpu_only = {"2255"}
+    gpu_only = set()
     batch_1_openmm = {
         "4138", "2819", "2255", "4294", "4618", "4079", "5069",
         "1640", "1540", "3326", "3923", "2318", "1679", "2781",
@@ -514,6 +514,7 @@ def test_openmm_cuda_targets_spec_requests_gpu_and_installs_toolkit():
     assert "cuda-nvcc-12-4" in pre_install
     assert "cuda-cudart-dev-12-4" in pre_install
     assert "cuda-nvrtc-dev-12-4" in pre_install
+    assert "cuda-profiler-api-12-4" in pre_install
     assert "libcufft-dev-12-4" in pre_install
     build = "\n".join(spec["build_after_test_patch"])
     assert "-DOPENMM_BUILD_CUDA_LIB=ON" in build
@@ -533,6 +534,8 @@ def test_openmm_source_check_python_overlay_replaces_installed_app():
     assert any("pip install --no-cache-dir openmm" in c for c in spec["pre_install"])
     overlay = "\n".join(spec["build"])
     assert 'rm -rf "$OPENMM_SITE/app"' in overlay
+    assert "/tmp/swebench-openmm-internal" in overlay
+    assert 'app/internal/*.so' in overlay
 
 
 def test_rdkit_pandas_tools_spec_installs_pillow():
@@ -542,6 +545,23 @@ def test_rdkit_pandas_tools_spec_installs_pillow():
     assert "python3-pil" in pre_install
 
 
+def test_rdkit_4793_caps_build_parallelism():
+    from swebench.harness.constants.c import SPECS_RDKIT
+
+    assert any(
+        command == "cmake --build build --parallel 4"
+        for command in SPECS_RDKIT["4793"]["build"]
+    )
+
+
+def test_rdkit_8796_enables_cairo_for_spreadsheet_rendering():
+    from swebench.harness.constants.c import SPECS_RDKIT
+
+    spec = SPECS_RDKIT["8796"]
+    assert "libcairo2-dev" in "\n".join(spec["pre_install"])
+    assert "-DRDK_BUILD_CAIRO_SUPPORT=ON" in "\n".join(spec["build"])
+
+
 def test_openmm_cuda_targets_spec_enables_plugin():
     from swebench.harness.constants.c import _openmm_cuda_targets_spec
 
@@ -549,6 +569,30 @@ def test_openmm_cuda_targets_spec_enables_plugin():
 
     build = "\n".join(spec["build_after_test_patch"])
     assert "-DOPENMM_BUILD_AMOEBA_PLUGIN=ON" in build
+
+
+def test_openmm_generated_cuda_cases_are_evaluable_on_real_gpu():
+    expected = {
+        "1924": "TestCudaLangevinIntegrator",
+        "3057": "TestCudaNonbondedForce",
+        "3428": "TestCudaNonbondedForce",
+        "3771": "TestCudaNonbondedForce",
+        "3834": "TestCudaMultipleForces",
+        "5069": "TestCudaNonbondedForce",
+        "5346": "TestCudaCustomCVForce",
+    }
+    for pr, target in expected.items():
+        spec = SPECS_OPENMM[pr]
+        assert spec["docker_specs"] == {"run_args": {"gpu": True}}
+        assert target in "\n".join(spec["build_after_test_patch"])
+        assert any(target in command for command in spec["test_cmd"])
+
+
+def test_openmm_2255_uses_real_opencl_minimizer_target():
+    spec = SPECS_OPENMM["2255"]
+
+    assert spec["docker_specs"] == {"run_args": {"gpu": True}}
+    assert "TestOpenCLLocalEnergyMinimizer" in "\n".join(spec["test_cmd"])
 
 
 def test_openmm_opencl_targets_spec_gpu_flag_sets_run_args():
@@ -584,11 +628,13 @@ def test_hardcoded_gpu_stubs_converted_to_real_specs():
         assert spec["docker_specs"]["run_args"]["gpu"] is True, pr
 
 
-def test_pr_2255_stays_non_evaluable_pending_follow_up():
+def test_pr_2255_runs_opencl_minimizer_on_gpu():
     from swebench.harness.constants.c import SPECS_OPENMM
 
-    spec_text = "\n".join(SPECS_OPENMM["2255"].get("test_cmd", []))
-    assert "not evaluable" in spec_text
+    spec = SPECS_OPENMM["2255"]
+    spec_text = "\n".join(spec.get("test_cmd", []))
+    assert spec["docker_specs"] == {"run_args": {"gpu": True}}
+    assert "TestOpenCLLocalEnergyMinimizer" in spec_text
 
 
 def test_part2_curated_opencl_specs_request_real_gpu():
