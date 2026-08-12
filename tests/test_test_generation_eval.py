@@ -49,6 +49,11 @@ def test_test_generation_prompt_requests_tests_only():
     assert "Return only a valid unified git diff" in prompt
     assert "must add a new focused assertion" in prompt
     assert "non-empty patch" in prompt
+    assert "only persistent file changes" in prompt
+    assert ".patch/.diff files" in prompt
+    assert "helper scripts" in prompt
+    assert "Do not write the final patch to disk or to /tmp" in prompt
+    assert "inspect it with `git diff`" in prompt
 
 
 def test_clean_images_cli_is_opt_in(monkeypatch):
@@ -404,6 +409,42 @@ def test_test_generation_marks_zero_selected_not_exercised():
 def test_ctest_no_tests_output_is_detected():
     assert _no_tests_selected("Test project /testbed\nNo tests were found!!!")
     assert _no_tests_selected("[  PASSED  ] 0 tests.")
+
+
+def test_gtest_all_failed_summary_is_not_mistaken_for_zero_selected():
+    # gtest always prints "[ PASSED ] 0 tests." when every executed test
+    # fails -- that line reports the *passed* count, not whether any test
+    # ran. `_no_tests_selected` alone cannot tell the two apart (it matches
+    # both), so callers must gate it on the parsed status map being empty:
+    # when the parser actually recovered a FAILED result, tests were
+    # genuinely selected and executed, and the correct classification is
+    # unresolved/gold_did_not_pass, not not_exercised/no_tests_selected.
+    gtest_all_failed_output = (
+        "[==========] Running 1 test from 1 test suite.\n"
+        "[ RUN      ] ReaxFFSpeciesTest.PositionUsesCenterOfMassAndTotalCharge\n"
+        "[  FAILED  ] ReaxFFSpeciesTest.PositionUsesCenterOfMassAndTotalCharge (3 ms)\n"
+        "[==========] 1 test from 1 test suite ran. (3 ms total)\n"
+        "[  PASSED  ] 0 tests.\n"
+        "[  FAILED  ] 1 test, listed below:\n"
+        "[  FAILED  ] ReaxFFSpeciesTest.PositionUsesCenterOfMassAndTotalCharge\n"
+    )
+    assert _no_tests_selected(gtest_all_failed_output)
+
+    base_status = {
+        "ReaxFFSpeciesTest.PositionUsesCenterOfMassAndTotalCharge": "FAILED"
+    }
+    result = classify_test_generation_result(
+        base_status,
+        base_status,
+        test_patch_applied=True,
+        gold_patch_applied=True,
+        no_tests_selected=(
+            _no_tests_selected(gtest_all_failed_output) and not base_status
+        ),
+    )
+
+    assert result["status"] == "unresolved"
+    assert result["failure_reason"] == "gold_did_not_pass"
 
 
 def test_test_generation_marks_collection_failure_as_generated_test_failure():

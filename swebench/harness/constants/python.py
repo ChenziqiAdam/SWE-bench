@@ -1285,6 +1285,15 @@ _DEEPCHEM_TEST_GENERATION_SPEC = {
     # These old DeepChem setup.py files do not declare their runtime/test
     # dependencies.  In particular, importing deepchem eagerly imports the
     # TensorFlow-backed modules.
+    #
+    # pyGPGO is intentionally omitted: deepchem.hyper.gaussian_process only
+    # imports it lazily inside GaussianProcessHyperparamOpt.fit (behind a
+    # try/except ImportError), and pyGPGO==0.1.2 has since been pulled from
+    # PyPI (only 0.1.0.dev1/0.3.0.dev1/0.4.0.dev1/0.5.0/0.5.1 remain, and
+    # 0.5.x restructured the pyGPGO.covfunc/GPGO module layout the pinned
+    # code path expects). Since these PRs only touch
+    # deepchem/{hyper,dock,metrics,feat,data} and never exercise
+    # GaussianProcessHyperparamOpt, the package isn't needed here.
     "pip_packages": [
         "pytest",
         "numpy==1.23.5",
@@ -1294,7 +1303,6 @@ _DEEPCHEM_TEST_GENERATION_SPEC = {
         "tensorflow-probability==0.21.0",
         "flaky==3.8.1",
         "joblib==1.4.2",
-        "pyGPGO==0.1.2",
         "rdkit==2023.9.6",
     ],
     "validation_cmd": "python -c 'import deepchem'",
@@ -1326,6 +1334,11 @@ _QUTIP_MODERN_TEST_GENERATION_SPEC = {
         "cython<3.1",
         "numpy==1.25.2",
         "scipy==1.11.4",
+        # This build era's setup.py calls packaging.version.LegacyVersion,
+        # which was removed in packaging 22.0; without this pin pip resolves
+        # the current (>=22) release and the editable install fails at
+        # "Getting requirements to build editable".
+        "packaging<22",
     ],
     "validation_cmd": "python -c 'import qutip'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",

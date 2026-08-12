@@ -1279,6 +1279,12 @@ def _qgis_spec(
         "-DWITH_HANA=OFF",
         "-DWITH_MSSQL=OFF",
         "-DWITH_QSPATIALITE=OFF",
+        # The build-deps base image's system libspatialindex has drifted to
+        # >=2.1, which QGIS's own CMakeLists.txt (see
+        # https://github.com/libspatialindex/libspatialindex/issues/276)
+        # hard-refuses to build against. Build QGIS's vendored copy instead
+        # of relying on the (too-new) system package.
+        "-DWITH_INTERNAL_SPATIALINDEX=TRUE",
         f"-DWITH_BINDINGS={'ON' if bindings else 'OFF'}",
         f"-DWITH_GRASS7={'ON' if grass else 'OFF'}",
         "-DWITH_GRASS8=OFF",

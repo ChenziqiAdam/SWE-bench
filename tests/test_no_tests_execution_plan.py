@@ -141,6 +141,29 @@ def test_openmm_lammps_and_biopython_dispatch_supported_languages():
     assert _plan("biopython/biopython", biopython).languages == ("python",)
 
 
+def test_lammps_accepts_top_level_registered_cpp_test():
+    patch = """diff --git a/unittest/CMakeLists.txt b/unittest/CMakeLists.txt
+--- a/unittest/CMakeLists.txt
++++ b/unittest/CMakeLists.txt
+@@ -1,2 +1,5 @@
+ include(GTest)
++add_executable(rigid_regression rigid_nve_small_inertia.cpp)
++add_test(NAME RigidRegression COMMAND rigid_regression)
+diff --git a/unittest/rigid_nve_small_inertia.cpp b/unittest/rigid_nve_small_inertia.cpp
+--- /dev/null
++++ b/unittest/rigid_nve_small_inertia.cpp
+@@ -0,0 +1 @@
++int main() { return 0; }
+"""
+
+    plan = _plan("lammps/lammps", patch)
+
+    assert plan.failure_reason is None
+    assert plan.paths == ("unittest/rigid_nve_small_inertia.cpp",)
+    assert plan.build_targets == ("rigid_regression",)
+    assert plan.commands == ("build/rigid_regression",)
+
+
 def test_unrelated_scratch_script_does_not_veto_a_valid_accepted_test():
     # Agents sometimes leave a throwaway debug script (e.g. hello.py used to
     # sanity-check the environment) in the final diff alongside a real,
@@ -163,6 +186,47 @@ diff --git a/unittest/commands/test_generated.cpp b/unittest/commands/test_gener
     assert plan.failure_reason is None
     assert plan.languages == ("cpp",)
     assert plan.paths == ("unittest/commands/test_generated.cpp",)
+
+
+def test_biopython_non_python_fixture_does_not_veto_a_valid_accepted_test():
+    # Biopython's parser test suites ship non-Python fixture/data files
+    # alongside the generated test (e.g. Tests/Exonerate/*.exn sample parser
+    # output consumed by Tests/test_SearchIO_exonerate.py). `_is_test_path`
+    # matches the fixture too, purely because an ancestor directory is
+    # literally named "Tests" -- that must not veto the accompanying,
+    # otherwise-canonical .py test.
+    patch = """diff --git a/Tests/Exonerate/exn_22_sample.exn b/Tests/Exonerate/exn_22_sample.exn
+--- /dev/null
++++ b/Tests/Exonerate/exn_22_sample.exn
+@@ -0,0 +1 @@
++C4 Alignment sample fixture data
+diff --git a/Tests/test_SearchIO_exonerate.py b/Tests/test_SearchIO_exonerate.py
+--- a/Tests/test_SearchIO_exonerate.py
++++ b/Tests/test_SearchIO_exonerate.py
+@@ -10,3 +10,7 @@ class ExonerateTextCases(unittest.TestCase):
+     pass
++
++    def test_exn_22_sample(self):
++        qresult = read(get_file("exn_22_sample.exn"), self.fmt)
++        self.assertEqual(1, len(qresult))
+"""
+    plan = _plan("biopython/biopython", patch)
+
+    assert plan.failure_reason is None
+    assert plan.paths == ("Tests/test_SearchIO_exonerate.py",)
+
+    # A fixture whose own filename *does* look like a test (not just its
+    # parent directory) must still trigger the veto -- that's a genuine
+    # signal the agent wrote a test in an unsupported format/location.
+    unsupported_patch = """diff --git a/Tests/test_generated.js b/Tests/test_generated.js
+--- /dev/null
++++ b/Tests/test_generated.js
+@@ -0,0 +1 @@
++test('bug', () => {})
+"""
+    assert _plan("biopython/biopython", unsupported_patch).failure_reason == (
+        "unsupported_generated_test"
+    )
 
 
 def test_lammps_force_style_yaml_fixtures_are_canonical():

@@ -156,7 +156,10 @@ def test_scientific_python_specs_pin_observed_missing_dependencies():
     assert "scipy==1.11.4" in astropy["pip_packages"]
     assert "joblib==1.4.2" in deepchem["pip_packages"]
     assert "tensorflow-probability==0.21.0" in deepchem["pip_packages"]
-    assert "pyGPGO==0.1.2" in deepchem["pip_packages"]
+    # pyGPGO is intentionally not pinned: deepchem.hyper.gaussian_process only
+    # imports it lazily (behind a try/except ImportError), pyGPGO==0.1.2 has
+    # since been pulled from PyPI, and these PRs never exercise that code path.
+    assert "pyGPGO==0.1.2" not in deepchem["pip_packages"]
     assert "numpy==1.23.5" in qutip_1436["pip_packages"]
 
 

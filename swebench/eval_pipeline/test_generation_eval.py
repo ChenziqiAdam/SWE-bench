@@ -604,13 +604,34 @@ def _lammps_generated_test_targets(generated_patch: str) -> list[tuple[str, str]
     CMAKE_BINARY_DIR, so every executable (including unittest/* gtest
     binaries) lands flat in build/, not nested under build/unittest/<subdir>/.
     """
+    # New standalone tests may be registered in any unittest/CMakeLists.txt,
+    # including the top-level one.  Prefer the actual add_executable() target
+    # over assuming that the target always equals the source stem.
+    added = "\n".join(
+        line[1:]
+        for line in generated_patch.splitlines()
+        if line.startswith("+") and not line.startswith("+++")
+    )
+    registered_targets: dict[str, str] = {}
+    for match in re.finditer(
+        r"add_executable\s*\(\s*([\w.-]+)\s+([^)]*)\)", added, re.DOTALL
+    ):
+        target, sources = match.groups()
+        for source in re.findall(r"[\w./+-]+\.(?:cc|cpp|cxx)", sources):
+            registered_targets[PurePosixPath(source).name] = target
+
     targets: set[tuple[str, str]] = set()
     paths = re.findall(r"^diff --git a/(\S+) b/\S+", generated_patch, re.MULTILINE)
     for path in paths:
-        match = re.match(r"unittest/(.+)/([^/]+)\.cpp$", path)
-        if match and _is_test_path(path):
-            _subdir, stem = match.groups()
-            targets.add((stem, f"build/{stem}"))
+        match = re.match(r"unittest/(?:.+/)?([^/]+)\.(?:cc|cpp|cxx)$", path)
+        if not match:
+            continue
+        stem = match.group(1)
+        target = registered_targets.get(PurePosixPath(path).name)
+        if target is None and _is_test_path(path):
+            target = stem
+        if target is not None:
+            targets.add((target, f"build/{target}"))
     return sorted(targets)
 
 
@@ -897,6 +918,22 @@ def _special_repo_execution_plan(
             and path.startswith("wrappers/python/tests/")
         ):
             continue
+        # Biopython's parser test suites ship non-Python fixture/data files
+        # alongside the generated test (e.g. Tests/Exonerate/*.exn sample
+        # output consumed by Tests/test_SearchIO_exonerate.py). A fixture
+        # whose own filename isn't test-like (only an ancestor directory is
+        # literally named "Tests") is not itself a runnable test and must
+        # not veto the accompanying, otherwise-canonical .py test. A file
+        # whose own stem does look like a test (e.g. Tests/test_generated.js)
+        # still falls through to the veto below -- that's a genuine signal
+        # the agent wrote a test in an unsupported format.
+        if (
+            repo == "biopython/biopython"
+            and language is None
+            and path.startswith("Tests/")
+            and not _is_test_path(basename)
+        ):
+            continue
         # Build-system metadata is often required to register a generated C++
         # test target. It is not an independently runnable test and therefore
         # must not veto the accompanying Test*.cpp source as "unsupported".
@@ -938,7 +975,8 @@ def _special_repo_execution_plan(
             canonical = (
                 language == "cpp"
                 and (
-                    re.match(r"unittest/.+/[^/]+\.cpp$", path) is not None
+                    re.match(r"unittest/(?:.+/)?[^/]+\.(?:cc|cpp|cxx)$", path)
+                    is not None
                     or path in lammps_yaml_tests
                 )
             ) or (
@@ -1019,6 +1057,16 @@ def _special_repo_execution_plan(
             )
         elif repo == "lammps/lammps":
             targets = _lammps_generated_test_targets(generated_patch)
+            cpp_sources = [
+                path for path in accepted["cpp"] if path not in lammps_yaml_tests
+            ]
+            if cpp_sources and not targets:
+                return GeneratedTestExecutionPlan(
+                    languages=("cpp",),
+                    paths=selected_paths,
+                    failure_reason="unsupported_generated_test",
+                    evidence={**evidence, "unresolved_cpp_target": tuple(cpp_sources)},
+                )
             build_targets = [target for target, _binary in targets]
             selected_commands.extend(binary for _target, binary in targets)
             # YAML fixtures run through a shared driver binary (e.g.
@@ -1645,7 +1693,11 @@ def _evaluate_one(
             gold_test_execution_failed=(
                 _test_execution_failed(gold_output) and not gold_status
             ),
-            no_tests_selected=_no_tests_selected(base_output) or _no_tests_selected(gold_output),
+            no_tests_selected=(
+                _no_tests_selected(base_output) and not base_status
+            ) or (
+                _no_tests_selected(gold_output) and not gold_status
+            ),
             collection_failed=_test_collection_failed(base_output)
             or _test_collection_failed(gold_output),
             non_evaluable=_non_evaluable_output(base_output) or _non_evaluable_output(gold_output),
