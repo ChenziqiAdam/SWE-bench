@@ -292,6 +292,7 @@ def _test_execution_failed(output: str) -> bool:
             "ImportError:",
             "ModuleNotFoundError:",
             "Segmentation fault",
+            "Aborted",
             "command not found",
         )
     )
@@ -679,6 +680,42 @@ def _lammps_force_style_yaml_test(path: str) -> tuple[str, str] | None:
     return None
 
 
+def _lammps_added_ctest_names(generated_patch: str) -> tuple[str, ...]:
+    """Return CTest names registered by added add_test/add_mpi_test calls."""
+    added = "\n".join(
+        line[1:]
+        for line in generated_patch.splitlines()
+        if line.startswith("+") and not line.startswith("+++")
+    )
+    names = {
+        match.group(1)
+        for match in re.finditer(
+            r"add_(?:mpi_)?test\s*\(\s*(?:NAME\s+)?([\w.:-]+)",
+            added,
+            re.IGNORECASE | re.DOTALL,
+        )
+    }
+    return tuple(sorted(names))
+
+
+def _lammps_ctest_referenced_paths(generated_patch: str) -> set[str]:
+    """Find patched artifacts referenced by added CMake test registrations."""
+    added = "\n".join(
+        line[1:]
+        for line in generated_patch.splitlines()
+        if line.startswith("+") and not line.startswith("+++")
+    )
+    return {
+        path
+        for path in _patch_paths(generated_patch)
+        if PurePosixPath(path).name != "CMakeLists.txt"
+        and (
+            path in added
+            or PurePosixPath(path).name in added
+        )
+    }
+
+
 def _lammps_generated_test_command(generated_patch: str) -> str | None:
     targets = _lammps_generated_test_targets(generated_patch)
     commands = [binary for _target, binary in targets]
@@ -868,6 +905,16 @@ def _special_repo_execution_plan(
     rejected_noise: list[str] = []
     openmm_header_targets: dict[str, str] = {}
     lammps_yaml_tests: dict[str, tuple[str, str]] = {}
+    lammps_ctest_names = (
+        _lammps_added_ctest_names(generated_patch)
+        if repo == "lammps/lammps"
+        else ()
+    )
+    lammps_ctest_paths = (
+        _lammps_ctest_referenced_paths(generated_patch)
+        if lammps_ctest_names
+        else set()
+    )
     for path in paths:
         suffix = PurePosixPath(path).suffix.lower()
         basename = PurePosixPath(path).name
@@ -909,6 +956,11 @@ def _special_repo_execution_plan(
             if yaml_test is not None:
                 language = "cpp"
                 lammps_yaml_tests[path] = yaml_test
+        # LAMMPS also registers input decks and standalone CMake scripts with
+        # add_test()/add_mpi_test(). They are complete tests even though their
+        # extensions are not source languages; execute their CTest wrapper.
+        if repo == "lammps/lammps" and path in lammps_ctest_paths:
+            language = language or "cpp"
         # Non-source fixtures shipped alongside a generated Python test
         # (e.g. wrappers/python/tests/systems/*.gro/*.top/*.pdb) are not
         # themselves tests and must not veto an otherwise-valid accepted test.
@@ -978,10 +1030,14 @@ def _special_repo_execution_plan(
                     re.match(r"unittest/(?:.+/)?[^/]+\.(?:cc|cpp|cxx)$", path)
                     is not None
                     or path in lammps_yaml_tests
+                    or path in lammps_ctest_paths
                 )
             ) or (
                 language == "python"
-                and path.startswith(("unittest/", "python/tests/"))
+                and (
+                    path.startswith(("unittest/", "python/tests/"))
+                    or "/tests/" in path
+                )
                 and _is_test_path(path)
             )
         elif repo == "biopython/biopython":
@@ -1058,9 +1114,12 @@ def _special_repo_execution_plan(
         elif repo == "lammps/lammps":
             targets = _lammps_generated_test_targets(generated_patch)
             cpp_sources = [
-                path for path in accepted["cpp"] if path not in lammps_yaml_tests
+                path
+                for path in accepted["cpp"]
+                if path not in lammps_yaml_tests
+                and PurePosixPath(path).suffix.lower() in {".cc", ".cpp", ".cxx"}
             ]
-            if cpp_sources and not targets:
+            if cpp_sources and not targets and not lammps_ctest_names:
                 return GeneratedTestExecutionPlan(
                     languages=("cpp",),
                     paths=selected_paths,
@@ -1068,7 +1127,8 @@ def _special_repo_execution_plan(
                     evidence={**evidence, "unresolved_cpp_target": tuple(cpp_sources)},
                 )
             build_targets = [target for target, _binary in targets]
-            selected_commands.extend(binary for _target, binary in targets)
+            if not lammps_ctest_names:
+                selected_commands.extend(binary for _target, binary in targets)
             # YAML fixtures run through a shared driver binary (e.g.
             # test_pair_style) that CMake already builds; the fixture itself
             # needs no per-file build target, only the driver + a scoped
@@ -1082,8 +1142,13 @@ def _special_repo_execution_plan(
                 if path in accepted["cpp"]
             )
             build_targets.extend(yaml_binaries)
-            if yaml_ctest_names:
-                pattern = "|".join(re.escape(name) for name in yaml_ctest_names)
+            selected_ctest_names = sorted(
+                set(yaml_ctest_names) | set(lammps_ctest_names)
+            )
+            if selected_ctest_names:
+                pattern = "|".join(
+                    re.escape(name) for name in selected_ctest_names
+                )
                 selected_commands.append(
                     f"ctest --test-dir build --output-on-failure -R '^({pattern})$'"
                 )
@@ -1682,17 +1747,10 @@ def _evaluate_one(
             gold_patch_applied=gold_patch_applied,
             base_timed_out=base_timed_out,
             gold_timed_out=gold_timed_out,
-            test_execution_failed=(
-                _test_execution_failed(base_output) and not base_status
-            ) or (
-                _test_execution_failed(gold_output) and not gold_status
-            ),
-            base_test_execution_failed=(
-                _test_execution_failed(base_output) and not base_status
-            ),
-            gold_test_execution_failed=(
-                _test_execution_failed(gold_output) and not gold_status
-            ),
+            test_execution_failed=_test_execution_failed(base_output)
+            or _test_execution_failed(gold_output),
+            base_test_execution_failed=_test_execution_failed(base_output),
+            gold_test_execution_failed=_test_execution_failed(gold_output),
             no_tests_selected=(
                 _no_tests_selected(base_output) and not base_status
             ) or (

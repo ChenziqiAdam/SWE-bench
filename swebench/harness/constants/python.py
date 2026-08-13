@@ -674,7 +674,12 @@ _ASTROPY_TEST_GENERATION_SPEC = {
     "install": "python -m pip install -e .[test] --verbose",
     # NumPy 2.x removed np.in1d, which these base commits still use while
     # importing Astropy's pytest support.
-    "pip_packages": ["pytest", "numpy==1.26.4", "scipy==1.11.4"],
+    "pip_packages": [
+        "pytest",
+        "numpy==1.26.4",
+        "scipy==1.11.4",
+        "matplotlib==3.8.4",
+    ],
     "validation_cmd": "python -c 'import astropy; import numpy'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
@@ -1317,9 +1322,11 @@ SPECS_DEEPCHEM = {
 
 
 # Issues_No_Tests_v2.xlsx: qutip PRs span 3 build eras.
-# - "modern" (PRs 1436 through 2582, 2021-2024): setuptools.build_meta +
+# - "modern" (PRs 2303 through 2582, 2023-2024): setuptools.build_meta +
 #   Cython-built C extensions (qutip/cy/*.pyx or qutip/core/data/*.pyx),
 #   needs a C compiler but otherwise a normal `pip install -e .`.
+# - "legacy" (PRs 1195 through 2011, 2020-2022): isolated build metadata
+#   requests dependencies incompatible with the Python needed by the commit.
 # - "ancient" (PRs 259, 428, 2014-2016): pre-setuptools numpy.distutils
 #   build (qutip 3.x), requires old numpy/Python since numpy.distutils was
 #   removed in numpy>=1.26 and Python 3.12.
@@ -1345,11 +1352,39 @@ _QUTIP_MODERN_TEST_GENERATION_SPEC = {
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
+_QUTIP_LEGACY_TEST_GENERATION_SPEC = {
+    "python": "3.9",
+    "pre_install": ["apt-get update -q", "apt-get install -y --no-install-recommends gcc g++"],
+    # Historical QuTiP pyproject files request build-only NumPy/packaging
+    # versions that cannot run on the selected Python. Use the already pinned
+    # environment instead of letting pip create an incompatible isolated one.
+    "install": "python -m pip install --no-build-isolation -e .",
+    "pip_packages": [
+        "pytest",
+        "cython==0.29.37",
+        "numpy==1.23.5",
+        "scipy==1.10.1",
+        "packaging<22",
+        "setuptools<69",
+        "wheel",
+    ],
+    "validation_cmd": "python -c 'import qutip'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
 _QUTIP_ANCIENT_TEST_GENERATION_SPEC = {
     "python": "3.7",
     "pre_install": ["apt-get update -q", "apt-get install -y --no-install-recommends gcc g++"],
-    "install": "python -m pip install -e .",
-    "pip_packages": ["pytest", "cython<3", "numpy<1.20", "scipy<1.8"],
+    "install": "python -m pip install --no-build-isolation -e .",
+    "pip_packages": [
+        "pytest<8",
+        "cython==0.29.21",
+        "numpy==1.16.6",
+        "scipy==1.2.1",
+        "setuptools<60",
+        "wheel<0.38",
+    ],
     "validation_cmd": "python -c 'import qutip'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
@@ -1359,9 +1394,12 @@ SPECS_QUTIP = {
     **{
         pr: dict(_QUTIP_MODERN_TEST_GENERATION_SPEC)
         for pr in (
-            "2582", "2541", "2493", "2466", "2371", "2303", "2011",
-            "1195", "1475", "1452", "1436",
+            "2582", "2541", "2493", "2466", "2371", "2303",
         )
+    },
+    **{
+        pr: dict(_QUTIP_LEGACY_TEST_GENERATION_SPEC)
+        for pr in ("2011", "1195", "1475", "1452", "1436")
     },
     **{
         pr: dict(_QUTIP_ANCIENT_TEST_GENERATION_SPEC)
@@ -1371,13 +1409,7 @@ SPECS_QUTIP = {
 # PR 1436 is from the QuTiP 4.x build era. It still reads legacy NumPy
 # BLAS configuration attributes that are absent from NumPy 1.25+ wheels.
 SPECS_QUTIP["1436"] = {
-    **_QUTIP_MODERN_TEST_GENERATION_SPEC,
-    "pip_packages": [
-        "pytest",
-        "cython<3",
-        "numpy==1.23.5",
-        "scipy==1.10.1",
-    ],
+    **_QUTIP_LEGACY_TEST_GENERATION_SPEC,
 }
 
 

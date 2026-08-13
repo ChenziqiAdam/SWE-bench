@@ -892,10 +892,13 @@ SPECS_OPENMM = _OpenMMSpecs({
         "TestForceField.py", "test_IgnoreExternalBonds"
     ),
     "3851": _openmm_python_app_spec("TestForceField.py", "test_CharmmPolar"),
-    "3311": _openmm_python_app_spec(
+    # PR #3311 changes both the AMOEBA XML and native HarmonicBondForce
+    # validation.  A PyPI wheel would bypass the native half of the gold patch,
+    # so build matching wrappers and the AMOEBA Reference plugin from source.
+    "3311": _openmm_native_python_spec(
         "TestForceField.py",
         "test_Amoeba18BPTI or test_Amoeba18Nucleic",
-        test_class="AmoebaTestForceField",
+        amoeba=True,
     ),
     "3210": _openmm_python_app_spec("TestCharmmFiles.py", "test_NBFIX"),
     "2897": _openmm_source_check_spec(
@@ -1114,7 +1117,6 @@ SPECS_OPENMM = _OpenMMSpecs({
     "3057": _openmm_cuda_targets_spec("TestCudaNonbondedForce"),
     "3428": _openmm_cuda_targets_spec("TestCudaNonbondedForce"),
     "3771": _openmm_cuda_targets_spec("TestCudaNonbondedForce"),
-    "3834": _openmm_cuda_targets_spec("TestCudaMultipleForces"),
     "5069": _openmm_cuda_targets_spec("TestCudaNonbondedForce"),
     "5346": _openmm_cuda_targets_spec("TestCudaCustomCVForce"),
     # ── Exact Python wrapper tests ───────────────────────────────────────────
@@ -1904,9 +1906,11 @@ def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
     """Build LAMMPS after applying an agent-generated regression-test patch."""
     package_flags = " ".join(f"-D PKG_{package}=ON" for package in packages)
     kokkos_flags = "-D BUILD_KOKKOS=ON -D Kokkos_ENABLE_SERIAL=ON" if kokkos else ""
-    mpi_enabled = "GPU" in packages
-    mpi_packages = " libopenmpi-dev openmpi-bin" if mpi_enabled else ""
-    mpi_flag = "ON" if mpi_enabled else "OFF"
+    # Generated regressions frequently use add_mpi_test() even when the issue
+    # is not in an MPI-named package. Keep MPI uniformly available so the
+    # planner can honor the registration instead of running the binary on one
+    # rank and producing a false failure.
+    mpi_packages = " libopenmpi-dev openmpi-bin"
     return {
         "pre_install": [
             "apt-get update -q",
@@ -1917,7 +1921,7 @@ def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
         "build_after_test_patch": [
             *(["git submodule update --init --recursive lib/kokkos"] if kokkos else []),
             "cmake -S cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=Release "
-            f"-D BUILD_MPI={mpi_flag} -D ENABLE_TESTING=ON "
+            f"-D BUILD_MPI=ON -D ENABLE_TESTING=ON "
             f"{kokkos_flags} {package_flags}",
             "cmake --build build --parallel $(nproc)",
         ],
@@ -1972,7 +1976,9 @@ SPECS_LAMMPS = {
     "4370": _lammps_test_generation_spec("BPM", "GRANULAR", "SPH"),
     "4291": _lammps_test_generation_spec("REPLICA"),
     "4152": _lammps_test_generation_spec(),
-    "3898": _lammps_test_generation_spec("KOKKOS", kokkos=True),
+    "3898": _lammps_test_generation_spec(
+        "KOKKOS", "REAXFF", "QEQ", kokkos=True
+    ),
 }
 
 MAP_REPO_VERSION_TO_SPECS_C = {

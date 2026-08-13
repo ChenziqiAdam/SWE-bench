@@ -154,6 +154,7 @@ def test_scientific_python_specs_pin_observed_missing_dependencies():
     qutip_1436 = MAP_REPO_VERSION_TO_SPECS["qutip/qutip"]["1436"]
 
     assert "scipy==1.11.4" in astropy["pip_packages"]
+    assert "matplotlib==3.8.4" in astropy["pip_packages"]
     assert "joblib==1.4.2" in deepchem["pip_packages"]
     assert "tensorflow-probability==0.21.0" in deepchem["pip_packages"]
     # pyGPGO is intentionally not pinned: deepchem.hyper.gaussian_process only
@@ -161,6 +162,16 @@ def test_scientific_python_specs_pin_observed_missing_dependencies():
     # since been pulled from PyPI, and these PRs never exercise that code path.
     assert "pyGPGO==0.1.2" not in deepchem["pip_packages"]
     assert "numpy==1.23.5" in qutip_1436["pip_packages"]
+
+
+def test_qutip_historical_specs_disable_isolated_build_dependencies():
+    qutip_specs = MAP_REPO_VERSION_TO_SPECS["qutip/qutip"]
+
+    for pr in ("1195", "1436", "1452", "1475", "2011", "259", "428"):
+        assert "--no-build-isolation" in qutip_specs[pr]["install"]
+
+    assert qutip_specs["1452"]["python"] == "3.9"
+    assert "numpy==1.16.6" in qutip_specs["259"]["pip_packages"]
 
 
 def test_current_scientific_issues_sheet_specs_are_concrete():

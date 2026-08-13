@@ -161,7 +161,9 @@ diff --git a/unittest/rigid_nve_small_inertia.cpp b/unittest/rigid_nve_small_ine
     assert plan.failure_reason is None
     assert plan.paths == ("unittest/rigid_nve_small_inertia.cpp",)
     assert plan.build_targets == ("rigid_regression",)
-    assert plan.commands == ("build/rigid_regression",)
+    assert plan.commands == (
+        "ctest --test-dir build --output-on-failure -R '^(RigidRegression)$'",
+    )
 
 
 def test_unrelated_scratch_script_does_not_veto_a_valid_accepted_test():
@@ -281,6 +283,84 @@ diff --git a/unittest/force-styles/tests/mol-pair-hbond_dreiding_morse.yaml b/un
     assert _plan("lammps/lammps", unknown_prefix_patch).failure_reason == (
         "unsupported_generated_test"
     )
+
+
+def test_lammps_runs_added_cmake_and_input_tests_through_ctest():
+    input_patch = """diff --git a/unittest/force-styles/CMakeLists.txt b/unittest/force-styles/CMakeLists.txt
+--- a/unittest/force-styles/CMakeLists.txt
++++ b/unittest/force-styles/CMakeLists.txt
+@@ -1 +1,3 @@
++add_test(NAME PairHybridKokkosOverlay
++  COMMAND $<TARGET_FILE:lmp> -in ${TEST_INPUT_FOLDER}/in.hybrid-overlay-kokkos)
+diff --git a/unittest/force-styles/tests/in.hybrid-overlay-kokkos b/unittest/force-styles/tests/in.hybrid-overlay-kokkos
+--- /dev/null
++++ b/unittest/force-styles/tests/in.hybrid-overlay-kokkos
+@@ -0,0 +1 @@
++run 0
+"""
+    cmake_patch = """diff --git a/unittest/CMakeLists.txt b/unittest/CMakeLists.txt
+--- a/unittest/CMakeLists.txt
++++ b/unittest/CMakeLists.txt
+@@ -1 +1,3 @@
++add_test(NAME VerifyTtmModExampleParameters COMMAND ${CMAKE_COMMAND}
++  -P ${CMAKE_CURRENT_SOURCE_DIR}/test_ttm_mod_example.cmake)
+diff --git a/unittest/test_ttm_mod_example.cmake b/unittest/test_ttm_mod_example.cmake
+--- /dev/null
++++ b/unittest/test_ttm_mod_example.cmake
+@@ -0,0 +1 @@
++message(STATUS "verified")
+"""
+
+    input_plan = _plan("lammps/lammps", input_patch)
+    cmake_plan = _plan("lammps/lammps", cmake_patch)
+
+    assert input_plan.failure_reason is None
+    assert input_plan.paths == (
+        "unittest/force-styles/tests/in.hybrid-overlay-kokkos",
+    )
+    assert input_plan.commands == (
+        "ctest --test-dir build --output-on-failure "
+        "-R '^(PairHybridKokkosOverlay)$'",
+    )
+    assert cmake_plan.failure_reason is None
+    assert cmake_plan.paths == ("unittest/test_ttm_mod_example.cmake",)
+    assert cmake_plan.commands == (
+        "ctest --test-dir build --output-on-failure "
+        "-R '^(VerifyTtmModExampleParameters)$'",
+    )
+
+
+def test_lammps_mpi_registration_uses_ctest_and_lib_python_tests_are_supported():
+    mpi_patch = """diff --git a/unittest/commands/CMakeLists.txt b/unittest/commands/CMakeLists.txt
+--- a/unittest/commands/CMakeLists.txt
++++ b/unittest/commands/CMakeLists.txt
+@@ -1 +1,3 @@
++add_executable(test_mpi_generated test_mpi_generated.cpp)
++add_mpi_test(NAME MPIGenerated NUM_PROCS 2 COMMAND $<TARGET_FILE:test_mpi_generated>)
+diff --git a/unittest/commands/test_mpi_generated.cpp b/unittest/commands/test_mpi_generated.cpp
+--- /dev/null
++++ b/unittest/commands/test_mpi_generated.cpp
+@@ -0,0 +1 @@
++TEST(MPIGenerated, Regression) {}
+"""
+    python_patch = """diff --git a/lib/gpu/tests/test_short_neighborlists.py b/lib/gpu/tests/test_short_neighborlists.py
+--- /dev/null
++++ b/lib/gpu/tests/test_short_neighborlists.py
+@@ -0,0 +1,2 @@
++def test_short_neighborlists():
++    assert True
+"""
+
+    mpi_plan = _plan("lammps/lammps", mpi_patch)
+    python_plan = _plan("lammps/lammps", python_patch)
+
+    assert mpi_plan.build_targets == ("test_mpi_generated",)
+    assert mpi_plan.commands == (
+        "ctest --test-dir build --output-on-failure -R '^(MPIGenerated)$'",
+    )
+    assert python_plan.failure_reason is None
+    assert python_plan.languages == ("python",)
+    assert "lib/gpu/tests/test_short_neighborlists.py" in python_plan.commands[0]
 
 
 def test_noncanonical_unknown_and_unresolved_targets_fail_explicitly():

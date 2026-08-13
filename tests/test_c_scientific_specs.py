@@ -316,6 +316,23 @@ def test_openmm_826_builds_matching_amoeba_python_bindings():
     assert patched == "      // Look for the first tag to figure out what type of object it is.\n"
 
 
+def test_openmm_3311_builds_native_amoeba_runtime():
+    spec = SPECS_OPENMM["3311"]
+    configure = spec["build_after_test_patch"][0]
+    commands = "\n".join(
+        spec["pre_install"]
+        + spec["build_after_test_patch"]
+        + spec["test_cmd"]
+    )
+
+    assert "-DOPENMM_BUILD_PYTHON_WRAPPERS=ON" in configure
+    assert "-DOPENMM_BUILD_AMOEBA_PLUGIN=ON" in configure
+    assert "python -m pip install --no-cache-dir openmm" not in commands
+    assert "--target install" in commands
+    assert "PythonInstall" in commands
+    assert "OPENMM_PLUGIN_DIR=$PWD/build" in spec["test_cmd"][0]
+
+
 def test_openmm_5137_runs_cmake_runtime_output():
     command = SPECS_OPENMM["5137"]["test_cmd"][0]
     pre_install = "\n".join(SPECS_OPENMM["5137"]["pre_install"])
@@ -577,7 +594,6 @@ def test_openmm_generated_cuda_cases_are_evaluable_on_real_gpu():
         "3057": "TestCudaNonbondedForce",
         "3428": "TestCudaNonbondedForce",
         "3771": "TestCudaNonbondedForce",
-        "3834": "TestCudaMultipleForces",
         "5069": "TestCudaNonbondedForce",
         "5346": "TestCudaCustomCVForce",
     }
@@ -586,6 +602,15 @@ def test_openmm_generated_cuda_cases_are_evaluable_on_real_gpu():
         assert spec["docker_specs"] == {"run_args": {"gpu": True}}
         assert target in "\n".join(spec["build_after_test_patch"])
         assert any(target in command for command in spec["test_cmd"])
+
+
+def test_openmm_3834_uses_parser_optimizer_target():
+    spec = SPECS_OPENMM["3834"]
+    commands = "\n".join(spec["build_after_test_patch"] + spec["test_cmd"])
+
+    assert "TestParser" in commands
+    assert "TestCudaMultipleForces" not in commands
+    assert "docker_specs" not in spec
 
 
 def test_openmm_2255_uses_real_opencl_minimizer_target():

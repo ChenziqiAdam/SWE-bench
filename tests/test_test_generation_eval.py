@@ -393,6 +393,28 @@ def test_openmm_pip_based_python_spec_is_not_rebuilt_from_source():
     assert not any("pip uninstall" in command for command in commands)
 
 
+def test_openmm_3311_python_plan_keeps_native_amoeba_build():
+    plan = GeneratedTestExecutionPlan(
+        languages=("python",),
+        paths=("wrappers/python/tests/TestForceField.py",),
+        commands=("python -m pytest",),
+    )
+
+    commands = _patch_driven_build_commands(
+        "openmm/openmm", SPECS_OPENMM["3311"], plan
+    )
+    configure = next(
+        command for command in commands
+        if command.startswith("cmake ") and " -B " in command
+    )
+
+    assert commands[0] == "python -m pip uninstall -y openmm || true"
+    assert "-DOPENMM_BUILD_PYTHON_WRAPPERS=ON" in configure
+    assert "-DOPENMM_BUILD_AMOEBA_PLUGIN=ON" in configure
+    assert any("--target install" in command for command in commands)
+    assert any("PythonInstall" in command for command in commands)
+
+
 def test_test_generation_marks_zero_selected_not_exercised():
     result = classify_test_generation_result(
         {},
@@ -447,6 +469,19 @@ def test_gtest_all_failed_summary_is_not_mistaken_for_zero_selected():
     assert result["failure_reason"] == "gold_did_not_pass"
 
 
+def test_base_process_abort_is_valid_when_gold_tests_pass_despite_prior_statuses():
+    result = classify_test_generation_result(
+        {"ExistingTest": "PASSED"},
+        {"ExistingTest": "PASSED", "GeneratedTest": "PASSED"},
+        test_patch_applied=True,
+        gold_patch_applied=True,
+        base_test_execution_failed=True,
+    )
+
+    assert result["status"] == "resolved"
+    assert result["base_failed_tests"] == ["generated_test_process"]
+
+
 def test_test_generation_marks_collection_failure_as_generated_test_failure():
     result = classify_test_generation_result(
         {},
@@ -472,6 +507,9 @@ def test_test_execution_failure_detection_is_scoped_to_test_output():
     assert _test_execution_failed(
         f"{GEN_APPLY_PASS}\n{START_TEST_OUTPUT}\n"
         "Traceback (most recent call last):\nImportError: invented API\n"
+    )
+    assert _test_execution_failed(
+        f"{START_TEST_OUTPUT}\ntest_generated: Aborted (core dumped)\n"
     )
     assert not _test_execution_failed("build warning: ImportError: documentation")
 
