@@ -1,18 +1,19 @@
 {
   "adapter_sha256": "047d8cbadc4ed60a8b097368781c399466d28f731027aa975a4486e263b94c9e",
   "clean_checkout_bundle_sha256": [
-    "71fd26ee27a2c5d9e11c7521616f1aea53156992f59e762c571ec2bfbe8cd562",
-    "71fd26ee27a2c5d9e11c7521616f1aea53156992f59e762c571ec2bfbe8cd562"
+    "a2b8f52cebc273b80d3fa13861b6e6f762bf7931a121fd777702b0b8d498e61f",
+    "a2b8f52cebc273b80d3fa13861b6e6f762bf7931a121fd777702b0b8d498e61f"
   ],
   "commit": "9141e4edcddc386cdf10a9201d70aba1abaeb66c",
+  "dependency_artifact_sha256": null,
   "environment": {
     "numpy": "1.26.4",
     "python": "3.10.20",
     "scipy": "1.12.0"
   },
   "environment_lock_sha256": "8d9c31364697298812f929068224f64662d5965b19b204d7420dccb82211b3df",
-  "independent_max_abs": 1.6736612096224235e-14,
-  "independent_rmse": 2.0694765441062865e-15,
+  "independent_max_abs": 8.429367447104763e-12,
+  "independent_rmse": 1.0823487353555133e-12,
   "status": "validated",
   "task_id": "scibench_replication_0011",
   "tolerances": {

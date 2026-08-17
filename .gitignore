@@ -170,3 +170,11 @@ cython_debug/
 data/repos/copies
 notebooks/
 *logs/
+
+PROGRESS.md
+curation_reports/
+curation_tools/
+CURATION_QUEUE.md
+
+AGENTS.md
+CLAUDE.md

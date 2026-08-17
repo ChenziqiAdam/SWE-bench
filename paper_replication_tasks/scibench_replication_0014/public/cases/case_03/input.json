@@ -1,0 +1,15 @@
+{
+  "epsilon_grid": [
+    1e-08,
+    2.1544346900318867e-05,
+    0.04641588833612782,
+    100.0
+  ],
+  "k": 3,
+  "mode": "sweep",
+  "n": 24,
+  "replicates": 8,
+  "seed": 1403,
+  "update_factor": 0.5,
+  "update_regime": "small"
+}

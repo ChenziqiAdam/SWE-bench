@@ -1,8 +1,13 @@
 # SciBench paper-replication functional tests (v4)
 
-> Curation status (2026-08-13): all seven active tasks (0007, 0008, 0009, 0011,
-> 0012, 0013, and 0014) are validated from two clean official runs and an independent
-> scientific audit.
+> Curation status (2026-08-15): the catalog is restricted to 11 papers in leading
+> field venues. Its two existing functional tasks (0011 and 0014) are validated
+> from two clean official runs and an independent scientific audit.
+
+The 2026-08-15 fixed-sparsity and a posteriori TSA pilots were deferred before
+ID assignment: their full official-plus-independent workflows exceeded the proposed
+runtime budgets. Candidate reports preserve the measured evidence; no cached or
+independent result was promoted as official gold.
 
 The unified paper catalog is [`papers.json`](papers.json). It records paper
 titles, canonical paper URLs, GitHub repositories, task IDs, and current build
@@ -15,7 +20,7 @@ Each task is one paper-level functional replication. The public bundle contains 
 Submit `submission.json`:
 
 ```json
-{"schema_version": 4, "task_id": "scibench_replication_0007", "entrypoint": ["python", "solution.py"]}
+{"schema_version": 4, "task_id": "scibench_replication_0011", "entrypoint": ["python", "solution.py"]}
 ```
 
 The trusted runner invokes a fresh process for every case:
@@ -25,6 +30,10 @@ The trusted runner invokes a fresh process for every case:
 ```
 
 The program must create `output.json`. Paths are checked for traversal and symlinks; JSON must be finite and shape-compatible. NPY/pickle output is not part of v4.
+
+The comparator also supports explicit per-field mixed tolerances. This was added for
+the deferred energy pilot (`0.05` capacity units and `max(1 MWh, 1%)` unserved energy)
+without changing the comparator used by validated tasks.
 
 ## Scoring
 

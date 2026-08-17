@@ -1,0 +1,298 @@
+{
+  "cases": [
+    {
+      "adapter_sha256": "82cf5965186883e1cf658a6f7ad7f1da8b7a96b81c260814896e3fb8452e684c",
+      "case_id": "case_01",
+      "checkout_commit": "05c0aeff63094a1acc356ec8ebc320d826900040",
+      "command": "<pinned-environment>/bin/python curation_tools/smw_adapter.py --task 0014 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "environment_lock_sha256": "718434ba913ad656efdef354bec36bbcd45f42f8f94ba6df423d820254f2fad9",
+      "input_sha256": "57197047454dfcfd4b1dd9326390b57f825d6bf5a7b9e1f67eb1f6a870a926a3",
+      "normalized_output_sha256": "5fff034461fdb208f67a1b1cda8d987c7397ab752d6247f974913640635a6a4e",
+      "output_sha256": "5fff034461fdb208f67a1b1cda8d987c7397ab752d6247f974913640635a6a4e",
+      "raw_official_sha256": "5fff034461fdb208f67a1b1cda8d987c7397ab752d6247f974913640635a6a4e",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "82cf5965186883e1cf658a6f7ad7f1da8b7a96b81c260814896e3fb8452e684c",
+      "case_id": "case_02",
+      "checkout_commit": "05c0aeff63094a1acc356ec8ebc320d826900040",
+      "command": "<pinned-environment>/bin/python curation_tools/smw_adapter.py --task 0014 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "environment_lock_sha256": "718434ba913ad656efdef354bec36bbcd45f42f8f94ba6df423d820254f2fad9",
+      "input_sha256": "79b162188d6d01e7d25e40f1a75fc9913d825920d3a3b1cb9d7547326dc1ff73",
+      "normalized_output_sha256": "0946b8bfc092b8120508965f13fa8ce8a3bf47442b997bff7312fd1f80b49afc",
+      "output_sha256": "0946b8bfc092b8120508965f13fa8ce8a3bf47442b997bff7312fd1f80b49afc",
+      "raw_official_sha256": "0946b8bfc092b8120508965f13fa8ce8a3bf47442b997bff7312fd1f80b49afc",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "82cf5965186883e1cf658a6f7ad7f1da8b7a96b81c260814896e3fb8452e684c",
+      "case_id": "case_03",
+      "checkout_commit": "05c0aeff63094a1acc356ec8ebc320d826900040",
+      "command": "<pinned-environment>/bin/python curation_tools/smw_adapter.py --task 0014 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "environment_lock_sha256": "718434ba913ad656efdef354bec36bbcd45f42f8f94ba6df423d820254f2fad9",
+      "input_sha256": "602f1727446a6555faa42d2b0c300f97803b8ceef621a255e8bd85cccd6e827a",
+      "normalized_output_sha256": "d9b1ed97d9ad66dae9d888d92c54722f496f1cff54c9d0b3548ed4287ba4bda8",
+      "output_sha256": "d9b1ed97d9ad66dae9d888d92c54722f496f1cff54c9d0b3548ed4287ba4bda8",
+      "raw_official_sha256": "d9b1ed97d9ad66dae9d888d92c54722f496f1cff54c9d0b3548ed4287ba4bda8",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "82cf5965186883e1cf658a6f7ad7f1da8b7a96b81c260814896e3fb8452e684c",
+      "case_id": "case_01",
+      "checkout_commit": "05c0aeff63094a1acc356ec8ebc320d826900040",
+      "command": "<pinned-environment>/bin/python curation_tools/smw_adapter.py --task 0014 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "environment_lock_sha256": "718434ba913ad656efdef354bec36bbcd45f42f8f94ba6df423d820254f2fad9",
+      "input_sha256": "6370c47805896802b98291795f8be8040594bb29c6c5ecdf3fb0a39ecb7ccef2",
+      "normalized_output_sha256": "aee683bccf4dc1f062625b102182314b664bcee00250991fdb92f8dc9ec5b17b",
+      "output_sha256": "aee683bccf4dc1f062625b102182314b664bcee00250991fdb92f8dc9ec5b17b",
+      "raw_official_sha256": "aee683bccf4dc1f062625b102182314b664bcee00250991fdb92f8dc9ec5b17b",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "82cf5965186883e1cf658a6f7ad7f1da8b7a96b81c260814896e3fb8452e684c",
+      "case_id": "case_02",
+      "checkout_commit": "05c0aeff63094a1acc356ec8ebc320d826900040",
+      "command": "<pinned-environment>/bin/python curation_tools/smw_adapter.py --task 0014 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "environment_lock_sha256": "718434ba913ad656efdef354bec36bbcd45f42f8f94ba6df423d820254f2fad9",
+      "input_sha256": "0d0f67318a5c5590f5dd0084c9667547651a01647ef0e2d1afddebe572f3b259",
+      "normalized_output_sha256": "f207fa45c09b752bee8f7fe79a4ffc7f9c1cfae1d4c7dc14d43c3dd6e47dfdaf",
+      "output_sha256": "f207fa45c09b752bee8f7fe79a4ffc7f9c1cfae1d4c7dc14d43c3dd6e47dfdaf",
+      "raw_official_sha256": "f207fa45c09b752bee8f7fe79a4ffc7f9c1cfae1d4c7dc14d43c3dd6e47dfdaf",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "82cf5965186883e1cf658a6f7ad7f1da8b7a96b81c260814896e3fb8452e684c",
+      "case_id": "case_03",
+      "checkout_commit": "05c0aeff63094a1acc356ec8ebc320d826900040",
+      "command": "<pinned-environment>/bin/python curation_tools/smw_adapter.py --task 0014 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "environment_lock_sha256": "718434ba913ad656efdef354bec36bbcd45f42f8f94ba6df423d820254f2fad9",
+      "input_sha256": "46ae60b9828612db1e8bf3bc4ae65efcb64aa3f750903e36cfbf13ddb5655d2b",
+      "normalized_output_sha256": "cab6cef130c75571eecbf8d04e14c9c965ea8c96d89f329889dab219aa929b7e",
+      "output_sha256": "cab6cef130c75571eecbf8d04e14c9c965ea8c96d89f329889dab219aa929b7e",
+      "raw_official_sha256": "cab6cef130c75571eecbf8d04e14c9c965ea8c96d89f329889dab219aa929b7e",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "82cf5965186883e1cf658a6f7ad7f1da8b7a96b81c260814896e3fb8452e684c",
+      "case_id": "case_04",
+      "checkout_commit": "05c0aeff63094a1acc356ec8ebc320d826900040",
+      "command": "<pinned-environment>/bin/python curation_tools/smw_adapter.py --task 0014 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "environment_lock_sha256": "718434ba913ad656efdef354bec36bbcd45f42f8f94ba6df423d820254f2fad9",
+      "input_sha256": "1d60cd23ef13ec29c391e4e5d1e4ff39f78a42dbba97a73941cb021d29ed3e1b",
+      "normalized_output_sha256": "21f5616e40e785ba1a614ee684e079b24b5620e07d28146ce53634cb6eea0f33",
+      "output_sha256": "21f5616e40e785ba1a614ee684e079b24b5620e07d28146ce53634cb6eea0f33",
+      "raw_official_sha256": "21f5616e40e785ba1a614ee684e079b24b5620e07d28146ce53634cb6eea0f33",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "82cf5965186883e1cf658a6f7ad7f1da8b7a96b81c260814896e3fb8452e684c",
+      "case_id": "case_05",
+      "checkout_commit": "05c0aeff63094a1acc356ec8ebc320d826900040",
+      "command": "<pinned-environment>/bin/python curation_tools/smw_adapter.py --task 0014 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "environment_lock_sha256": "718434ba913ad656efdef354bec36bbcd45f42f8f94ba6df423d820254f2fad9",
+      "input_sha256": "b85752d3b29a3d2cba88d10921d1737aa05eb9bf3fc9266e35b292aeb2191eb3",
+      "normalized_output_sha256": "f5dee9609f94935006cbe6ffee552343789aceab74e02951834d8627cb0eb09d",
+      "output_sha256": "f5dee9609f94935006cbe6ffee552343789aceab74e02951834d8627cb0eb09d",
+      "raw_official_sha256": "f5dee9609f94935006cbe6ffee552343789aceab74e02951834d8627cb0eb09d",
+      "split": "hidden"
+    }
+  ],
+  "commit": "05c0aeff63094a1acc356ec8ebc320d826900040",
+  "dependency_artifact_sha256": null,
+  "environment": {
+    "numpy": "2.2.3",
+    "platform": "macOS-26.4.1-arm64-arm-64bit",
+    "python": "3.12.9"
+  },
+  "environment_lock_sha256": "718434ba913ad656efdef354bec36bbcd45f42f8f94ba6df423d820254f2fad9",
+  "gold_source": "pinned_official_checkout",
+  "independent_audit": {
+    "derived_tolerances": {
+      "atol": 3.637978807091713e-11,
+      "comparison": "mixed",
+      "rtol": 1e-08
+    },
+    "implementation": "curation_tools/smw_scientific.py; direct paper Theorem 2/6, Corollary 3/7, and independent SMW construction",
+    "maximum_absolute_discrepancy": 3.637978807091713e-12,
+    "maximum_relative_discrepancy": 3.1338047955643283e-15,
+    "per_field_discrepancy": {
+      "backward_error_mean": {
+        "max_abs": 3.375077994860476e-14,
+        "max_relative": 3.1338047955643283e-15
+      },
+      "backward_full_bound": {
+        "max_abs": 0.0,
+        "max_relative": 0.0
+      },
+      "backward_simplified_expression": {
+        "max_abs": 0.0,
+        "max_relative": 0.0
+      },
+      "epsilon_1": {
+        "max_abs": 0.0,
+        "max_relative": 0.0
+      },
+      "epsilon_2": {
+        "max_abs": 0.0,
+        "max_relative": 0.0
+      },
+      "forward_error_mean": {
+        "max_abs": 3.637978807091713e-12,
+        "max_relative": 3.5175076201344796e-16
+      },
+      "forward_full_bound": {
+        "max_abs": 0.0,
+        "max_relative": 0.0
+      },
+      "forward_simplified_expression": {
+        "max_abs": 0.0,
+        "max_relative": 0.0
+      }
+    },
+    "status": "passed"
+  },
+  "lifecycle": "validated",
+  "notebook_sha256": {
+    "SMW_backward_same_epsilon.ipynb": "939231de1313b1adac4a14d5442027c0d0354737f2038ded9f6b4e1c82f62953",
+    "SMW_forward_same_epsilon.ipynb": "fdbf4b5a92efd543e32ea8d048502412baf0c241e2fb614328dc8abcc15d9f3d"
+  },
+  "official_reproduction": {
+    "adapter_sha256": "82cf5965186883e1cf658a6f7ad7f1da8b7a96b81c260814896e3fb8452e684c",
+    "clean_checkout_bundle_sha256": [
+      "87c05164fe70c36cea71fe8ff0a7ddd8b0703ce46e7cefc7506dded5caa2f94a",
+      "87c05164fe70c36cea71fe8ff0a7ddd8b0703ce46e7cefc7506dded5caa2f94a"
+    ],
+    "command": "python curation_tools/build_smw_task.py --checkout-1 <clean-1> --checkout-2 <clean-2> --paper <arxiv-v1.pdf>",
+    "dependency_artifact_sha256": null,
+    "environment_lock_sha256": "718434ba913ad656efdef354bec36bbcd45f42f8f94ba6df423d820254f2fad9",
+    "raw_and_normalized_outputs": "curation_reports/official_runs/0014"
+  },
+  "paper_sha256": "18789c49fe7354fbd23d4be9106da2c0321d92a06be34b6204b2d5fe03b74011",
+  "paper_version": "arXiv:2504.04554v1 (21 pages)",
+  "parameter_patch": "JSON/RNG boundary only. The two compute_SMW function bodies are extracted and executed unchanged. Driver-level correction computes alpha and beta from the actual scaled U,V passed to those functions.",
+  "repository": "https://github.com/LinkaiMa/SMW",
+  "schema_version": 4,
+  "scientific_case_design": [
+    {
+      "alpha": 0.9153083104190365,
+      "beta": 1.0925280461423876,
+      "case_id": "case_01",
+      "condition_number_A": 5.000000000000002,
+      "epsilon_validity": [
+        {
+          "epsilon_1": 2.0000000000000004e-08,
+          "epsilon_2": 7e-08,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": true
+        }
+      ],
+      "k": 1,
+      "lambda_over_sigma_min_A": 0.49999999999999994,
+      "mode": "point",
+      "n": 4
+    },
+    {
+      "alpha": 1.0035773499084357,
+      "beta": 1.103334803708685,
+      "case_id": "case_02",
+      "condition_number_A": 999.9999999999956,
+      "epsilon_validity": [
+        {
+          "epsilon_1": 9.999999999999999e-10,
+          "epsilon_2": 2.9999999999999996e-09,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": true
+        }
+      ],
+      "k": 2,
+      "lambda_over_sigma_min_A": 0.5000000000000001,
+      "mode": "point",
+      "n": 6
+    },
+    {
+      "alpha": 99.9999999999988,
+      "beta": 1.4999999999999993,
+      "case_id": "case_03",
+      "condition_number_A": 15.000000000000004,
+      "epsilon_validity": [
+        {
+          "epsilon_1": 9.999999999999998e-12,
+          "epsilon_2": 1.0000000000000004e-08,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": true
+        }
+      ],
+      "k": 3,
+      "lambda_over_sigma_min_A": 6.3114257166885075,
+      "mode": "point",
+      "n": 7
+    },
+    {
+      "alpha": 1.0,
+      "beta": 100.00000000000001,
+      "case_id": "case_04",
+      "condition_number_A": 20.000000000000007,
+      "epsilon_validity": [
+        {
+          "epsilon_1": 1e-10,
+          "epsilon_2": 9.999999999999996e-10,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": true
+        }
+      ],
+      "k": 4,
+      "lambda_over_sigma_min_A": 735.0985923500542,
+      "mode": "point",
+      "n": 8
+    },
+    {
+      "alpha": 1.3451300939940722,
+      "beta": 2.515406018152184,
+      "case_id": "case_05",
+      "condition_number_A": 42.615791544967934,
+      "epsilon_validity": [
+        {
+          "epsilon_1": 1e-08,
+          "epsilon_2": 1e-08,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": true
+        },
+        {
+          "epsilon_1": 0.03101988952277374,
+          "epsilon_2": 0.03101988952277374,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": true
+        },
+        {
+          "epsilon_1": 0.03791319830561235,
+          "epsilon_2": 0.03791319830561235,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": false
+        },
+        {
+          "epsilon_1": 0.06484710384712124,
+          "epsilon_2": 0.06484710384712124,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": false
+        },
+        {
+          "epsilon_1": 0.07925757136870373,
+          "epsilon_2": 0.07925757136870373,
+          "theorem_2_assumptions": false,
+          "theorem_6_assumptions": false
+        },
+        {
+          "epsilon_1": 100.0,
+          "epsilon_2": 100.0,
+          "theorem_2_assumptions": false,
+          "theorem_6_assumptions": false
+        }
+      ],
+      "k": 4,
+      "lambda_over_sigma_min_A": 21.30789577248397,
+      "mode": "sweep",
+      "n": 30
+    }
+  ],
+  "task_id": "scibench_replication_0014"
+}

@@ -1,10 +1,10 @@
 {
-  "atoms": 16,
+  "atoms": 32,
   "jump_size": 1.0,
   "rng": "numpy.random.RandomState",
   "seed_range": [
-    211,
-    223
+    701,
+    717
   ],
-  "steps": 24
+  "steps": 8
 }

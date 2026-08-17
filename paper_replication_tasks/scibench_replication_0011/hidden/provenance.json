@@ -1,109 +1,140 @@
 {
   "cases": [
     {
+      "adapter_sha256": "047d8cbadc4ed60a8b097368781c399466d28f731027aa975a4486e263b94c9e",
       "case_id": "case_01",
+      "checkout_commit": "9141e4edcddc386cdf10a9201d70aba1abaeb66c",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0011 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "8d9c31364697298812f929068224f64662d5965b19b204d7420dccb82211b3df",
       "independent_error": {
-        "max_abs": 1.6736612096224235e-14,
+        "max_abs": 1.8207657603852567e-14,
         "per_field_max_abs": {
-          "diffusion": 1.6736612096224235e-14,
+          "diffusion": 1.8207657603852567e-14,
           "mean_msd": 0.0,
           "time": 0.0
         },
-        "rmse": 2.0694765441062865e-15
+        "rmse": 2.26400788409694e-15
       },
       "input_sha256": "9e61416a925aaf72b27b0ce751dfab82ee41893882c19a0ba43dd81023b21603",
-      "normalized_output_sha256": "7d36996c55d8075aeb31bcd821c09f9796cbd79fcbad6d9b2e5b075a9a893362",
-      "output_sha256": "7d36996c55d8075aeb31bcd821c09f9796cbd79fcbad6d9b2e5b075a9a893362",
-      "raw_official_sha256": "2460da5403d0c2b3563602086ed411aee7f11d04967edceaa79180d067d611a0",
+      "normalized_output_sha256": "76387e7c831a8181cedccac4e058833b2c398b918ed98a1796df066fabc09c3b",
+      "output_sha256": "76387e7c831a8181cedccac4e058833b2c398b918ed98a1796df066fabc09c3b",
+      "raw_official_sha256": "1b1d093169189a5372ed05c68e1870a55916eef441ddfa45eb75a782cdddc759",
       "split": "public"
     },
     {
+      "adapter_sha256": "047d8cbadc4ed60a8b097368781c399466d28f731027aa975a4486e263b94c9e",
       "case_id": "case_01",
+      "checkout_commit": "9141e4edcddc386cdf10a9201d70aba1abaeb66c",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0011 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "8d9c31364697298812f929068224f64662d5965b19b204d7420dccb82211b3df",
       "independent_error": {
-        "max_abs": 1.457167719820518e-16,
+        "max_abs": 8.28503932126523e-15,
         "per_field_max_abs": {
-          "diffusion": 1.457167719820518e-16,
+          "diffusion": 8.28503932126523e-15,
           "mean_msd": 0.0,
           "time": 0.0
         },
-        "rmse": 2.3365042770586634e-17
+        "rmse": 1.205764624274647e-15
       },
-      "input_sha256": "d6378167b84f10bd43727000e1298b171a7800bf557599dcdba1197ba29078f2",
-      "normalized_output_sha256": "180a2e0f08bfa1c4bdf124a23f139bd237b25589040ad3ecb20db3fed2f35e36",
-      "output_sha256": "180a2e0f08bfa1c4bdf124a23f139bd237b25589040ad3ecb20db3fed2f35e36",
-      "raw_official_sha256": "b39bfcb4b3080af4956de4d5090ca7413f627944554339f8a2141aa68f1928b4",
+      "input_sha256": "691a7ec00602cc9deb865e68e082bd8c6e6e177747ff24aae152b96ad889188a",
+      "normalized_output_sha256": "194c3c819d6effec565196d7f477f7f97d3b574c2986b744600dc78cda0cb080",
+      "output_sha256": "194c3c819d6effec565196d7f477f7f97d3b574c2986b744600dc78cda0cb080",
+      "raw_official_sha256": "5566f89276a6a760c55ddd189df050dafc045e51e701a546e82b011b02b445b7",
       "split": "hidden"
     },
     {
+      "adapter_sha256": "047d8cbadc4ed60a8b097368781c399466d28f731027aa975a4486e263b94c9e",
       "case_id": "case_02",
+      "checkout_commit": "9141e4edcddc386cdf10a9201d70aba1abaeb66c",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0011 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "8d9c31364697298812f929068224f64662d5965b19b204d7420dccb82211b3df",
       "independent_error": {
-        "max_abs": 6.827871601444713e-15,
+        "max_abs": 4.996003610813204e-16,
         "per_field_max_abs": {
-          "diffusion": 6.827871601444713e-15,
+          "diffusion": 4.996003610813204e-16,
           "mean_msd": 0.0,
           "time": 0.0
         },
-        "rmse": 1.1491923647395911e-15
+        "rmse": 1.207802388050089e-16
       },
-      "input_sha256": "5369aafceb933d3fcbb237a1b7c99d75816747c3707157229b6cd3240c7f1921",
-      "normalized_output_sha256": "74682020037bc69526a12b08543331f426438e1a2068b30ab5ce132590d9fdfb",
-      "output_sha256": "74682020037bc69526a12b08543331f426438e1a2068b30ab5ce132590d9fdfb",
-      "raw_official_sha256": "a11f3a264dbe388728041deaacb17f07763f8730b5fd954850196792355cb37c",
+      "input_sha256": "e8400f629eb450a3476575943cc5798a24db3602e1e48707316b6849775de1d2",
+      "normalized_output_sha256": "656005d7424fb578b04d110fad70de6c31b7a4adb3f5d6353e667c584c6f3227",
+      "output_sha256": "656005d7424fb578b04d110fad70de6c31b7a4adb3f5d6353e667c584c6f3227",
+      "raw_official_sha256": "735c56abb7b3600f96313c5aada2d36456387dd7d53cc0e936176db2de1ff7be",
       "split": "hidden"
     },
     {
+      "adapter_sha256": "047d8cbadc4ed60a8b097368781c399466d28f731027aa975a4486e263b94c9e",
       "case_id": "case_03",
+      "checkout_commit": "9141e4edcddc386cdf10a9201d70aba1abaeb66c",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0011 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "8d9c31364697298812f929068224f64662d5965b19b204d7420dccb82211b3df",
       "independent_error": {
-        "max_abs": 7.66053886991358e-15,
+        "max_abs": 2.328692794151266e-14,
         "per_field_max_abs": {
-          "diffusion": 7.66053886991358e-15,
+          "diffusion": 2.328692794151266e-14,
           "mean_msd": 0.0,
           "time": 0.0
         },
-        "rmse": 1.03435129087681e-15
+        "rmse": 3.664596018874032e-15
       },
-      "input_sha256": "888ec23ed5ad373bc619f7f6dd84e04c7757bd60b19cd5291f409d90b9d9f864",
-      "normalized_output_sha256": "302274813538c96df78caceec25adc569644caa926e75e4ce8a40a9b55479a37",
-      "output_sha256": "302274813538c96df78caceec25adc569644caa926e75e4ce8a40a9b55479a37",
-      "raw_official_sha256": "dbb7a0d52a92c5520d5e1c55a24bb612dc582bd91cee81b5debed0873068701c",
+      "input_sha256": "291ac2534bb0719f6ec7d7dc69d9bcef6fcea5368da24326c109f10e43280117",
+      "normalized_output_sha256": "e6a138de79be3eb1d51043cb089252b4348204838c0a6c2c65ba6960b5c8a2ab",
+      "output_sha256": "e6a138de79be3eb1d51043cb089252b4348204838c0a6c2c65ba6960b5c8a2ab",
+      "raw_official_sha256": "5f1a30861d0791450bf73fc9f72a0ddff8bda4dc45ad33a66d74a787b4e0ee28",
       "split": "hidden"
     },
     {
+      "adapter_sha256": "047d8cbadc4ed60a8b097368781c399466d28f731027aa975a4486e263b94c9e",
       "case_id": "case_04",
+      "checkout_commit": "9141e4edcddc386cdf10a9201d70aba1abaeb66c",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0011 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "8d9c31364697298812f929068224f64662d5965b19b204d7420dccb82211b3df",
       "independent_error": {
-        "max_abs": 2.248201624865942e-15,
+        "max_abs": 1.8214596497756474e-16,
         "per_field_max_abs": {
-          "diffusion": 2.248201624865942e-15,
+          "diffusion": 1.8214596497756474e-16,
           "mean_msd": 0.0,
           "time": 0.0
         },
-        "rmse": 2.937934869363009e-16
+        "rmse": 1.8156460574303563e-17
       },
-      "input_sha256": "f5ba82325c39efece145d205ef508e20f82251fce80fe1d443ae331ed62879ab",
-      "normalized_output_sha256": "135d4a1a732263dae0f2659f17de6157f09ce1f9d8ca91dc1f579b96bfbf3e94",
-      "output_sha256": "135d4a1a732263dae0f2659f17de6157f09ce1f9d8ca91dc1f579b96bfbf3e94",
-      "raw_official_sha256": "53bb3fccbf2f9f21f094eabd2d7d85d86529c4630386555ccc07b652e5b69075",
+      "input_sha256": "618da30118eed9bea25843265c625a392cba63b7afe91bee75668f87a07eec10",
+      "normalized_output_sha256": "a55adf6603edc2817ca9c95840379ab440c42513dd57d4ba6d4933b4139ea6cc",
+      "output_sha256": "a55adf6603edc2817ca9c95840379ab440c42513dd57d4ba6d4933b4139ea6cc",
+      "raw_official_sha256": "51b84073293bdaf59c037012be81bdb5c8b9097f9537b2ab9ddaeb47d48cd798",
       "split": "hidden"
     },
     {
+      "adapter_sha256": "047d8cbadc4ed60a8b097368781c399466d28f731027aa975a4486e263b94c9e",
       "case_id": "case_05",
+      "checkout_commit": "9141e4edcddc386cdf10a9201d70aba1abaeb66c",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0011 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "8d9c31364697298812f929068224f64662d5965b19b204d7420dccb82211b3df",
       "independent_error": {
-        "max_abs": 3.219646771412954e-15,
+        "max_abs": 8.429367447104763e-12,
         "per_field_max_abs": {
-          "diffusion": 3.219646771412954e-15,
+          "diffusion": 8.429367447104763e-12,
           "mean_msd": 0.0,
           "time": 0.0
         },
-        "rmse": 3.325149525356911e-16
+        "rmse": 1.0823487353555133e-12
       },
-      "input_sha256": "6a3a4a52bcac773e332a6a832a01464b74564c31c0f133d44b66ed770200cfe1",
-      "normalized_output_sha256": "46df15eb017ce4f7a3030d41ae04ff85d71eaf5cf9af06181763448633b4a6e4",
-      "output_sha256": "46df15eb017ce4f7a3030d41ae04ff85d71eaf5cf9af06181763448633b4a6e4",
-      "raw_official_sha256": "47905594b6b7444c29089c7bdffb08fb39045aa186bba167986da0652cca4a16",
+      "input_sha256": "2f36745a395fac4095da69782c8d8435d867575dfd1c3e6026a5dcf24db8a49b",
+      "normalized_output_sha256": "33fbe261f9e53e56182fef017d64cf9a9096fb9b0fef98ca5373b55e6178aee7",
+      "output_sha256": "33fbe261f9e53e56182fef017d64cf9a9096fb9b0fef98ca5373b55e6178aee7",
+      "raw_official_sha256": "a0497b3d9af3b24ad7270ad6005b679f888bfdb1c676cd7016bcd06be0ecfd92",
       "split": "hidden"
     }
   ],
   "commit": "9141e4edcddc386cdf10a9201d70aba1abaeb66c",
+  "dependency_artifact_sha256": null,
   "environment": {
     "numpy": "1.26.4",
     "python": "3.10.20",
@@ -118,8 +149,8 @@
       "rmse": 2e-11
     },
     "implementation": "scientific.py clean-room formulation (not used for gold generation)",
-    "maximum_max_abs": 1.6736612096224235e-14,
-    "maximum_rmse": 2.0694765441062865e-15,
+    "maximum_max_abs": 8.429367447104763e-12,
+    "maximum_rmse": 1.0823487353555133e-12,
     "status": "passed"
   },
   "lifecycle": "validated",
@@ -127,12 +158,13 @@
   "official_reproduction": {
     "adapter_sha256": "047d8cbadc4ed60a8b097368781c399466d28f731027aa975a4486e263b94c9e",
     "clean_checkout_bundle_sha256": [
-      "71fd26ee27a2c5d9e11c7521616f1aea53156992f59e762c571ec2bfbe8cd562",
-      "71fd26ee27a2c5d9e11c7521616f1aea53156992f59e762c571ec2bfbe8cd562"
+      "a2b8f52cebc273b80d3fa13861b6e6f762bf7931a121fd777702b0b8d498e61f",
+      "a2b8f52cebc273b80d3fa13861b6e6f762bf7931a121fd777702b0b8d498e61f"
     ],
     "commands": [
       "<environment>/bin/python curation_tools/official_adapter.py --task 0011 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>"
     ],
+    "dependency_artifact_sha256": null,
     "environment": {
       "numpy": "1.26.4",
       "python": "3.10.20",

@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import platform
 import subprocess
 import sys
 import tempfile
@@ -17,7 +16,7 @@ from task_registry import TASK_REGISTRY, active_task_ids, validated_task_ids
 
 ROOT = Path(__file__).resolve().parent
 LEGACY = {"masked_paper.pdf", "submission_schema.json", "gold_output.json", "evaluator.py", "results.json", ".DS_Store"}
-PUBLIC_COUNTS = {"scibench_replication_0007": 1, "scibench_replication_0008": 23, "scibench_replication_0009": 1, "scibench_replication_0011": 1, "scibench_replication_0012": 8, "scibench_replication_0013": 3, "scibench_replication_0014": 3}
+PUBLIC_COUNTS = {"scibench_replication_0011": 1, "scibench_replication_0014": 3}
 
 
 class ValidationError(RuntimeError):
@@ -87,8 +86,6 @@ def validate_official(root: Path) -> None:
         for run_number, checkout in enumerate(checkout_roots, 1):
             with tempfile.TemporaryDirectory(prefix=f"scibench_{task_id[-4:]}_env_") as environment_dir:
                 conda_environment = os.environ.copy()
-                if task_id.endswith("0013") and platform.machine() == "arm64":
-                    conda_environment["CONDA_SUBDIR"] = "osx-64"
                 subprocess.run(
                     ["conda", "env", "create", "--quiet", "--prefix", environment_dir, "--file", str(environment_file)],
                     check=True,
@@ -126,7 +123,7 @@ def validate_bundle() -> tuple[int, int]:
     require(manifest.get("scoring") == {"public_weight": 0.4, "hidden_weight": 0.6}, "scoring mismatch")
     rows = {row["task_id"]: row for row in manifest.get("tasks", [])}
     require(set(rows) == set(active_task_ids()), "manifest task set mismatch")
-    audit = read_json(ROOT / "curation_reports/five_task_official_gold_audit.json")
+    audit = read_json(ROOT / "curation_reports/retained_task_official_gold_audit.json")
     for adapter_record in audit["adapters"]:
         adapter = ROOT / adapter_record["path"]
         require(adapter_record["sha256"] == sha256_file(adapter), "curator adapter hash mismatch")
@@ -192,7 +189,7 @@ def validate_bundle() -> tuple[int, int]:
                     require(sha256_file(raw) == record["raw_official_sha256"], f"raw official hash mismatch: {task_id}/{stem}/run_{run_number}")
                     require(sha256_file(normalized) == record["normalized_output_sha256"], f"normalized official hash mismatch: {task_id}/{stem}/run_{run_number}")
                 require(record["normalized_output_sha256"] == record["output_sha256"], f"gold normalization hash mismatch: {task_id}/{stem}")
-                if task_id.endswith(("0009", "0012", "0014")):
+                if task_id.endswith("0014"):
                     require(record.get("checkout_commit") == registry["commit"], f"case checkout provenance mismatch: {task_id}/{stem}")
                     require(record.get("environment_lock_sha256") == provenance.get("environment_lock_sha256"), f"case environment provenance mismatch: {task_id}/{stem}")
                     require(record.get("dependency_artifact_sha256") == expected_artifact, f"case dependency provenance mismatch: {task_id}/{stem}")

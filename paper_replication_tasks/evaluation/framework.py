@@ -119,6 +119,12 @@ def compare_output(actual: dict[str, Any], expected: dict[str, Any], tolerance: 
         rmse = float(np.sqrt(np.mean(np.square(errors)))) if errors else 0.0
         return {"passed": not structural and within, "max_abs": maximum, "rmse": rmse,
                 "max_relative": max(relative, default=0.0), "structural_errors": structural[:10]}
+    if tolerance.get("comparison") == "fieldwise":
+        errors, relative, structural, within = _fieldwise_errors(actual, expected, tolerance)
+        maximum = max(errors, default=0.0)
+        rmse = float(np.sqrt(np.mean(np.square(errors)))) if errors else 0.0
+        return {"passed": not structural and within, "max_abs": maximum, "rmse": rmse,
+                "max_relative": max(relative, default=0.0), "structural_errors": structural[:10]}
     errors, structural = _errors(actual, expected)
     maximum = max(errors, default=0.0)
     rmse = float(np.sqrt(np.mean(np.square(errors)))) if errors else 0.0
@@ -152,6 +158,38 @@ def _mixed_errors(actual: Any, expected: Any, atol: float, rtol: float, path: st
         child_errors, child_relative, child_structural, child_within = _mixed_errors(child_actual, child_expected, atol, rtol, child_path)
         errors.extend(child_errors); relative.extend(child_relative); structural.extend(child_structural)
         within &= child_within
+    return errors, relative, structural, within
+
+
+def _fieldwise_errors(actual: Any, expected: Any, tolerance: dict[str, Any], path: str = "$") -> tuple[list[float], list[float], list[str], bool]:
+    """Mixed comparison with an explicit rule selected by output field name."""
+    rules = tolerance.get("field_rules")
+    if not isinstance(rules, dict) or not rules:
+        return [], [], ["fieldwise comparison has no rules"], False
+    if isinstance(expected, dict):
+        if not isinstance(actual, dict) or set(actual) != set(expected):
+            return [], [], [f"{path}: object keys/type differ"], False
+        children = [(actual[key], expected[key], f"{path}.{key}") for key in expected]
+    elif isinstance(expected, list):
+        if not isinstance(actual, list) or len(actual) != len(expected):
+            return [], [], [f"{path}: array length/type differ"], False
+        children = [(actual[index], target, f"{path}[{index}]") for index, target in enumerate(expected)]
+    elif isinstance(expected, (int, float)) and not isinstance(expected, bool):
+        if not isinstance(actual, (int, float)) or isinstance(actual, bool) or not math.isfinite(float(actual)):
+            return [], [], [f"{path}: expected finite number"], False
+        field = next((name for name in rules if f".{name}" in path), None)
+        if field is None:
+            return [], [], [f"{path}: no tolerance rule"], False
+        rule = rules[field]
+        difference = abs(float(actual) - float(expected))
+        relative = difference / max(abs(float(expected)), 1e-300)
+        return [difference], [relative], [], difference <= float(rule["atol"]) + float(rule["rtol"]) * abs(float(expected))
+    else:
+        return [], [], ([] if actual == expected else [f"{path}: value differs"]), actual == expected
+    errors: list[float] = []; relative: list[float] = []; structural: list[str] = []; within = True
+    for child_actual, child_expected, child_path in children:
+        child_errors, child_relative, child_structural, child_within = _fieldwise_errors(child_actual, child_expected, tolerance, child_path)
+        errors.extend(child_errors); relative.extend(child_relative); structural.extend(child_structural); within &= child_within
     return errors, relative, structural, within
 
 

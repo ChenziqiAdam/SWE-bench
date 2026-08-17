@@ -84,7 +84,7 @@ def audit(official: dict[str, Any], independent: dict[str, Any]) -> dict[str, An
 
 def version_record(python: Path) -> dict[str, str]:
     source = (
-        "import importlib,json,platform;"
+        "import importlib,importlib.util,json,platform;"
         "v={'python':platform.python_version()};"
         "[(v.__setitem__(n,getattr(importlib.import_module(n),'__version__','unknown'))) "
         "for n in ('numpy','scipy','sympy','numba','dmdlab') if importlib.util.find_spec(n)];"
@@ -184,9 +184,7 @@ def promote(task_id: str, checkouts: list[Path], environment: Path, dependency_a
     environment_file = environment_lock_path(checkouts[0], registry)
     max_abs = max(record["independent_error"]["max_abs"] for record in case_records)
     rmse = max(record["independent_error"]["rmse"] for record in case_records)
-    floors = ({"max_abs": 1e-10, "rmse": 1e-11} if task_id.endswith("0009")
-              else {"max_abs": 1e-11, "rmse": 1e-12} if task_id.endswith("0012")
-              else {"max_abs": 1e-10, "rmse": 2e-11})
+    floors = {"max_abs": 1e-10, "rmse": 2e-11}
     tolerances = {"max_abs": max(floors["max_abs"], max_abs * 10), "rmse": max(floors["rmse"], rmse * 10)}
     write_json(ROOT / task_id / "hidden/tolerances.json", tolerances)
     provenance = {
@@ -200,13 +198,7 @@ def promote(task_id: str, checkouts: list[Path], environment: Path, dependency_a
         "environment_lock_sha256": digest(environment_file),
         "dependency_artifact_sha256": expected_artifact_hash,
         "official_adapter": registry["official_adapter"],
-        "parameter_patch": (
-            "Generalized snapshot blocks are concatenated into X1/X2; dmdlab.DMD and model.eigs execute directly with only JSON normalization."
-            if task_id.endswith("0009") else
-            "Dimensionless A1=1, beta=1/T, and g*mu_B=1 values are injected into pinned exact symbolic Hamiltonian and field functions; only JSON normalization is added."
-            if task_id.endswith("0012") else
-            "JSON parameters and JSON output only; plotting/file-output tails are disabled; pinned numerical statements execute unchanged except the documented SciPy pinv compatibility rule for 0011."
-        ),
+        "parameter_patch": "JSON parameters and JSON output only; plotting/file-output tails are disabled; pinned numerical statements execute unchanged except the documented SciPy pinv compatibility rule for 0011.",
         "generation_command": "python curation_tools/promote_official.py --task ... --checkout ... --environment ...",
         "official_reproduction": {
             "adapter_sha256": digest(adapter),
@@ -226,8 +218,6 @@ def promote(task_id: str, checkouts: list[Path], environment: Path, dependency_a
         },
         "cases": case_records,
     }
-    if task_id.endswith("0007"):
-        provenance["compatibility_note"] = "The repository environment requests NumPy 1.19.2 while its pip-pinned SciPy 1.10.1 requires NumPy >=1.19.5, so the lock cannot be satisfied literally. The resolved numerical-only environment fixes Python 3.9.23, NumPy 1.26.4, and SciPy 1.10.1; GUI dependencies are omitted."
     if task_id.endswith("0011"):
         provenance["rank_deficiency_note"] = "Some empirical covariance matrices are singular. SciPy 1.12.0 scipy.linalg.pinv rank selection is an intentional part of the task definition."
     write_json(ROOT / task_id / "hidden/provenance.json", provenance)
