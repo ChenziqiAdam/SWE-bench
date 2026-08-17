@@ -939,12 +939,22 @@ def _special_repo_execution_plan(
                 for command in commands
                 for match in re.findall(r"\./build/(Test[A-Za-z0-9_]+)", command)
             ]
+            platform_prefixes = {
+                prefix
+                for target in configured_targets
+                for prefix in ("TestCuda", "TestOpenCL", "TestCpu", "TestReference")
+                if target.startswith(prefix)
+            }
             openmm_header_targets[path] = next(
                 (
                     target for target in configured_targets
                     if target.endswith(family)
                 ),
-                "TestReference" + family,
+                (
+                    next(iter(platform_prefixes)) + family
+                    if len(platform_prefixes) == 1
+                    else "TestReference" + family
+                ),
             )
         # LAMMPS's force-styles suite is data-driven: a YAML fixture under
         # unittest/force-styles/tests/<prefix>-<name>.yaml is a complete,
@@ -1495,8 +1505,6 @@ def _build_script(instance: dict, generated_patch: str, apply_gold: bool) -> str
     ]
     if "eval_commands" in specs:
         lines += specs["eval_commands"]
-    if "install" in specs:
-        lines.append(specs["install"])
     generated_apply = [
         f"git apply -v {GENERATED_TEST_PATCH} "
         f"|| git apply -v --3way {GENERATED_TEST_PATCH} "
@@ -1511,6 +1519,12 @@ def _build_script(instance: dict, generated_patch: str, apply_gold: bool) -> str
             f"echo {GOLD_APPLY_PASS}",
         ]
     lines += generated_apply
+    # Repository installation can compile native extensions from the source
+    # tree.  Apply both patches first so the base pass builds generated native
+    # tests and the gold pass rebuilds Cython/C/C++ changes from the gold patch.
+    # Installing before patch application leaves stale base binaries in place.
+    if "install" in specs:
+        lines.append(specs["install"])
     build_commands = _patch_driven_build_commands(instance["repo"], specs, plan)
     lines += [
         f"{cmd} || {{ echo {BUILD_FAIL}; exit 13; }}" for cmd in build_commands

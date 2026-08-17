@@ -34,6 +34,67 @@ def test_build_image_retries_podman_stale_layer_once(monkeypatch, tmp_path):
     logger.warning.assert_called_once()
 
 
+def test_build_image_retries_transient_container_cleanup_race(monkeypatch, tmp_path):
+    responses = [
+        iter([{"errorDetail": {"message": "identifier is not a container"}}]),
+        iter(
+            [
+                {
+                    "errorDetail": {
+                        "message": 'deleting build container "abc123": identifier is not a container'
+                    }
+                }
+            ]
+        ),
+        iter([{"stream": "success\n"}]),
+    ]
+    api = SimpleNamespace(build=Mock(side_effect=responses))
+    client = SimpleNamespace(api=api)
+    logger = Mock()
+    monkeypatch.setattr(docker_build, "setup_logger", lambda *_args: logger)
+    monkeypatch.setattr(docker_build, "close_logger", lambda *_args: None)
+
+    docker_build.build_image(
+        image_name="sweb.eval.demo:latest",
+        setup_scripts={"setup.sh": "true"},
+        dockerfile="FROM scratch\nCOPY setup.sh /setup.sh",
+        platform="linux/x86_64",
+        client=client,
+        build_dir=Path(tmp_path),
+    )
+
+    assert api.build.call_count == 3
+    assert logger.warning.call_count == 2
+
+
+def test_build_image_raises_after_exhausting_transient_retries(monkeypatch, tmp_path):
+    responses = [
+        iter([{"errorDetail": {"message": "identifier is not a container"}}]),
+        iter([{"errorDetail": {"message": "identifier is not a container"}}]),
+        iter([{"errorDetail": {"message": "identifier is not a container"}}]),
+    ]
+    api = SimpleNamespace(build=Mock(side_effect=responses))
+    client = SimpleNamespace(api=api)
+    logger = Mock()
+    monkeypatch.setattr(docker_build, "setup_logger", lambda *_args: logger)
+    monkeypatch.setattr(docker_build, "close_logger", lambda *_args: None)
+
+    try:
+        docker_build.build_image(
+            image_name="sweb.eval.demo:latest",
+            setup_scripts={"setup.sh": "true"},
+            dockerfile="FROM scratch\nCOPY setup.sh /setup.sh",
+            platform="linux/x86_64",
+            client=client,
+            build_dir=Path(tmp_path),
+        )
+        assert False, "expected BuildImageError"
+    except docker_build.BuildImageError:
+        pass
+
+    assert api.build.call_count == 3
+
+
 def _spec(docker_specs=None):
     return SimpleNamespace(
         instance_id="demo__repo-1",

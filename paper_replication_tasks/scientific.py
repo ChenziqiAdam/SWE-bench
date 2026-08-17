@@ -172,12 +172,24 @@ def anisotropy(case: dict[str, Any]) -> dict[str, Any]:
     return {"temperature": _finite(temperatures), "orientation": _finite(orientation), "hamiltonian": hamiltonian.tolist(), "effective_field": field.tolist()}
 
 
+def conditional_moments(case: dict[str, Any]) -> dict[str, Any]:
+    from curation_tools.conditional_moment_scientific import solve as solve_conditional_moments
+    return solve_conditional_moments(case)
+
+
+def smw_stability(case: dict[str, Any]) -> dict[str, Any]:
+    from curation_tools.smw_scientific import solve as solve_smw
+    return solve_smw(case)
+
+
 SOLVERS = {
     "scibench_replication_0007": kinetics,
     "scibench_replication_0008": spin_curves,
     "scibench_replication_0009": floquet_dmd,
     "scibench_replication_0011": random_walk,
     "scibench_replication_0012": anisotropy,
+    "scibench_replication_0013": conditional_moments,
+    "scibench_replication_0014": smw_stability,
 }
 
 

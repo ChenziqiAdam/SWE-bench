@@ -282,8 +282,36 @@ def validate_buildable(
                 iid = inst["instance_id"]
                 if iid in ok_ids:
                     cache[iid] = {"buildable": True, "error": "", "spec_hash": spec_hashes[iid]}
+                    continue
+                if iid in smoke_failures:
+                    # Image built but failed the post-build smoke test: a real failure.
+                    cache[iid] = {"buildable": False, "error": smoke_failures[iid], "spec_hash": spec_hashes[iid]}
+                    continue
+                # The thread pool recorded a build failure for this instance, but
+                # build_image() logs "Image built successfully!" as soon as the
+                # Docker build stream completes without error — any exception
+                # afterwards (e.g. a transient client.images.get() race right
+                # after tagging) gets misclassified as a build failure even
+                # though the image exists. Verify against Docker directly
+                # before trusting the thread-pool's failure classification.
+                image_key = spec_map[iid].instance_image_key
+                try:
+                    client.images.get(image_key)
+                    image_exists = True
+                except docker.errors.ImageNotFound:
+                    image_exists = False
+                except Exception:
+                    image_exists = False
+                if image_exists:
+                    logger.warning(
+                        "Instance image for %s exists despite a reported build "
+                        "failure (likely a transient post-build race); treating "
+                        "as buildable.",
+                        iid,
+                    )
+                    cache[iid] = {"buildable": True, "error": "", "spec_hash": spec_hashes[iid]}
                 else:
-                    reason = smoke_failures.get(iid) or _read_build_log(spec_map[iid])
+                    reason = _read_build_log(spec_map[iid])
                     cache[iid] = {"buildable": False, "error": reason or "instance image build failed", "spec_hash": spec_hashes[iid]}
 
         _write_cache(cache, cache_path)

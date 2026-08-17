@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from fractions import Fraction
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -104,11 +105,108 @@ def _errors(actual: Any, expected: Any, path: str = "$") -> tuple[list[float], l
 
 
 def compare_output(actual: dict[str, Any], expected: dict[str, Any], tolerance: dict[str, float]) -> dict[str, Any]:
+    if "moment_basis" in expected and "deterministic_equations" in expected and "jump_equations" in expected:
+        try:
+            actual = _canonicalize_conditional_moment_output(actual)
+            expected = _canonicalize_conditional_moment_output(expected)
+        except EvaluationInputError as exc:
+            return {"passed": False, "max_abs": 0.0, "rmse": 0.0, "structural_errors": [str(exc)]}
+    if tolerance.get("comparison") == "mixed":
+        errors, relative, structural, within = _mixed_errors(
+            actual, expected, float(tolerance["atol"]), float(tolerance["rtol"])
+        )
+        maximum = max(errors, default=0.0)
+        rmse = float(np.sqrt(np.mean(np.square(errors)))) if errors else 0.0
+        return {"passed": not structural and within, "max_abs": maximum, "rmse": rmse,
+                "max_relative": max(relative, default=0.0), "structural_errors": structural[:10]}
     errors, structural = _errors(actual, expected)
     maximum = max(errors, default=0.0)
     rmse = float(np.sqrt(np.mean(np.square(errors)))) if errors else 0.0
     passed = not structural and maximum <= tolerance["max_abs"] and rmse <= tolerance["rmse"]
     return {"passed": passed, "max_abs": maximum, "rmse": rmse, "structural_errors": structural[:10]}
+
+
+def _mixed_errors(actual: Any, expected: Any, atol: float, rtol: float, path: str = "$") -> tuple[list[float], list[float], list[str], bool]:
+    errors: list[float] = []
+    relative: list[float] = []
+    structural: list[str] = []
+    within = True
+    if isinstance(expected, dict):
+        if not isinstance(actual, dict) or set(actual) != set(expected):
+            return errors, relative, [f"{path}: object keys/type differ"], False
+        children = ((actual[key], expected[key], f"{path}.{key}") for key in expected)
+    elif isinstance(expected, list):
+        if not isinstance(actual, list) or len(actual) != len(expected):
+            return errors, relative, [f"{path}: array length/type differ"], False
+        children = ((actual[index], target, f"{path}[{index}]") for index, target in enumerate(expected))
+    elif isinstance(expected, (int, float)) and not isinstance(expected, bool):
+        if not isinstance(actual, (int, float)) or isinstance(actual, bool) or not math.isfinite(float(actual)):
+            return errors, relative, [f"{path}: expected finite number"], False
+        difference = abs(float(actual) - float(expected))
+        errors.append(difference)
+        relative.append(difference / max(abs(float(expected)), 1e-300))
+        return errors, relative, structural, difference <= atol + rtol * abs(float(expected))
+    else:
+        return errors, relative, ([] if actual == expected else [f"{path}: value differs"]), actual == expected
+    for child_actual, child_expected, child_path in children:
+        child_errors, child_relative, child_structural, child_within = _mixed_errors(child_actual, child_expected, atol, rtol, child_path)
+        errors.extend(child_errors); relative.extend(child_relative); structural.extend(child_structural)
+        within &= child_within
+    return errors, relative, structural, within
+
+
+def _canonicalize_conditional_moment_output(value: dict[str, Any]) -> dict[str, Any]:
+    keys = {"moment_basis", "deterministic_equations", "jump_equations", "sample_times", "selected_state_trajectory", "conditional_moment_trajectory"}
+    if not isinstance(value, dict) or set(value) != keys:
+        raise EvaluationInputError("conditional-moment output keys differ")
+    basis = value["moment_basis"]
+    selected_trajectory = value["selected_state_trajectory"]
+    if not isinstance(basis, list) or not basis or not isinstance(selected_trajectory, list) or not selected_trajectory:
+        raise EvaluationInputError("empty or invalid moment basis/selected trajectory")
+    latent_count = len(basis[0]) if isinstance(basis[0], list) else -1
+    selected_count = len(selected_trajectory[0]) if isinstance(selected_trajectory[0], list) else -1
+    moment_count = len(basis)
+    reaction_count = len(value["jump_equations"]) if isinstance(value["jump_equations"], list) else -1
+    if latent_count < 1 or selected_count < 1 or reaction_count < 1:
+        raise EvaluationInputError("invalid conditional-moment dimensions")
+    if any(not isinstance(row, list) or len(row) != latent_count or any(isinstance(x, bool) or not isinstance(x, int) or x < 0 for x in row) for row in basis):
+        raise EvaluationInputError("invalid moment_basis")
+
+    def equation(terms: Any) -> list[dict[str, Any]]:
+        if not isinstance(terms, list):
+            raise EvaluationInputError("equation must be an array")
+        combined: dict[tuple[int, ...], Fraction] = {}
+        for term in terms:
+            if not isinstance(term, dict) or set(term) != {"coefficient", "selected_exponents", "rate_exponents", "moment_exponents"}:
+                raise EvaluationInputError("invalid Laurent term keys")
+            coefficient = term["coefficient"]
+            vectors = (term["selected_exponents"], term["rate_exponents"], term["moment_exponents"])
+            widths = (selected_count, reaction_count, moment_count)
+            if (not isinstance(coefficient, list) or len(coefficient) != 2 or
+                    any(isinstance(x, bool) or not isinstance(x, int) for x in coefficient) or coefficient[1] == 0):
+                raise EvaluationInputError("invalid rational coefficient")
+            if any(not isinstance(vector, list) or len(vector) != width or any(isinstance(x, bool) or not isinstance(x, int) for x in vector) for vector, width in zip(vectors, widths)):
+                raise EvaluationInputError("invalid Laurent exponent vector")
+            exponent_key = tuple(x for vector in vectors for x in vector)
+            combined[exponent_key] = combined.get(exponent_key, Fraction()) + Fraction(coefficient[0], coefficient[1])
+        rows = []
+        for exponents, coefficient in sorted(combined.items()):
+            if coefficient == 0:
+                continue
+            a, b = selected_count, selected_count + reaction_count
+            rows.append({"coefficient": [coefficient.numerator, coefficient.denominator], "selected_exponents": list(exponents[:a]), "rate_exponents": list(exponents[a:b]), "moment_exponents": list(exponents[b:])})
+        return rows
+
+    deterministic = value["deterministic_equations"]
+    jumps = value["jump_equations"]
+    if not isinstance(deterministic, list) or len(deterministic) != moment_count:
+        raise EvaluationInputError("deterministic equation shape mismatch")
+    if not isinstance(jumps, list) or len(jumps) != reaction_count or any(not isinstance(row, list) or len(row) != moment_count for row in jumps):
+        raise EvaluationInputError("jump equation shape mismatch")
+    result = dict(value)
+    result["deterministic_equations"] = [equation(row) for row in deterministic]
+    result["jump_equations"] = [[equation(row) for row in reaction] for reaction in jumps]
+    return result
 
 
 def _file_map(root: Path) -> dict[str, str]:

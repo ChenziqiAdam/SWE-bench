@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import platform
 import subprocess
 import sys
 import tempfile
@@ -15,7 +17,7 @@ from task_registry import TASK_REGISTRY, active_task_ids, validated_task_ids
 
 ROOT = Path(__file__).resolve().parent
 LEGACY = {"masked_paper.pdf", "submission_schema.json", "gold_output.json", "evaluator.py", "results.json", ".DS_Store"}
-PUBLIC_COUNTS = {"scibench_replication_0007": 1, "scibench_replication_0008": 23, "scibench_replication_0009": 1, "scibench_replication_0011": 1, "scibench_replication_0012": 8}
+PUBLIC_COUNTS = {"scibench_replication_0007": 1, "scibench_replication_0008": 23, "scibench_replication_0009": 1, "scibench_replication_0011": 1, "scibench_replication_0012": 8, "scibench_replication_0013": 3, "scibench_replication_0014": 3}
 
 
 class ValidationError(RuntimeError):
@@ -84,9 +86,13 @@ def validate_official(root: Path) -> None:
         run_hashes: list[list[str]] = []
         for run_number, checkout in enumerate(checkout_roots, 1):
             with tempfile.TemporaryDirectory(prefix=f"scibench_{task_id[-4:]}_env_") as environment_dir:
+                conda_environment = os.environ.copy()
+                if task_id.endswith("0013") and platform.machine() == "arm64":
+                    conda_environment["CONDA_SUBDIR"] = "osx-64"
                 subprocess.run(
                     ["conda", "env", "create", "--quiet", "--prefix", environment_dir, "--file", str(environment_file)],
                     check=True,
+                    env=conda_environment,
                 )
                 if artifact_hash is not None:
                     subprocess.run(
@@ -148,6 +154,10 @@ def validate_bundle() -> tuple[int, int]:
         require(provenance.get("commit") == registry["commit"], f"commit mismatch: {task_id}")
         require("maximum_observed_error" not in json.dumps(provenance), f"unsupported zero-error claim: {task_id}")
         require(provenance.get("lifecycle") == registry["status"], f"provenance lifecycle mismatch: {task_id}")
+        compatibility_patch = registry.get("compatibility_patch_path")
+        if compatibility_patch is not None:
+            patch_path = ROOT / compatibility_patch
+            require(patch_path.is_file() and provenance.get("patch_sha256") == sha256_file(patch_path), f"compatibility patch provenance mismatch: {task_id}")
         case_records = {(record["split"], record["case_id"]): record for record in provenance["cases"]}
         for split, cases in (("public", public_cases), ("hidden", hidden_cases)):
             for case in cases:
@@ -182,7 +192,7 @@ def validate_bundle() -> tuple[int, int]:
                     require(sha256_file(raw) == record["raw_official_sha256"], f"raw official hash mismatch: {task_id}/{stem}/run_{run_number}")
                     require(sha256_file(normalized) == record["normalized_output_sha256"], f"normalized official hash mismatch: {task_id}/{stem}/run_{run_number}")
                 require(record["normalized_output_sha256"] == record["output_sha256"], f"gold normalization hash mismatch: {task_id}/{stem}")
-                if task_id.endswith(("0009", "0012")):
+                if task_id.endswith(("0009", "0012", "0014")):
                     require(record.get("checkout_commit") == registry["commit"], f"case checkout provenance mismatch: {task_id}/{stem}")
                     require(record.get("environment_lock_sha256") == provenance.get("environment_lock_sha256"), f"case environment provenance mismatch: {task_id}/{stem}")
                     require(record.get("dependency_artifact_sha256") == expected_artifact, f"case dependency provenance mismatch: {task_id}/{stem}")
@@ -211,7 +221,7 @@ def main() -> int:
     except (ValidationError, KeyError, OSError, subprocess.CalledProcessError) as exc:
         print(f"validation failed: {exc}", file=sys.stderr)
         return 1
-    print(f"audited 5 v4 bundles: {validated} validated, {pending} pending official regeneration")
+    print(f"audited {validated + pending} v4 bundles: {validated} validated, {pending} pending official regeneration")
     return 0
 
 

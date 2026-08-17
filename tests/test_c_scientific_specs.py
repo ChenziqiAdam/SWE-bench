@@ -662,13 +662,26 @@ def test_pr_2255_runs_opencl_minimizer_on_gpu():
     assert "TestOpenCLLocalEnergyMinimizer" in spec_text
 
 
+def test_openmm_program_side_target_fixes_run_common_gpu_paths():
+    expected = {
+        "3240": "TestOpenCLCustomExternalForce",
+        "5242": "TestOpenCLLocalEnergyMinimizer",
+    }
+
+    for pr, target in expected.items():
+        spec = SPECS_OPENMM[pr]
+        commands = "\n".join(spec.get("test_cmd", []))
+        assert target in commands
+        assert spec["docker_specs"] == {"run_args": {"gpu": True}}
+
+
 def test_part2_curated_opencl_specs_request_real_gpu():
     from swebench.harness.constants.c import SPECS_OPENMM
 
     part2_prs = [
         "1382", "1679", "1682", "1924", "2257", "2318", "2322", "2819",
         "3057", "3428", "3460", "3771", "4079", "4090", "4119", "4148",
-        "4249", "4618", "5069", "5117", "5346",
+        "4249", "4618", "5069", "5117", "5242", "5346", "3240",
     ]
     for pr in part2_prs:
         spec = SPECS_OPENMM[pr]

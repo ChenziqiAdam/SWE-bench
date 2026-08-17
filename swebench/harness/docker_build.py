@@ -296,7 +296,8 @@ def build_image(
         logger.info(
             f"Building docker image {image_name} in {build_dir} with platform {platform}"
         )
-        for attempt in range(2):
+        max_attempts = 3
+        for attempt in range(max_attempts):
             response = client.api.build(
                 path=str(build_dir),
                 tag=image_name,
@@ -310,10 +311,15 @@ def build_image(
             # Log the build process continuously. Podman can briefly retain a
             # stale cache reference after an image is removed, reporting
             # "top layer info: layer not known" before any build step runs.
-            # Retrying once is safe and avoids turning that storage race into
-            # an instance-level evaluation error.
+            # Under concurrent builds, the daemon's forcerm=True cleanup of the
+            # intermediate build container can also race with another build's
+            # container teardown, surfacing as "identifier is not a container"
+            # or "deleting build container ..." even though the image itself
+            # was built and tagged successfully. Retrying is safe for both
+            # cases and avoids turning transient daemon races into
+            # instance-level evaluation errors.
             buildlog = ""
-            retry_stale_layer = False
+            retry_transient = False
             for chunk in response:
                 if "stream" in chunk:
                     # Remove ANSI escape sequences from the log
@@ -322,18 +328,27 @@ def build_image(
                     buildlog += chunk_stream
                 elif "errorDetail" in chunk:
                     message = chunk["errorDetail"]["message"]
-                    if attempt == 0 and "layer not known" in message.lower():
+                    lower_message = message.lower()
+                    is_transient = (
+                        "layer not known" in lower_message
+                        or "identifier is not a container" in lower_message
+                        or "deleting build container" in lower_message
+                    )
+                    if attempt < max_attempts - 1 and is_transient:
                         logger.warning(
-                            "Container storage cache was stale while building %s; "
-                            "retrying once",
+                            "Transient Docker daemon error while building %s "
+                            "(attempt %d/%d): %s; retrying",
                             image_name,
+                            attempt + 1,
+                            max_attempts,
+                            message,
                         )
-                        retry_stale_layer = True
+                        retry_transient = True
                         break
                     # Decode error message, raise BuildError
                     logger.error(f"Error: {ansi_escape(message)}")
                     raise docker.errors.BuildError(message, buildlog)
-            if not retry_stale_layer:
+            if not retry_transient:
                 break
             close = getattr(response, "close", None)
             if close:

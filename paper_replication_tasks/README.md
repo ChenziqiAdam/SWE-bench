@@ -1,8 +1,12 @@
 # SciBench paper-replication functional tests (v4)
 
-> Curation status (2026-08-02): all five active tasks (0007, 0008, 0009, 0011,
-> and 0012) are validated from two clean official runs and an independent
+> Curation status (2026-08-13): all seven active tasks (0007, 0008, 0009, 0011,
+> 0012, 0013, and 0014) are validated from two clean official runs and an independent
 > scientific audit.
+
+The unified paper catalog is [`papers.json`](papers.json). It records paper
+titles, canonical paper URLs, GitHub repositories, task IDs, and current build
+statuses for validated tasks and candidates.
 
 Each task is one paper-level functional replication. The public bundle contains the complete paper, a JSON CLI schema, and every curated public input/output case. Exactly five parameter-perturbed cases remain hidden.
 

@@ -611,6 +611,32 @@ def test_gold_script_applies_gold_before_generated_test(monkeypatch):
     assert "--fuzz" not in script
 
 
+def test_gold_script_installs_after_applying_patches(monkeypatch):
+    install = "python -m pip install -e ."
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.MAP_REPO_VERSION_TO_SPECS",
+        {
+            "demo/repo": {
+                "1": {"install": install, "test_cmd": "pytest generated_test.py"}
+            }
+        },
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.get_test_cmds",
+        lambda _instance: "pytest generated_test.py",
+    )
+
+    script = _build_script(
+        {"repo": "demo/repo", "version": "1", "base_commit": "abc"},
+        "patch",
+        apply_gold=True,
+    )
+
+    assert script.index(GOLD_APPLY_PASS) < script.index(GEN_APPLY_PASS)
+    assert script.index(GEN_APPLY_PASS) < script.index(install)
+    assert script.index(install) < script.index(START_TEST_OUTPUT)
+
+
 def test_gold_patch_excludes_pr_authored_cpp_tests():
     gold = """diff --git a/src/fix.cpp b/src/fix.cpp
 --- a/src/fix.cpp
@@ -853,6 +879,28 @@ def test_openmm_test_generation_uses_patch_language_over_fixed_spec(monkeypatch)
 
     assert "TestIntegrators.py::test_generated" in command
     assert "TestReferenceCustomIntegrator" not in command
+
+
+def test_openmm_shared_header_preserves_curated_platform_family():
+    patch = """diff --git a/tests/TestCustomIntegrator.h b/tests/TestCustomIntegrator.h
+--- a/tests/TestCustomIntegrator.h
++++ b/tests/TestCustomIntegrator.h
+@@ -1 +1,2 @@
++void testGeneratedRegression() {}
+"""
+    commands = SPECS_OPENMM["2257"]["test_cmd"]
+
+    plan = _special_repo_execution_plan(
+        {"repo": "openmm/openmm", "version": "2257", "test_patch": ""},
+        patch,
+        commands,
+    )
+
+    assert plan is not None
+    assert plan.failure_reason is None
+    assert plan.build_targets == ("TestOpenCLCustomIntegrator",)
+    assert "./build/TestOpenCLCustomIntegrator" in plan.commands[0]
+    assert "TestReferenceCustomIntegrator" not in plan.commands[0]
 
 
 def test_openmm_source_spec_requires_generated_pytest(monkeypatch):
