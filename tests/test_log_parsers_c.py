@@ -51,6 +51,33 @@ FAILED TestCharmmFiles.py::TestCharmmFiles::test_NBFIX14 - ValueError
     }
 
 
+def test_parse_log_pytest_reads_skipped_short_summary_without_nodeid():
+    log = """
++ python3 -m pytest -rA --tb=long -p no:cacheprovider unittest/python/test_srd_deform.py::TestSRDDeform::test_srd_deform_velocity_profile_linearity
+============================= test session starts ==============================
+collected 1 item
+
+unittest/python/test_srd_deform.py s                                     [100%]
+
+=========================== short test summary info ============================
+SKIPPED [1] unittest/python/test_srd_deform.py:58: LAMMPS Python module not available
+============================== 1 skipped in 0.01s ==============================
+"""
+
+    assert parse_log_pytest_nodeid(log, None) == {
+        "unittest/python/test_srd_deform.py::TestSRDDeform::test_srd_deform_velocity_profile_linearity": TestStatus.SKIPPED.value
+    }
+
+
+def test_parse_log_pytest_skipped_short_summary_ambiguous_with_multiple_invocations():
+    log = """
++ python3 -m pytest -rA a.py::test_a b.py::test_b
+SKIPPED [1] a.py:10: reason
+"""
+
+    assert parse_log_pytest_nodeid(log, None) == {}
+
+
 def test_parse_log_catch2_reads_python_unittest_summary():
     log = """
 + RDBASE=/testbed

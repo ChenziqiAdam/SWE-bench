@@ -1,0 +1,5 @@
+{
+  "method": "b2sfca",
+  "threshold": 25,
+  "hub_filter": "all_active"
+}

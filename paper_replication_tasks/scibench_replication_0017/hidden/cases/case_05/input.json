@@ -1,0 +1,5 @@
+{
+  "method": "c2sfca",
+  "threshold": 12,
+  "hub_filter": "all_active"
+}

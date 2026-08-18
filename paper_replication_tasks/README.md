@@ -1,8 +1,11 @@
 # SciBench paper-replication functional tests (v4)
 
-> Curation status (2026-08-15): the catalog is restricted to 11 papers in leading
-> field venues. Its two existing functional tasks (0011 and 0014) are validated
-> from two clean official runs and an independent scientific audit.
+> Curation status (2026-08-17): the catalog is restricted to 11 papers in leading
+> field venues. Its three existing functional tasks (0011, 0014, and 0017) are
+> validated from two clean official runs and an independent scientific audit.
+> Task 0017 is the first R-based task, reproducing sobiEquity's balanced/
+> conventional floating catchment area accessibility methods via a curator
+> Rscript adapter; agents still submit pure Python solutions.
 
 The 2026-08-15 fixed-sparsity and a posteriori TSA pilots were deferred before
 ID assignment: their full official-plus-independent workflows exceeded the proposed

@@ -273,6 +273,47 @@ def parse_log_openmm_binary_done(log: str, test_spec: TestSpec) -> dict[str, str
     return test_status_map
 
 
+_PYTEST_INVOCATION_LINE_RE = re.compile(r"pytest\b.*")
+_PYTEST_NODEID_TOKEN_RE = re.compile(r"\S+::\S+")
+_PYTEST_SHORT_SUMMARY_RE = re.compile(
+    r"^(PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)\s+\[\d+\]\s+(\S+):\d+:"
+)
+
+
+def _parse_pytest_short_summary_without_nodeid(log: str) -> dict[str, str]:
+    """Parse pytest's `-ra`/`-rA` short-summary lines that lack a `::nodeid`.
+
+    A `SKIPPED` entry (unlike PASSED/FAILED) is reported by file+line, not by
+    nodeid, e.g. `SKIPPED [1] path/to/test_file.py:58: reason string` — no
+    `::test_name` appears anywhere in that line. parse_log_pytest_nodeid()
+    requires '::' and silently drops these, leaving skip-only runs with an
+    empty status map (misclassified as no_parseable_test_status). When the
+    log invoked exactly one nodeid (the common case for a single generated
+    regression test), attribute the summary status to that nodeid.
+    """
+    status_words = {
+        "PASSED": TestStatus.PASSED.value,
+        "FAILED": TestStatus.FAILED.value,
+        "ERROR": TestStatus.ERROR.value,
+        "SKIPPED": TestStatus.SKIPPED.value,
+        "XFAIL": TestStatus.PASSED.value,
+        "XPASS": TestStatus.PASSED.value,
+    }
+    invoked_nodeids: set[str] = set()
+    for line in log.split("\n"):
+        if _PYTEST_INVOCATION_LINE_RE.search(line):
+            invoked_nodeids.update(_PYTEST_NODEID_TOKEN_RE.findall(line))
+    if len(invoked_nodeids) != 1:
+        return {}
+    (nodeid,) = invoked_nodeids
+    status_map = {}
+    for line in log.split("\n"):
+        match = _PYTEST_SHORT_SUMMARY_RE.match(line.strip())
+        if match:
+            status_map[nodeid] = status_words[match.group(1)]
+    return status_map
+
+
 def parse_log_pytest_nodeid(log: str, test_spec: TestSpec) -> dict[str, str]:
     """Parse `pytest -v` output where each line is `<nodeid> STATUS [pct]`.
 
@@ -308,6 +349,8 @@ def parse_log_pytest_nodeid(log: str, test_spec: TestSpec) -> dict[str, str]:
             if tok_clean in status_words:
                 test_status_map[nodeid] = status_words[tok_clean]
                 break
+    if not test_status_map:
+        test_status_map = _parse_pytest_short_summary_without_nodeid(log)
     return test_status_map
 
 

@@ -1,0 +1,236 @@
+{
+  "cases": [
+    {
+      "adapter_sha256": "63c1cdee21063ec66b427eadf8b7ea6a3cdc6bb069f02739ebfd2ec97fe0be93",
+      "case_id": "case_01",
+      "checkout_commit": "80b6516acb0936a4c3e75d15fc3885f1d398021f",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0017 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "6ec8b22b577c54bcc8dea06b29da73c51fda2666269a66de8551cd2150e52e10",
+      "independent_error": {
+        "max_abs": 5.773159728050814e-15,
+        "per_field_max_abs": {
+          "accessibility": 2.886579864025407e-15,
+          "hub": 0.0,
+          "level_of_service": 5.773159728050814e-15,
+          "population_unit": 0.0
+        },
+        "rmse": 7.709234170257941e-17
+      },
+      "input_sha256": "47c1ad16a18ea7659c0ac9e898920c03cf395a499b7958536a25d0cc3d1c1a0e",
+      "normalized_output_sha256": "5460889998925419d2ef54601ba634180ac281190b3d15031a818fd0ff0633ac",
+      "output_sha256": "5460889998925419d2ef54601ba634180ac281190b3d15031a818fd0ff0633ac",
+      "raw_official_sha256": "8c3791dfff6844dbf73a1ae0d4381c94aa1a3d428ad8e87098aad07e7a55183c",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "63c1cdee21063ec66b427eadf8b7ea6a3cdc6bb069f02739ebfd2ec97fe0be93",
+      "case_id": "case_02",
+      "checkout_commit": "80b6516acb0936a4c3e75d15fc3885f1d398021f",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0017 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "6ec8b22b577c54bcc8dea06b29da73c51fda2666269a66de8551cd2150e52e10",
+      "independent_error": {
+        "max_abs": 5.773159728050814e-15,
+        "per_field_max_abs": {
+          "accessibility": 2.886579864025407e-15,
+          "hub": 0.0,
+          "level_of_service": 5.773159728050814e-15,
+          "population_unit": 0.0
+        },
+        "rmse": 7.244782631597973e-17
+      },
+      "input_sha256": "0c0789739d9674d8bd2d77b35ca36d6f9ff623a5bbd02a8b9ba0f47aea661985",
+      "normalized_output_sha256": "f9d4aef18484e1e5a24181996d6ae0c5a96c2345ce31781d1fd29321ba8a7fda",
+      "output_sha256": "f9d4aef18484e1e5a24181996d6ae0c5a96c2345ce31781d1fd29321ba8a7fda",
+      "raw_official_sha256": "a6f07b132e9480685ff320b0779b3bfbdb9e0a61b1c75587838b8083092ca1b3",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "63c1cdee21063ec66b427eadf8b7ea6a3cdc6bb069f02739ebfd2ec97fe0be93",
+      "case_id": "case_03",
+      "checkout_commit": "80b6516acb0936a4c3e75d15fc3885f1d398021f",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0017 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "6ec8b22b577c54bcc8dea06b29da73c51fda2666269a66de8551cd2150e52e10",
+      "independent_error": {
+        "max_abs": 6.938893903907228e-17,
+        "per_field_max_abs": {
+          "accessibility": 6.938893903907228e-17,
+          "hub": 0.0,
+          "level_of_service": 4.163336342344337e-17,
+          "population_unit": 0.0
+        },
+        "rmse": 7.022868924026436e-18
+      },
+      "input_sha256": "09af0da24f87ef612b4a230c538078523e89aba5432b349140ca2663397877d2",
+      "normalized_output_sha256": "ad33b639dd481640868d076d2d989c459325babe038419eaf244a068d2a4158a",
+      "output_sha256": "ad33b639dd481640868d076d2d989c459325babe038419eaf244a068d2a4158a",
+      "raw_official_sha256": "7f58f3c5a4adf21bafa9a884d5100b3f804c371c7c74f76bfa27196d6db846db",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "63c1cdee21063ec66b427eadf8b7ea6a3cdc6bb069f02739ebfd2ec97fe0be93",
+      "case_id": "case_01",
+      "checkout_commit": "80b6516acb0936a4c3e75d15fc3885f1d398021f",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0017 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "6ec8b22b577c54bcc8dea06b29da73c51fda2666269a66de8551cd2150e52e10",
+      "independent_error": {
+        "max_abs": 1.2434497875801753e-14,
+        "per_field_max_abs": {
+          "accessibility": 1.2434497875801753e-14,
+          "hub": 0.0,
+          "level_of_service": 1.2434497875801753e-14,
+          "population_unit": 0.0
+        },
+        "rmse": 4.618128895236456e-16
+      },
+      "input_sha256": "961de53bad58e6828234624130bce03b58018f92882e5c26394a8eefc91c99ec",
+      "normalized_output_sha256": "76757fb83db3150df3559f8ea2792012d96bc5f26f44be729341a3e809e610a6",
+      "output_sha256": "76757fb83db3150df3559f8ea2792012d96bc5f26f44be729341a3e809e610a6",
+      "raw_official_sha256": "c4305d897aab32ac7e1eb4dd817072dae8cad3b14d3562f5c474ba7c9496a02e",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "63c1cdee21063ec66b427eadf8b7ea6a3cdc6bb069f02739ebfd2ec97fe0be93",
+      "case_id": "case_02",
+      "checkout_commit": "80b6516acb0936a4c3e75d15fc3885f1d398021f",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0017 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "6ec8b22b577c54bcc8dea06b29da73c51fda2666269a66de8551cd2150e52e10",
+      "independent_error": {
+        "max_abs": 5.329070518200751e-15,
+        "per_field_max_abs": {
+          "accessibility": 2.6645352591003757e-15,
+          "hub": 0.0,
+          "level_of_service": 5.329070518200751e-15,
+          "population_unit": 0.0
+        },
+        "rmse": 1.2449862901231565e-16
+      },
+      "input_sha256": "39ab7c9a66aeac4800c538ef4b1290aafaaf0b4093bee8b6d9d012afbd358fce",
+      "normalized_output_sha256": "fd47fcd0f34500d8583b79f06f8a67ca6b7933eeed5e5b1e293a614cf79e530e",
+      "output_sha256": "fd47fcd0f34500d8583b79f06f8a67ca6b7933eeed5e5b1e293a614cf79e530e",
+      "raw_official_sha256": "76326455f754d724ef78e3f9c696c78d65e7b6d11bc42af6fd4a466c1535b585",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "63c1cdee21063ec66b427eadf8b7ea6a3cdc6bb069f02739ebfd2ec97fe0be93",
+      "case_id": "case_03",
+      "checkout_commit": "80b6516acb0936a4c3e75d15fc3885f1d398021f",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0017 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "6ec8b22b577c54bcc8dea06b29da73c51fda2666269a66de8551cd2150e52e10",
+      "independent_error": {
+        "max_abs": 5.551115123125783e-17,
+        "per_field_max_abs": {
+          "accessibility": 3.7947076036992655e-19,
+          "hub": 0.0,
+          "level_of_service": 5.551115123125783e-17,
+          "population_unit": 0.0
+        },
+        "rmse": 1.0273102602764773e-18
+      },
+      "input_sha256": "099114e1bd781505ec5efcfd47fef911687f61ac9490b3d17b8dee25a7e3dd6f",
+      "normalized_output_sha256": "51ed62c537ac49e6e122531afa864f7c54551843653f24d7ebc73a9e16d94331",
+      "output_sha256": "51ed62c537ac49e6e122531afa864f7c54551843653f24d7ebc73a9e16d94331",
+      "raw_official_sha256": "7018afa9a5775e25623c72127f82757019ffb20a8e1f2a23f21b844884f0f887",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "63c1cdee21063ec66b427eadf8b7ea6a3cdc6bb069f02739ebfd2ec97fe0be93",
+      "case_id": "case_04",
+      "checkout_commit": "80b6516acb0936a4c3e75d15fc3885f1d398021f",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0017 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "6ec8b22b577c54bcc8dea06b29da73c51fda2666269a66de8551cd2150e52e10",
+      "independent_error": {
+        "max_abs": 2.220446049250313e-15,
+        "per_field_max_abs": {
+          "accessibility": 2.220446049250313e-15,
+          "hub": 0.0,
+          "level_of_service": 2.220446049250313e-15,
+          "population_unit": 0.0
+        },
+        "rmse": 4.164751542434242e-17
+      },
+      "input_sha256": "ef9282f0158aa17dd70b77bb6a317f8497f44a5042bd7d9ed47716470b9e26fb",
+      "normalized_output_sha256": "9d0bd36d2b5baa03478037ae7e9671b8be46d20ef00ba804e745f7dd50f6665b",
+      "output_sha256": "9d0bd36d2b5baa03478037ae7e9671b8be46d20ef00ba804e745f7dd50f6665b",
+      "raw_official_sha256": "23850b293024958b7e8c18d2d0cc49a9128705c2a2a2c6952657f2c4cb6b3bd0",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "63c1cdee21063ec66b427eadf8b7ea6a3cdc6bb069f02739ebfd2ec97fe0be93",
+      "case_id": "case_05",
+      "checkout_commit": "80b6516acb0936a4c3e75d15fc3885f1d398021f",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0017 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "6ec8b22b577c54bcc8dea06b29da73c51fda2666269a66de8551cd2150e52e10",
+      "independent_error": {
+        "max_abs": 5.551115123125783e-17,
+        "per_field_max_abs": {
+          "accessibility": 5.551115123125783e-17,
+          "hub": 0.0,
+          "level_of_service": 1.3877787807814457e-17,
+          "population_unit": 0.0
+        },
+        "rmse": 7.32201269565947e-18
+      },
+      "input_sha256": "b210e5e01d82f02df4d6bc0e6a8397a34f5be6fd217b0f67333ac2d13714b457",
+      "normalized_output_sha256": "e32f192b3f0aaf1ec560528f0d6a9590e34617d8fab78cbdad7c840458278d35",
+      "output_sha256": "e32f192b3f0aaf1ec560528f0d6a9590e34617d8fab78cbdad7c840458278d35",
+      "raw_official_sha256": "ecdc98583f49e2f084ed0e09f0a24918572e43ee1753b102023fea87e1dc1b59",
+      "split": "hidden"
+    }
+  ],
+  "commit": "80b6516acb0936a4c3e75d15fc3885f1d398021f",
+  "dependency_artifact_sha256": null,
+  "environment": {
+    "numba": "0.60.0",
+    "numpy": "1.26.4",
+    "python": "3.12.7",
+    "scipy": "1.13.1",
+    "sympy": "1.14.0"
+  },
+  "environment_lock_sha256": "6ec8b22b577c54bcc8dea06b29da73c51fda2666269a66de8551cd2150e52e10",
+  "generation_command": "python curation_tools/promote_official.py --task ... --checkout ... --environment ...",
+  "gold_source": "pinned_official_checkout",
+  "independent_audit": {
+    "derived_tolerances": {
+      "max_abs": 1e-10,
+      "rmse": 2e-11
+    },
+    "implementation": "scientific.py clean-room formulation (not used for gold generation)",
+    "maximum_max_abs": 1.2434497875801753e-14,
+    "maximum_rmse": 4.618128895236456e-16,
+    "status": "passed"
+  },
+  "lifecycle": "validated",
+  "official_adapter": "verbatim sobiEquity::b2sfca()/c2sfca() applied to the archived ttm_walk travel-time matrix joined with population_50x50 and sobi_hubs RACKS_AMOU",
+  "official_reproduction": {
+    "adapter_sha256": "63c1cdee21063ec66b427eadf8b7ea6a3cdc6bb069f02739ebfd2ec97fe0be93",
+    "clean_checkout_bundle_sha256": [
+      "0f9bc8ba76a32610dc71e1ef14d96c6322505f7d49baebd713e1e05274cba4de",
+      "0f9bc8ba76a32610dc71e1ef14d96c6322505f7d49baebd713e1e05274cba4de"
+    ],
+    "commands": [
+      "<environment>/bin/python curation_tools/official_adapter.py --task 0017 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>"
+    ],
+    "dependency_artifact_sha256": null,
+    "environment": {
+      "numba": "0.60.0",
+      "numpy": "1.26.4",
+      "python": "3.12.7",
+      "scipy": "1.13.1",
+      "sympy": "1.14.0"
+    },
+    "environment_lock_sha256": "6ec8b22b577c54bcc8dea06b29da73c51fda2666269a66de8551cd2150e52e10",
+    "raw_and_normalized_outputs": "curation_reports/official_runs/0017"
+  },
+  "parameter_patch": "JSON parameters and JSON output only; plotting/file-output tails are disabled; pinned numerical statements execute unchanged except the documented SciPy pinv compatibility rule for 0011.",
+  "repository": "https://github.com/paezha/Accessibility-Sobi-Hamilton",
+  "schema_version": 4,
+  "task_id": "scibench_replication_0017"
+}

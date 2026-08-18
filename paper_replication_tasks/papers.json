@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-15",
+  "updated_at": "2026-08-17",
   "status_definitions": {
     "validated": "Formal v4 task validated with official gold and an independent scientific audit.",
     "curator_reproduction": "Selected for curator reproduction but not yet promoted to a formal task.",
@@ -19,11 +19,11 @@
       "build_status": "validated"
     },
     {
-      "task_id": null,
+      "task_id": "scibench_replication_0017",
       "paper_title": "Examining Equity in Accessibility to Bike Share: A Balanced Floating Catchment Area Approach",
       "paper_url": "https://doi.org/10.1016/j.trd.2021.103091",
       "github_url": "https://github.com/paezha/Accessibility-Sobi-Hamilton",
-      "build_status": "curator_reproduction"
+      "build_status": "validated"
     },
     {
       "task_id": null,

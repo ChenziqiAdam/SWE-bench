@@ -660,6 +660,18 @@ _LAMMPS_FORCE_STYLE_YAML_RULES: tuple[tuple[str, str, str], ...] = (
     ("improper-", "ImproperStyle", "test_improper_style"),
 )
 
+# Driver binaries shared by the force-styles YAML suite (see
+# _LAMMPS_FORCE_STYLE_YAML_RULES above). Each one requires a
+# `<testfile.yaml>` positional argument — invoked bare, it just prints its
+# usage message and exits, producing no parseable test output. A generated
+# test that edits one of these drivers' .cpp sources without also
+# registering a ctest (add_test/add_mpi_test) or referencing a YAML fixture
+# leaves no way to invoke it correctly, so it must be treated as
+# unsupported rather than silently run without arguments.
+_LAMMPS_FORCE_STYLE_DRIVER_BINARIES: frozenset[str] = frozenset(
+    binary for _prefix, _ctest_prefix, binary in _LAMMPS_FORCE_STYLE_YAML_RULES
+)
+
 
 def _lammps_force_style_yaml_test(path: str) -> tuple[str, str] | None:
     """Return (ctest_name, driver_binary) for a force-styles YAML fixture path.
@@ -1136,6 +1148,28 @@ def _special_repo_execution_plan(
                     failure_reason="unsupported_generated_test",
                     evidence={**evidence, "unresolved_cpp_target": tuple(cpp_sources)},
                 )
+            if not lammps_ctest_names:
+                # A shared force-styles driver binary (test_pair_style, etc.)
+                # requires a YAML fixture argument; invoking it bare produces
+                # only a usage message, not a parseable test result. Without
+                # a ctest registration or a YAML fixture in this patch,
+                # there's no argument to supply.
+                bare_driver_targets = [
+                    (target, binary) for target, binary in targets
+                    if PurePosixPath(binary).name in _LAMMPS_FORCE_STYLE_DRIVER_BINARIES
+                ]
+                if bare_driver_targets and not lammps_yaml_tests:
+                    return GeneratedTestExecutionPlan(
+                        languages=("cpp",),
+                        paths=selected_paths,
+                        failure_reason="unsupported_generated_test",
+                        evidence={
+                            **evidence,
+                            "unresolved_cpp_target": tuple(
+                                target for target, _binary in bare_driver_targets
+                            ),
+                        },
+                    )
             build_targets = [target for target, _binary in targets]
             if not lammps_ctest_names:
                 selected_commands.extend(binary for _target, binary in targets)

@@ -71,19 +71,39 @@ def _smoke_validate_image(client, image_name: str, command: str) -> tuple[bool, 
         "source /opt/miniconda3/bin/activate && conda activate testbed && "
         f"cd /testbed && {command}"
     )
-    try:
-        client.containers.run(
-            image_name,
-            command=["/bin/bash", "-lc", shell_command],
-            remove=True,
-        )
-        return True, ""
-    except Exception as exc:
-        stderr = getattr(exc, "stderr", b"") or b""
-        if isinstance(stderr, bytes):
-            stderr = stderr.decode(errors="replace")
-        detail = str(stderr).strip() or str(exc)
-        return False, f"post-build validation failed: {detail[-2000:]}"
+    max_attempts = 3
+    for attempt in range(max_attempts):
+        try:
+            client.containers.run(
+                image_name,
+                command=["/bin/bash", "-lc", shell_command],
+                remove=True,
+            )
+            return True, ""
+        except Exception as exc:
+            stderr = getattr(exc, "stderr", b"") or b""
+            if isinstance(stderr, bytes):
+                stderr = stderr.decode(errors="replace")
+            detail = str(stderr).strip() or str(exc)
+            # containers.run(..., remove=True) races the daemon's own
+            # auto-removal against the SDK reading the exit status right
+            # after: the container is already gone by the time it looks,
+            # surfacing as "no such container" even though the smoke command
+            # itself may have run fine. Retry rather than treating this as a
+            # real smoke-test failure.
+            is_transient = "no such container" in detail.lower()
+            if attempt < max_attempts - 1 and is_transient:
+                logger.warning(
+                    "Transient Docker daemon error during smoke validation of "
+                    "%s (attempt %d/%d): %s; retrying",
+                    image_name,
+                    attempt + 1,
+                    max_attempts,
+                    detail[:200],
+                )
+                continue
+            return False, f"post-build validation failed: {detail[-2000:]}"
+    return False, "post-build validation failed: exhausted retries"
 
 
 def validate_buildable(

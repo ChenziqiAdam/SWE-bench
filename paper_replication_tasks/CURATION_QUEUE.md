@@ -9,14 +9,13 @@ receives a task ID only after its official workflow and independent scientific a
 |---|---|---|
 | `arm61/msd-errors` | `scibench_replication_0011` | Seeded random walks, MSD, and OLS/WLS/GLS diffusion estimates |
 | `LinkaiMa/SMW` | `scibench_replication_0014` | SMW forward/backward errors and stability bounds |
+| `paezha/Accessibility-Sobi-Hamilton` | `scibench_replication_0017` | Deterministic BFCA/2SFCA accessibility and level-of-service using the archived travel-time matrix |
 
-Identifier `scibench_replication_0010` is retired and is not reusable.
-
-## Curator reproduction
-
-| Repository | Scope |
-|---|---|
-| `paezha/Accessibility-Sobi-Hamilton` | Deterministic BFCA/2SFCA calculations using the archived travel-time matrix |
+Identifier `scibench_replication_0010` is retired and is not reusable. Identifiers
+`scibench_replication_0015` and `0016` are occupied by the deferred fixed-sparsity
+and energy-TSA candidates below (their prior working files and evidence directories
+predate a stale claim that no `0015`/`0016` ID had been assigned); `0017` was used
+instead for the Accessibility-Sobi-Hamilton task to avoid a collision.
 
 ## Blocked
 

@@ -823,6 +823,49 @@ def test_lammps_test_generation_builds_and_runs_touched_binary(monkeypatch):
     assert "ctest --test-dir build" not in script
 
 
+def test_lammps_test_generation_rejects_bare_force_style_driver(monkeypatch):
+    """A generated edit to a shared force-styles driver's .cpp (e.g.
+    test_pair_style.cpp) without a ctest registration or a YAML fixture has
+    no argument to invoke the driver with — it must be flagged unsupported,
+    not silently run bare (which just prints usage and produces no
+    parseable test output, previously misclassified as
+    no_parseable_test_status)."""
+    patch = """diff --git a/unittest/force-styles/test_pair_style.cpp b/unittest/force-styles/test_pair_style.cpp
+--- a/unittest/force-styles/test_pair_style.cpp
++++ b/unittest/force-styles/test_pair_style.cpp
+@@ -10,3 +10,6 @@
++TEST_F(PairStyleTest, ExtraCase) {}
+"""
+    specs = {
+        "build_after_test_patch": [
+            "cmake -S cmake -B build -D ENABLE_TESTING=ON",
+            "cmake --build build --parallel $(nproc)",
+        ],
+        "test_cmd": ["ctest --test-dir build --output-on-failure"],
+        "test_generation_use_spec_cmd": True,
+    }
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.MAP_REPO_VERSION_TO_SPECS",
+        {"lammps/lammps": {"4887": specs}},
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.get_test_cmds",
+        lambda _instance: specs["test_cmd"],
+    )
+    instance = {
+        "instance_id": "lammps__lammps-4887",
+        "repo": "lammps/lammps",
+        "version": "4887",
+        "base_commit": "abc",
+        "test_patch": "",
+    }
+
+    command = _test_command(instance, patch)
+
+    assert "UNSUPPORTED_GENERATED_TEST" in command
+    assert "build/test_pair_style" not in command
+
+
 def test_rdkit_test_generation_isolates_touched_cpp_target(monkeypatch):
     commands = [
         "ctest --test-dir build -V -R '^graphmolTestsCatch$'",

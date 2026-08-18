@@ -73,3 +73,59 @@ def test_real_build_failure_stays_unbuildable_when_image_missing(monkeypatch, tm
     result = validate_base.validate_buildable(instances, cache_path, max_workers=1)
 
     assert result["demo__repo-1"]["buildable"] is False
+
+
+def test_smoke_validate_retries_transient_no_such_container_race(monkeypatch):
+    calls = []
+
+    class FakeExc(Exception):
+        stderr = b"404 Client Error ...: no such container"
+
+    def fake_run(*args, **kwargs):
+        calls.append(1)
+        if len(calls) < 3:
+            raise FakeExc("no such container")
+        return None
+
+    client = SimpleNamespace(containers=SimpleNamespace(run=fake_run))
+    ok, error = validate_base._smoke_validate_image(client, "demo:latest", "python -c 'import demo'")
+
+    assert ok is True
+    assert error == ""
+    assert len(calls) == 3
+
+
+def test_smoke_validate_raises_after_exhausting_transient_retries(monkeypatch):
+    calls = []
+
+    class FakeExc(Exception):
+        stderr = b"404 Client Error ...: no such container"
+
+    def fake_run(*args, **kwargs):
+        calls.append(1)
+        raise FakeExc("no such container")
+
+    client = SimpleNamespace(containers=SimpleNamespace(run=fake_run))
+    ok, error = validate_base._smoke_validate_image(client, "demo:latest", "python -c 'import demo'")
+
+    assert ok is False
+    assert "no such container" in error.lower()
+    assert len(calls) == 3
+
+
+def test_smoke_validate_does_not_retry_real_failure(monkeypatch):
+    calls = []
+
+    class FakeExc(Exception):
+        stderr = b"ModuleNotFoundError: No module named 'sklearn'"
+
+    def fake_run(*args, **kwargs):
+        calls.append(1)
+        raise FakeExc("import error")
+
+    client = SimpleNamespace(containers=SimpleNamespace(run=fake_run))
+    ok, error = validate_base._smoke_validate_image(client, "demo:latest", "python -c 'import demo'")
+
+    assert ok is False
+    assert "sklearn" in error
+    assert len(calls) == 1

@@ -58,10 +58,16 @@ def fixed_sparsity(case: dict[str, Any]) -> dict[str, Any]:
     return solve_fixed_sparsity(case)
 
 
+def sobi_equity_accessibility(case: dict[str, Any]) -> dict[str, Any]:
+    from curation_tools.sobiEquity_scientific import solve as solve_sobi_equity
+    return solve_sobi_equity(case)
+
+
 SOLVERS = {
     "scibench_replication_0011": random_walk,
     "scibench_replication_0014": smw_stability,
     "scibench_replication_0015": fixed_sparsity,
+    "scibench_replication_0017": sobi_equity_accessibility,
 }
 
 
