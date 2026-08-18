@@ -1,0 +1,153 @@
+{
+  "cases": [
+    {
+      "adapter_sha256": "17fa81798cddfbe7c55036a0e24db6c1b9dd6fdfee4c1f57711bd7f78db08d06",
+      "case_id": "case_01",
+      "checkout_commit": "6da600d95dbcf8a2f6f8424432601e31a243ba5e",
+      "command": "<pinned-environment>/bin/python curation_tools/fixed_sparsity_adapter.py --task 0015 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "b628ea5fef9cc6d04f7446e3f91b7514e689fa464e65db68be09386ab4dd6224",
+      "input_sha256": "4be6f912b0bac2eae09696f79899efc942201a794846eb6f0808b5743554e2ed",
+      "normalized_output_sha256": "4b40ae90a0f3cbf70d3315d0c9b53a8dc74c79eef0f6acbb70b0bbdbac990968",
+      "output_sha256": "4b40ae90a0f3cbf70d3315d0c9b53a8dc74c79eef0f6acbb70b0bbdbac990968",
+      "raw_official_sha256": "4b40ae90a0f3cbf70d3315d0c9b53a8dc74c79eef0f6acbb70b0bbdbac990968",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "17fa81798cddfbe7c55036a0e24db6c1b9dd6fdfee4c1f57711bd7f78db08d06",
+      "case_id": "case_02",
+      "checkout_commit": "6da600d95dbcf8a2f6f8424432601e31a243ba5e",
+      "command": "<pinned-environment>/bin/python curation_tools/fixed_sparsity_adapter.py --task 0015 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "b628ea5fef9cc6d04f7446e3f91b7514e689fa464e65db68be09386ab4dd6224",
+      "input_sha256": "8d2cf6a94da93dda5d81e8679484a7d097cc9616f1f2d928e265024bec3bcc90",
+      "normalized_output_sha256": "69f1cb16412e6a148f30fccf605d970fef5e4cfa89d298517f68dcea70fa8662",
+      "output_sha256": "69f1cb16412e6a148f30fccf605d970fef5e4cfa89d298517f68dcea70fa8662",
+      "raw_official_sha256": "69f1cb16412e6a148f30fccf605d970fef5e4cfa89d298517f68dcea70fa8662",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "17fa81798cddfbe7c55036a0e24db6c1b9dd6fdfee4c1f57711bd7f78db08d06",
+      "case_id": "case_03",
+      "checkout_commit": "6da600d95dbcf8a2f6f8424432601e31a243ba5e",
+      "command": "<pinned-environment>/bin/python curation_tools/fixed_sparsity_adapter.py --task 0015 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "b628ea5fef9cc6d04f7446e3f91b7514e689fa464e65db68be09386ab4dd6224",
+      "input_sha256": "3395e9ce926b83e5d099539108a6c2560405f16a30b8310e9443c90d5a86f872",
+      "normalized_output_sha256": "96e1369fe520291b866a2979307223f2b2f40198ac8f2a24aa77112ea8ee12cf",
+      "output_sha256": "96e1369fe520291b866a2979307223f2b2f40198ac8f2a24aa77112ea8ee12cf",
+      "raw_official_sha256": "96e1369fe520291b866a2979307223f2b2f40198ac8f2a24aa77112ea8ee12cf",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "17fa81798cddfbe7c55036a0e24db6c1b9dd6fdfee4c1f57711bd7f78db08d06",
+      "case_id": "case_01",
+      "checkout_commit": "6da600d95dbcf8a2f6f8424432601e31a243ba5e",
+      "command": "<pinned-environment>/bin/python curation_tools/fixed_sparsity_adapter.py --task 0015 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "b628ea5fef9cc6d04f7446e3f91b7514e689fa464e65db68be09386ab4dd6224",
+      "input_sha256": "646e1e29705a8797dfb4cfeee050aac73dfed55c22f9c958925d7f5e30a306bd",
+      "normalized_output_sha256": "ee644966e704b132209b7d8367eadbfb92e644bffbab6fa9cd983383bed347df",
+      "output_sha256": "ee644966e704b132209b7d8367eadbfb92e644bffbab6fa9cd983383bed347df",
+      "raw_official_sha256": "ee644966e704b132209b7d8367eadbfb92e644bffbab6fa9cd983383bed347df",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "17fa81798cddfbe7c55036a0e24db6c1b9dd6fdfee4c1f57711bd7f78db08d06",
+      "case_id": "case_02",
+      "checkout_commit": "6da600d95dbcf8a2f6f8424432601e31a243ba5e",
+      "command": "<pinned-environment>/bin/python curation_tools/fixed_sparsity_adapter.py --task 0015 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "b628ea5fef9cc6d04f7446e3f91b7514e689fa464e65db68be09386ab4dd6224",
+      "input_sha256": "6760e1f0c01805e522b9980d3e5d1bc06acf50dd9f41b09e7777f4c91e247707",
+      "normalized_output_sha256": "bbcde7f98687cf9e0bc4a116a8b144838b61446c7a45af3d8fe12b65d4f2a7f2",
+      "output_sha256": "bbcde7f98687cf9e0bc4a116a8b144838b61446c7a45af3d8fe12b65d4f2a7f2",
+      "raw_official_sha256": "bbcde7f98687cf9e0bc4a116a8b144838b61446c7a45af3d8fe12b65d4f2a7f2",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "17fa81798cddfbe7c55036a0e24db6c1b9dd6fdfee4c1f57711bd7f78db08d06",
+      "case_id": "case_03",
+      "checkout_commit": "6da600d95dbcf8a2f6f8424432601e31a243ba5e",
+      "command": "<pinned-environment>/bin/python curation_tools/fixed_sparsity_adapter.py --task 0015 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "b628ea5fef9cc6d04f7446e3f91b7514e689fa464e65db68be09386ab4dd6224",
+      "input_sha256": "e44167716a40a15e5c39ffaaf2463b156377079ad820d13568e782e3bb3b30f8",
+      "normalized_output_sha256": "797944e4b444d9ee0b9d09f6e305ab64beaafb91a183e108298511e79e0dab97",
+      "output_sha256": "797944e4b444d9ee0b9d09f6e305ab64beaafb91a183e108298511e79e0dab97",
+      "raw_official_sha256": "797944e4b444d9ee0b9d09f6e305ab64beaafb91a183e108298511e79e0dab97",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "17fa81798cddfbe7c55036a0e24db6c1b9dd6fdfee4c1f57711bd7f78db08d06",
+      "case_id": "case_04",
+      "checkout_commit": "6da600d95dbcf8a2f6f8424432601e31a243ba5e",
+      "command": "<pinned-environment>/bin/python curation_tools/fixed_sparsity_adapter.py --task 0015 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "b628ea5fef9cc6d04f7446e3f91b7514e689fa464e65db68be09386ab4dd6224",
+      "input_sha256": "602ab3d3b1a6b3214ef4a62e15323bd143b6de37c2da7cd3b5d69c079ed36010",
+      "normalized_output_sha256": "ada17ae6d73b32b974fa8d48d02b1a62193e4b056e5747857c450c4be68d3625",
+      "output_sha256": "ada17ae6d73b32b974fa8d48d02b1a62193e4b056e5747857c450c4be68d3625",
+      "raw_official_sha256": "ada17ae6d73b32b974fa8d48d02b1a62193e4b056e5747857c450c4be68d3625",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "17fa81798cddfbe7c55036a0e24db6c1b9dd6fdfee4c1f57711bd7f78db08d06",
+      "case_id": "case_05",
+      "checkout_commit": "6da600d95dbcf8a2f6f8424432601e31a243ba5e",
+      "command": "<pinned-environment>/bin/python curation_tools/fixed_sparsity_adapter.py --task 0015 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "b628ea5fef9cc6d04f7446e3f91b7514e689fa464e65db68be09386ab4dd6224",
+      "input_sha256": "fab2267eb1843974e0dd6d2b62dfe32cddded651516ed9151effcb4091046927",
+      "normalized_output_sha256": "a262e0ea75c7717c048a91ad72cd06234fadbb986439ceea50c058025916ece3",
+      "output_sha256": "a262e0ea75c7717c048a91ad72cd06234fadbb986439ceea50c058025916ece3",
+      "raw_official_sha256": "a262e0ea75c7717c048a91ad72cd06234fadbb986439ceea50c058025916ece3",
+      "split": "hidden"
+    }
+  ],
+  "commit": "6da600d95dbcf8a2f6f8424432601e31a243ba5e",
+  "dependency_artifact_sha256": null,
+  "environment": {
+    "build_platform": "macOS-26.4.1-arm64-arm-64bit",
+    "networkx": "3.0",
+    "numpy": "1.24.2",
+    "python": "3.10.9",
+    "scipy": "1.10.1",
+    "sympy": "1.11.1"
+  },
+  "environment_lock_sha256": "b628ea5fef9cc6d04f7446e3f91b7514e689fa464e65db68be09386ab4dd6224",
+  "gold_source": "pinned_official_checkout",
+  "independent_audit": {
+    "derived_tolerances": {
+      "atol": 1e-10,
+      "comparison": "mixed",
+      "rtol": 1.198843227299967e-06
+    },
+    "implementation": "curation_tools/fixed_sparsity_scientific.py; independent Gaussian sketch, normal-equations row solves, matrix/pattern construction, errors, quantiles, and Theorem 1 bounds",
+    "maximum_absolute_discrepancy": 1.1988432272999671e-15,
+    "maximum_relative_discrepancy": 1.198843227299967e-07,
+    "status": "passed"
+  },
+  "lifecycle": "validated",
+  "notebook_sha256": {
+    "hard_example.ipynb": "07f3532a6c775cefe6c2a16b750b2974ba6c2f3fcb4dcd2b163a503cde66d513",
+    "sparse_recovery.ipynb": "2b89484a821498766daed105a29ca09ceebd137c661d1c284f4568e162c3cd99"
+  },
+  "official_reproduction": {
+    "adapter_sha256": "17fa81798cddfbe7c55036a0e24db6c1b9dd6fdfee4c1f57711bd7f78db08d06",
+    "clean_checkout_bundle_sha256": [
+      "48c8681f29fffd6bba9910bac211b909eddd440dfd852b2019ba399e645b871d",
+      "48c8681f29fffd6bba9910bac211b909eddd440dfd852b2019ba399e645b871d"
+    ],
+    "command": "python curation_tools/build_fixed_sparsity_task.py --checkout-1 <clean-1> --checkout-2 <clean-2> --paper <paper.pdf> --paper-version <version>",
+    "dependency_artifact_sha256": null,
+    "environment_lock_sha256": "b628ea5fef9cc6d04f7446e3f91b7514e689fa464e65db68be09386ab4dd6224",
+    "raw_and_normalized_outputs": "curation_reports/official_runs/0015"
+  },
+  "paper_sha256": "b1f124097fed43903ef37f434904ee140b727b30f593a6a8bb895c42a8ea53cc",
+  "paper_version": "SIAM J. Matrix Anal. Appl., Vol. 47, No. 2, pp. 483-511 (2026), published version, DOI 10.1137/25M1742710",
+  "parameter_patch": "One explicit numpy.random.seed(MT19937) call at the experiment-driver boundary; invalid m<s+2 points are omitted so output JSON remains finite. The sparse_recovery function is extracted and executed unchanged.",
+  "repository": "https://github.com/tchen-research/fixed_sparsity_matrix_approximation",
+  "schema_version": 4,
+  "task_id": "scibench_replication_0015"
+}

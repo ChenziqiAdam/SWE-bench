@@ -1,0 +1,56 @@
+{
+  "candidate": "a_posteriori_tsa_storage",
+  "status": "deferred_runtime_and_independent_audit",
+  "task_id_assigned": false,
+  "repository": "https://github.com/ahilbers/a_posteriori_tsa_storage",
+  "tag": "v.1.0.0",
+  "commit": "c162068f61bafbe640bbd40ee4a47312498ed153",
+  "environment_lock_sha256": "4702612abf4604f2508787973b504e43fe2de573d60c2a01e6019468c887c30d",
+  "calliope_pr_380_sha256": "defc1fae767f3948e084efca6acd2da7487e5cf5f28eb3c765b355bde3a935ae",
+  "time_series_sha256": "49e45b0b4e7678a52151382565f11446660659102f264c81320307022b89d6e3",
+  "historical_stack_verified": {
+    "python": "3.8.20",
+    "calliope": "0.6.7",
+    "cbc": "2.10.13",
+    "pyomo": "6.0.1",
+    "numpy": "1.19.5",
+    "pandas": "1.2.5",
+    "scikit_learn": "0.23.2",
+    "ruamel_yaml": "0.17.21",
+    "pyyaml": "5.4.1",
+    "matplotlib": "3.3.4"
+  },
+  "seed_years_verified": {
+    "0": [1980, 1983, 1983],
+    "1": [2017, 1992, 1988],
+    "2": [1995, 1988, 2002],
+    "3": [2004, 1983, 1988],
+    "4": [1985, 1981, 2003],
+    "5": [2015, 1994, 1996]
+  },
+  "runtime_gate": {
+    "declared_case_seconds": 3600,
+    "declared_total_seconds": 14400,
+    "required_model_runs_per_case": 12,
+    "required_cases": 6,
+    "first_public_planning_solve_completed": false,
+    "first_public_planning_solve_observed_seconds_before_stop": 549,
+    "reason": "The first of 72 dependent model runs remained in CBC after nine minutes. Six planning and six full-chronology operate runs per case cannot be validated within the proposed per-case/total budgets on the audited host."
+  },
+  "scientific_gate": {
+    "independent_solver_neutral_lp_complete": false,
+    "official_vs_independent_all_cases": false,
+    "reason": "No official gold was completed, so solver-dependent D-F trajectories cannot be compared under defensible tolerances. Official gold was not replaced."
+  },
+  "proposed_field_tolerances": {
+    "capacity_totals": {"atol": 0.05, "rtol": 0.0, "units": "GW/GWh"},
+    "unserved_energy": {"atol": 1.0, "rtol": 0.01, "units": "MWh"}
+  },
+  "promotion_gates": {
+    "two_clean_official_hashes": false,
+    "independent_all_cases": false,
+    "runtime_within_budget": false,
+    "reference_score_one": false,
+    "public_memorizer_cap": false
+  }
+}

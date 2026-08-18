@@ -1,0 +1,6 @@
+name: scibench-replication-0014
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12.9
+  - numpy=2.2.3

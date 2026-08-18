@@ -1,0 +1,21 @@
+{
+  "experiments": [
+    {
+      "label": "irregular_sparsity",
+      "matrix": "random_dense",
+      "matvec_counts": [
+        12,
+        24,
+        40
+      ],
+      "n": 48,
+      "pattern": "irregular",
+      "pattern_parameters": [
+        7
+      ],
+      "trials": 16
+    }
+  ],
+  "mode": "curves",
+  "seed": 1512
+}

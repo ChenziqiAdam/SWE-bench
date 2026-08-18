@@ -1,0 +1,7 @@
+name: scibench-replication-0019
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - octave=9.4.0
+  - numpy=1.26.4

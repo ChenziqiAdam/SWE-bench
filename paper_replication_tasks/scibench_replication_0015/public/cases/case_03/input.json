@@ -1,0 +1,10 @@
+{
+  "experiments": [
+    {
+      "k": 6,
+      "label": "paper_hard_coloring"
+    }
+  ],
+  "mode": "hard_coloring",
+  "seed": 1502
+}

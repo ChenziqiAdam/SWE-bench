@@ -1,0 +1,13 @@
+{
+  "hard_coloring": [
+    {
+      "coloring_matvecs": 36,
+      "column_sparsity": 11,
+      "dimension": 36,
+      "gaussian_exact_recovery_threshold": 11,
+      "k": 6,
+      "label": "paper_hard_coloring",
+      "row_sparsity": 11
+    }
+  ]
+}

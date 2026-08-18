@@ -428,7 +428,22 @@ def _openmm_generated_pytest_targets(
     if nodeids and not unknown_class_files:
         return sorted(nodeids), None
     if test_names:
-        return sorted(unknown_class_files or files), " or ".join(sorted(test_names))
+        # `unknown_class_files` (needs a `-k` filter, since its enclosing
+        # class wasn't visible in the diff hunk) can coexist with cleanly
+        # resolved `nodeids` from other files in the same patch. A `-k`
+        # filter is a global substring match applied across every collected
+        # item, so passing both an explicit nodeid and an unrelated `-k`
+        # filter in one pytest invocation would wrongly deselect that
+        # nodeid too. Fold the already-resolved files into the filtered
+        # target list (dropping their nodeid precision down to file-level)
+        # rather than silently discarding them, and OR their test names into
+        # the filter so they still get selected.
+        resolved_files = {nodeid.split("::", 1)[0] for nodeid in nodeids}
+        resolved_names = {nodeid.rsplit("::", 1)[-1] for nodeid in nodeids}
+        return (
+            sorted(unknown_class_files | resolved_files or files),
+            " or ".join(sorted(test_names | resolved_names)),
+        )
     return sorted(files), None
 
 
@@ -524,13 +539,23 @@ def _qgis_isolated_python_command(
     specs: dict,
     generated_patch: str,
 ) -> str | None:
-    """Run only added QGIS unittest methods under the built Python environment."""
-    path = specs.get("test_generation_python_test")
-    if not path:
+    """Run only added QGIS unittest methods under the built Python environment.
+
+    Prefer the curated PR-specific test file (`test_generation_python_test`)
+    when the patch actually touches it, but fall back to whichever other
+    Python test file the patch touches: the model is free to add its
+    regression test anywhere under the QGIS Python test tree, and the
+    curated path is only a hint about how the *original* PR was tested, not
+    a constraint on where a generated test must live. Silently using the
+    curated command regardless of what the patch touched would run an
+    unrelated fixed test and misreport the result.
+    """
+    all_targets = _rdkit_generated_unittest_targets(generated_patch)
+    if not all_targets:
         return None
-    names = _rdkit_generated_unittest_targets(generated_patch).get(path)
-    if not names:
-        return None
+    curated_path = specs.get("test_generation_python_test")
+    path = curated_path if curated_path in all_targets else next(iter(all_targets))
+    names = all_targets[path]
     return (
         "QGIS_PREFIX_PATH=/testbed/build/output "
         "LD_LIBRARY_PATH=/testbed/build/output/lib:${LD_LIBRARY_PATH:-} "
@@ -1021,10 +1046,20 @@ def _special_repo_execution_plan(
                 for prefix in ("TestCuda", "TestOpenCL", "TestCpu", "TestReference")
                 if target.startswith(prefix)
             }
+            # Match on an exact "<platform-prefix>Family" reconstruction
+            # rather than a bare `target.endswith(family)` substring check:
+            # families with overlapping suffixes coexist in this dataset
+            # (TestReferenceNonbondedForce vs
+            # TestReferenceCustomNonbondedForce both end with
+            # "NonbondedForce"), so an unanchored endswith can silently pick
+            # a structurally different binary than the one the header
+            # actually belongs to.
             openmm_header_targets[path] = next(
                 (
                     target for target in configured_targets
-                    if target.endswith(family)
+                    if target in {prefix + family for prefix in (
+                        "TestCuda", "TestOpenCL", "TestCpu", "TestReference"
+                    )}
                 ),
                 (
                     next(iter(platform_prefixes)) + family
@@ -1414,6 +1449,15 @@ def _test_command(instance: dict, generated_patch: str) -> str:
         isolated_command = _qgis_isolated_python_command(specs, generated_patch)
         if isolated_command:
             return isolated_command
+        # QGIS has no C++ dispatch branch in `_special_repo_execution_plan`
+        # (unlike LAMMPS/RDKit/OpenMM), and its curated `test_cmd` targets a
+        # fixed CTest binary picked for the *original* PR's own test, not
+        # whatever the model actually wrote. Falling through to that curated
+        # command for a patch with no discoverable Python unittest target
+        # (e.g. a C++ .cpp addition) would silently run an unrelated test
+        # and misreport the result as a real pass/fail instead of surfacing
+        # that this generated test can't be safely evaluated.
+        return f"echo {UNSUPPORTED_GENERATED_TEST} && false"
     raw = commands[0] if len(commands) == 1 else None
     if raw and specs.get("test_generation_use_spec_cmd"):
         return raw

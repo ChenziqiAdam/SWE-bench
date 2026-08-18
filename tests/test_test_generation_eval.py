@@ -1055,7 +1055,11 @@ def test_openmm_source_spec_requires_generated_pytest(monkeypatch):
     assert "fixed source oracle" not in command
 
 
-def test_qgis_test_generation_keeps_fixed_ctest_command(monkeypatch):
+def test_qgis_test_generation_rejects_unsupported_cpp_only_patch(monkeypatch):
+    # QGIS has no C++ dispatch branch (unlike LAMMPS/RDKit/OpenMM): a patch
+    # that only touches a .cpp test source has no safe way to be retargeted,
+    # so it must fail closed instead of silently running the curated
+    # fixed ctest command for an unrelated original-PR test.
     fixed = "ctest --test-dir build -V -R '^PyQgsRasterColorRampShader$'"
     monkeypatch.setattr(
         "swebench.eval_pipeline.test_generation_eval.MAP_REPO_VERSION_TO_SPECS",
@@ -1072,20 +1076,70 @@ def test_qgis_test_generation_keeps_fixed_ctest_command(monkeypatch):
         "swebench.eval_pipeline.test_generation_eval.get_test_cmds",
         lambda _instance: [fixed],
     )
-    patch = """diff --git a/tests/src/python/test_qgsrastercolorrampshader.py b/tests/src/python/test_qgsrastercolorrampshader.py
---- a/tests/src/python/test_qgsrastercolorrampshader.py
-+++ b/tests/src/python/test_qgsrastercolorrampshader.py
-@@ -1 +1,2 @@
- pass
-+def test_regression(): pass
+    patch = """diff --git a/tests/src/analysis/testqgsrastercolorrampshader.cpp b/tests/src/analysis/testqgsrastercolorrampshader.cpp
+--- a/tests/src/analysis/testqgsrastercolorrampshader.cpp
++++ b/tests/src/analysis/testqgsrastercolorrampshader.cpp
+@@ -1,3 +1,6 @@
+ class TestQgsRasterColorRampShader : public QObject
+ {
++  private slots:
++    void regression() {}
+ };
 """
 
     command = _test_command(
         {"repo": "qgis/QGIS", "version": "35852", "test_patch": ""}, patch
     )
 
-    assert command == fixed
-    assert "test_qgsrastercolorrampshader.py" not in command
+    assert command == "echo UNSUPPORTED_GENERATED_TEST && false"
+
+
+def test_qgis_test_generation_runs_python_test_file_outside_curated_path(monkeypatch):
+    # The curated `test_generation_python_test` names the file the
+    # *original* PR's own test lived in; the model may legitimately write
+    # its regression test in a different Python test file. That file must
+    # still be run directly instead of silently falling back to the fixed
+    # curated ctest command for an unrelated test.
+    fixed = "ctest --test-dir build -V -R '^PyQgsRasterColorRampShader$'"
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.MAP_REPO_VERSION_TO_SPECS",
+        {
+            "qgis/QGIS": {
+                "35852": {
+                    "test_cmd": [fixed],
+                    "test_generation_use_spec_cmd": True,
+                    "test_generation_python_test": (
+                        "tests/src/python/test_qgsrastercolorrampshader.py"
+                    ),
+                }
+            }
+        },
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.get_test_cmds",
+        lambda _instance: [fixed],
+    )
+    path = "tests/src/python/test_qgsotherfile.py"
+    patch = f"""diff --git a/{path} b/{path}
+--- a/{path}
++++ b/{path}
+@@ -10,6 +10,9 @@ class TestQgsOtherFile(unittest.TestCase):
+
+         pass
+
++    def test_regression(self):
++        pass
++
+"""
+
+    command = _test_command(
+        {"repo": "qgis/QGIS", "version": "35852", "test_patch": ""}, patch
+    )
+
+    assert "ctest" not in command
+    assert command.endswith(
+        f"/testbed/{path} TestQgsOtherFile.test_regression"
+    )
 
 
 def test_qgis_test_generation_isolates_added_unittest_method(monkeypatch):
@@ -1161,6 +1215,39 @@ def test_openmm_test_generation_keeps_definition_scope_for_added_body_lines():
     )
 
 
+def test_openmm_test_generation_keeps_resolved_nodeid_from_other_file():
+    # A patch touching two wrapper test files: one added method resolves to
+    # a full nodeid (class visible in the diff hunk context), the other's
+    # enclosing class isn't visible in its hunk header. The first file's
+    # resolved nodeid must not be silently dropped just because a second
+    # file needs a `-k` filter.
+    patch = """diff --git a/wrappers/python/tests/TestForceA.py b/wrappers/python/tests/TestForceA.py
+--- a/wrappers/python/tests/TestForceA.py
++++ b/wrappers/python/tests/TestForceA.py
+@@ -1,3 +1,6 @@
+ import unittest
+
++def test_regression_a():
++    assert True
++
+diff --git a/wrappers/python/tests/TestForceB.py b/wrappers/python/tests/TestForceB.py
+--- a/wrappers/python/tests/TestForceB.py
++++ b/wrappers/python/tests/TestForceB.py
+@@ -55,6 +55,9 @@ def helper():
+
+         self.assertTrue(True)
+
++    def test_regression_b(self):
++        self.assertTrue(True)
++
+"""
+
+    targets, pytest_filter = _openmm_generated_pytest_targets(patch)
+
+    assert targets == ["TestForceA.py", "TestForceB.py"]
+    assert pytest_filter == "test_regression_a or test_regression_b"
+
+
 def test_openmm_shared_header_cpp_test_targets_reference_wrapper():
     # OpenMM's per-force/integrator C++ tests are shared header files
     # (tests/TestX.h) included by a pre-existing TestReferenceX.cpp wrapper
@@ -1178,6 +1265,35 @@ def test_openmm_shared_header_cpp_test_targets_reference_wrapper():
 
     assert plan.failure_reason is None
     assert plan.paths == ("tests/TestNonbondedForce.h",)
+    assert plan.build_targets == ("TestReferenceNonbondedForce",)
+    assert plan.commands == (
+        "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
+        "OPENMM_PLUGIN_DIR=$PWD/build ./build/TestReferenceNonbondedForce",
+    )
+
+
+def test_openmm_shared_header_target_match_is_exact_not_suffix():
+    # `TestReferenceCustomNonbondedForce` and `TestReferenceNonbondedForce`
+    # both end with "NonbondedForce"; an unanchored `endswith` match could
+    # pick the wrong (structurally different) binary for a header patch
+    # targeting the plain NonbondedForce family. Verify the Custom variant,
+    # listed first, is not mistakenly selected.
+    patch = """diff --git a/tests/TestNonbondedForce.h b/tests/TestNonbondedForce.h
+--- a/tests/TestNonbondedForce.h
++++ b/tests/TestNonbondedForce.h
+@@ -1 +1,2 @@
++void testRegression() {}
+"""
+    commands = [
+        "cmake --build build --target TestReferenceCustomNonbondedForce",
+        "./build/TestReferenceCustomNonbondedForce",
+        "cmake --build build --target TestReferenceNonbondedForce",
+        "./build/TestReferenceNonbondedForce",
+    ]
+
+    plan = _special_repo_execution_plan({"repo": "openmm/openmm"}, patch, commands)
+
+    assert plan.failure_reason is None
     assert plan.build_targets == ("TestReferenceNonbondedForce",)
     assert plan.commands == (
         "LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "

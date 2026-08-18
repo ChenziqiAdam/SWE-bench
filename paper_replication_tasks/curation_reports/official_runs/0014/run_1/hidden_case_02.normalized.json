@@ -1,0 +1,26 @@
+{
+  "backward_error_mean": [
+    0.00015599173757667535
+  ],
+  "backward_full_bound": [
+    0.0020000073040861406
+  ],
+  "backward_simplified_expression": [
+    0.0020000239999999996
+  ],
+  "epsilon_1": [
+    9.999999999999999e-10
+  ],
+  "epsilon_2": [
+    2.9999999999999996e-09
+  ],
+  "forward_error_mean": [
+    9.663803601543663e-10
+  ],
+  "forward_full_bound": [
+    4.007161103042096e-09
+  ],
+  "forward_simplified_expression": [
+    1.800000000000008e-08
+  ]
+}

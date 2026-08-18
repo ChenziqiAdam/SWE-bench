@@ -1,0 +1,18 @@
+name: scibench-replication-0016
+channels:
+  - conda-forge
+subdir: osx-64
+dependencies:
+  - python=3.8.20
+  - coin-or-cbc=2.10.13
+  - numpy=1.19.5
+  - pandas=1.2.5
+  - scipy=1.6.3
+  - scikit-learn=0.23.2
+  - pyyaml=5.4.1
+  - matplotlib=3.3.4
+  - pip=24.0
+  - pip:
+      - calliope==0.6.7
+      - pyomo==6.0.1
+      - ruamel.yaml==0.17.21

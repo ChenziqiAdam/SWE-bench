@@ -1,0 +1,54 @@
+{
+  "candidate": "RalfZimmermannSDU/StiefelCurvatureSIMAX",
+  "commit": "1dad75cf55f0f688d59b61e0d9a58b61779efe9f",
+  "conclusion": {
+    "task_id": "scibench_replication_0019",
+    "formal_task_created": true,
+    "reason": "The repository ships four self-contained MATLAB functions computing sectional curvature under the paper's four metrics (Stiefel canonical, Stiefel Euclidean, Grassmann, SO(n)). All four use only core-language operations (matrix products, trace, Frobenius norm) with no toolbox dependency, no RNG, and no external data, so the core method reproduces exactly from a pinned checkout under GNU Octave (no local MATLAB license required).",
+    "status": "curator_reproduction_passed"
+  },
+  "language_audit": {
+    "language": "MATLAB",
+    "note": "First MATLAB/Octave-based task in this benchmark. No local MATLAB license was available, so GNU Octave substitutes as the execution engine.",
+    "toolbox_audit": "Verified via full read of all 8 repository files (4 seccurv_*.m formula functions, 3 script_curvature_SIMAX_exp4{1,2,3}.m experiment drivers, README.md): only core-language calls are used (zeros, linspace, size, norm(...,'fro'), trace, rand, plus plotting/display calls in the experiment scripts, which are not exercised by the task). No Optimization/Statistics/Symbolic Math Toolbox or any other addon-only function appears anywhere.",
+    "curator_octave_version_used": "9.4.0 (conda-forge, osx-arm64)",
+    "version_deviation_reason": "conda-forge's octave=7.3.0 build pulls an unsatisfiable qscintilla2/python dependency chain (GUI-only component); 9.4.0 solves cleanly and is core-language compatible for the sole purpose used here (jsondecode/jsonencode plus matrix arithmetic). All four seccurv_*.m functions were cross-checked against an independent NumPy reimplementation (curation_tools/stiefelcurv_scientific.py) built directly from the paper's Section 3 equations: agreement to machine epsilon (max abs discrepancy 2.22e-16) across two independent clean checkouts and 8 test cases, confirming the Octave 9.4.0 substitution reproduces MATLAB's own evaluation exactly for this code."
+  },
+  "scope_decision": {
+    "in_scope": "seccurv_Stiefel_canon.m, seccurv_Stiefel_euclid.m, seccurv_Grassmann.m, and seccurv_SOn.m called verbatim on curator-constructed tangent-vector coordinate matrices matching the configurations used in script_curvature_SIMAX_exp41.m (Section 4.1, Figure 1: fixed n=10 rank-increase family) and script_curvature_SIMAX_exp43.m (Section 4.3, Figures 3-4: DDVV-inequality matrices at p=4,n=8).",
+    "out_of_scope": "script_curvature_SIMAX_exp42.m (Section 4.2, Figure 2): calls rand(2*p) with no rng(...) or rand('seed',...) call anywhere in the repository, so results are not bit-reproducible without modifying official code (which every prior task in this benchmark avoids). It is also the repository's only runtime/budget risk: at paper settings (runs=100, max_dim=1000) matrices grow to 2000x2000 and the README itself warns of long computation times; the script additionally blocks on an interactive input() prompt for runs/max_dim, incompatible with a non-interactive harness."
+  },
+  "repository_hashes": {
+    "seccurv_Stiefel_canon.m": "bcf921bec55711ae21890e54e57efcaabceeeb708990c1a561d64d621cd30693",
+    "seccurv_Stiefel_euclid.m": "6b00f2426f6762e570ed5b312ce79061b0f8fe40e8b598acdc467f5c2087db0c",
+    "seccurv_Grassmann.m": "cc28a7de1cf68e718e3a9138ac99c1f3b4acdfc57062bf19dd186ae3256c278c",
+    "seccurv_SOn.m": "8a9997320bde51645a7247c304bda4df3262037f9cce9735c879046303fe35cb",
+    "script_curvature_SIMAX_exp41.m": "558befff4bb3d418a0517fccadf0739c99ca36ec79e54bd2d07339f1a243c466",
+    "script_curvature_SIMAX_exp42.m": "c3086b7c7f72e03a4837a480109c9155d696725551033f67b9b2d4c404d929cf",
+    "script_curvature_SIMAX_exp43.m": "8d0f884ec6d13a56134bdd147e028dffe0e427b4aad9da150436cc3e779e8b45"
+  },
+  "data_inventory": {
+    "note": "No external data files. All experiment inputs are constructed in-script from fixed dimensions and closed-form parametrized matrices."
+  },
+  "paper_audit": {
+    "source": "arXiv:2403.01879v3 (open access; SIAM published version at DOI 10.1137/24M1655755 confirmed to match title/authors/abstract)",
+    "paper_sha256": "4699a7ca940b385fec7068c5f8fdf9f238db482442b86f24c3e99243965eb704",
+    "redaction_check": "Full 29-page read confirms no MATLAB/Octave code listings, pseudocode blocks, or algorithm boxes anywhere in the paper (including Section 4 Numerical Experiments); all content is mathematical notation and plotted results. No GitHub repository citation exists in the paper to evaluate under the citation carve-out. Per the current masking policy, the full paper PDF ships as-is; no redaction required."
+  },
+  "reproduction_evidence": {
+    "public_case_stiefel_canonical_rank_increase_n10_u0.3": {"seccurv": 0.5530047975759615},
+    "hidden_case_grassmann_orthogonal_pair": {"seccurv": 0.0},
+    "hidden_case_so_n_generic_pair": {"seccurv": 0.5},
+    "determinism": {
+      "repeat_run_same_checkout_digest_match": true,
+      "cross_checkout_digest_match": true,
+      "clean_checkout_bundle_sha256": "a23a46657698f963a18e3108c373a0aa71c4fb60ecbaa6e85cd1f71877b6bd08",
+      "digest_input": "all 8 public+hidden case outputs, two independent fresh checkouts of commit 1dad75cf"
+    },
+    "independent_audit_maximum_absolute_discrepancy": 2.220446049250313e-16,
+    "independent_audit_maximum_relative_discrepancy": 5.7717588157169e-16,
+    "runtime_seconds_per_case": 0.4,
+    "runtime_budget_risk": "none; orders of magnitude under any budget gate used for other candidates"
+  },
+  "schema_version": 1
+}

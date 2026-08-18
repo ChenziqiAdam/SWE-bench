@@ -1,0 +1,43 @@
+{
+  "experiments": [
+    {
+      "label": "figure_2_tridiagonal_inverse",
+      "matrix": "tridiagonal_inverse",
+      "matvec_counts": [
+        1,
+        1,
+        2,
+        2,
+        4,
+        6,
+        8,
+        12,
+        18,
+        26,
+        37,
+        54,
+        78,
+        112,
+        162,
+        233,
+        336,
+        483,
+        695,
+        1001
+      ],
+      "n": 1000,
+      "pattern": "banded",
+      "pattern_parameters": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "trials": 20
+    }
+  ],
+  "mode": "curves",
+  "seed": 1500
+}

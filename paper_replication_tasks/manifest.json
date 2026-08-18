@@ -117,6 +117,35 @@
         "task.md": "898787b37d34b844b264b2aabc52fd82ce3eca752d1994d6ec737f576bf612bf"
       },
       "task_id": "scibench_replication_0015"
+    },
+    {
+      "hidden_files": {
+        "cases/case_01/input.json": "33c42bfcd4d91a1d3463d9724d92298f1ea522cc189c9d257f7324d19a150d41",
+        "cases/case_01/output.json": "9907ffd5aab61312fb47cc81636d794c48ced15aea17498c81467b35c4727998",
+        "cases/case_02/input.json": "75cd0fd32ab753291689545198c66e5cb456ca36fadf06d2c1653ff760c3b16c",
+        "cases/case_02/output.json": "a03a44160ddc8d1d3c7a82f7e059f6cbb860e8268adebc3c37aaeca783be988c",
+        "cases/case_03/input.json": "c033c7ff721c6b0fd020dc549636022ec80e1181d436a3453e8d47c36afe261e",
+        "cases/case_03/output.json": "700dc9064fa2b271438772be6a43059dc746242c02ac429f3f85f36cf9fab814",
+        "cases/case_04/input.json": "e3bad552c3175b0f7774efdacc606ebbf29ba0f521d7458c251a14f0209ad7cd",
+        "cases/case_04/output.json": "7c44d2ed49436fc176d12f2ee616242830d4ae8b2632913da9fdf53d39038fef",
+        "cases/case_05/input.json": "cf4ea30535397d356e5a984170687cd4d37a632d78242904c8bcdc7e3b4da254",
+        "cases/case_05/output.json": "54a71fedfbd13f5648b002ca8e3f138cf8fcb8f49a99902fea2e739aa5c23806",
+        "provenance.json": "d7cc6cd4fcc4d135f77ae8a9a139aef968161134cde7b5f479215dd91975679d",
+        "tolerances.json": "784aa36ffc88495d6072959e21148926e280fc3387d8fb1344ba4c6bb544871f"
+      },
+      "lifecycle": "validated",
+      "public_files": {
+        "cases/case_01/input.json": "a34c952b60f400e2f139e71a723cbc93e01327b01f806da415c29c7cbe1194f3",
+        "cases/case_01/output.json": "766fd26a652d6ade50e0e1066321b663a2f50224f1c5e1f0fad4cf64d73c0c07",
+        "cases/case_02/input.json": "dfcb8363a6ba0e195e65c1b50f1c566852f156e8e28f4a7f22d60d7a31b92252",
+        "cases/case_02/output.json": "f883c02031657f4070f9e7dd61fe1c7a63bb9829bd5e8b129eddcf01c718d940",
+        "cases/case_03/input.json": "bc7f42f186d6cb8705330e11a6eb8b16f655ba3da0c47e157452fd741ebb44a8",
+        "cases/case_03/output.json": "232555309a86c429bf530bd622b0d3b2dfa4ef82f3bdea0d6742ced1ce59e847",
+        "interface.schema.json": "a4a6c3af8828ecac3278f1f0647c4327474c5d59eedad5c6ee182659e99a058d",
+        "paper.pdf": "4699a7ca940b385fec7068c5f8fdf9f238db482442b86f24c3e99243965eb704",
+        "task.md": "6c5bc05e31ae71dc9becc819e03ae2d601f8b828f0753ced9f6459ec408fa9f1"
+      },
+      "task_id": "scibench_replication_0019"
     }
   ]
 }

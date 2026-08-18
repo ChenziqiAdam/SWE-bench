@@ -1,0 +1,152 @@
+{
+  "cases": [
+    {
+      "adapter_sha256": "50713d46ffeff329c58bc7571a1cde6c970739bd2944b0fe1ea548a869f45402",
+      "case_id": "case_01",
+      "checkout_commit": "1dad75cf55f0f688d59b61e0d9a58b61779efe9f",
+      "command": "<pinned-environment>/bin/python curation_tools/stiefelcurv_adapter.py --task 0019 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "438ed4ae0883e7d7c9e9609e6d30b51de257a60e300facaf87439730b31ae77f",
+      "input_sha256": "a34c952b60f400e2f139e71a723cbc93e01327b01f806da415c29c7cbe1194f3",
+      "normalized_output_sha256": "766fd26a652d6ade50e0e1066321b663a2f50224f1c5e1f0fad4cf64d73c0c07",
+      "output_sha256": "766fd26a652d6ade50e0e1066321b663a2f50224f1c5e1f0fad4cf64d73c0c07",
+      "raw_official_sha256": "766fd26a652d6ade50e0e1066321b663a2f50224f1c5e1f0fad4cf64d73c0c07",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "50713d46ffeff329c58bc7571a1cde6c970739bd2944b0fe1ea548a869f45402",
+      "case_id": "case_02",
+      "checkout_commit": "1dad75cf55f0f688d59b61e0d9a58b61779efe9f",
+      "command": "<pinned-environment>/bin/python curation_tools/stiefelcurv_adapter.py --task 0019 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "438ed4ae0883e7d7c9e9609e6d30b51de257a60e300facaf87439730b31ae77f",
+      "input_sha256": "dfcb8363a6ba0e195e65c1b50f1c566852f156e8e28f4a7f22d60d7a31b92252",
+      "normalized_output_sha256": "f883c02031657f4070f9e7dd61fe1c7a63bb9829bd5e8b129eddcf01c718d940",
+      "output_sha256": "f883c02031657f4070f9e7dd61fe1c7a63bb9829bd5e8b129eddcf01c718d940",
+      "raw_official_sha256": "f883c02031657f4070f9e7dd61fe1c7a63bb9829bd5e8b129eddcf01c718d940",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "50713d46ffeff329c58bc7571a1cde6c970739bd2944b0fe1ea548a869f45402",
+      "case_id": "case_03",
+      "checkout_commit": "1dad75cf55f0f688d59b61e0d9a58b61779efe9f",
+      "command": "<pinned-environment>/bin/python curation_tools/stiefelcurv_adapter.py --task 0019 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "438ed4ae0883e7d7c9e9609e6d30b51de257a60e300facaf87439730b31ae77f",
+      "input_sha256": "bc7f42f186d6cb8705330e11a6eb8b16f655ba3da0c47e157452fd741ebb44a8",
+      "normalized_output_sha256": "232555309a86c429bf530bd622b0d3b2dfa4ef82f3bdea0d6742ced1ce59e847",
+      "output_sha256": "232555309a86c429bf530bd622b0d3b2dfa4ef82f3bdea0d6742ced1ce59e847",
+      "raw_official_sha256": "232555309a86c429bf530bd622b0d3b2dfa4ef82f3bdea0d6742ced1ce59e847",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "50713d46ffeff329c58bc7571a1cde6c970739bd2944b0fe1ea548a869f45402",
+      "case_id": "case_01",
+      "checkout_commit": "1dad75cf55f0f688d59b61e0d9a58b61779efe9f",
+      "command": "<pinned-environment>/bin/python curation_tools/stiefelcurv_adapter.py --task 0019 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "438ed4ae0883e7d7c9e9609e6d30b51de257a60e300facaf87439730b31ae77f",
+      "input_sha256": "33c42bfcd4d91a1d3463d9724d92298f1ea522cc189c9d257f7324d19a150d41",
+      "normalized_output_sha256": "9907ffd5aab61312fb47cc81636d794c48ced15aea17498c81467b35c4727998",
+      "output_sha256": "9907ffd5aab61312fb47cc81636d794c48ced15aea17498c81467b35c4727998",
+      "raw_official_sha256": "9907ffd5aab61312fb47cc81636d794c48ced15aea17498c81467b35c4727998",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "50713d46ffeff329c58bc7571a1cde6c970739bd2944b0fe1ea548a869f45402",
+      "case_id": "case_02",
+      "checkout_commit": "1dad75cf55f0f688d59b61e0d9a58b61779efe9f",
+      "command": "<pinned-environment>/bin/python curation_tools/stiefelcurv_adapter.py --task 0019 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "438ed4ae0883e7d7c9e9609e6d30b51de257a60e300facaf87439730b31ae77f",
+      "input_sha256": "75cd0fd32ab753291689545198c66e5cb456ca36fadf06d2c1653ff760c3b16c",
+      "normalized_output_sha256": "a03a44160ddc8d1d3c7a82f7e059f6cbb860e8268adebc3c37aaeca783be988c",
+      "output_sha256": "a03a44160ddc8d1d3c7a82f7e059f6cbb860e8268adebc3c37aaeca783be988c",
+      "raw_official_sha256": "a03a44160ddc8d1d3c7a82f7e059f6cbb860e8268adebc3c37aaeca783be988c",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "50713d46ffeff329c58bc7571a1cde6c970739bd2944b0fe1ea548a869f45402",
+      "case_id": "case_03",
+      "checkout_commit": "1dad75cf55f0f688d59b61e0d9a58b61779efe9f",
+      "command": "<pinned-environment>/bin/python curation_tools/stiefelcurv_adapter.py --task 0019 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "438ed4ae0883e7d7c9e9609e6d30b51de257a60e300facaf87439730b31ae77f",
+      "input_sha256": "c033c7ff721c6b0fd020dc549636022ec80e1181d436a3453e8d47c36afe261e",
+      "normalized_output_sha256": "700dc9064fa2b271438772be6a43059dc746242c02ac429f3f85f36cf9fab814",
+      "output_sha256": "700dc9064fa2b271438772be6a43059dc746242c02ac429f3f85f36cf9fab814",
+      "raw_official_sha256": "700dc9064fa2b271438772be6a43059dc746242c02ac429f3f85f36cf9fab814",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "50713d46ffeff329c58bc7571a1cde6c970739bd2944b0fe1ea548a869f45402",
+      "case_id": "case_04",
+      "checkout_commit": "1dad75cf55f0f688d59b61e0d9a58b61779efe9f",
+      "command": "<pinned-environment>/bin/python curation_tools/stiefelcurv_adapter.py --task 0019 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "438ed4ae0883e7d7c9e9609e6d30b51de257a60e300facaf87439730b31ae77f",
+      "input_sha256": "e3bad552c3175b0f7774efdacc606ebbf29ba0f521d7458c251a14f0209ad7cd",
+      "normalized_output_sha256": "7c44d2ed49436fc176d12f2ee616242830d4ae8b2632913da9fdf53d39038fef",
+      "output_sha256": "7c44d2ed49436fc176d12f2ee616242830d4ae8b2632913da9fdf53d39038fef",
+      "raw_official_sha256": "7c44d2ed49436fc176d12f2ee616242830d4ae8b2632913da9fdf53d39038fef",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "50713d46ffeff329c58bc7571a1cde6c970739bd2944b0fe1ea548a869f45402",
+      "case_id": "case_05",
+      "checkout_commit": "1dad75cf55f0f688d59b61e0d9a58b61779efe9f",
+      "command": "<pinned-environment>/bin/python curation_tools/stiefelcurv_adapter.py --task 0019 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "438ed4ae0883e7d7c9e9609e6d30b51de257a60e300facaf87439730b31ae77f",
+      "input_sha256": "cf4ea30535397d356e5a984170687cd4d37a632d78242904c8bcdc7e3b4da254",
+      "normalized_output_sha256": "54a71fedfbd13f5648b002ca8e3f138cf8fcb8f49a99902fea2e739aa5c23806",
+      "output_sha256": "54a71fedfbd13f5648b002ca8e3f138cf8fcb8f49a99902fea2e739aa5c23806",
+      "raw_official_sha256": "54a71fedfbd13f5648b002ca8e3f138cf8fcb8f49a99902fea2e739aa5c23806",
+      "split": "hidden"
+    }
+  ],
+  "commit": "1dad75cf55f0f688d59b61e0d9a58b61779efe9f",
+  "dependency_artifact_sha256": null,
+  "environment": {
+    "build_platform": "macOS-26.4.1-arm64-arm-64bit",
+    "octave": "9.4.0",
+    "python": "3.12"
+  },
+  "environment_lock_sha256": "438ed4ae0883e7d7c9e9609e6d30b51de257a60e300facaf87439730b31ae77f",
+  "gold_source": "pinned_official_checkout",
+  "independent_audit": {
+    "derived_tolerances": {
+      "atol": 1e-10,
+      "comparison": "mixed",
+      "rtol": 1e-08
+    },
+    "implementation": "curation_tools/stiefelcurv_scientific.py; independent NumPy reimplementation of the four sectional-curvature formulas (Stiefel canonical, Stiefel Euclidean, Grassmann, SO(n)) from the paper's Section 3 equations",
+    "maximum_absolute_discrepancy": 2.220446049250313e-16,
+    "maximum_relative_discrepancy": 5.7717588157169e-16,
+    "status": "passed"
+  },
+  "lifecycle": "validated",
+  "official_reproduction": {
+    "adapter_sha256": "50713d46ffeff329c58bc7571a1cde6c970739bd2944b0fe1ea548a869f45402",
+    "clean_checkout_bundle_sha256": [
+      "a23a46657698f963a18e3108c373a0aa71c4fb60ecbaa6e85cd1f71877b6bd08",
+      "a23a46657698f963a18e3108c373a0aa71c4fb60ecbaa6e85cd1f71877b6bd08"
+    ],
+    "command": "python curation_tools/build_stiefelcurv_task.py --checkout-1 <clean-1> --checkout-2 <clean-2> --paper <paper.pdf> --paper-version <version>",
+    "dependency_artifact_sha256": null,
+    "environment_lock_sha256": "438ed4ae0883e7d7c9e9609e6d30b51de257a60e300facaf87439730b31ae77f",
+    "raw_and_normalized_outputs": "curation_reports/official_runs/0019"
+  },
+  "official_source_sha256": {
+    "seccurv_Grassmann.m": "cc28a7de1cf68e718e3a9138ac99c1f3b4acdfc57062bf19dd186ae3256c278c",
+    "seccurv_SOn.m": "8a9997320bde51645a7247c304bda4df3262037f9cce9735c879046303fe35cb",
+    "seccurv_Stiefel_canon.m": "bcf921bec55711ae21890e54e57efcaabceeeb708990c1a561d64d621cd30693",
+    "seccurv_Stiefel_euclid.m": "6b00f2426f6762e570ed5b312ce79061b0f8fe40e8b598acdc467f5c2087db0c"
+  },
+  "paper_sha256": "4699a7ca940b385fec7068c5f8fdf9f238db482442b86f24c3e99243965eb704",
+  "paper_version": "arXiv:2403.01879v3, math.NA, published as SIAM J. Matrix Anal. Appl. Vol. 46 (2025), DOI 10.1137/24M1655755",
+  "parameter_patch": "None: the four pinned seccurv_*.m functions are called verbatim with curator-constructed input matrices matching the paper's own Figure 1/3/4 configurations plus independently designed hidden regimes; the stochastic Figure 2 experiment (script_curvature_SIMAX_exp42.m, unseeded rand(), no rng() call anywhere in the repository) is out of scope because it is not bit-reproducible without modifying official code.",
+  "repository": "https://github.com/RalfZimmermannSDU/StiefelCurvatureSIMAX",
+  "schema_version": 4,
+  "task_id": "scibench_replication_0019"
+}

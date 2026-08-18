@@ -1,0 +1,22 @@
+{
+  "experiments": [
+    {
+      "k": 3,
+      "label": "growth_k_3"
+    },
+    {
+      "k": 5,
+      "label": "growth_k_5"
+    },
+    {
+      "k": 8,
+      "label": "growth_k_8"
+    },
+    {
+      "k": 12,
+      "label": "growth_k_12"
+    }
+  ],
+  "mode": "hard_coloring",
+  "seed": 1515
+}

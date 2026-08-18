@@ -1,0 +1,65 @@
+{
+  "candidate": "paezha/Accessibility-Sobi-Hamilton",
+  "commit": "80b6516acb0936a4c3e75d15fc3885f1d398021f",
+  "conclusion": {
+    "task_id": "scibench_replication_0017",
+    "formal_task_created": true,
+    "reason": "The companion R data package sobiEquity ships the archived travel-time matrix and all supporting inputs used by the paper's central BFCA/2SFCA accessibility calculations. b2sfca() and c2sfca() are deterministic dplyr table computations over that archived data with no RNG and no runtime geospatial routing, so the core method reproduces exactly from a pinned checkout.",
+    "status": "curator_reproduction_passed"
+  },
+  "language_audit": {
+    "language": "R",
+    "note": "First R-based task in this benchmark. Repository is an R research compendium (Accessibility-Sobi-Hamilton.Rproj) containing a companion data/code package sobiEquity/ plus a full README.Rmd analysis pipeline.",
+    "r_version_in_repo_renv_lock": "4.2.1",
+    "curator_r_version_used": "4.3.3",
+    "version_deviation_reason": "conda-forge ships no r-sf build compatible with r-base 4.2.x (minimum r-sf requires r-base>=4.3). sf is used only to call st_drop_geometry() to strip a geometry column before joining population/hub attributes into the travel-time table; it performs no coordinate, CRS, or geometric computation that participates in the b2sfca()/c2sfca() numerics. Verified byte-identical digest of b2sfca() output across two independent checkouts under R 4.3.3/dplyr 1.1.4/sf 1.0.20, confirming the version deviation does not affect gold."
+  },
+  "scope_decision": {
+    "in_scope": "sobiEquity::b2sfca() and sobiEquity::c2sfca() applied to the archived ttm_walk travel-time matrix joined with population_50x50 and sobi_hubs (RACKS_AMOU), filtered by hub_type/hub_status and a walking-time threshold, per README.Rmd's 'join-population-to-travel-time-data' / 'join-sobi-station-to-travel-time-data' chunks.",
+    "out_of_scope": "README.Rmd's full pipeline (pycnophylactic population interpolation, r5r travel-time-matrix construction, maps via biscale/ggmap/raster/gdistance, income-group reaggregation). r5r-based routing is already commented out in the repository; the travel-time matrix is loaded pre-computed via data(\"ttm_walk\")."
+  },
+  "repository_hashes": {
+    "sobiEquity/R/b2sfca.R": "ea13f116f03a607e2d7b403df3f9fb5da64d6484e88b320b68c025a46a21a6f9",
+    "sobiEquity/R/c2sfca.R": "2a65bf7d2b42bd79052f3cb5e26e698e203338a3ca4233c40ddbadf73d2bae3f",
+    "sobiEquity_0.1.0.tar.gz": "a22419d03ad6476bb7066f5cb8c1416d28c16efc39d13fcc6aa2003aff2c1852",
+    "sobiEquity/data/ttm_walk.RData": "86e6dc7be22c1d8d97bff3112d94cd61565aa0d8826c51508e31c7047e6b3614",
+    "sobiEquity/data/sobi_hubs.RData": "d90f2046588652374ca5df9f3df2320fc25810242bc4ca42ee347252f2846164",
+    "sobiEquity/data/population_50x50.RData": "3458a7e868dc51e7f2bf5253f81a87c21e285262f2fa76eb96de8b75f4647281"
+  },
+  "data_inventory": {
+    "ttm_walk": "data.frame, 211605 rows x 5 cols (UID, OBJECTID, travel_time, hub_type, hub_status). hub_type in {Conventional, ERI}; hub_status in {Active, Deactivated}. travel_time range 0-30 minutes.",
+    "population_50x50": "sf data.frame, 11427 rows (population, geometry, UID), 50x50m interpolated population cells.",
+    "sobi_hubs": "sf data.frame, 133 rows, docking-station attributes including RACKS_AMOU (bicycle rack count).",
+    "n_unique_population_cells_in_ttm": 10852,
+    "n_unique_hubs_in_ttm": 133
+  },
+  "reproduction_evidence": {
+    "prepared_ttm_dim": [211605, 7],
+    "no_missing_joins": "0 NA population, 0 NA racks after left_join",
+    "b2sfca_threshold_5_conventional_active": {
+      "n_los_rows": 119,
+      "n_accessibility_rows": 4949,
+      "sum_accessibility": 68.95887
+    },
+    "b2sfca_threshold_5_all_hubs_active": {
+      "sum_accessibility": 69.14522,
+      "note": "small increase over conventional-only, consistent with paper finding that equity stations increased accessibility modestly"
+    },
+    "c2sfca_threshold_5_conventional_active": {
+      "sum_accessibility": 206.387
+    },
+    "threshold_sweep_sum_accessibility": {
+      "1": 44.06525, "2": 88.51278, "3": 25.54823, "5": 68.95887,
+      "8": 6.376264, "10": 3.812468, "15": 2.546852, "20": 2.135653, "30": 1.832779
+    },
+    "determinism": {
+      "repeat_run_same_checkout_digest_match": true,
+      "cross_checkout_digest_match": true,
+      "digest_sha256": "add03088a738e6e0f92523094abf3d5ce62359b90e6170bb1a08aa3dac421024",
+      "digest_input": "b2sfca(threshold=5) output on Conventional/Active-filtered ttm, two independent fresh checkouts of commit 80b6516a"
+    },
+    "runtime_seconds_per_case": 0.33,
+    "runtime_budget_risk": "none; orders of magnitude under any budget gate used for other candidates"
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,30 @@
+{
+  "gates": {
+    "hash_mismatch_rejected": true,
+    "independent_reference_all_cases": true,
+    "invalid_curve_inputs_rejected": true,
+    "invalid_hard_coloring_rejected": true,
+    "mixed_comparator_accepts_close": true,
+    "mixed_comparator_rejects_far": true,
+    "nan_inf_json_rejected": true,
+    "nonfinite_output_rejected": true,
+    "oversized_json_rejected": true,
+    "partial_failure_rejected": true,
+    "public_memorizer_cap": true,
+    "reference_score_one": true,
+    "stale_output_rejected": true,
+    "symlink_rejected": true,
+    "timeout_rejected": true,
+    "traversal_rejected": true,
+    "wrong_output_shape_rejected": true,
+    "wrong_task_id_rejected": true
+  },
+  "public_only_memorizer_score": 0.4,
+  "reference_full_success": true,
+  "reference_score": 1.0,
+  "status": "scientific_scoring_and_safety_gates_passed",
+  "formal_task_assigned": false,
+  "promotion_blocker": "publisher journal PDF unavailable (HTTP 403); author manuscript substitution is not accepted silently",
+  "task_id": null,
+  "proposed_task_id": "scibench_replication_0015"
+}

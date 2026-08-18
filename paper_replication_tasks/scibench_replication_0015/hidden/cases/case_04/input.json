@@ -1,0 +1,21 @@
+{
+  "experiments": [
+    {
+      "label": "nonuniform_row_sparsity",
+      "matrix": "random_dense",
+      "matvec_counts": [
+        20,
+        35,
+        60
+      ],
+      "n": 64,
+      "pattern": "nonuniform",
+      "pattern_parameters": [
+        14
+      ],
+      "trials": 16
+    }
+  ],
+  "mode": "curves",
+  "seed": 1514
+}

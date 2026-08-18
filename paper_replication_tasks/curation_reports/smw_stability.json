@@ -1,0 +1,138 @@
+{
+  "hidden_cases": 5,
+  "maximum_absolute_discrepancy": 3.637978807091713e-12,
+  "maximum_relative_discrepancy": 3.1338047955643283e-15,
+  "normalized_bundle_sha256": "87c05164fe70c36cea71fe8ff0a7ddd8b0703ce46e7cefc7506dded5caa2f94a",
+  "official_commit": "05c0aeff63094a1acc356ec8ebc320d826900040",
+  "public_cases": 3,
+  "scientific_case_design": [
+    {
+      "alpha": 0.9153083104190365,
+      "beta": 1.0925280461423876,
+      "case_id": "case_01",
+      "condition_number_A": 5.000000000000002,
+      "epsilon_validity": [
+        {
+          "epsilon_1": 2.0000000000000004e-08,
+          "epsilon_2": 7e-08,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": true
+        }
+      ],
+      "k": 1,
+      "lambda_over_sigma_min_A": 0.49999999999999994,
+      "mode": "point",
+      "n": 4
+    },
+    {
+      "alpha": 1.0035773499084357,
+      "beta": 1.103334803708685,
+      "case_id": "case_02",
+      "condition_number_A": 999.9999999999956,
+      "epsilon_validity": [
+        {
+          "epsilon_1": 9.999999999999999e-10,
+          "epsilon_2": 2.9999999999999996e-09,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": true
+        }
+      ],
+      "k": 2,
+      "lambda_over_sigma_min_A": 0.5000000000000001,
+      "mode": "point",
+      "n": 6
+    },
+    {
+      "alpha": 99.9999999999988,
+      "beta": 1.4999999999999993,
+      "case_id": "case_03",
+      "condition_number_A": 15.000000000000004,
+      "epsilon_validity": [
+        {
+          "epsilon_1": 9.999999999999998e-12,
+          "epsilon_2": 1.0000000000000004e-08,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": true
+        }
+      ],
+      "k": 3,
+      "lambda_over_sigma_min_A": 6.3114257166885075,
+      "mode": "point",
+      "n": 7
+    },
+    {
+      "alpha": 1.0,
+      "beta": 100.00000000000001,
+      "case_id": "case_04",
+      "condition_number_A": 20.000000000000007,
+      "epsilon_validity": [
+        {
+          "epsilon_1": 1e-10,
+          "epsilon_2": 9.999999999999996e-10,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": true
+        }
+      ],
+      "k": 4,
+      "lambda_over_sigma_min_A": 735.0985923500542,
+      "mode": "point",
+      "n": 8
+    },
+    {
+      "alpha": 1.3451300939940722,
+      "beta": 2.515406018152184,
+      "case_id": "case_05",
+      "condition_number_A": 42.615791544967934,
+      "epsilon_validity": [
+        {
+          "epsilon_1": 1e-08,
+          "epsilon_2": 1e-08,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": true
+        },
+        {
+          "epsilon_1": 0.03101988952277374,
+          "epsilon_2": 0.03101988952277374,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": true
+        },
+        {
+          "epsilon_1": 0.03791319830561235,
+          "epsilon_2": 0.03791319830561235,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": false
+        },
+        {
+          "epsilon_1": 0.06484710384712124,
+          "epsilon_2": 0.06484710384712124,
+          "theorem_2_assumptions": true,
+          "theorem_6_assumptions": false
+        },
+        {
+          "epsilon_1": 0.07925757136870373,
+          "epsilon_2": 0.07925757136870373,
+          "theorem_2_assumptions": false,
+          "theorem_6_assumptions": false
+        },
+        {
+          "epsilon_1": 100.0,
+          "epsilon_2": 100.0,
+          "theorem_2_assumptions": false,
+          "theorem_6_assumptions": false
+        }
+      ],
+      "k": 4,
+      "lambda_over_sigma_min_A": 21.30789577248397,
+      "mode": "sweep",
+      "n": 30
+    }
+  ],
+  "status": "validated",
+  "task_id": "scibench_replication_0014",
+  "tolerances": {
+    "atol": 3.637978807091713e-11,
+    "comparison": "mixed",
+    "rtol": 1e-08
+  },
+  "two_clean_checkout_hashes_match": true
+}

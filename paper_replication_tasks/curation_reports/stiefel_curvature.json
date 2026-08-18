@@ -1,0 +1,17 @@
+{
+  "hidden_cases": 5,
+  "maximum_absolute_discrepancy": 2.220446049250313e-16,
+  "maximum_relative_discrepancy": 5.7717588157169e-16,
+  "normalized_bundle_sha256": "a23a46657698f963a18e3108c373a0aa71c4fb60ecbaa6e85cd1f71877b6bd08",
+  "official_commit": "1dad75cf55f0f688d59b61e0d9a58b61779efe9f",
+  "public_cases": 3,
+  "scope_exclusion": "script_curvature_SIMAX_exp42.m (Figure 2) excluded: unseeded rand(), no rng() call in the repository, not bit-reproducible without modifying official code; also the runtime long pole at paper settings (runs=100, max_dim=1000, matrices up to 2000x2000).",
+  "status": "validated",
+  "task_id": "scibench_replication_0019",
+  "tolerances": {
+    "atol": 1e-10,
+    "comparison": "mixed",
+    "rtol": 1e-08
+  },
+  "two_clean_checkout_hashes_match": true
+}

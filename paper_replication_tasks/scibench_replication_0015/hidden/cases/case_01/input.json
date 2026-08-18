@@ -1,0 +1,38 @@
+{
+  "experiments": [
+    {
+      "label": "reduced_tridiagonal",
+      "matrix": "tridiagonal_inverse",
+      "matvec_counts": [
+        12,
+        24,
+        48
+      ],
+      "n": 96,
+      "pattern": "banded",
+      "pattern_parameters": [
+        0,
+        3
+      ],
+      "trials": 12
+    },
+    {
+      "label": "reduced_trefethen",
+      "matrix": "trefethen_inverse",
+      "matvec_counts": [
+        30,
+        60,
+        100
+      ],
+      "n": 96,
+      "pattern": "power_bands",
+      "pattern_parameters": [
+        0,
+        2
+      ],
+      "trials": 12
+    }
+  ],
+  "mode": "curves",
+  "seed": 1511
+}

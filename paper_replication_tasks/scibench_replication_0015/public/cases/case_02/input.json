@@ -1,0 +1,42 @@
+{
+  "experiments": [
+    {
+      "label": "figure_4_trefethen_primes",
+      "matrix": "trefethen_inverse",
+      "matvec_counts": [
+        10,
+        12,
+        15,
+        18,
+        22,
+        28,
+        34,
+        42,
+        51,
+        63,
+        78,
+        96,
+        118,
+        145,
+        178,
+        219,
+        270,
+        331,
+        407,
+        501
+      ],
+      "n": 1000,
+      "pattern": "power_bands",
+      "pattern_parameters": [
+        0,
+        1,
+        2,
+        5,
+        10
+      ],
+      "trials": 100
+    }
+  ],
+  "mode": "curves",
+  "seed": 1501
+}

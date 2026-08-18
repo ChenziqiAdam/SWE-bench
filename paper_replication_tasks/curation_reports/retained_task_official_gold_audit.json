@@ -1,0 +1,53 @@
+{
+  "adapters": [
+    {
+      "path": "curation_tools/official_adapter.py",
+      "sha256": "047d8cbadc4ed60a8b097368781c399466d28f731027aa975a4486e263b94c9e"
+    },
+    {
+      "path": "curation_tools/sobiEquity_adapter.py",
+      "sha256": "63c1cdee21063ec66b427eadf8b7ea6a3cdc6bb069f02739ebfd2ec97fe0be93"
+    },
+    {
+      "path": "curation_tools/fixed_sparsity_adapter.py",
+      "sha256": "17fa81798cddfbe7c55036a0e24db6c1b9dd6fdfee4c1f57711bd7f78db08d06"
+    },
+    {
+      "path": "curation_tools/stiefelcurv_adapter.py",
+      "sha256": "50713d46ffeff329c58bc7571a1cde6c970739bd2944b0fe1ea548a869f45402"
+    }
+  ],
+  "audit_date": "2026-08-18",
+  "conclusion": "The retained official-adapter task satisfies the official-gold promotion gate.",
+  "tasks": {
+    "scibench_replication_0011": {
+      "commit": "9141e4edcddc386cdf10a9201d70aba1abaeb66c",
+      "environment_file_sha256": "8d9c31364697298812f929068224f64662d5965b19b204d7420dccb82211b3df",
+      "finding": "All six cases were generated twice with pinned walk(), get_disp3d(), and the glswlsols.py regression block under the exact pinned environment.yml (Python 3.10.20, NumPy 1.26.4, SciPy 1.12.0). Maximum independent error is 8.429367447104763e-12; singular covariance behavior is fixed to SciPy 1.12.0 pinv semantics.",
+      "hidden_case_redesign_2026_08_17": "Replaced the original five hidden cases, which only varied atoms/jump_size/steps/seed_range as uncorrelated jitter around the public case, with five cases each isolating a distinct regime along the paper's own stated numerical hazard (Sec. on covariance reconditioning): case_01 severe rank deficiency at public-matched atoms/steps (empirical covariance rank 5/31), case_02 full-rank/well-conditioned opposite extreme (rank 7/7, short trajectory), case_03 minimal-atoms single-trajectory noise at moderate deficiency (rank 15/31, atoms=4), case_04 maximal-severity deficiency (rank 7/63, largest system), case_05 near-full-rank boundary (rank 29/31). All five verified deterministic across two independent clean checkouts and cross-checked against the scientific.py clean-room implementation under the pinned environment.",
+      "status": "validated"
+    },
+    "scibench_replication_0017": {
+      "commit": "80b6516acb0936a4c3e75d15fc3885f1d398021f",
+      "environment_file_sha256": "curation_tools/environments/0017-r-environment.yml (curator-authored, conda-forge r-base=4.3/r-dplyr=1.1.4/r-sf=1.0_20)",
+      "finding": "First R-based validated task. All eight cases (3 public, 5 hidden) invoke the pinned sobiEquity::b2sfca()/c2sfca() functions verbatim via a curator Rscript driver against the archived ttm_walk travel-time matrix joined with population_50x50 and sobi_hubs$RACKS_AMOU (README.Rmd's own join chunks), generated twice from independent clean checkouts with byte-identical results (no RNG in the official method). Maximum independent error against the clean-room pandas reimplementation (sobiEquity_scientific.py) is 1.2434497875801753e-14. R was pinned to 4.3 instead of the repository's renv.lock 4.2.1 because conda-forge ships no r-sf build for R 4.2.x; sf is used only for st_drop_geometry() (no coordinate/CRS computation), and the deviation was verified not to affect gold (see curation_reports/accessibility_sobi_hamilton.json).",
+      "hidden_case_design": "Five hidden cases isolate distinct regimes along the threshold axis and method/filter combinations documented via a direct threshold sweep of the archived data: case_01 sparse near-minimum-threshold coverage (b2sfca, threshold=1, conventional_active, n_pop=721), case_02 the non-monotonic balancing-factor dip regime where newly-reachable low-rack hubs depress system-wide accessibility despite more population reached (b2sfca, threshold=3, conventional_active), case_03 near-saturation smoothing extreme with equity stations included (b2sfca, threshold=25, all_active), case_04 the unbalanced conventional 2SFCA method at the paper's average threshold (c2sfca, threshold=6, conventional_active), case_05 conventional 2SFCA combined with equity-station inclusion at an extended threshold (c2sfca, threshold=12, all_active).",
+      "status": "validated"
+    },
+    "scibench_replication_0015": {
+      "commit": "6da600d95dbcf8a2f6f8424432601e31a243ba5e",
+      "environment_file_sha256": "b628ea5fef9cc6d04f7446e3f91b7514e689fa464e65db68be09386ab4dd6224",
+      "finding": "All eight cases (3 public, 5 hidden) were generated twice from independent clean checkouts by executing the pinned notebook sparse_recovery() kernel verbatim against curator-constructed matrices/patterns with controlled MT19937 state; both runs produced a byte-identical normalized bundle (sha256 48c8681f29fffd6bba9910bac211b909eddd440dfd852b2019ba399e645b871d). Maximum independent error against the clean-room implementation (fixed_sparsity_scientific.py) is 1.1988432272999671e-15 absolute / 1.198843227299967e-07 relative. Promotion was previously blocked because the required SIAM publisher PDF (DOI 10.1137/25M1742710) returned HTTP 403 and the arXiv v3 author manuscript was not accepted as a silent substitute; resolved 2026-08-18 by downloading the publisher PDF via UChicago institutional/library-proxy access (SIAM J. Matrix Anal. Appl., Vol. 47, No. 2, pp. 483-511, sha256 b1f124097fed43903ef37f434904ee140b727b30f593a6a8bb895c42a8ea53cc).",
+      "hidden_case_design": "Five hidden cases probe regimes distinct from the two public curve figures and the public hard-coloring case: case_01/case_02 reduced-size tridiagonal-inverse and Trefethen-inverse curves at n=96 with narrower offset/matvec sweeps, case_03 minimal-atom irregular-sparsity random-dense recovery (n=48), case_04 exact sparse-support recovery on a random-sparse matrix (n=60), case_05 nonuniform per-row sparsity on a random-dense matrix (n=64), plus a hard-coloring growth sweep across k=3,5,8,12.",
+      "status": "validated"
+    },
+    "scibench_replication_0019": {
+      "commit": "1dad75cf55f0f688d59b61e0d9a58b61779efe9f",
+      "environment_file_sha256": "438ed4ae0883e7d7c9e9609e6d30b51de257a60e300facaf87439730b31ae77f",
+      "finding": "First MATLAB/Octave-based validated task (no MATLAB license available locally; GNU Octave 9.4.0 substitutes). All eight cases (3 public, 5 hidden) invoke the four pinned seccurv_Stiefel_canon/seccurv_Stiefel_euclid/seccurv_Grassmann/seccurv_SOn.m functions verbatim via a curator Octave driver on curator-constructed tangent-vector matrices matching Section 4.1 (Figure 1) and Section 4.3 (Figures 3-4) configurations, generated twice from independent clean checkouts with byte-identical results (no RNG in the pinned functions; normalized bundle sha256 a23a46657698f963a18e3108c373a0aa71c4fb60ecbaa6e85cd1f71877b6bd08). Maximum independent error against the clean-room NumPy reimplementation (stiefelcurv_scientific.py) is 2.220446049250313e-16 absolute / 5.7717588157169e-16 relative (machine epsilon). Verified via full read of all 8 repository files that no MATLAB toolbox functions are used anywhere (core-language only: zeros, linspace, size, norm, trace, rand), so Octave reproduces MATLAB's own evaluation exactly. Paper sourced from the open-access arXiv:2403.01879v3 (confirmed to match the published SIAM title/authors/abstract); full 29-page read confirmed no embedded code listings requiring redaction under the current masking policy.",
+      "scope_exclusion": "script_curvature_SIMAX_exp42.m (Figure 2, Section 4.2) is out of scope: it calls rand(2*p) with no rng(...)/rand('seed',...) call anywhere in the repository, so results are not bit-reproducible without modifying official code; it is also the repository's only runtime/budget risk at paper settings (runs=100, max_dim=1000, matrices up to 2000x2000) and blocks on an interactive input() prompt.",
+      "hidden_case_design": "Five hidden cases isolate distinct regimes and metrics beyond the three public cases (Figure 1 rank-increase point, Figure 4 A1-vs-A2 DDVV pairing, Figure 3 B-block rank-test surface): case_01 near-flat small-u Stiefel-Euclidean rank-increase point, case_02 late-stage high-rank Stiefel-canonical rank-increase point, case_03 the alternate A3-vs-A2 DDVV pairing under the Euclidean metric, case_04 a near-orthogonal Grassmann tangent pair (isolates seccurv_Grassmann.m independently of the Stiefel block construction), case_05 a generic 4x4 SO(n) skew tangent pair (isolates seccurv_SOn.m independently of the Stiefel/Grassmann block forms).",
+      "status": "validated"
+    }
+  }
+}

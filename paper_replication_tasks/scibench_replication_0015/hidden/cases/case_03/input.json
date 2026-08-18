@@ -1,0 +1,21 @@
+{
+  "experiments": [
+    {
+      "label": "exact_sparse_recovery",
+      "matrix": "random_sparse",
+      "matvec_counts": [
+        10,
+        18,
+        30
+      ],
+      "n": 60,
+      "pattern": "matrix_support",
+      "pattern_parameters": [
+        6
+      ],
+      "trials": 12
+    }
+  ],
+  "mode": "curves",
+  "seed": 1513
+}

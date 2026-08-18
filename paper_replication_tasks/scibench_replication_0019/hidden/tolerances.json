@@ -1,0 +1,5 @@
+{
+  "atol": 1e-10,
+  "comparison": "mixed",
+  "rtol": 1e-08
+}

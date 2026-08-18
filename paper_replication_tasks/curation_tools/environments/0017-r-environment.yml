@@ -1,0 +1,11 @@
+name: scibench-replication-0017
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - r-base=4.3
+  - r-dplyr=1.1.4
+  - r-magrittr=2.0.3
+  - r-jsonlite=2.0.0
+  - r-sf=1.0_20
+  - r-digest=0.6.37

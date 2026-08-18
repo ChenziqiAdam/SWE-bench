@@ -1,0 +1,40 @@
+{
+  "hard_coloring": [
+    {
+      "coloring_matvecs": 9,
+      "column_sparsity": 5,
+      "dimension": 9,
+      "gaussian_exact_recovery_threshold": 5,
+      "k": 3,
+      "label": "growth_k_3",
+      "row_sparsity": 5
+    },
+    {
+      "coloring_matvecs": 25,
+      "column_sparsity": 9,
+      "dimension": 25,
+      "gaussian_exact_recovery_threshold": 9,
+      "k": 5,
+      "label": "growth_k_5",
+      "row_sparsity": 9
+    },
+    {
+      "coloring_matvecs": 64,
+      "column_sparsity": 15,
+      "dimension": 64,
+      "gaussian_exact_recovery_threshold": 15,
+      "k": 8,
+      "label": "growth_k_8",
+      "row_sparsity": 15
+    },
+    {
+      "coloring_matvecs": 144,
+      "column_sparsity": 23,
+      "dimension": 144,
+      "gaussian_exact_recovery_threshold": 23,
+      "k": 12,
+      "label": "growth_k_12",
+      "row_sparsity": 23
+    }
+  ]
+}

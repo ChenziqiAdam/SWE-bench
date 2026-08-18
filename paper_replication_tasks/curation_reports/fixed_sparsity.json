@@ -1,0 +1,16 @@
+{
+  "hidden_cases": 5,
+  "maximum_absolute_discrepancy": 1.1988432272999671e-15,
+  "maximum_relative_discrepancy": 1.198843227299967e-07,
+  "normalized_bundle_sha256": "48c8681f29fffd6bba9910bac211b909eddd440dfd852b2019ba399e645b871d",
+  "official_commit": "6da600d95dbcf8a2f6f8424432601e31a243ba5e",
+  "public_cases": 3,
+  "status": "validated",
+  "task_id": "scibench_replication_0015",
+  "tolerances": {
+    "atol": 1e-10,
+    "comparison": "mixed",
+    "rtol": 1.198843227299967e-06
+  },
+  "two_clean_checkout_hashes_match": true
+}
