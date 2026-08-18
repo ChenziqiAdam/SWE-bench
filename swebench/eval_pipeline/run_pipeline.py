@@ -325,13 +325,15 @@ def parse_args():
                    help="(Always on.) Agentic inference: multi-turn tool-use loop that explores "
                         "the cloned repo and writes files. The pipeline is agent-only; this flag "
                         "is kept for backward compatibility with existing scripts.")
-    p.add_argument("--agent_backend", default="builtin", choices=["builtin", "sweagent", "codex", "claude_code"],
+    p.add_argument("--agent_backend", default="builtin",
+                   choices=["builtin", "sweagent", "codex", "claude_code", "agy"],
                    help="Which agent backend to use with --agent. "
                         "'builtin' (default): homegrown multi-turn Anthropic tool-use loop. "
                         "'sweagent': invoke SWE-agent CLI as a subprocess (requires `sweagent` "
                         "to be installed: uv pip install swe-agent). "
                         "'codex': invoke local Codex CLI via `codex exec`. "
-                        "'claude_code': invoke local Claude Code CLI via `claude -p`.")
+                        "'claude_code': invoke local Claude Code CLI via `claude -p`. "
+                        "'agy': invoke local Antigravity CLI via `agy -p`.")
     p.add_argument(
         "--inference_network_policy",
         choices=["model-only", "unrestricted"],
@@ -639,6 +641,18 @@ def parse_args():
     p.add_argument("--claude_code_model", default=None,
                    help="Optional model override for Claude Code CLI. Defaults to --model. Only "
                         "used with --agent_backend claude_code.")
+    p.add_argument("--agy_timeout", type=int, default=900,
+                   help="Wall-clock timeout per instance in seconds for Antigravity CLI inference. "
+                        "Only used with --agent_backend agy.")
+    p.add_argument("--agy_print_timeout", default="15m",
+                   help="Value passed to `agy -p --print-timeout` (e.g. '15m'). Only used with "
+                        "--agent_backend agy.")
+    p.add_argument("--agy_effort", default=None, choices=["low", "medium", "high"],
+                   help="Optional reasoning effort passed to `agy -p --effort`. Only used with "
+                        "--agent_backend agy.")
+    p.add_argument("--agy_model", default=None,
+                   help="Optional model override for Antigravity CLI. Defaults to --model. Only "
+                        "used with --agent_backend agy.")
     p.add_argument("--clean_images", action="store_true",
                    help="Delete per-instance Docker images after eval. In test-generation "
                         "mode deletion occurs only after report.json is saved. Saves disk "
@@ -781,6 +795,17 @@ def _run_agent_backend(args, instances: list[dict], output_file: str,
             setup_timeout=args.claude_code_setup_timeout,
             hidden_paths=hidden_paths,
             max_patch_bytes=args.claude_code_max_patch_bytes,
+        )
+    elif args.agent_backend == "agy":
+        from swebench.eval_pipeline.agy_inference import run_agy_inference
+        run_agy_inference(
+            instances=instances, output_file=output_file, model_name=inference_model,
+            github_token=github_token, max_workers=args.max_workers,
+            timeout=args.agy_timeout, print_timeout=args.agy_print_timeout,
+            effort=args.agy_effort,
+            retry_empty_predictions=args.retry_empty_predictions, eval_mode=args.eval_mode,
+            network_policy=args.inference_network_policy,
+            hidden_paths=hidden_paths,
         )
     else:
         from swebench.eval_pipeline.agent_inference import run_agent_inference_for_level
@@ -1219,6 +1244,8 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
             args.codex_timeout = args.shared_generation_budget
         elif args.agent_backend == "claude_code":
             args.claude_code_timeout = args.shared_generation_budget
+        elif args.agent_backend == "agy":
+            args.agy_timeout = args.shared_generation_budget
     if not args.skip_inference:
         logger.info("=== Standalone coverage generation: agent inference ===")
         _run_agent_backend(
@@ -1487,6 +1514,8 @@ def main():
         inference_model = args.codex_model
     elif args.agent_backend == "claude_code" and args.claude_code_model:
         inference_model = args.claude_code_model
+    elif args.agent_backend == "agy" and args.agy_model:
+        inference_model = args.agy_model
     if args.agent_backend == "codex" and args.api_key and not args.endpoint:
         logger.warning(
             "--api_key is only translated into Codex config when --endpoint is "
@@ -1496,6 +1525,11 @@ def main():
         logger.warning(
             "--endpoint for Claude Code is passed as ANTHROPIC_BASE_URL and must "
             "be Anthropic-compatible, not generic OpenAI-compatible."
+        )
+    if args.agent_backend == "agy" and (args.endpoint or args.api_key):
+        logger.warning(
+            "--endpoint/--api_key are not supported by the Antigravity CLI backend "
+            "and are ignored. agy uses its own cached CLI authentication."
         )
 
     output_dir = Path(args.output_dir)
@@ -1945,6 +1979,10 @@ def main():
         "claude_code_permission_mode": args.claude_code_permission_mode,
         "claude_code_max_turns": args.claude_code_max_turns,
         "claude_code_model": args.claude_code_model,
+        "agy_timeout": args.agy_timeout,
+        "agy_print_timeout": args.agy_print_timeout,
+        "agy_effort": args.agy_effort,
+        "agy_model": args.agy_model,
         "inference_network_policy": args.inference_network_policy,
         "coverage_target": args.coverage_target or "(inferred per instance)",
         "coverage_eval_timeout": args.coverage_eval_timeout,
