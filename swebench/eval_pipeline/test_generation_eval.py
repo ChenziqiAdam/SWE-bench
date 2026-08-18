@@ -636,6 +636,37 @@ def _lammps_generated_test_targets(generated_patch: str) -> list[tuple[str, str]
     return sorted(targets)
 
 
+def _lammps_native_gtest_case_sources(generated_patch: str) -> set[str]:
+    """Return stems (source filename minus extension) of existing
+    .cc/.cpp/.cxx files patched with a new top-level `TEST(...)`/`TEST_F(...)`
+    case. A source's stem matches its CMake target/binary name for the
+    force-styles driver binaries (e.g. test_pair_style.cpp -> test_pair_style).
+
+    gtest self-discovers compiled-in TEST()/TEST_F() cases in the binary
+    they're linked into -- extending an already-registered driver source
+    this way needs no YAML fixture or new add_test()/add_mpi_test()
+    registration to be invokable.
+    """
+    stems: set[str] = set()
+    for section in re.split(r"(?=^diff --git )", generated_patch, flags=re.MULTILINE):
+        header = re.match(r"^diff --git a/(\S+) b/\S+", section)
+        if not header:
+            continue
+        path = header.group(1)
+        if PurePosixPath(path).suffix.lower() not in {".cc", ".cpp", ".cxx"}:
+            continue
+        if re.search(r"^new file mode", section, re.MULTILINE):
+            continue
+        added = "\n".join(
+            line[1:]
+            for line in section.splitlines()
+            if line.startswith("+") and not line.startswith("+++")
+        )
+        if re.search(r"^\s*TEST(?:_F)?\s*\(", added, re.MULTILINE):
+            stems.add(PurePosixPath(path).stem)
+    return stems
+
+
 # unittest/force-styles/CMakeLists.txt file(GLOB ... CONFIGURE_DEPENDS) rules:
 # each YAML fixture under unittest/force-styles/tests/<prefix>-<name>.yaml is
 # auto-registered (at configure time, no per-file CMake edits needed) as a
@@ -690,6 +721,34 @@ def _lammps_force_style_yaml_test(path: str) -> tuple[str, str] | None:
             name = filename[len(prefix):]
             return (f"{ctest_prefix}:{name}", binary)
     return None
+
+
+def _lammps_yaml_input_file_basenames(generated_patch: str) -> set[str]:
+    """Return `input_file:` basenames referenced by added force-styles YAML.
+
+    A force-styles YAML fixture (unittest/force-styles/tests/<prefix>-<name>.yaml)
+    is data-driven and typically references a companion LAMMPS input deck via
+    its own `input_file: in.<name>` field. That companion file lives alongside
+    the YAML under the same tests/ directory but is not itself a test the
+    harness can run standalone, so it must not veto the YAML fixture it
+    supports as an "unsupported" test path.
+    """
+    basenames: set[str] = set()
+    for section in re.split(r"(?=^diff --git )", generated_patch, flags=re.MULTILINE):
+        header = re.match(r"^diff --git a/(\S+) b/\S+", section)
+        if not header or not header.group(1).startswith(
+            "unittest/force-styles/tests/"
+        ) or not header.group(1).endswith(".yaml"):
+            continue
+        added = "\n".join(
+            line[1:]
+            for line in section.splitlines()
+            if line.startswith("+") and not line.startswith("+++")
+        )
+        match = re.search(r"^input_file:\s*(\S+)", added, re.MULTILINE)
+        if match:
+            basenames.add(PurePosixPath(match.group(1)).name)
+    return basenames
 
 
 def _lammps_added_ctest_names(generated_patch: str) -> tuple[str, ...]:
@@ -927,6 +986,11 @@ def _special_repo_execution_plan(
         if lammps_ctest_names
         else set()
     )
+    lammps_yaml_input_files = (
+        _lammps_yaml_input_file_basenames(generated_patch)
+        if repo == "lammps/lammps"
+        else set()
+    )
     for path in paths:
         suffix = PurePosixPath(path).suffix.lower()
         basename = PurePosixPath(path).name
@@ -983,6 +1047,18 @@ def _special_repo_execution_plan(
         # extensions are not source languages; execute their CTest wrapper.
         if repo == "lammps/lammps" and path in lammps_ctest_paths:
             language = language or "cpp"
+        # A force-styles YAML fixture's own `input_file: in.<name>` field
+        # names a companion LAMMPS input deck shipped alongside it under the
+        # same tests/ directory. That deck is read by the shared driver
+        # binary at runtime, not independently invoked, so it is not itself
+        # a test and must not veto the YAML fixture it supports.
+        if (
+            repo == "lammps/lammps"
+            and language is None
+            and path.startswith("unittest/force-styles/tests/")
+            and basename in lammps_yaml_input_files
+        ):
+            continue
         # Non-source fixtures shipped alongside a generated Python test
         # (e.g. wrappers/python/tests/systems/*.gro/*.top/*.pdb) are not
         # themselves tests and must not veto an otherwise-valid accepted test.
@@ -1153,10 +1229,18 @@ def _special_repo_execution_plan(
                 # requires a YAML fixture argument; invoking it bare produces
                 # only a usage message, not a parseable test result. Without
                 # a ctest registration or a YAML fixture in this patch,
-                # there's no argument to supply.
+                # there's no argument to supply. Exception: a patch that adds
+                # a native TEST()/TEST_F() case directly to the driver's own
+                # .cpp source needs no argument at all -- gtest self-discovers
+                # compiled-in cases, so invoking the binary bare already runs
+                # (only) the new case correctly.
+                native_gtest_sources = _lammps_native_gtest_case_sources(
+                    generated_patch
+                )
                 bare_driver_targets = [
                     (target, binary) for target, binary in targets
                     if PurePosixPath(binary).name in _LAMMPS_FORCE_STYLE_DRIVER_BINARIES
+                    and PurePosixPath(binary).name not in native_gtest_sources
                 ]
                 if bare_driver_targets and not lammps_yaml_tests:
                     return GeneratedTestExecutionPlan(

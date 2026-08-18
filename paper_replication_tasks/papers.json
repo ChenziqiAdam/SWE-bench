@@ -68,11 +68,11 @@
       "build_status": "collected_candidate"
     },
     {
-      "task_id": null,
+      "task_id": "scibench_replication_0015",
       "paper_title": "Fixed-Sparsity Matrix Approximation from Matrix-Vector Products",
       "paper_url": "https://doi.org/10.1137/25M1742710",
       "github_url": "https://github.com/tchen-research/fixed_sparsity_matrix_approximation",
-      "build_status": "deferred"
+      "build_status": "validated"
     },
     {
       "task_id": "scibench_replication_0014",

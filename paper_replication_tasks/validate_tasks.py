@@ -16,7 +16,7 @@ from task_registry import TASK_REGISTRY, active_task_ids, validated_task_ids
 
 ROOT = Path(__file__).resolve().parent
 LEGACY = {"masked_paper.pdf", "submission_schema.json", "gold_output.json", "evaluator.py", "results.json", ".DS_Store"}
-PUBLIC_COUNTS = {"scibench_replication_0011": 1, "scibench_replication_0014": 3, "scibench_replication_0017": 3}
+PUBLIC_COUNTS = {"scibench_replication_0011": 1, "scibench_replication_0014": 3, "scibench_replication_0017": 3, "scibench_replication_0015": 3}
 
 
 class ValidationError(RuntimeError):

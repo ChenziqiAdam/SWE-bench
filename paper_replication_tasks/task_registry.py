@@ -7,16 +7,10 @@ TASK_REGISTRY = {
     "scibench_replication_0011": {"status": "validated", "repository": "https://github.com/arm61/msd-errors", "commit": "9141e4edcddc386cdf10a9201d70aba1abaeb66c", "environment_file": "environment.yml", "official_adapter": "walk(), get_disp3d(), and glswlsols.py regression block with JSON sizes/seeds", "functional_target": "generate seeded lattice random walks and estimate ensemble MSD and diffusion"},
     "scibench_replication_0014": {"status": "validated", "repository": "https://github.com/LinkaiMa/SMW", "commit": "05c0aeff63094a1acc356ec8ebc320d826900040", "environment_file": None, "curator_environment_file": "curation_tools/environments/0014-environment.yml", "adapter_path": "curation_tools/smw_adapter.py", "official_adapter": "verbatim forward/backward compute_SMW notebook functions with controlled float64 MT19937 noise injection", "functional_target": "compute SMW approximate-inverse forward/backward errors and the paper's full and simplified bounds"},
     "scibench_replication_0017": {"status": "validated", "repository": "https://github.com/paezha/Accessibility-Sobi-Hamilton", "commit": "80b6516acb0936a4c3e75d15fc3885f1d398021f", "environment_file": None, "curator_environment_file": "curation_tools/environments/0017-r-environment.yml", "adapter_path": "curation_tools/sobiEquity_adapter.py", "official_adapter": "verbatim sobiEquity::b2sfca()/c2sfca() applied to the archived ttm_walk travel-time matrix joined with population_50x50 and sobi_hubs RACKS_AMOU", "functional_target": "compute balanced (BFCA) and conventional (2SFCA) floating catchment area accessibility and level-of-service for the Hamilton bike-share network at a given walking-time threshold and hub configuration"},
+    "scibench_replication_0015": {"status": "validated", "repository": "https://github.com/tchen-research/fixed_sparsity_matrix_approximation", "commit": "6da600d95dbcf8a2f6f8424432601e31a243ba5e", "environment_file": None, "curator_environment_file": "curation_tools/environments/0015-environment.yml", "adapter_path": "curation_tools/fixed_sparsity_adapter.py", "official_adapter": "verbatim pinned-notebook sparse_recovery kernel executed on curator-constructed matrices/patterns with controlled MT19937 state", "functional_target": "Gaussian-sketch fixed-sparsity matrix approximation from matrix-vector products: off-pattern Frobenius error, recovery RMSE/quantiles, and Theorem 1 bound curves"},
 }
 
 CANDIDATE_REGISTRY = {
-    "fixed_sparsity_matrix_approximation": {
-        "status": "deferred_runtime_budget",
-        "repository": "https://github.com/tchen-research/fixed_sparsity_matrix_approximation",
-        "commit": "6da600d95dbcf8a2f6f8424432601e31a243ba5e",
-        "proposed_resources": {"case_timeout_seconds": 14400, "total_timeout_seconds": 43200, "cpus": 4, "memory_gb": 8},
-        "report": "curation_reports/fixed_sparsity.json",
-    },
     "a_posteriori_tsa_storage": {
         "status": "deferred_runtime_and_independent_audit",
         "repository": "https://github.com/ahilbers/a_posteriori_tsa_storage",

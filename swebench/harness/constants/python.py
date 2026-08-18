@@ -679,6 +679,13 @@ _ASTROPY_TEST_GENERATION_SPEC = {
         "numpy==1.26.4",
         "scipy==1.11.4",
         "matplotlib==3.8.4",
+        # matplotlib 3.8.4 still calls pyparsing's deprecated parseString();
+        # pyparsing>=3.1.2 turns that into a PyparsingDeprecationWarning, and
+        # astropy/conftest.py's warnings-as-errors config promotes it into a
+        # collection-time ImportError on `import matplotlib`, failing every
+        # generated test identically on both base and gold. Pin the last
+        # release before that deprecation wrapper was added.
+        "pyparsing==3.1.1",
     ],
     "validation_cmd": "python -c 'import astropy; import numpy'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
@@ -1309,6 +1316,12 @@ _DEEPCHEM_TEST_GENERATION_SPEC = {
         "flaky==3.8.1",
         "joblib==1.4.2",
         "rdkit==2023.9.6",
+        # deepchem/utils/save.py does `from sklearn.externals import
+        # joblib as old_joblib` at import time. sklearn.externals.joblib was
+        # removed in scikit-learn 0.23 (2020); 0.22.2.post1 is the last
+        # release that still ships it, and it's the import chain
+        # deepchem/data/datasets.py pulls in unconditionally.
+        "scikit-learn==0.22.2.post1",
     ],
     "validation_cmd": "python -c 'import deepchem'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
@@ -1362,7 +1375,15 @@ _QUTIP_LEGACY_TEST_GENERATION_SPEC = {
     "pip_packages": [
         "pytest",
         "cython==0.29.37",
-        "numpy==1.23.5",
+        # numpy>=1.22 wheels switched their bundled OpenBLAS build to the
+        # ILP64 naming scheme and no longer expose numpy.__config__.blas_opt_info
+        # (only openblas64__info/blas_ilp64_opt_info). This build era's
+        # qutip/_mkl/utilities.py._blas_info() reads config.blas_opt_info
+        # directly at import time, so anything >=1.22 raises AttributeError
+        # for every instance in this spec. 1.21.6 is the last release whose
+        # wheel still sets blas_opt_info, and satisfies scipy==1.10.1's
+        # numpy<1.27.0,>=1.19.5 requirement.
+        "numpy==1.21.6",
         "scipy==1.10.1",
         "packaging<22",
         "setuptools<69",

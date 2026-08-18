@@ -823,20 +823,45 @@ def test_lammps_test_generation_builds_and_runs_touched_binary(monkeypatch):
     assert "ctest --test-dir build" not in script
 
 
-def test_lammps_test_generation_rejects_bare_force_style_driver(monkeypatch):
-    """A generated edit to a shared force-styles driver's .cpp (e.g.
-    test_pair_style.cpp) without a ctest registration or a YAML fixture has
-    no argument to invoke the driver with — it must be flagged unsupported,
-    not silently run bare (which just prints usage and produces no
-    parseable test output, previously misclassified as
-    no_parseable_test_status)."""
-    patch = """diff --git a/unittest/force-styles/test_pair_style.cpp b/unittest/force-styles/test_pair_style.cpp
---- a/unittest/force-styles/test_pair_style.cpp
-+++ b/unittest/force-styles/test_pair_style.cpp
-@@ -10,3 +10,6 @@
-+TEST_F(PairStyleTest, ExtraCase) {}
+def test_lammps_test_generation_accepts_yaml_fixture_with_companion_input_file(
+    monkeypatch,
+):
+    """A force-styles YAML fixture's own `input_file: in.<name>` field names
+    a companion LAMMPS input deck shipped alongside it under the same
+    tests/ directory (read by the shared driver binary at runtime, not
+    independently invoked). It must not be treated as an unsupported test
+    path and veto the otherwise-valid YAML fixture (regression for the bug
+    found in lammps__lammps-4346, where this exact patch shape was
+    incorrectly rejected as unsupported_generated_test)."""
+    patch = """diff --git a/unittest/force-styles/tests/atomic-pair-gran_hooke_history_virial.yaml b/unittest/force-styles/tests/atomic-pair-gran_hooke_history_virial.yaml
+new file mode 100644
+--- /dev/null
++++ b/unittest/force-styles/tests/atomic-pair-gran_hooke_history_virial.yaml
+@@ -0,0 +1,3 @@
++---
++input_file: in.gran_hooke_history_virial
++pair_style: gran/hooke/history 1000.0 0.0 0.0 0.0 0.0 0
+diff --git a/unittest/force-styles/tests/in.gran_hooke_history_virial b/unittest/force-styles/tests/in.gran_hooke_history_virial
+new file mode 100644
+--- /dev/null
++++ b/unittest/force-styles/tests/in.gran_hooke_history_virial
+@@ -0,0 +1,2 @@
++units lj
++atom_style granular
 """
-    specs = {
+    plan = _special_repo_execution_plan({"repo": "lammps/lammps"}, patch, [])
+
+    assert plan.failure_reason is None
+    assert plan.evidence["rejected_paths"] == ()
+    assert (
+        "unittest/force-styles/tests/atomic-pair-gran_hooke_history_virial.yaml"
+        in plan.paths
+    )
+    assert any("ctest" in command for command in plan.commands)
+
+
+def _lammps_force_style_driver_specs():
+    return {
         "build_after_test_patch": [
             "cmake -S cmake -B build -D ENABLE_TESTING=ON",
             "cmake --build build --parallel $(nproc)",
@@ -844,6 +869,23 @@ def test_lammps_test_generation_rejects_bare_force_style_driver(monkeypatch):
         "test_cmd": ["ctest --test-dir build --output-on-failure"],
         "test_generation_use_spec_cmd": True,
     }
+
+
+def test_lammps_test_generation_rejects_bare_force_style_driver(monkeypatch):
+    """A generated edit to a shared force-styles driver's .cpp (e.g.
+    test_pair_style.cpp) that does not add a new TEST()/TEST_F() case, and
+    has no ctest registration or YAML fixture, has no argument to invoke the
+    driver with — it must be flagged unsupported, not silently run bare
+    (which just prints usage and produces no parseable test output,
+    previously misclassified as no_parseable_test_status)."""
+    patch = """diff --git a/unittest/force-styles/test_pair_style.cpp b/unittest/force-styles/test_pair_style.cpp
+--- a/unittest/force-styles/test_pair_style.cpp
++++ b/unittest/force-styles/test_pair_style.cpp
+@@ -10,3 +10,6 @@
++// bumped a shared constant used by existing cases, no new TEST() added
++constexpr double kTolerance = 1e-10;
+"""
+    specs = _lammps_force_style_driver_specs()
     monkeypatch.setattr(
         "swebench.eval_pipeline.test_generation_eval.MAP_REPO_VERSION_TO_SPECS",
         {"lammps/lammps": {"4887": specs}},
@@ -864,6 +906,46 @@ def test_lammps_test_generation_rejects_bare_force_style_driver(monkeypatch):
 
     assert "UNSUPPORTED_GENERATED_TEST" in command
     assert "build/test_pair_style" not in command
+
+
+def test_lammps_test_generation_runs_bare_driver_with_new_native_test_case(
+    monkeypatch,
+):
+    """A generated edit that adds a new TEST()/TEST_F() case directly to a
+    shared force-styles driver's own .cpp source (e.g. test_pair_style.cpp)
+    needs no YAML fixture or ctest registration to be invokable: gtest
+    self-discovers compiled-in TEST()/TEST_F() cases in the binary they're
+    linked into, so running the driver bare already exercises the new case.
+    This must NOT be flagged unsupported (regression for the bug found in
+    lammps__lammps-4887, where this exact patch shape was incorrectly
+    vetoed)."""
+    patch = """diff --git a/unittest/force-styles/test_pair_style.cpp b/unittest/force-styles/test_pair_style.cpp
+--- a/unittest/force-styles/test_pair_style.cpp
++++ b/unittest/force-styles/test_pair_style.cpp
+@@ -10,3 +10,6 @@
++TEST(PairStyle, ExtraCase) {}
+"""
+    specs = _lammps_force_style_driver_specs()
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.MAP_REPO_VERSION_TO_SPECS",
+        {"lammps/lammps": {"4887": specs}},
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.get_test_cmds",
+        lambda _instance: specs["test_cmd"],
+    )
+    instance = {
+        "instance_id": "lammps__lammps-4887",
+        "repo": "lammps/lammps",
+        "version": "4887",
+        "base_commit": "abc",
+        "test_patch": "",
+    }
+
+    command = _test_command(instance, patch)
+
+    assert "UNSUPPORTED_GENERATED_TEST" not in command
+    assert "build/test_pair_style" in command
 
 
 def test_rdkit_test_generation_isolates_touched_cpp_target(monkeypatch):

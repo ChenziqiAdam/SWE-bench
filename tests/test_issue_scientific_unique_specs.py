@@ -161,7 +161,12 @@ def test_scientific_python_specs_pin_observed_missing_dependencies():
     # imports it lazily (behind a try/except ImportError), pyGPGO==0.1.2 has
     # since been pulled from PyPI, and these PRs never exercise that code path.
     assert "pyGPGO==0.1.2" not in deepchem["pip_packages"]
-    assert "numpy==1.23.5" in qutip_1436["pip_packages"]
+    # numpy>=1.22 wheels dropped numpy.__config__.blas_opt_info (switched to
+    # the ILP64 openblas64__info naming), which this build era's
+    # qutip/_mkl/utilities.py reads directly at import time; 1.21.6 is the
+    # last release whose wheel still sets it (see swebench/harness/constants/
+    # python.py's _QUTIP_LEGACY_TEST_GENERATION_SPEC for the full trace).
+    assert "numpy==1.21.6" in qutip_1436["pip_packages"]
 
 
 def test_qutip_historical_specs_disable_isolated_build_dependencies():
