@@ -42,13 +42,14 @@
     "determinism": {
       "repeat_run_same_checkout_digest_match": true,
       "cross_checkout_digest_match": true,
-      "clean_checkout_bundle_sha256": "a23a46657698f963a18e3108c373a0aa71c4fb60ecbaa6e85cd1f71877b6bd08",
-      "digest_input": "all 8 public+hidden case outputs, two independent fresh checkouts of commit 1dad75cf"
+      "clean_checkout_bundle_sha256": "263b839de8adc51804879f803a774427f8475f8475b8e27563ff2e56ec12e4fc",
+      "digest_input": "all 8 public+hidden case outputs, two independent fresh checkouts of commit 1dad75cf; independently re-verified with a third fresh checkout after the 2026-08-19 hidden-case redesign"
     },
-    "independent_audit_maximum_absolute_discrepancy": 2.220446049250313e-16,
-    "independent_audit_maximum_relative_discrepancy": 5.7717588157169e-16,
+    "independent_audit_maximum_absolute_discrepancy": 3.3306690738754696e-16,
+    "independent_audit_maximum_relative_discrepancy": 5.828670879282077e-16,
     "runtime_seconds_per_case": 0.4,
-    "runtime_budget_risk": "none; orders of magnitude under any budget gate used for other candidates"
+    "runtime_budget_risk": "none; orders of magnitude under any budget gate used for other candidates",
+    "hidden_case_redesign_2026_08_19": "The original five hidden cases only covered distinct metrics/parameter regions (coverage design) without targeting the shared numerical hazard in seccurv_*.m: every formula performs Gram-Schmidt orthogonalization (normX, then normY after projecting out the X-component from Y) before computing curvature, so normY collapsing toward zero for a nearly-parallel-but-still-independent pair is the paper's own linear-independence boundary. Replaced case_01 (stiefel_euclidean rank-increase, u=0.05) with a case where Y is built as c*X plus a 1e-6 perturbation (post-projection normY ~ 1e-6); replaced case_04 (a generic orthogonal Grassmann pair) with rank-deficient near-parallel B-blocks (post-projection normY ~ 9e-8) isolating the same hazard combined with low rank; replaced case_05 (a hand-picked p=4 SO(n) pair) with a generic but high-dimensional n=30 skew pair testing floating-point accumulation at scale beyond the paper's own p=4 examples. case_02 (late-stage high-rank Fig. 1 point) and case_03 (alternate DDVV A3-vs-A2 pairing) were kept unchanged. All three new cases were verified numerically valid (normY > 0, finite curvature) and reproduce to machine epsilon against the independent NumPy implementation across two clean official checkouts plus a third independent spot-check checkout."
   },
   "schema_version": 1
 }

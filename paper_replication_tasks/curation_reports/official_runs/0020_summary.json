@@ -1,0 +1,21 @@
+{
+  "adapter_sha256": "333d9c10cd7f429d56b7145cb3f8c405084c6b9817746e94e61a280782427c09",
+  "clean_checkout_bundle_sha256": [
+    "b4b51e297f6f273bd1ec66ccb6614de49a0902bc305cdfe044fd92663512aa8c",
+    "b4b51e297f6f273bd1ec66ccb6614de49a0902bc305cdfe044fd92663512aa8c"
+  ],
+  "commit": "6e84cf31ef7012daa08168bcdc8315f8ca3ec7c6",
+  "dependency_artifact_sha256": null,
+  "environment": {
+    "python": "3.12.13"
+  },
+  "environment_lock_sha256": "92495955880e4c28acd188e80c52208a6d3d1495bb841d0abc56476fba89f2be",
+  "independent_max_abs": 1.48167227820295e-07,
+  "independent_rmse": 2.9950796775793264e-08,
+  "status": "validated",
+  "task_id": "scibench_replication_0020",
+  "tolerances": {
+    "max_abs": 1.4816722782029501e-06,
+    "rmse": 2.9950796775793265e-07
+  }
+}

@@ -1,0 +1,408 @@
+{
+  "adapter_sha256": "aee56d94783bcb3ef880cde6658172e209c4108599fb3eb32588747ef20a1897",
+  "cases": [
+    {
+      "adapter_sha256": "aee56d94783bcb3ef880cde6658172e209c4108599fb3eb32588747ef20a1897",
+      "case_id": "case_01",
+      "checkout_commit": "c162068f61bafbe640bbd40ee4a47312498ed153",
+      "cluster_audit": {
+        "A": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "B": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "C": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "D": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "E": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "F": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        }
+      },
+      "command": "<pinned-environment>/bin/python curation_tools/energy_tsa_adapter.py --task 0016 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "environment_lock_sha256": "4702612abf4604f2508787973b504e43fe2de573d60c2a01e6019468c887c30d",
+      "input_sha256": "ae3b7a54397b7e55f5439368e562b448b625f97555b8288fa747ffbc2a2d0601",
+      "output_sha256": "e53a4c320f3a8cb1c533bd6ea6d2771a4310299e993c999de2548c30b1549b28",
+      "patch_sha256": "defc1fae767f3948e084efca6acd2da7487e5cf5f28eb3c765b355bde3a935ae",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "aee56d94783bcb3ef880cde6658172e209c4108599fb3eb32588747ef20a1897",
+      "case_id": "case_01",
+      "checkout_commit": "c162068f61bafbe640bbd40ee4a47312498ed153",
+      "cluster_audit": {
+        "A": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "B": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "C": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "D": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "E": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "F": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        }
+      },
+      "command": "<pinned-environment>/bin/python curation_tools/energy_tsa_adapter.py --task 0016 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "environment_lock_sha256": "4702612abf4604f2508787973b504e43fe2de573d60c2a01e6019468c887c30d",
+      "input_sha256": "42cbac435f189e20ee3b73f8d425ad465eef1320de6b838d2782b8fb52cd1255",
+      "output_sha256": "6f0598fb87e20bdff0854439535285671ce0806ee3ae3f33938927bc557a0b54",
+      "patch_sha256": "defc1fae767f3948e084efca6acd2da7487e5cf5f28eb3c765b355bde3a935ae",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "aee56d94783bcb3ef880cde6658172e209c4108599fb3eb32588747ef20a1897",
+      "case_id": "case_02",
+      "checkout_commit": "c162068f61bafbe640bbd40ee4a47312498ed153",
+      "cluster_audit": {
+        "A": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "B": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "C": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "D": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "E": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "F": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        }
+      },
+      "command": "<pinned-environment>/bin/python curation_tools/energy_tsa_adapter.py --task 0016 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "environment_lock_sha256": "4702612abf4604f2508787973b504e43fe2de573d60c2a01e6019468c887c30d",
+      "input_sha256": "6171ef18b80eacf9a9fc06f09f9d6656b2d874e03adaecfb87923d7d37184c22",
+      "output_sha256": "ca96bb4df688af905350b9558b6ddb9c01d762b5232e7fca5e7edd0bef08da87",
+      "patch_sha256": "defc1fae767f3948e084efca6acd2da7487e5cf5f28eb3c765b355bde3a935ae",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "aee56d94783bcb3ef880cde6658172e209c4108599fb3eb32588747ef20a1897",
+      "case_id": "case_03",
+      "checkout_commit": "c162068f61bafbe640bbd40ee4a47312498ed153",
+      "cluster_audit": {
+        "A": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "B": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "C": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "D": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "E": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "F": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        }
+      },
+      "command": "<pinned-environment>/bin/python curation_tools/energy_tsa_adapter.py --task 0016 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "environment_lock_sha256": "4702612abf4604f2508787973b504e43fe2de573d60c2a01e6019468c887c30d",
+      "input_sha256": "1ffc70e34cb9061944876183eb2725e08610ea7e84f163c12e3089494b0409f4",
+      "output_sha256": "cb11d18ad8ef80bf28c83a2e04fd1a857492b754debfebdedd7a5d52da65f8ec",
+      "patch_sha256": "defc1fae767f3948e084efca6acd2da7487e5cf5f28eb3c765b355bde3a935ae",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "aee56d94783bcb3ef880cde6658172e209c4108599fb3eb32588747ef20a1897",
+      "case_id": "case_04",
+      "checkout_commit": "c162068f61bafbe640bbd40ee4a47312498ed153",
+      "cluster_audit": {
+        "A": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "B": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "C": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "D": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "E": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "F": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        }
+      },
+      "command": "<pinned-environment>/bin/python curation_tools/energy_tsa_adapter.py --task 0016 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "environment_lock_sha256": "4702612abf4604f2508787973b504e43fe2de573d60c2a01e6019468c887c30d",
+      "input_sha256": "7e7befe21c504dbb3146e506caeb539e7d86f7484ad868de9fa7fbb88656db3f",
+      "output_sha256": "553b552a517d7f0283ea06a4f02e334bd9852e4ca49805aa14f03366680ddde8",
+      "patch_sha256": "defc1fae767f3948e084efca6acd2da7487e5cf5f28eb3c765b355bde3a935ae",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "aee56d94783bcb3ef880cde6658172e209c4108599fb3eb32588747ef20a1897",
+      "case_id": "case_05",
+      "checkout_commit": "c162068f61bafbe640bbd40ee4a47312498ed153",
+      "cluster_audit": {
+        "A": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "B": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "C": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "D": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "E": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "F": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        }
+      },
+      "command": "<pinned-environment>/bin/python curation_tools/energy_tsa_adapter.py --task 0016 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "environment_lock_sha256": "4702612abf4604f2508787973b504e43fe2de573d60c2a01e6019468c887c30d",
+      "input_sha256": "43d3b8945a6d610066d6c80cbe4c0fd73e32a3310d414ca105a9f6d50aef52cb",
+      "output_sha256": "cc574ad536a183fd83488da2ffd0a6015d52b4066ef7e1eeb5389cd16ab5d046",
+      "patch_sha256": "defc1fae767f3948e084efca6acd2da7487e5cf5f28eb3c765b355bde3a935ae",
+      "split": "hidden"
+    }
+  ],
+  "commit": "c162068f61bafbe640bbd40ee4a47312498ed153",
+  "environment_lock_sha256": "4702612abf4604f2508787973b504e43fe2de573d60c2a01e6019468c887c30d",
+  "gold_source": "pinned_official_checkout",
+  "independent_audit": {
+    "implementation": "curation_tools/energy_tsa_scientific.py; independent reimplementation of aggregation.py's stratify->normalize->cluster->representative-day pipeline for all six methods A-F, compared against Calliope's own day-to-cluster assignment (solver-neutral -- does not re-solve the CBC MILP)",
+    "results": {
+      "hidden_case_01": {
+        "A": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "B": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "C": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "D": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "E": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "F": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        }
+      },
+      "hidden_case_02": {
+        "A": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "B": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "C": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "D": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "E": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "F": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        }
+      },
+      "hidden_case_03": {
+        "A": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "B": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "C": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "D": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "E": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "F": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        }
+      },
+      "hidden_case_04": {
+        "A": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "B": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "C": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "D": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "E": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "F": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        }
+      },
+      "hidden_case_05": {
+        "A": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "B": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "C": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "D": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "E": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "F": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        }
+      },
+      "public_case_01": {
+        "A": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "B": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "C": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "D": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "E": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        },
+        "F": {
+          "adjusted_rand_index": 1.0,
+          "exact_partition_match": true
+        }
+      }
+    },
+    "status": "passed"
+  },
+  "lifecycle": "validated",
+  "official_reproduction": {
+    "adapter_sha256": "aee56d94783bcb3ef880cde6658172e209c4108599fb3eb32588747ef20a1897",
+    "command": "python curation_tools/build_energy_tsa_task.py --checkout <clean-checkout> --paper <paper.pdf> --paper-version <version>",
+    "environment_lock_sha256": "4702612abf4604f2508787973b504e43fe2de573d60c2a01e6019468c887c30d",
+    "patch_sha256": "defc1fae767f3948e084efca6acd2da7487e5cf5f28eb3c765b355bde3a935ae",
+    "raw_and_normalized_outputs": "curation_reports/official_runs/energy",
+    "two_clean_runs_max_capacity_abs_error": 5.684341886080802e-14,
+    "two_clean_runs_max_unserved_relative_error": 1.7800028356845604e-16
+  },
+  "paper_sha256": "f7de9fe507fe2bb0bff801bbc9975deb13c0a4b0853fd588935bd04f3af39dfa",
+  "paper_version": "arXiv:2210.08351v1",
+  "patch_sha256": "defc1fae767f3948e084efca6acd2da7487e5cf5f28eb3c765b355bde3a935ae",
+  "repository": "https://github.com/ahilbers/a_posteriori_tsa_storage",
+  "schema_version": 4,
+  "task_id": "scibench_replication_0018"
+}

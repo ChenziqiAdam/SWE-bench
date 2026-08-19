@@ -1,0 +1,13 @@
+{
+  "comparison": "fieldwise",
+  "field_rules": {
+    "capacity_totals": {
+      "atol": 0.05,
+      "rtol": 0.0
+    },
+    "unserved_energy": {
+      "atol": 1.0,
+      "rtol": 0.01
+    }
+  }
+}

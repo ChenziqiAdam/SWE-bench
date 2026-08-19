@@ -1,0 +1,188 @@
+{
+  "cases": [
+    {
+      "adapter_sha256": "333d9c10cd7f429d56b7145cb3f8c405084c6b9817746e94e61a280782427c09",
+      "case_id": "case_01",
+      "checkout_commit": "6e84cf31ef7012daa08168bcdc8315f8ca3ec7c6",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0020 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "92495955880e4c28acd188e80c52208a6d3d1495bb841d0abc56476fba89f2be",
+      "independent_error": {
+        "max_abs": 1.695648599309152e-08,
+        "per_field_max_abs": {
+          "coefficients": 1.695648599309152e-08,
+          "pooled_r2": 2.199385118473174e-11,
+          "r2_by_equation": 1.741997657234151e-10,
+          "rho": 1.1508735631160505e-10,
+          "std_errors": 1.3999130743513888e-09
+        },
+        "rmse": 3.6710836440062154e-09
+      },
+      "input_sha256": "35395104941e57c975cfefe76292525ffdeb113ae358518f41f03c336af8fc59",
+      "normalized_output_sha256": "8ccbdd35d12f32476136a446ffd1056ee2847c6495660e835d3ad13a3ff66757",
+      "output_sha256": "8ccbdd35d12f32476136a446ffd1056ee2847c6495660e835d3ad13a3ff66757",
+      "raw_official_sha256": "8ff17c732866702c39e9aa52e749f42d814973c3ac4b342cbec91020a8f2cb24",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "333d9c10cd7f429d56b7145cb3f8c405084c6b9817746e94e61a280782427c09",
+      "case_id": "case_01",
+      "checkout_commit": "6e84cf31ef7012daa08168bcdc8315f8ca3ec7c6",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0020 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "92495955880e4c28acd188e80c52208a6d3d1495bb841d0abc56476fba89f2be",
+      "independent_error": {
+        "max_abs": 5.575040162852929e-08,
+        "per_field_max_abs": {
+          "coefficients": 5.575040162852929e-08,
+          "pooled_r2": 7.988276706782926e-12,
+          "r2_by_equation": 2.645925700761609e-10,
+          "rho": 1.809221175652631e-10,
+          "std_errors": 7.015737768512054e-09
+        },
+        "rmse": 8.100157244174127e-09
+      },
+      "input_sha256": "76d342f8117b657086d546d5a8c7eb5294eef476c753ae68877f9e4b2a361713",
+      "normalized_output_sha256": "283610f7af9db791b2f6846178b228cefa41bd158bffdced634e232359b4d8f5",
+      "output_sha256": "283610f7af9db791b2f6846178b228cefa41bd158bffdced634e232359b4d8f5",
+      "raw_official_sha256": "8939a080f0bd6c3e0616b34620c9779554efce393194f4c224f935a6a3dbe063",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "333d9c10cd7f429d56b7145cb3f8c405084c6b9817746e94e61a280782427c09",
+      "case_id": "case_02",
+      "checkout_commit": "6e84cf31ef7012daa08168bcdc8315f8ca3ec7c6",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0020 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "92495955880e4c28acd188e80c52208a6d3d1495bb841d0abc56476fba89f2be",
+      "independent_error": {
+        "max_abs": 9.499269104651376e-08,
+        "per_field_max_abs": {
+          "coefficients": 9.499269104651376e-08,
+          "pooled_r2": 3.480071786299277e-11,
+          "r2_by_equation": 6.300768795597378e-10,
+          "rho": 2.6290235266568374e-10,
+          "std_errors": 5.8877487330022404e-09
+        },
+        "rmse": 2.3532076989841782e-08
+      },
+      "input_sha256": "9cc62c8ec04e07c1771cf8108250197ad243c5491090d889d3843213c2fcef23",
+      "normalized_output_sha256": "5e7a2bde94c86bba0044b8093b42041e8fe7d05e905123564c084459843dcfb2",
+      "output_sha256": "5e7a2bde94c86bba0044b8093b42041e8fe7d05e905123564c084459843dcfb2",
+      "raw_official_sha256": "282ce4a5d4c3ec19dd7d140b75d8ff01d34a431eb87bee81eb06229939c5b1a1",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "333d9c10cd7f429d56b7145cb3f8c405084c6b9817746e94e61a280782427c09",
+      "case_id": "case_03",
+      "checkout_commit": "6e84cf31ef7012daa08168bcdc8315f8ca3ec7c6",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0020 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "92495955880e4c28acd188e80c52208a6d3d1495bb841d0abc56476fba89f2be",
+      "independent_error": {
+        "max_abs": 1.48167227820295e-07,
+        "per_field_max_abs": {
+          "coefficients": 1.48167227820295e-07,
+          "pooled_r2": 9.163780845256042e-12,
+          "r2_by_equation": 2.642637220162669e-10,
+          "rho": 6.469038638101665e-10,
+          "std_errors": 2.848887792339383e-08
+        },
+        "rmse": 2.9950796775793264e-08
+      },
+      "input_sha256": "cd36d937a3442cdf8232ca6cb00bd93e5158c3b43adc8b03c9874a50e9d2f356",
+      "normalized_output_sha256": "ed382b0b7abd3b2fc1788ec3fd96885bcc12fd3ed883c937743cda4b89f1ec05",
+      "output_sha256": "ed382b0b7abd3b2fc1788ec3fd96885bcc12fd3ed883c937743cda4b89f1ec05",
+      "raw_official_sha256": "bf548798118029b6935ab76e19b2cc77667f8fdb3b7d4a1941a6973a7a77a6b2",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "333d9c10cd7f429d56b7145cb3f8c405084c6b9817746e94e61a280782427c09",
+      "case_id": "case_04",
+      "checkout_commit": "6e84cf31ef7012daa08168bcdc8315f8ca3ec7c6",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0020 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "92495955880e4c28acd188e80c52208a6d3d1495bb841d0abc56476fba89f2be",
+      "independent_error": {
+        "max_abs": 8.017801533810598e-08,
+        "per_field_max_abs": {
+          "coefficients": 8.017801533810598e-08,
+          "pooled_r2": 2.4094282125020072e-11,
+          "r2_by_equation": 7.513021871297099e-10,
+          "rho": 6.744512726086782e-10,
+          "std_errors": 6.173540123555199e-09
+        },
+        "rmse": 1.6978501305553116e-08
+      },
+      "input_sha256": "db14f30ef2500f776e7f3d8702f36bbfee89d73ced4917d057a1e26889e5c693",
+      "normalized_output_sha256": "e2f0f1f0cb2faac42d1d4c401c623aba5c38cb889f110aee643c5633f0d366a2",
+      "output_sha256": "e2f0f1f0cb2faac42d1d4c401c623aba5c38cb889f110aee643c5633f0d366a2",
+      "raw_official_sha256": "8dfd43b9ed4c32742590eb532b1a0001d5f909b292816b24f99aa098c82f7ea4",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "333d9c10cd7f429d56b7145cb3f8c405084c6b9817746e94e61a280782427c09",
+      "case_id": "case_05",
+      "checkout_commit": "6e84cf31ef7012daa08168bcdc8315f8ca3ec7c6",
+      "command": "<environment>/bin/python curation_tools/official_adapter.py --task 0020 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "92495955880e4c28acd188e80c52208a6d3d1495bb841d0abc56476fba89f2be",
+      "independent_error": {
+        "max_abs": 8.989204047793464e-08,
+        "per_field_max_abs": {
+          "coefficients": 8.989204047793464e-08,
+          "pooled_r2": 7.268408097615975e-12,
+          "r2_by_equation": 2.2784962805388886e-10,
+          "rho": 1.5702245059756592e-10,
+          "std_errors": 3.5719498470143662e-09
+        },
+        "rmse": 1.3556603568763082e-08
+      },
+      "input_sha256": "995d49f6eb9ab8b679e1f119a4a0f67c9a5788ef45bcda68d413a5ec7718e97b",
+      "normalized_output_sha256": "8fbc956c08e46dff0aa1f1fa20c7d9178446a4f110d8c38c10853056ee9bf8a3",
+      "output_sha256": "8fbc956c08e46dff0aa1f1fa20c7d9178446a4f110d8c38c10853056ee9bf8a3",
+      "raw_official_sha256": "e9eb2392f8f3aa96a95df40544fcbaef4b65214abbe1a4fed5a11ee0b281f140",
+      "split": "hidden"
+    }
+  ],
+  "commit": "6e84cf31ef7012daa08168bcdc8315f8ca3ec7c6",
+  "dependency_artifact_sha256": null,
+  "environment": {
+    "python": "3.12.13"
+  },
+  "environment_lock_sha256": "92495955880e4c28acd188e80c52208a6d3d1495bb841d0abc56476fba89f2be",
+  "generation_command": "python curation_tools/promote_official.py --task ... --checkout ... --environment ...",
+  "gold_source": "pinned_official_checkout",
+  "independent_audit": {
+    "derived_tolerances": {
+      "max_abs": 1.4816722782029501e-06,
+      "rmse": 2.9950796775793265e-07
+    },
+    "implementation": "scientific.py clean-room formulation (not used for gold generation)",
+    "maximum_max_abs": 1.48167227820295e-07,
+    "maximum_rmse": 2.9950796775793264e-08,
+    "status": "passed"
+  },
+  "lifecycle": "validated",
+  "official_adapter": "verbatim pinned spsur::spsurtime() panel spatial-SUR-SLM 3SLS estimation on the archived covid19_spain_1/provinces_spain data for the three environmental-lag specifications",
+  "official_reproduction": {
+    "adapter_sha256": "333d9c10cd7f429d56b7145cb3f8c405084c6b9817746e94e61a280782427c09",
+    "clean_checkout_bundle_sha256": [
+      "b4b51e297f6f273bd1ec66ccb6614de49a0902bc305cdfe044fd92663512aa8c",
+      "b4b51e297f6f273bd1ec66ccb6614de49a0902bc305cdfe044fd92663512aa8c"
+    ],
+    "commands": [
+      "<environment>/bin/python curation_tools/official_adapter.py --task 0020 --checkout <clean-checkout> --input <input.json> --output <normalized.json> --raw-output <raw.json>"
+    ],
+    "dependency_artifact_sha256": null,
+    "environment": {
+      "python": "3.12.13"
+    },
+    "environment_lock_sha256": "92495955880e4c28acd188e80c52208a6d3d1495bb841d0abc56476fba89f2be",
+    "raw_and_normalized_outputs": "curation_reports/official_runs/0020"
+  },
+  "parameter_patch": "JSON parameters and JSON output only; plotting/file-output tails are disabled; pinned numerical statements execute unchanged except the documented SciPy pinv compatibility rule for 0011.",
+  "repository": "https://github.com/paezha/covid19-environmental-correlates",
+  "schema_version": 4,
+  "task_id": "scibench_replication_0020"
+}

@@ -85,6 +85,57 @@ def so_n_case(n: int, X, Y) -> dict:
     return {"metric": "so_n", "n": n, "X": X, "Y": Y}
 
 
+def near_degenerate_stiefel_euclidean_case() -> dict:
+    """Y nearly parallel to X before Gram-Schmidt: the post-orthogonalization
+    normY collapses to ~1e-6 (vs. O(1) for a generic pair). Every seccurv_*.m
+    formula divides by this norm, so an implementation that reorders the
+    normalize/project steps, or normalizes with the wrong (pre- vs.
+    post-projection) vector, is amplified by ~1e6 here while still matching
+    to machine precision on well-separated public cases. X, Y remain linearly
+    independent (normY > 0), so the input is valid per the paper's own
+    assumption, not a boundary violation."""
+    p, np_ = 3, 3
+    A1 = [[0, 1, 0], [-1, 0, 0], [0, 0, 0]]
+    B1 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    c, eps = 5.0, 1e-6
+    A2 = (np.asarray(A1) * c).tolist()
+    B2 = (np.asarray(B1) * c).tolist()
+    B2[0][1] += eps
+    return stiefel_case("stiefel_euclidean", p, np_, A1, B1, A2, B2)
+
+
+def rank_deficient_near_parallel_grassmann_case() -> dict:
+    """B1, B2 are both rank-deficient (each column concentrated in a distinct
+    2-dim subspace of a 5-dim ambient space) and near-parallel before
+    projection: post-projection normY collapses to ~9e-8. Isolates
+    seccurv_Grassmann.m under the same near-degenerate-orthogonalization
+    hazard as the Stiefel case above, combined with low-rank B-blocks
+    (the paper's own 'low rank' theme) rather than full-rank generic
+    matrices."""
+    np_, p = 5, 3
+    B1 = [[1, 0, 0], [2, 0, 0], [0, 1, 0], [0, 0, 1], [0, 0, 1]]
+    c, eps = 3.0, 1e-7
+    B2 = (np.asarray(B1, dtype=float) * c).tolist()
+    B2[0][0] += eps
+    return grassmann_case(np_, p, B1, B2)
+
+
+def high_dimensional_so_n_case() -> dict:
+    """Generic but high-dimensional (n=30) skew pair, isolating seccurv_SOn.m
+    at a scale far beyond the paper's own p=4 examples: exercises whether an
+    implementation's trace/Lie-bracket computation accumulates floating-point
+    error differently at scale (900-entry matrices) rather than only matching
+    at the small hand-checkable sizes used elsewhere in this task."""
+    n = 30
+    rng1 = np.random.RandomState(1)
+    rng2 = np.random.RandomState(2)
+    raw1 = rng1.normal(size=(n, n))
+    raw2 = rng2.normal(size=(n, n))
+    X = (raw1 - raw1.T).tolist()
+    Y = (raw2 - raw2.T).tolist()
+    return so_n_case(n, X, Y)
+
+
 def cases():
     public = [
         rank_increase_case("stiefel_canonical", 10, 0.3),
@@ -92,22 +143,20 @@ def cases():
         ddvv_b_block_case("stiefel_euclidean", 0.4, 0.7),
     ]
     hidden = [
-        # Well-separated rank-1 tangent directions (small u): near-flat regime.
-        rank_increase_case("stiefel_euclidean", 10, 0.05),
+        # Near-degenerate Gram-Schmidt orthogonalization (Y nearly parallel
+        # to X): the numerical hazard every seccurv_*.m formula shares.
+        near_degenerate_stiefel_euclidean_case(),
         # Late-stage high-rank regime (large u, deep into the 9-stage family).
         rank_increase_case("stiefel_canonical", 10, 0.95),
         # DDVV A3-vs-A2 pairing at the midpoint, exercising the alternate matrix.
         ddvv_a_block_case("stiefel_euclidean", "A3A2", 0.6),
-        # Grassmann metric on a near-orthogonal pair (independent of the
-        # Stiefel block construction above, isolates seccurv_Grassmann.m).
-        grassmann_case(4, 4,
-            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]],
-            [[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]]),
-        # SO(n) metric on a genuinely 6-dimensional skew pair (isolates
-        # seccurv_SOn.m; independent of the Stiefel/Grassmann block forms).
-        so_n_case(4,
-            [[0, 1, 2, 0], [-1, 0, 0, 3], [-2, 0, 0, 1], [0, -3, -1, 0]],
-            [[0, 0, 1, -2], [0, 0, 3, 0], [-1, -3, 0, 0], [2, 0, 0, 0]]),
+        # Grassmann metric on rank-deficient, near-parallel B-blocks: the same
+        # near-degenerate-orthogonalization hazard combined with low rank.
+        rank_deficient_near_parallel_grassmann_case(),
+        # SO(n) metric at n=30 (vs. the paper's own p=4 examples): floating-
+        # point accumulation at scale, independent of the Stiefel/Grassmann
+        # block forms.
+        high_dimensional_so_n_case(),
     ]
     return public, hidden
 

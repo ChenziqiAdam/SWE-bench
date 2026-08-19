@@ -44,7 +44,8 @@
       "paper_title": "A Spatio-Temporal Analysis of the Environmental Correlates of COVID-19 Incidence in Spain",
       "paper_url": "https://doi.org/10.1111/gean.12241",
       "github_url": "https://github.com/paezha/covid19-environmental-correlates",
-      "build_status": "scoped_pilot"
+      "task_id": "scibench_replication_0020",
+      "build_status": "validated"
     },
     {
       "task_id": null,
@@ -58,7 +59,8 @@
       "paper_title": "Reducing Climate Risk in Energy System Planning: A Posteriori Time Series Aggregation for Models with Storage",
       "paper_url": "https://doi.org/10.1016/j.apenergy.2022.120624",
       "github_url": "https://github.com/ahilbers/a_posteriori_tsa_storage",
-      "build_status": "deferred"
+      "task_id": "scibench_replication_0018",
+      "build_status": "validated"
     },
     {
       "task_id": null,

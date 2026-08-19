@@ -1,0 +1,25 @@
+name: scibench-replication-0020
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - r-base=4.3
+  - c-compiler
+  - cxx-compiler
+  - fortran-compiler
+  - r-dplyr=1.1.4
+  - r-magrittr=2.0.3
+  - r-jsonlite=2.0.0
+  - r-sf=1.0_20
+  - r-digest=0.6.37
+  - r-spdep
+  - r-plm
+  - r-lubridate
+  - r-units
+  - r-gmodels
+  - r-sparsemvn
+  - r-minqa
+  - r-numderiv
+  - r-formula
+  - r-matrix
+  - r-mass

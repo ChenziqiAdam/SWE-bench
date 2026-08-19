@@ -1,0 +1,18 @@
+{
+  "gates": {
+    "cluster_audit_all_cases_all_methods_passed": true,
+    "fieldwise_comparator_accepts_close": true,
+    "fieldwise_comparator_rejects_far": true,
+    "invalid_case_inputs_rejected": true,
+    "nan_inf_json_rejected": true,
+    "nonfinite_output_rejected": true,
+    "oversized_json_rejected": true,
+    "public_memorizer_cap": null,
+    "reference_score_one": null,
+    "symlink_rejected": true,
+    "traversal_rejected": true,
+    "wrong_output_shape_rejected": true
+  },
+  "status": "structural_passed",
+  "task_id": "scibench_replication_0018"
+}
