@@ -103,6 +103,11 @@ def main() -> None:
         root = Path(temporary)
         task = root / TASK_ID
         shutil.copytree(source_task, task)
+        manifest = {"schema_version": 4, "scoring": {"public_weight": 0.4, "hidden_weight": 0.6}, "tasks": [{
+            "task_id": TASK_ID, "lifecycle": "validated",
+            "public_files": file_map(task / "public"), "hidden_files": file_map(task / "hidden"),
+        }]}
+        (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
 
         nan_json = root / "nan.json"; nan_json.write_text('{"x":NaN}', encoding="utf-8")
         huge_json = root / "huge.json"; huge_json.write_text('{"x":"' + "a" * (16 * 1024 * 1024) + '"}', encoding="utf-8")

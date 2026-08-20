@@ -1310,7 +1310,12 @@ _DEEPCHEM_TEST_GENERATION_SPEC = {
         "pytest",
         "numpy==1.23.5",
         "pandas==1.5.3",
-        "scipy==1.10.1",
+        # scipy>=1.9 removed scipy.linalg.pinv2, which
+        # sklearn==0.22.2.post1's cross_decomposition._pls still imports at
+        # module load time (deepchem/models/sklearn_models pulls this in
+        # unconditionally). 1.8.1 is the last 1.8.x release and still
+        # supports Python 3.8 / numpy 1.23.5.
+        "scipy==1.8.1",
         "tensorflow-cpu==2.13.1",
         "tensorflow-probability==0.21.0",
         "flaky==3.8.1",

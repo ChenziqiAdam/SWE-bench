@@ -120,6 +120,30 @@ rho <- as.numeric(fit$deltas)
 r2_by_equation <- as.numeric(fit$R2[-1])
 pooled_r2 <- as.numeric(fit$R2[1])
 
+# Direct/indirect/total marginal-effects decomposition (LeSage & Pace 2009,
+# README.Rmd's "impacts" chunks). README calls trW(..., type = "MC"), an
+# unseeded Monte Carlo trace estimator; we instead use type = "mult" (the
+# exact power-series trace via repeated W multiplication -- W is 47x47, so
+# this is cheap and exact, not an approximation) to get the same underlying
+# quantity deterministically. The R = NULL argument below skips only the
+# unseeded Monte Carlo *significance* simulation in intImpacts(); the
+# direct/indirect/total point estimates themselves are a closed-form
+# function of (rho, beta, tr) with no randomness either way.
+Wsur <- as(spdep::listw2mat(listw), "CsparseMatrix")
+trsur <- spatialreg::trW(Wsur, type = "mult")
+impacts_by_equation <- impactspsur(fit, tr = trsur, R = NULL)
+
+impact_names <- character(0)
+impact_direct <- numeric(0)
+impact_indirect <- numeric(0)
+impact_total <- numeric(0)
+for (eq_impacts in impacts_by_equation) {
+  impact_names <- c(impact_names, attr(eq_impacts, "bnames"))
+  impact_direct <- c(impact_direct, as.numeric(eq_impacts$direct))
+  impact_indirect <- c(impact_indirect, as.numeric(eq_impacts$indirect))
+  impact_total <- c(impact_total, as.numeric(eq_impacts$total))
+}
+
 output <- list(
   lag_spec = case$lag_spec,
   restricted = case$restricted,
@@ -128,7 +152,11 @@ output <- list(
   std_errors = std_errors,
   rho = rho,
   r2_by_equation = r2_by_equation,
-  pooled_r2 = pooled_r2
+  pooled_r2 = pooled_r2,
+  impact_names = impact_names,
+  impact_direct = impact_direct,
+  impact_indirect = impact_indirect,
+  impact_total = impact_total
 )
 
 cat(toJSON(output, dataframe = "columns", digits = 17, na = "null", auto_unbox = TRUE))

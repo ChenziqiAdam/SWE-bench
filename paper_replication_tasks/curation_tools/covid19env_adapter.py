@@ -217,17 +217,24 @@ def solve(case: dict[str, Any], checkout: Path) -> dict[str, Any]:
     names = list(raw["coefficient_names"])
     coefficients = {name: float(value) for name, value in zip(names, raw["coefficients"])}
     std_errors = {name: float(value) for name, value in zip(names, raw["std_errors"])}
+    impact_names = list(raw["impact_names"])
+    direct = {name: float(value) for name, value in zip(impact_names, raw["impact_direct"])}
+    indirect = {name: float(value) for name, value in zip(impact_names, raw["impact_indirect"])}
+    total = {name: float(value) for name, value in zip(impact_names, raw["impact_total"])}
     result = {
         "coefficients": coefficients,
         "std_errors": std_errors,
         "rho": [float(value) for value in raw["rho"]],
         "r2_by_equation": [float(value) for value in raw["r2_by_equation"]],
         "pooled_r2": float(raw["pooled_r2"]),
+        "direct_effects": direct,
+        "indirect_effects": indirect,
+        "total_effects": total,
     }
     for key in ("rho", "r2_by_equation"):
         if not all(math.isfinite(value) for value in result[key]):
             raise ValueError(f"non-finite value in {key}")
-    for mapping_key in ("coefficients", "std_errors"):
+    for mapping_key in ("coefficients", "std_errors", "direct_effects", "indirect_effects", "total_effects"):
         if not all(math.isfinite(value) for value in result[mapping_key].values()):
             raise ValueError(f"non-finite value in {mapping_key}")
     if not math.isfinite(result["pooled_r2"]):

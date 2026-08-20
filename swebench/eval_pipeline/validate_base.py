@@ -280,19 +280,35 @@ def validate_buildable(
                             continue
                     successful.append(built)
                 if clean_images:
+                    # Clean up every image the build stage produced, including
+                    # ones that failed the post-build smoke test above (they
+                    # are recorded as non-buildable in `cache` regardless) --
+                    # but the log message must not claim smoke validation
+                    # passed for those, or a real dependency failure reads as
+                    # a successful validation.
+                    smoke_failed_ids = set(smoke_failures)
                     for spec, *_rest in batch_successful:
+                        passed_smoke = spec.instance_id not in smoke_failed_ids
                         try:
                             client.images.remove(spec.instance_image_key, force=True)
-                            logger.info(
-                                "Validation passed for %s; removed instance image %s",
-                                spec.instance_id,
-                                spec.instance_image_key,
-                            )
+                            if passed_smoke:
+                                logger.info(
+                                    "Validation passed for %s; removed instance image %s",
+                                    spec.instance_id,
+                                    spec.instance_image_key,
+                                )
+                            else:
+                                logger.info(
+                                    "Validation failed for %s; removed instance image %s",
+                                    spec.instance_id,
+                                    spec.instance_image_key,
+                                )
                         except docker.errors.NotFound:
                             pass
                         except Exception as exc:
                             logger.warning(
-                                "Validation passed for %s, but instance image cleanup failed: %s",
+                                "Validation %s for %s, but instance image cleanup failed: %s",
+                                "passed" if passed_smoke else "failed",
                                 spec.instance_id,
                                 exc,
                             )

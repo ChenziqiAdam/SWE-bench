@@ -220,10 +220,54 @@ def solve(case: dict[str, Any]) -> dict[str, Any]:
         sl = slice(g * N, (g + 1) * N)
         r2_by_equation.append(float(np.corrcoef(y[sl], y_hat[sl])[0, 1] ** 2))
 
+    # Direct/indirect/total marginal-effects decomposition (LeSage & Pace 2009).
+    # For SLM, S_g = (I - rho_g W)^-1 is the exact partial-derivatives operator;
+    # direct_{k,g} = beta_{k,g} * mean(diag(S_g)), total_{k,g} = beta_{k,g} *
+    # mean(rowSums(S_g)), indirect = total - direct. This is algebraically the
+    # same quantity spatialreg::intImpacts computes via a truncated trace
+    # series (README.Rmd's impactspsur(..., tr=..., R=NULL) chunk); the exact
+    # matrix inverse used here needs no series-truncation choice and matches
+    # the official trace-series result to ~1e-7 for this well-conditioned W.
+    coef_by_name = dict(zip(names, coefficients))
+    identity = np.eye(N)
+    direct_effects: dict[str, float] = {}
+    indirect_effects: dict[str, float] = {}
+    total_effects: dict[str, float] = {}
+    for g in range(G):
+        S_g = np.linalg.inv(identity - rho[g] * W)
+        mean_diag = float(np.mean(np.diag(S_g)))
+        mean_rowsum = float(np.mean(S_g.sum(axis=1)))
+        if not restricted:
+            for local_name in regressor_names:
+                if local_name == "(Intercept)":
+                    continue
+                full_name = f"{local_name}_{g + 1}"
+                beta_kg = coef_by_name[full_name]
+                direct_effects[full_name] = beta_kg * mean_diag
+                total_effects[full_name] = beta_kg * mean_rowsum
+                indirect_effects[full_name] = total_effects[full_name] - direct_effects[full_name]
+        else:
+            per_eq_locals = [nm for nm in regressor_names if nm not in ("(Intercept)", "log(GDPpc)", "log(Older)")]
+            for local_name in per_eq_locals:
+                full_name = f"{local_name}_{g + 1}"
+                beta_kg = coef_by_name[full_name]
+                direct_effects[full_name] = beta_kg * mean_diag
+                total_effects[full_name] = beta_kg * mean_rowsum
+                indirect_effects[full_name] = total_effects[full_name] - direct_effects[full_name]
+            if g == 0:
+                for pooled_name in ("log(GDPpc)_1", "log(Older)_1"):
+                    beta_kg = coef_by_name[pooled_name]
+                    direct_effects[pooled_name] = beta_kg * mean_diag
+                    total_effects[pooled_name] = beta_kg * mean_rowsum
+                    indirect_effects[pooled_name] = total_effects[pooled_name] - direct_effects[pooled_name]
+
     return {
         "coefficients": {name: float(v) for name, v in zip(names, coefficients)},
         "std_errors": {name: float(v) for name, v in zip(names, std_errors)},
         "rho": [float(v) for v in rho],
         "r2_by_equation": r2_by_equation,
         "pooled_r2": pooled_r2,
+        "direct_effects": direct_effects,
+        "indirect_effects": indirect_effects,
+        "total_effects": total_effects,
     }

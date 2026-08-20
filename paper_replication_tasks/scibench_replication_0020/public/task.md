@@ -106,6 +106,52 @@ all `47*30` observations. `r2_by_equation` is, for each of the 30 equations
 (in day order), the squared Pearson correlation between that equation's 47
 observed and fitted values.
 
+## Direct, indirect, and total effects
+
+Because of the spatial lag term `rho_g * W * log(Incidence)_g`, an ordinary
+`beta` coefficient is **not** the marginal effect of its regressor: a change
+to `X_k` in one province also changes `log(Incidence)` in neighboring
+provinces via `W`, which then feeds back through further neighbors. Following
+LeSage and Pace (2009), decompose the `N x N` matrix of partial derivatives
+`d log(Incidence)_g / d X_{k,g}` for each equation `g` and non-intercept
+regressor `k` into:
+
+- **Direct effect**: the mean of the diagonal elements (a province's own
+  regressor affecting its own outcome).
+- **Indirect effect**: the mean of the off-diagonal elements (spillover from
+  other provinces' regressor values via contagion).
+- **Total effect**: direct + indirect.
+
+For the SLM specification used here, with `S_g(rho_g) = (I - rho_g * W)^-1`,
+the exact partial-derivatives matrix for regressor `k` in equation `g` is
+`S_g(rho_g) * beta_{k,g}`. Using the trace-based approximation of LeSage and
+Pace (equivalent to expanding `S_g(rho_g) = sum_{q=0}^{Q-1} rho_g^q * W^q`
+with `Q = 30` terms, i.e. `spatialreg::trW(..., type = "mult")`'s default
+`m = 30`):
+
+```
+direct_{k,g}   = beta_{k,g} * (1/N) * sum_{q=0}^{Q-1} rho_g^q * tr(W^q)
+total_{k,g}    = beta_{k,g} * (1/N) * sum_i sum_j S_g(rho_g)_{ij}
+               = beta_{k,g} * sum_{q=0}^{Q-1} rho_g^q * (row-sums of W^q averaged)
+indirect_{k,g} = total_{k,g} - direct_{k,g}
+```
+
+Equivalently and more directly: let `S_g = (I_47 - rho_g * W)^-1` (computed
+exactly, not via the trace series) for each equation `g`. Then
+`direct_{k,g} = beta_{k,g} * mean(diag(S_g))`, and
+`total_{k,g} = beta_{k,g} * mean(rowSums(S_g))` (equivalently
+`beta_{k,g} * (sum of all entries of S_g) / N`, since `W`, and hence `S_g`,
+is row-standardized this equals `beta_{k,g} * mean(rowSums(S_g))`). Use the
+exact `S_g` matrix inverse form (not a truncated series) for full precision;
+this is algebraically identical to the trace series in the limit and matches
+it to numerical precision for this well-conditioned `W`.
+
+This decomposition applies to every non-intercept regressor in every
+equation, using that equation's `rho_g` and `beta_{k,g}` (for the restricted
+case, `log(GDPpc)` and `log(Older)` use the single pooled coefficient in
+every equation's decomposition, each equation still using its own `rho_g`).
+It does not apply to the intercept.
+
 ## Lag specifications
 
 `input.json`'s `lag_spec` selects which moving average of the climatic
@@ -147,5 +193,11 @@ Write JSON with these exact keys:
 - `r2_by_equation`: array of the 30 per-equation R-squared values, in day
   order.
 - `pooled_r2`: the single pooled R-squared value.
+- `direct_effects`, `indirect_effects`, `total_effects`: objects with the
+  same per-equation naming scheme as `coefficients` (`"<regressor>_<equation_number>"`,
+  and the two pooled `"_1"`-suffixed names for a restricted case), but
+  covering only the non-intercept regressors (no `"(Intercept)_g"` keys), each
+  holding that regressor/equation's direct, indirect, or total effect as
+  defined above.
 
 Use float64 arithmetic throughout.

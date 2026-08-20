@@ -5,6 +5,13 @@ capacity expansion planning model with storage, and reproduce its six aggregatio
 (A-F). The runner invokes `<entrypoint> --input input.json --output new-output-dir`; write
 finite `output.json`.
 
+**Scope note**: this task targets the paper's Section 4.3 validation configuration (3-year base
+time series aggregated to 30 representative days, all six methods A-F). The paper's Figure 6 also
+reports a 120-representative-day configuration, and Section 4.4/Figure 7 reports a separate
+30-year-base/120-day example restricted to methods A and F; both use the identical aggregation
+algorithm and code path (only `ts_reduction_num_years`/`num_days` differ) and are not part of this
+task's cases.
+
 ## Planning model
 
 Implement the six-region system exactly as specified in the paper's Appendix B (nomenclature

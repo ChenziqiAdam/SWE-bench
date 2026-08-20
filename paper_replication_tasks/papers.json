@@ -67,6 +67,20 @@
       "paper_title": "A Matrix-Free Approach for Finite-Strain Hyperelastic Problems Using Geometric Multigrid",
       "paper_url": "https://doi.org/10.1002/nme.6336",
       "github_url": "https://github.com/davydden/large-strain-matrix-free",
+      "build_status": "blocked_hpc_only_results"
+    },
+    {
+      "task_id": "scibench_replication_0021",
+      "paper_title": "A New Rational Approximation Algorithm via the Empirical Interpolation Method",
+      "paper_url": "https://doi.org/10.1137/24M1674832",
+      "github_url": "https://github.com/yuwenli925/REIM",
+      "build_status": "validated"
+    },
+    {
+      "task_id": null,
+      "paper_title": "A Sketch-and-Select Arnoldi Process",
+      "paper_url": "https://doi.org/10.1137/23M1588007",
+      "github_url": "https://github.com/simunec/sketch-select-arnoldi",
       "build_status": "collected_candidate"
     },
     {
