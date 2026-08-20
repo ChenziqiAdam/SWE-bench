@@ -1,0 +1,17 @@
+{
+  "hidden_cases": 5,
+  "maximum_absolute_discrepancy": 3.3323717899338967e-06,
+  "maximum_relative_discrepancy": 0.0001527351255759894,
+  "normalized_bundle_sha256": "f9531bccbe8831b465ffb269e5c537d0175b41bbcd70d16b97c1d4ac69df0db8",
+  "official_commit": "9760b18408f17d226124a93755294a95f15230f8",
+  "public_cases": 3,
+  "scope_note": "All 7 paper figures/Table 1 covered across 6 case_types. bdf2_fractional_heat step counts (244/5 for s=0.5, 239/6 for s=1.0) match the paper's own reported 243/5 and 238/6 to within an off-by-one array-length convention (T includes the t=0 initial-condition entry).",
+  "status": "validated",
+  "task_id": "scibench_replication_0021",
+  "tolerances": {
+    "atol": 3.332371789933897e-05,
+    "comparison": "mixed",
+    "rtol": 0.0015273512557598939
+  },
+  "two_clean_checkout_hashes_match": true
+}

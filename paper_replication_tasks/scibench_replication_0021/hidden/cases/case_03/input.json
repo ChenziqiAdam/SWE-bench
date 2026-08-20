@@ -1,0 +1,7 @@
+{
+  "K": 1e-06,
+  "M": 40,
+  "a": 1e-06,
+  "b": 1.0,
+  "case_type": "precon_family_approx"
+}

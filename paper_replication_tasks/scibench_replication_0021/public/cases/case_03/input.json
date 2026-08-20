@@ -1,0 +1,10 @@
+{
+  "Lambda": 1000000.0,
+  "M": 30,
+  "case_type": "bdf2_fractional_heat",
+  "mesh_h_exponent": 8,
+  "s": 0.5,
+  "tau0": 0.001,
+  "tend": 1.0,
+  "tol": 0.0001
+}

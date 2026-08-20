@@ -199,17 +199,17 @@
     },
     {
       "hidden_files": {
-        "cases/case_01/input.json": "5d30a4ddcb940b7de9dd859db70b00d0f990d91ef53761a05776d90977fc199e",
-        "cases/case_01/output.json": "20cefd7d4e248de0ced90150cb8d30471e3c36b4d7cf9c7cc1da6af29b24b9b9",
+        "cases/case_01/input.json": "f7d1bb7651c9c8a41b548e30d2d4248848188af9bb682f8971b1b35960efefa7",
+        "cases/case_01/output.json": "bf7dbe4e599fb214156af199fd638eded2c1a1c8281a3f135955423fb04f922a",
         "cases/case_02/input.json": "e90e57dae860c9caec3fe45e4188b0fd511efa609205fcf9e793fc7820398f84",
         "cases/case_02/output.json": "ad84384ad0f8c71d29a7527cfb6b53301f5a442dfca4be2fde69236912b5a8e5",
-        "cases/case_03/input.json": "c725e1ef3caccbb16cb25a4c1e28cc51be65ecea50cef7f75eb0235740286811",
-        "cases/case_03/output.json": "48fb3ecd41fc5fb32ae7064d72c0bfa876b8657f8a1df5d7daa80bca2817f457",
+        "cases/case_03/input.json": "935519d383829dc0432da61f4dc9893da8de995b3089659d617d26c7ca0e37da",
+        "cases/case_03/output.json": "72d9ed73f361ef565905fb645b19ee9bd51450c498433e4c39c73f90fd8639e0",
         "cases/case_04/input.json": "b8cff29e2c4efaffd549b7862703c754cf718f7b227157d5a9845b0baa112333",
         "cases/case_04/output.json": "c0365e17d6a12589cbaa2588eaa0fcf0fe560963024fd7bec0992669e8b57ac6",
-        "cases/case_05/input.json": "2fd01b87f4140c1c2564941c4ea22ee52fe4c7d39ae7246e71003776e1ebc202",
-        "cases/case_05/output.json": "b577305a594e5d950f5bfa1f03bf9e7a38dfe94880f3904f29ac19a9435d5462",
-        "provenance.json": "1c63c4bdf737851b2ea6f7fe77130c2ec37fff8d39059fad067abb96070aa835",
+        "cases/case_05/input.json": "fd438b3c599ef8969dc04146c265ac06666e09469c6499fd16ed717b782b7732",
+        "cases/case_05/output.json": "5eb4823401906958f3514555eba737d641ead357ed66b13400a5fcc8d79d4b6b",
+        "provenance.json": "93419580b90165e0fac6a63ba6770ad3fb2719019ab7b57c5cb3da024d8d4436",
         "tolerances.json": "eee8001309ed1b32bd4bbf0872cbd61700c6c16bddab5a8a9e9a6fe926373436"
       },
       "lifecycle": "validated",
@@ -221,7 +221,7 @@
         "cases/case_03/input.json": "ff6437878b8cf2d8593a4f185ce170537aaff13ffeff501febf21265f68f85f1",
         "cases/case_03/output.json": "1d4829653c41e964bfe5ea0a1009cb435b3ac24a05ace7593f234bc6d41277dd",
         "interface.schema.json": "d73f0624576c00d2e4f2aca6d94271976ae9da8844786e127851bcd078895806",
-        "paper.pdf": "f58c9f6c3295cedde3f5a48f7ef49e0f00290dddb5a6795dcc9ac940d25cdf17",
+        "paper.pdf": "35e67f7263fcdd5a6a97ed7b2a3a897da40cebf7c07a07351a43e92ee484dc0a",
         "task.md": "3bbd0505169f2074e6fa1eb9d5d352a986de7abc5c5caa2422f9c1d14c951bd3"
       },
       "task_id": "scibench_replication_0021"

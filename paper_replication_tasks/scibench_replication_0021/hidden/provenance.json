@@ -1,0 +1,157 @@
+{
+  "cases": [
+    {
+      "adapter_sha256": "4850c053e9b4cdfd2730477806ad66ef3e2eabe7dfaf897891bab4a9039ce817",
+      "case_id": "case_01",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "command": "python curation_tools/reim_adapter.py --task 0021 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "c896d3a837edbf56dbbc79406e3a24ba1ec8ef6c158c7208113fb347c4902043",
+      "input_sha256": "d7f3a4d153ac4b5f44f12054009449e13ec1c876bdc0e3af38882a0ac6fd1995",
+      "normalized_output_sha256": "0e1234a514aa39f9d8fccf72250fbd500c9ab2f12253d7a416641a9d9471457b",
+      "output_sha256": "0e1234a514aa39f9d8fccf72250fbd500c9ab2f12253d7a416641a9d9471457b",
+      "raw_official_sha256": "0e1234a514aa39f9d8fccf72250fbd500c9ab2f12253d7a416641a9d9471457b",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "4850c053e9b4cdfd2730477806ad66ef3e2eabe7dfaf897891bab4a9039ce817",
+      "case_id": "case_02",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "command": "python curation_tools/reim_adapter.py --task 0021 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "c896d3a837edbf56dbbc79406e3a24ba1ec8ef6c158c7208113fb347c4902043",
+      "input_sha256": "7054c2affb2578b0728cea9c01023e9ae68ebe6e17ce6229bca70f83d22af150",
+      "normalized_output_sha256": "378a6c154fc63a13c489af2ea1c4ff0cbc53c6d9d04ffef88f7e1821b2f0c657",
+      "output_sha256": "378a6c154fc63a13c489af2ea1c4ff0cbc53c6d9d04ffef88f7e1821b2f0c657",
+      "raw_official_sha256": "378a6c154fc63a13c489af2ea1c4ff0cbc53c6d9d04ffef88f7e1821b2f0c657",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "4850c053e9b4cdfd2730477806ad66ef3e2eabe7dfaf897891bab4a9039ce817",
+      "case_id": "case_03",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "command": "python curation_tools/reim_adapter.py --task 0021 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "c896d3a837edbf56dbbc79406e3a24ba1ec8ef6c158c7208113fb347c4902043",
+      "input_sha256": "ff6437878b8cf2d8593a4f185ce170537aaff13ffeff501febf21265f68f85f1",
+      "normalized_output_sha256": "1d4829653c41e964bfe5ea0a1009cb435b3ac24a05ace7593f234bc6d41277dd",
+      "output_sha256": "1d4829653c41e964bfe5ea0a1009cb435b3ac24a05ace7593f234bc6d41277dd",
+      "raw_official_sha256": "1d4829653c41e964bfe5ea0a1009cb435b3ac24a05ace7593f234bc6d41277dd",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "4850c053e9b4cdfd2730477806ad66ef3e2eabe7dfaf897891bab4a9039ce817",
+      "case_id": "case_01",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "command": "python curation_tools/reim_adapter.py --task 0021 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "c896d3a837edbf56dbbc79406e3a24ba1ec8ef6c158c7208113fb347c4902043",
+      "input_sha256": "f7d1bb7651c9c8a41b548e30d2d4248848188af9bb682f8971b1b35960efefa7",
+      "normalized_output_sha256": "bf7dbe4e599fb214156af199fd638eded2c1a1c8281a3f135955423fb04f922a",
+      "output_sha256": "bf7dbe4e599fb214156af199fd638eded2c1a1c8281a3f135955423fb04f922a",
+      "raw_official_sha256": "bf7dbe4e599fb214156af199fd638eded2c1a1c8281a3f135955423fb04f922a",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "4850c053e9b4cdfd2730477806ad66ef3e2eabe7dfaf897891bab4a9039ce817",
+      "case_id": "case_02",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "command": "python curation_tools/reim_adapter.py --task 0021 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "c896d3a837edbf56dbbc79406e3a24ba1ec8ef6c158c7208113fb347c4902043",
+      "input_sha256": "e90e57dae860c9caec3fe45e4188b0fd511efa609205fcf9e793fc7820398f84",
+      "normalized_output_sha256": "ad84384ad0f8c71d29a7527cfb6b53301f5a442dfca4be2fde69236912b5a8e5",
+      "output_sha256": "ad84384ad0f8c71d29a7527cfb6b53301f5a442dfca4be2fde69236912b5a8e5",
+      "raw_official_sha256": "ad84384ad0f8c71d29a7527cfb6b53301f5a442dfca4be2fde69236912b5a8e5",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "4850c053e9b4cdfd2730477806ad66ef3e2eabe7dfaf897891bab4a9039ce817",
+      "case_id": "case_03",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "command": "python curation_tools/reim_adapter.py --task 0021 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "c896d3a837edbf56dbbc79406e3a24ba1ec8ef6c158c7208113fb347c4902043",
+      "input_sha256": "935519d383829dc0432da61f4dc9893da8de995b3089659d617d26c7ca0e37da",
+      "normalized_output_sha256": "72d9ed73f361ef565905fb645b19ee9bd51450c498433e4c39c73f90fd8639e0",
+      "output_sha256": "72d9ed73f361ef565905fb645b19ee9bd51450c498433e4c39c73f90fd8639e0",
+      "raw_official_sha256": "72d9ed73f361ef565905fb645b19ee9bd51450c498433e4c39c73f90fd8639e0",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "4850c053e9b4cdfd2730477806ad66ef3e2eabe7dfaf897891bab4a9039ce817",
+      "case_id": "case_04",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "command": "python curation_tools/reim_adapter.py --task 0021 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "c896d3a837edbf56dbbc79406e3a24ba1ec8ef6c158c7208113fb347c4902043",
+      "input_sha256": "b8cff29e2c4efaffd549b7862703c754cf718f7b227157d5a9845b0baa112333",
+      "normalized_output_sha256": "c0365e17d6a12589cbaa2588eaa0fcf0fe560963024fd7bec0992669e8b57ac6",
+      "output_sha256": "c0365e17d6a12589cbaa2588eaa0fcf0fe560963024fd7bec0992669e8b57ac6",
+      "raw_official_sha256": "c0365e17d6a12589cbaa2588eaa0fcf0fe560963024fd7bec0992669e8b57ac6",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "4850c053e9b4cdfd2730477806ad66ef3e2eabe7dfaf897891bab4a9039ce817",
+      "case_id": "case_05",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "command": "python curation_tools/reim_adapter.py --task 0021 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "c896d3a837edbf56dbbc79406e3a24ba1ec8ef6c158c7208113fb347c4902043",
+      "input_sha256": "fd438b3c599ef8969dc04146c265ac06666e09469c6499fd16ed717b782b7732",
+      "normalized_output_sha256": "5eb4823401906958f3514555eba737d641ead357ed66b13400a5fcc8d79d4b6b",
+      "output_sha256": "5eb4823401906958f3514555eba737d641ead357ed66b13400a5fcc8d79d4b6b",
+      "raw_official_sha256": "5eb4823401906958f3514555eba737d641ead357ed66b13400a5fcc8d79d4b6b",
+      "split": "hidden"
+    }
+  ],
+  "commit": "9760b18408f17d226124a93755294a95f15230f8",
+  "dependency_artifact_sha256": null,
+  "environment": {
+    "build_platform": "macOS-26.4.1-arm64-arm-64bit",
+    "octave": "9.4.0",
+    "python": "3.12"
+  },
+  "environment_lock_sha256": "c896d3a837edbf56dbbc79406e3a24ba1ec8ef6c158c7208113fb347c4902043",
+  "gold_source": "pinned_official_checkout",
+  "independent_audit": {
+    "derived_tolerances": {
+      "atol": 3.332371789933897e-05,
+      "comparison": "mixed",
+      "rtol": 0.0015273512557598939
+    },
+    "implementation": "curation_tools/reim_scientific.py; independent NumPy/SciPy reimplementation of Algorithm 2.1 (rEIM greedy recurrence), the fractional-Laplacian P1-FEM assembly/solve (Section 3.1), and the adaptive-step BDF2 fractional-heat scheme (Section 3.3) from the paper's own equations",
+    "maximum_absolute_discrepancy": 3.3323717899338967e-06,
+    "maximum_relative_discrepancy": 0.0001527351255759894,
+    "status": "passed"
+  },
+  "lifecycle": "validated",
+  "official_reproduction": {
+    "adapter_sha256": "4850c053e9b4cdfd2730477806ad66ef3e2eabe7dfaf897891bab4a9039ce817",
+    "clean_checkout_bundle_sha256": [
+      "f9531bccbe8831b465ffb269e5c537d0175b41bbcd70d16b97c1d4ac69df0db8",
+      "f9531bccbe8831b465ffb269e5c537d0175b41bbcd70d16b97c1d4ac69df0db8"
+    ],
+    "command": "python curation_tools/build_reim_task.py --checkout-1 <clean-1> --checkout-2 <clean-2> --paper <paper.pdf> --paper-version <version>",
+    "dependency_artifact_sha256": null,
+    "environment_lock_sha256": "c896d3a837edbf56dbbc79406e3a24ba1ec8ef6c158c7208113fb347c4902043",
+    "raw_and_normalized_outputs": "curation_reports/official_runs/0021"
+  },
+  "official_source_sha256": {
+    "FEM/P1mat2d.m": "c890daae28d29ee9b95239678ca7c972bae2a3f8da965c25e64fd80285708b3a",
+    "FEM/P1rhs2d.m": "a92a443946515dc8535f4ca123ad4f0f2b842e01e58ba977062158ba149b5b11",
+    "FEM/bisect.m": "1f0d1f2d32065777f1ff5680a2c0c1f1ae54a0c0b20bfbc591df08383ce0cd31",
+    "FEM/gradbasis.m": "0e8c6ae5b5c0b48871a924d6d1e316accaab8b65b88335502c8e4428e1e86e4d",
+    "FEM/myauxstructure.m": "82448a304ee09a64d1a8ef911f84b0def6ff3cd8b86e59b091df1e91b0c5b035",
+    "FEM/squaremesh.m": "3c8cf006fc4376d1030bab2cadfa8128c5f11e0981c6120b96260e433d6c3945",
+    "FEM/uniformrefine.m": "1b7311a3889369452aced127dfc4dc823df8257a6a387db1dda1492c4c853227",
+    "REIM.m_octave_compat_patched": "e6b3b228b72a203c77d48abcaebcc81520ed929be0be19fb1763e2fb8a1c3aab",
+    "REIM.m_original": "f27dea36e57994569963d35e50b3cdc6fff4fdd872ee68018949cbd0ef97e033"
+  },
+  "paper_sha256": "35e67f7263fcdd5a6a97ed7b2a3a897da40cebf7c07a07351a43e92ee484dc0a",
+  "paper_version": "arXiv:2406.19339v3, math.NA, published as SIAM J. Sci. Comput., DOI 10.1137/24M1674832",
+  "parameter_patch": "curation_tools/patches/0021-reim-strcmp.patch: REIM.m's family dispatch uses f==\"power\" etc. char-array equality, which errors in Octave (mx_el_eq nonconformant arguments) whenever f's length differs from the compared literal's length -- a genuine MATLAB/Octave semantic gap (MATLAB's double-quoted literals are `string` scalars there, comparing by content regardless of char-array length; Octave has no such distinction). Verified byte-identical output to the unpatched original for f='power' (the only family that ran unpatched under Octave at all); time/exp/precon families were unreachable without this patch. Additionally, fractional_fem's s in {0.25,0.75} hidden case pins res/pol as literal data copied from FEM2D_factional_demo.m's own commented-in blocks, since direct numerical testing confirmed those arrays are NOT reproducible from a live REIM('power',...) call at any tested M (the paper's Section 5.1 states its own dictionary/candidate-set tuning was done ad hoc per experiment beyond REIM.m's generic branches). Public case 2 and the paper's own Table 1 both use REIM.m's live power branch instead, which IS reproducible.",
+  "repository": "https://github.com/yuwenli925/REIM",
+  "schema_version": 4,
+  "task_id": "scibench_replication_0021"
+}

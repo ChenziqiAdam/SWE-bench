@@ -1,0 +1,7 @@
+{
+  "M": 30,
+  "a": 1.0,
+  "b": 1000000.0,
+  "case_type": "exp_family_approx",
+  "tau": 0.002
+}

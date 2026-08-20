@@ -1,0 +1,7 @@
+{
+  "L2_error": 0.002477588255880848,
+  "N": 1089,
+  "case_type": "fractional_fem",
+  "mesh_type": "uniform",
+  "s": 0.5
+}
