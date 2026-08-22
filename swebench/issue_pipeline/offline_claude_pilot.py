@@ -40,7 +40,7 @@ from swebench.eval_pipeline.inference_security import (
 )
 from swebench.eval_pipeline.prompt_builder import _test_generation_instruction
 
-MODEL = "claude-sonnet-4-5-20250929"
+MODEL = "claude-sonnet-5"
 TIMEOUT = 900
 EVAL_MODE = "test_generation"
 AGENT_BACKEND = "claude_code_offline_pilot"

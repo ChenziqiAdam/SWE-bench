@@ -169,6 +169,31 @@ def test_scientific_python_specs_pin_observed_missing_dependencies():
     assert "numpy==1.21.6" in qutip_1436["pip_packages"]
 
 
+def test_deepchem_install_shims_missing_new_checkpoint_reader():
+    """deepchem/models/tensorgraph/tensor_graph.py does `from
+    tensorflow.python.pywrap_tensorflow_internal import NewCheckpointReader`
+    at import time (unconditionally pulled in via deepchem/__init__.py),
+    but that symbol is a TF1-era internal export the pinned
+    tensorflow-cpu==2.13.1 never re-exposes there -- only as the public
+    `tensorflow.train.NewCheckpointReader`. The `install` step must patch
+    the missing symbol back onto the installed module (idempotently, and
+    only if it's actually missing) since none of these 4 PRs exercise
+    TensorGraph and the import must simply not crash.
+    """
+    deepchem_1769 = MAP_REPO_VERSION_TO_SPECS["deepchem/deepchem"]["1769"]
+    install = deepchem_1769["install"]
+
+    assert "pip install -e ." in install
+    # Must actually probe importability (not a text grep that could
+    # false-positive on an unrelated string/comment).
+    assert (
+        "from tensorflow.python.pywrap_tensorflow_internal "
+        "import NewCheckpointReader" in install
+    )
+    assert "if !" in install and "; fi" in install
+    assert "from tensorflow.train import NewCheckpointReader" in install
+
+
 def test_qutip_historical_specs_disable_isolated_build_dependencies():
     qutip_specs = MAP_REPO_VERSION_TO_SPECS["qutip/qutip"]
 

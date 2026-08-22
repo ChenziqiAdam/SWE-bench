@@ -1293,7 +1293,36 @@ SPECS_BIOPYTHON = {
 # torch/tensorflow/jax/dqc extras, so the plain base install is sufficient.
 _DEEPCHEM_TEST_GENERATION_SPEC = {
     "python": "3.8",
-    "install": "python -m pip install -e .",
+    # deepchem/models/tensorgraph/tensor_graph.py does
+    # `from tensorflow.python.pywrap_tensorflow_internal import
+    # NewCheckpointReader` at import time (pulled in unconditionally via
+    # deepchem/__init__.py -> deepchem.metalearning -> deepchem.models ->
+    # deepchem.models.tensorgraph, same forced-import pattern as the
+    # scipy.linalg.pinv2 issue below). That symbol was a TF1-era internal
+    # export; TF2.x (including the pinned 2.13.1) never re-exposes it from
+    # pywrap_tensorflow_internal, only as the public, stable
+    # `tensorflow.train.NewCheckpointReader`. Since these 4 PRs never
+    # exercise TensorGraph, permanently append a re-export shim to the
+    # installed pywrap_tensorflow_internal.py file after tensorflow-cpu is
+    # installed (pip_packages install runs before this `install` step) --
+    # editing the file on disk, not `setattr` in-process, because
+    # validation/test commands each start a fresh interpreter. Idempotency
+    # and "is it actually importable" are both checked the same way the
+    # symbol will really be used (`python -c "from ... import
+    # NewCheckpointReader"`, not a text grep, which could false-positive on
+    # an unrelated string/comment containing the same name) so a rerun or a
+    # future TF version that already provides the symbol is a no-op.
+    "install": (
+        "python -m pip install -e . && "
+        "if ! python -c 'from tensorflow.python.pywrap_tensorflow_internal "
+        "import NewCheckpointReader' 2>/dev/null; then "
+        "TF_INTERNAL=$(python -c 'import tensorflow.python.pywrap_tensorflow_internal as m; print(m.__file__)') && "
+        "printf '%s\\n' "
+        "'' "
+        "'# swebench shim: TF2 moved this symbol to tensorflow.train.NewCheckpointReader' "
+        "'from tensorflow.train import NewCheckpointReader' "
+        ">> \"$TF_INTERNAL\"; fi"
+    ),
     # These old DeepChem setup.py files do not declare their runtime/test
     # dependencies.  In particular, importing deepchem eagerly imports the
     # TensorFlow-backed modules.

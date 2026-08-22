@@ -242,7 +242,6 @@ def test_scientific_infrastructure_failure_markers_are_narrow():
         "fatal error: GL/gl.h: No such file or directory",
         "error: unknown target CPU 'generic'",
         "ninja: fatal: posix_spawn: Operation not permitted",
-        "Assertion failure (This test is stochastic and may occasionally fail)",
         "#if CL_KHR_COMMAND_BUFFER_EXTENSION_VERSION > CL_MAKE_VERSION(0, 9, 5)",
         "size of array 'altStackMem' is not an integral constant-expression",
         "call to non-'constexpr' function 'long int sysconf(int)'",
@@ -251,6 +250,23 @@ def test_scientific_infrastructure_failure_markers_are_narrow():
         assert _infrastructure_failure_output(output)
 
     assert not _infrastructure_failure_output("AssertionError: expected 3, found 2")
+
+
+def test_openmm_stochastic_assertion_marker_is_not_infrastructure_failure():
+    """OpenMM's ASSERT_USUALLY_* macros stamp this exact phrase on every
+    stochastic-integrator assertion failure, deterministic or not (see
+    openmmapi/include/openmm/internal/AssertionUtilities.h). Treating it as
+    a host/toolchain infrastructure marker silently discarded real,
+    deterministic base-fail/gold-pass results (e.g. tests that fix an RNG
+    seed via setRandomNumberSeed before comparing) as `excluded`. A single
+    generated test asserting via ASSERT_USUALLY_EQUAL_TOL must still be
+    scorable like any other assertion.
+    """
+    assert not _infrastructure_failure_output(
+        "exception: Assertion failure at TestLangevinIntegrator.h:124. "
+        "Expected 9.97736, found 10.6733 "
+        "(This test is stochastic and may occasionally fail)"
+    )
 
 
 def test_openmm_pocl_runtime_crashes_are_infrastructure_failures():

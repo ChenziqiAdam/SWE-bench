@@ -31,12 +31,13 @@ MODEL = "gemini-3.6-flash-high"
 CLI_VERSION = "1.1.15"
 TIMEOUT = 900
 EVAL_MODE = "test_generation"
-AGENT_BACKEND = "antigravity_cli"
+AGENT_BACKEND = "agy"
 NETWORK_ISOLATION_LABEL = (
     "history_isolated_terminal_sandbox_audited_not_fully_network_disabled"
 )
 
 SAFE_CORE_TOOLS = (
+    "find_by_name",
     "grep_search",
     "list_dir",
     "multi_replace_file_content",
@@ -49,6 +50,7 @@ SAFE_CORE_TOOLS = (
     "send_command_input",
     "finish",
     "manage_task",
+    "schedule",
     "wait",
     "wait_5_seconds",
 )

@@ -572,7 +572,7 @@ def test_claude_code_inference_ignores_low_signal_stream_json_on_exit(tmp_path, 
     )
 
 
-def test_claude_code_inference_captures_patch_on_timeout(tmp_path, monkeypatch):
+def test_claude_code_inference_discards_worktree_patch_on_timeout(tmp_path, monkeypatch):
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()
     claude = fake_bin / "claude"
@@ -610,10 +610,11 @@ def test_claude_code_inference_captures_patch_on_timeout(tmp_path, monkeypatch):
 
     rows = [json.loads(line) for line in out.read_text().splitlines()]
     assert rows[0]["error"] == "timeout"
-    assert "value = 5" in rows[0]["model_patch"]
+    assert rows[0]["model_patch"] == ""
+    assert rows[0]["metrics"]["partial_patch_recovered"] is False
 
 
-def test_claude_code_inference_recovers_structured_patch_on_timeout(tmp_path, monkeypatch):
+def test_claude_code_inference_discards_structured_patch_on_timeout(tmp_path, monkeypatch):
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()
     claude = fake_bin / "claude"
@@ -664,9 +665,9 @@ def test_claude_code_inference_recovers_structured_patch_on_timeout(tmp_path, mo
 
     rows = [json.loads(line) for line in out.read_text().splitlines()]
     assert rows[0]["error"] == "timeout"
-    assert rows[0]["model_patch"].startswith("diff --git a/module.py b/module.py")
-    assert "+value = 6" in rows[0]["model_patch"]
-    assert "recovered patch bytes" in (
+    assert rows[0]["model_patch"] == ""
+    assert rows[0]["metrics"]["partial_patch_recovered"] is False
+    assert "prediction patch discarded" in (
         tmp_path / "claude_code_logs" / "demo__repo-timeout-stream.log"
     ).read_text()
 

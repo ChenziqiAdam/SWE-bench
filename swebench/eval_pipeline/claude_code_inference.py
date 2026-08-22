@@ -19,7 +19,11 @@ from tqdm.auto import tqdm
 
 from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
 from swebench.eval_pipeline.host_environment import isolated_python_environment
-from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
+from swebench.eval_pipeline.inference import (
+    _clean_patch,
+    _repair_patch,
+    _strip_generated_artifact_diff_blocks,
+)
 from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json, with_wall_time
 from swebench.eval_pipeline.inference_security import (
     guarded_hidden_paths,
@@ -312,64 +316,6 @@ def _capture_patch(repo_dir: Path, exclude_cpp_build: bool = False) -> str:
         text=True,
     )
     return result.stdout or ""
-
-
-def _format_hunk_range(start: int, count: int) -> str:
-    return str(start) if count == 1 else f"{start},{count}"
-
-
-def _capture_structured_patch_from_stream(stdout: str, repo_dir: Path) -> str:
-    """Recover Claude Code Edit-tool patches from stream-json output."""
-    hunks_by_path: dict[str, list[str]] = {}
-    repo_dir = repo_dir.resolve()
-
-    for line in (stdout or "").splitlines():
-        try:
-            obj = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-
-        result = obj.get("tool_use_result")
-        if not isinstance(result, dict):
-            continue
-        file_path = result.get("filePath")
-        structured = result.get("structuredPatch")
-        if not isinstance(file_path, str) or not isinstance(structured, list):
-            continue
-
-        try:
-            rel_path = Path(file_path).resolve().relative_to(repo_dir).as_posix()
-        except (OSError, ValueError):
-            continue
-
-        new_hunks = []
-        for hunk in structured:
-            if not isinstance(hunk, dict):
-                continue
-            lines = hunk.get("lines")
-            if not isinstance(lines, list):
-                continue
-            old_start = int(hunk.get("oldStart", 0))
-            old_lines = int(hunk.get("oldLines", 0))
-            new_start = int(hunk.get("newStart", 0))
-            new_lines = int(hunk.get("newLines", 0))
-            new_hunks.append(
-                f"@@ -{_format_hunk_range(old_start, old_lines)} "
-                f"+{_format_hunk_range(new_start, new_lines)} @@\n"
-            )
-            new_hunks.extend(line if line.endswith("\n") else line + "\n" for line in lines)
-        if new_hunks:
-            hunks_by_path.setdefault(rel_path, []).extend(new_hunks)
-
-    patch_parts = []
-    for rel_path, hunks in hunks_by_path.items():
-        patch_parts.append(
-            f"diff --git a/{rel_path} b/{rel_path}\n"
-            f"--- a/{rel_path}\n"
-            f"+++ b/{rel_path}\n"
-            + "".join(hunks)
-        )
-    return "\n".join(patch_parts)
 
 
 def _extract_claude_error(stdout: str, stderr: str) -> str:
@@ -673,8 +619,8 @@ def run_claude_code_inference(
                     f"detail: {detail}"
                 )
 
-            patch = _repair_patch(_clean_patch(_capture_patch(
-                repo_dir, inst.get("coverage_language") == "cpp"
+            patch = _repair_patch(_clean_patch(_strip_generated_artifact_diff_blocks(
+                _capture_patch(repo_dir, inst.get("coverage_language") == "cpp")
             )))
             patch, patch_error = _enforce_patch_size(patch, max_patch_bytes)
             logger.info(
@@ -702,28 +648,11 @@ def run_claude_code_inference(
         except subprocess.TimeoutExpired as te:
             stdout = te.stdout if isinstance(te.stdout, str) else (te.stdout or b"").decode(errors="replace")
             stderr = te.stderr if isinstance(te.stderr, str) else (te.stderr or b"").decode(errors="replace")
-            patch = ""
-            if repo_dir:
-                try:
-                    patch = _repair_patch(_clean_patch(_capture_patch(
-                        repo_dir, inst.get("coverage_language") == "cpp"
-                    )))
-                    if not patch:
-                        patch = _repair_patch(
-                            _clean_patch(_capture_structured_patch_from_stream(stdout, repo_dir))
-                        )
-                        if patch:
-                            logger.info(
-                                f"[{instance_id}] recovered timeout patch from Claude Code stream-json"
-                            )
-                except Exception as patch_error:
-                    logger.warning(f"[{instance_id}] failed to capture timeout patch: {patch_error}")
-            patch, patch_size_error = _enforce_patch_size(patch, max_patch_bytes)
             try:
                 (logs_dir / f"{instance_id}.jsonl").write_text(stdout or "")
                 (logs_dir / f"{instance_id}.log").write_text(
                     f"=== TIMEOUT after {timeout}s ===\n"
-                    f"=== recovered patch bytes: {len(patch)} ===\n"
+                    "=== prediction patch discarded: inference did not complete ===\n"
                     "=== STDERR ===\n"
                     + (stderr or "")
                     + "\n=== STDOUT tail ===\n"
@@ -734,7 +663,7 @@ def run_claude_code_inference(
             logger.error(f"[{instance_id}] claude_code timed out after {timeout}s")
             record = {
                 "instance_id": instance_id,
-                "model_patch": patch,
+                "model_patch": "",
                 "model_name_or_path": model_name,
                 "agent_backend": AGENT_BACKEND,
                 "eval_mode": eval_mode,
@@ -745,14 +674,11 @@ def run_claude_code_inference(
                         **metrics_from_stream_json(stdout),
                         **environment_metrics,
                         "timed_out": True,
-                        "partial_patch_recovered": bool(patch),
+                        "partial_patch_recovered": False,
                     },
                     time.perf_counter() - started,
                 ),
             }
-            if patch_size_error:
-                logger.error("[%s] %s", instance_id, patch_size_error)
-                record["error"] = f"timeout; {patch_size_error}"
         except Exception as e:
             logger.error(f"Error on {instance_id}: {e}")
             traceback.print_exc()

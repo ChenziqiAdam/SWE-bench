@@ -220,7 +220,6 @@ def _infrastructure_failure_output(output: str) -> bool:
             "fatal error: GL/gl.h: No such file or directory",
             "error: unknown target CPU 'generic'",
             "ninja: fatal: posix_spawn: Operation not permitted",
-            "This test is stochastic and may occasionally fail",
             "CL_KHR_COMMAND_BUFFER_EXTENSION_VERSION > CL_MAKE_VERSION",
             "size of array 'altStackMem' is not an integral constant-expression",
             "call to non-'constexpr' function 'long int sysconf(int)'",

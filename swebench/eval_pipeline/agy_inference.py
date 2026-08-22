@@ -17,7 +17,11 @@ from typing import Optional
 from tqdm.auto import tqdm
 
 from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
-from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
+from swebench.eval_pipeline.inference import (
+    _clean_patch,
+    _repair_patch,
+    _strip_generated_artifact_diff_blocks,
+)
 from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json, with_wall_time
 from swebench.eval_pipeline.inference_security import (
     guarded_hidden_paths,
@@ -259,8 +263,8 @@ def run_agy_inference(
                     f"stderr: {(result.stderr or '')[-500:]}"
                 )
 
-            patch = _repair_patch(_clean_patch(_capture_patch(
-                repo_dir, inst.get("coverage_language") == "cpp"
+            patch = _repair_patch(_clean_patch(_strip_generated_artifact_diff_blocks(
+                _capture_patch(repo_dir, inst.get("coverage_language") == "cpp")
             )))
             logger.info(
                 f"[{instance_id}] agy exit={result.returncode}, "

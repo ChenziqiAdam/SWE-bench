@@ -7,12 +7,12 @@
     "nan_inf_json_rejected": true,
     "nonfinite_output_rejected": true,
     "oversized_json_rejected": true,
-    "public_memorizer_cap": null,
-    "reference_score_one": null,
+    "public_memorizer_cap": true,
+    "reference_score_one": true,
     "symlink_rejected": true,
     "traversal_rejected": true,
     "wrong_output_shape_rejected": true
   },
-  "status": "structural_passed",
+  "status": "passed",
   "task_id": "scibench_replication_0018"
 }

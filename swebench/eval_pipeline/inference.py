@@ -127,6 +127,51 @@ def _clean_patch(patch: str) -> str:
     return patch
 
 
+_GENERATED_ARTIFACT_DIR_PATTERNS = ("build", "build-", "cmake-build-", "_build")
+_GENERATED_BYTECODE_SUFFIXES = (".pyc", ".pyo")
+
+
+def _strip_generated_artifact_diff_blocks(patch: str) -> str:
+    """Remove generated build and bytecode files from a captured git diff.
+
+    Agent test runs can create untracked ``__pycache__`` files or build trees.
+    ``git add -N .`` makes those files visible to the subsequent diff capture,
+    but they are execution artifacts rather than authored model changes.
+    """
+    if not patch:
+        return patch
+
+    blocks: list[list[str]] = []
+    current: list[str] = []
+    for line in patch.splitlines(keepends=True):
+        if line.startswith("diff --git "):
+            if current:
+                blocks.append(current)
+            current = [line]
+        elif current:
+            current.append(line)
+    if current:
+        blocks.append(current)
+
+    kept: list[str] = []
+    for block in blocks:
+        path = block[0].split(" b/", 1)[-1].strip()
+        parts = path.lower().split("/")
+        filename = parts[-1]
+        is_bytecode = (
+            "__pycache__" in parts
+            or filename.endswith(_GENERATED_BYTECODE_SUFFIXES)
+        )
+        is_build_output = any(
+            part == pattern or part.startswith(pattern)
+            for part in parts[:-1]
+            for pattern in _GENERATED_ARTIFACT_DIR_PATTERNS
+        )
+        if not is_bytecode and not is_build_output:
+            kept.extend(block)
+    return "".join(kept)
+
+
 def _repair_patch(patch: str) -> str:
     """
     Fix common model diff errors:

@@ -50,6 +50,16 @@ DATASET_PROFILES = {
         "qgis/QGIS": 1,
         "astropy/astropy": 1,
     },
+    "issues_no_tests_final": {
+        "openmm/openmm": 45,
+        "lammps/lammps": 31,
+        "qutip/qutip": 2,
+        "deepchem/deepchem": 2,
+        "rdkit/rdkit": 1,
+        "biopython/biopython": 1,
+        "qgis/QGIS": 1,
+        "astropy/astropy": 1,
+    },
 }
 REVIEW_SEED = 20260803
 MAX_FETCH_ATTEMPTS = 3

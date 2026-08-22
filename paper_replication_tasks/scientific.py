@@ -78,6 +78,11 @@ def rational_approx_eim(case: dict[str, Any]) -> dict[str, Any]:
     return solve_reim(case)
 
 
+def sketch_select_arnoldi(case: dict[str, Any]) -> dict[str, Any]:
+    from curation_tools.ssarnoldi_scientific import solve as solve_ssarnoldi
+    return solve_ssarnoldi(case)
+
+
 SOLVERS = {
     "scibench_replication_0011": random_walk,
     "scibench_replication_0014": smw_stability,
@@ -86,6 +91,7 @@ SOLVERS = {
     "scibench_replication_0019": stiefel_curvature,
     "scibench_replication_0020": covid19_environmental_correlates,
     "scibench_replication_0021": rational_approx_eim,
+    "scibench_replication_0022": sketch_select_arnoldi,
 }
 
 
