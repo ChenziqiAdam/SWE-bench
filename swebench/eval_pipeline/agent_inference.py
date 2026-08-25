@@ -140,6 +140,7 @@ TOOLS = [
 
 _MAX_READ_CHARS = 50_000
 _MAX_SEARCH_CHARS = 5_000
+_GIT_FETCH_TIMEOUT_SECONDS = 300
 
 
 def _redact_secret(text: object, secret: Optional[str]) -> str:
@@ -198,6 +199,7 @@ def _clone_repo_at_commit(
             cwd=tmpdir,
             check=True,
             capture_output=True,
+            timeout=_GIT_FETCH_TIMEOUT_SECONDS,
         )
         subprocess.run(
             ["git", "checkout", "--quiet", "--detach", "FETCH_HEAD"],

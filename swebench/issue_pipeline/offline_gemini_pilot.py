@@ -28,7 +28,7 @@ from swebench.eval_pipeline.prompt_builder import _test_generation_instruction
 
 
 MODEL = "gemini-3.6-flash-high"
-CLI_VERSION = "1.1.15"
+CLI_VERSION = "1.1.19"
 TIMEOUT = 900
 EVAL_MODE = "test_generation"
 AGENT_BACKEND = "agy"

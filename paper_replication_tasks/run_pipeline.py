@@ -35,12 +35,20 @@ from swebench.eval_pipeline.inference_metrics import (
     metrics_from_stream_json,
     with_wall_time,
 )
-from paper_replication_tasks.container_runtime import (
-    ContainerRuntimeError,
-    local_image_identity,
-    podman_client,
-    run_podman_container,
-)
+try:
+    from .container_runtime import (
+        ContainerRuntimeError,
+        local_image_identity,
+        podman_client,
+        run_podman_container,
+    )
+except ImportError:  # Direct script execution.
+    from container_runtime import (  # type: ignore
+        ContainerRuntimeError,
+        local_image_identity,
+        podman_client,
+        run_podman_container,
+    )
 
 
 ROOT = Path(__file__).resolve().parent

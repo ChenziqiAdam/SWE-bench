@@ -43,7 +43,7 @@ from swebench.eval_pipeline.prompt_builder import _test_generation_instruction
 MODEL = "claude-sonnet-5"
 TIMEOUT = 900
 EVAL_MODE = "test_generation"
-AGENT_BACKEND = "claude_code_offline_pilot"
+AGENT_BACKEND = "claude_code"
 NETWORK_ISOLATION_LABEL = "unrestricted_no_os_sandbox_history_isolated_only"
 
 _NETWORK_COMMAND_PATTERNS = (
@@ -393,6 +393,7 @@ def _run_one(
     model: str,
     timeout: int,
     runner: Callable[..., subprocess.CompletedProcess] = subprocess.run,
+    process_env: dict[str, str] | None = None,
 ) -> tuple[dict, dict]:
     instance_id = instance["instance_id"]
     trajectory_path = output_dir / "trajectories" / f"{instance_id}.jsonl"
@@ -414,7 +415,7 @@ def _run_one(
             text=True,
             input=prompt,
             timeout=timeout,
-            env=dict(os.environ),
+            env=dict(os.environ) if process_env is None else process_env,
         )
         stdout = result.stdout or ""
         stderr = result.stderr or ""

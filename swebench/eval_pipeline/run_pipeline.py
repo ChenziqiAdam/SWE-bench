@@ -304,7 +304,8 @@ def parse_args():
         "By default the model name determines the backend (claude-* → Anthropic, "
         "everything else → OpenAI). Supply --endpoint to use any OpenAI-compatible "
         "provider for builtin/SWE-agent, a Responses-compatible provider for Codex, "
-        "or an Anthropic-compatible provider for Claude Code."
+        "or an Anthropic-compatible provider for Claude Code. mini-swe-agent "
+        "uses LiteLLM's OpenAI-compatible provider."
     )
     llm.add_argument(
         "--endpoint", default=None,
@@ -326,14 +327,15 @@ def parse_args():
                         "the cloned repo and writes files. The pipeline is agent-only; this flag "
                         "is kept for backward compatibility with existing scripts.")
     p.add_argument("--agent_backend", default="builtin",
-                   choices=["builtin", "sweagent", "codex", "claude_code", "agy"],
+                   choices=["builtin", "sweagent", "codex", "claude_code", "agy", "mini_swe_agent"],
                    help="Which agent backend to use with --agent. "
                         "'builtin' (default): homegrown multi-turn Anthropic tool-use loop. "
                         "'sweagent': invoke SWE-agent CLI as a subprocess (requires `sweagent` "
                         "to be installed: uv pip install swe-agent). "
                         "'codex': invoke local Codex CLI via `codex exec`. "
                         "'claude_code': invoke local Claude Code CLI via `claude -p`. "
-                        "'agy': invoke local Antigravity CLI via `agy -p`.")
+                        "'agy': invoke local Antigravity CLI via `agy -p`. "
+                        "'mini_swe_agent': invoke the official v2 `mini` host CLI.")
     p.add_argument(
         "--inference_network_policy",
         choices=["model-only", "unrestricted"],
@@ -606,6 +608,17 @@ def parse_args():
     p.add_argument("--codex_model", default=None,
                    help="Optional model override for Codex CLI. Defaults to --model. Only used "
                         "with --agent_backend codex.")
+    p.add_argument("--mini_swe_agent_model", default=None,
+                   help="Optional model override for mini-swe-agent. Defaults to --model.")
+    p.add_argument("--mini_swe_agent_config", default=None,
+                   help="Optional complete mini-swe-agent v2 YAML config. CLI safety settings "
+                        "still force the local environment.")
+    p.add_argument("--mini_swe_agent_timeout", type=int, default=900,
+                   help="Wall-clock timeout per mini-swe-agent instance (default 900 seconds).")
+    p.add_argument("--mini_swe_agent_command_timeout", type=int, default=300,
+                   help="Timeout for each mini-swe-agent local shell command (default 300 seconds).")
+    p.add_argument("--mini_swe_agent_cost_limit", type=float, default=0,
+                   help="Per-instance mini-swe-agent cost limit (default 0, disabled).")
     p.add_argument("--claude_code_timeout", type=int, default=900,
                    help="Wall-clock timeout per instance in seconds for Claude Code CLI inference. "
                         "Only used with --agent_backend claude_code.")
@@ -778,6 +791,28 @@ def _run_agent_backend(args, instances: list[dict], output_file: str,
             timeout=args.codex_timeout, sandbox=args.codex_sandbox,
             profile=args.codex_profile, api_base=args.endpoint, api_key=args.api_key,
             retry_empty_predictions=args.retry_empty_predictions, eval_mode=args.eval_mode,
+            network_policy=args.inference_network_policy,
+            hidden_paths=hidden_paths,
+        )
+    elif args.agent_backend == "mini_swe_agent":
+        from swebench.eval_pipeline.mini_swe_agent_inference import (
+            run_mini_swe_agent_inference,
+        )
+
+        run_mini_swe_agent_inference(
+            instances=instances,
+            output_file=output_file,
+            model_name=inference_model,
+            github_token=github_token,
+            max_workers=args.max_workers,
+            timeout=args.mini_swe_agent_timeout,
+            command_timeout=args.mini_swe_agent_command_timeout,
+            cost_limit=args.mini_swe_agent_cost_limit,
+            config_path=args.mini_swe_agent_config,
+            api_base=args.endpoint,
+            api_key=args.api_key,
+            retry_empty_predictions=args.retry_empty_predictions,
+            eval_mode=args.eval_mode,
             network_policy=args.inference_network_policy,
             hidden_paths=hidden_paths,
         )
@@ -1242,6 +1277,8 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
             )
         if args.agent_backend == "codex":
             args.codex_timeout = args.shared_generation_budget
+        elif args.agent_backend == "mini_swe_agent":
+            args.mini_swe_agent_timeout = args.shared_generation_budget
         elif args.agent_backend == "claude_code":
             args.claude_code_timeout = args.shared_generation_budget
         elif args.agent_backend == "agy":
@@ -1492,6 +1529,11 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
             or "agent-selected from coverage increases",
             "agent_backend": args.agent_backend,
             "model": inference_model,
+            "mini_swe_agent_model": args.mini_swe_agent_model,
+            "mini_swe_agent_config": args.mini_swe_agent_config,
+            "mini_swe_agent_timeout": args.mini_swe_agent_timeout,
+            "mini_swe_agent_command_timeout": args.mini_swe_agent_command_timeout,
+            "mini_swe_agent_cost_limit": args.mini_swe_agent_cost_limit,
             "run_id": args.run_id,
         },
     )
@@ -1512,6 +1554,8 @@ def main():
     inference_model = args.model
     if args.agent_backend == "codex" and args.codex_model:
         inference_model = args.codex_model
+    elif args.agent_backend == "mini_swe_agent" and args.mini_swe_agent_model:
+        inference_model = args.mini_swe_agent_model
     elif args.agent_backend == "claude_code" and args.claude_code_model:
         inference_model = args.claude_code_model
     elif args.agent_backend == "agy" and args.agy_model:
@@ -1973,6 +2017,11 @@ def main():
         "codex_sandbox": args.codex_sandbox,
         "codex_profile": args.codex_profile,
         "codex_model": args.codex_model,
+        "mini_swe_agent_model": args.mini_swe_agent_model,
+        "mini_swe_agent_config": args.mini_swe_agent_config,
+        "mini_swe_agent_timeout": args.mini_swe_agent_timeout,
+        "mini_swe_agent_command_timeout": args.mini_swe_agent_command_timeout,
+        "mini_swe_agent_cost_limit": args.mini_swe_agent_cost_limit,
         "claude_code_timeout": args.claude_code_timeout,
         "claude_code_max_patch_bytes": args.claude_code_max_patch_bytes,
         "claude_code_interrupt_retries": args.claude_code_interrupt_retries,

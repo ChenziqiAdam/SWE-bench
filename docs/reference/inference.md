@@ -109,6 +109,52 @@ All inference scripts produce outputs in a format compatible with the SWE-bench 
 
 ## Tips and Best Practices
 
+### mini-swe-agent host backend
+
+Install the external CLI separately; it is not a required SWE-bench package
+dependency:
+
+```bash
+uv pip install mini-swe-agent
+```
+
+The `mini_swe_agent` backend assumes the official mini-swe-agent v2
+[`mini` interface](https://github.com/SWE-agent/mini-swe-agent/blob/main/src/minisweagent/run/mini.py)
+and also discovers its equivalent `mini-swe-agent` console script. It supports
+`fix`, `test_generation`, and `coverage_generation` in disposable,
+history-isolated local clones:
+
+```bash
+# Issue fix (use --eval_mode test_generation for regression-test generation)
+python -m swebench.eval_pipeline.run_pipeline \
+  --agent_backend mini_swe_agent \
+  --mini_swe_agent_model openai/gpt-5 \
+  --eval_mode fix
+
+# Standalone coverage generation
+python -m swebench.eval_pipeline.run_pipeline \
+  --agent_backend mini_swe_agent \
+  --eval_mode coverage_generation \
+  --repo_url https://github.com/owner/repository.git \
+  --base_commit <full-commit-sha>
+```
+
+`--mini_swe_agent_model` falls back to `--model`. Optional controls are
+`--mini_swe_agent_config`, `--mini_swe_agent_timeout` (900 seconds),
+`--mini_swe_agent_command_timeout` (300 seconds), and
+`--mini_swe_agent_cost_limit` (0 disables the limit). A custom config may
+change agent/model behavior, but the pipeline always overrides its environment
+to mini-swe-agent's local host environment and the disposable clone.
+
+For an OpenAI-compatible `--endpoint`, the backend configures LiteLLM's
+`model.model_kwargs.api_base` and prefixes an unqualified model with `openai/`.
+The API key is passed only through `OPENAI_API_KEY`; it is not written to the
+generated configuration, trajectory, or logs. With the default `model-only`
+policy, use a loopback endpoint such as `http://127.0.0.1:4000/v1`; direct
+provider access requires the explicitly unsafe `unrestricted` debugging mode.
+Nested mini-swe-agent Docker environments are intentionally unsupported under
+`model-only`; this integration always uses the guarded host CLI.
+
 - When running inference on large datasets, use sharding to split the workload
 - For API models, monitor costs carefully and set appropriate `--max_cost` limits
 - For local models, ensure you have sufficient GPU memory for the model size

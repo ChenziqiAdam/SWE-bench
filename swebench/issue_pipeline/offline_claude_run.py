@@ -11,9 +11,14 @@ import shutil
 import subprocess
 import tempfile
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Callable, Iterable
+
+from openpyxl import load_workbook
 
 from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
 from swebench.eval_pipeline.inference_security import (
@@ -36,6 +41,11 @@ from swebench.issue_pipeline.offline_claude_pilot import (
     build_pilot_prompt,
     detect_rate_limit,
     select_pilot_instances,
+)
+from swebench.issue_pipeline.claude_stream_gateway import (
+    ClaudeStreamGateway,
+    normalize_openrouter_endpoint,
+    retry_delay,
 )
 
 
@@ -64,7 +74,7 @@ DATASET_PROFILES = {
 REVIEW_SEED = 20260803
 MAX_FETCH_ATTEMPTS = 3
 ABNORMAL_FILE_COUNT = 3
-MANIFEST_VERSION = 1
+MANIFEST_VERSION = 2
 RECOVERY_VERSION = 1
 RECOVERABLE_ERRORS = {None, "disallowed_patch_scope"}
 
@@ -87,6 +97,124 @@ class RateLimitStop(RuntimeError):
             "--resume once the session window resets"
         )
         self.instance_id = instance_id
+
+
+class FatalProviderError(RuntimeError):
+    """Authentication, permission, invalid request, or unknown-model failure."""
+
+
+class CheckoutFetchError(RuntimeError):
+    """A transient checkout failure that must not finalize an instance."""
+
+
+def load_env_file(path: Path) -> dict[str, str]:
+    """Read a small dotenv file without mutating or printing the environment."""
+    values: dict[str, str] = {}
+    for number, raw in enumerate(path.read_text().splitlines(), 1):
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[7:].lstrip()
+        if "=" not in line:
+            raise ValueError(f"invalid env-file line {number}")
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+            value = value[1:-1]
+        values[key] = value
+    missing = [key for key in ("MODEL_NAME", "ENDPOINT", "API_KEY") if not values.get(key)]
+    if missing:
+        raise ValueError(f"env file missing required variables: {', '.join(missing)}")
+    return values
+
+
+def select_workbook_instances(
+    excel_path: Path, instances_path: Path
+) -> tuple[list[dict], dict[str, int], dict[str, int]]:
+    """Validate the exact workbook-row to unique-closing-PR source mapping."""
+    workbook = load_workbook(excel_path, read_only=True, data_only=True)
+    if "Final Issues" not in workbook.sheetnames:
+        raise ValueError("workbook has no 'Final Issues' sheet")
+    rows = list(workbook["Final Issues"].iter_rows(values_only=True))
+    if not rows:
+        raise ValueError("workbook is empty")
+    headers = {str(value): index for index, value in enumerate(rows[0])}
+    required = {"Repo", "Closing PR #"}
+    if not required <= headers.keys():
+        raise ValueError("workbook is missing Repo or Closing PR #")
+    workbook_pairs: list[tuple[str, int]] = []
+    for row_number, row in enumerate(rows[1:], 2):
+        repo = row[headers["Repo"]]
+        pull = row[headers["Closing PR #"]]
+        if not repo or pull in (None, ""):
+            raise ValueError(f"workbook row {row_number} has no repo/closing PR")
+        workbook_pairs.append((str(repo), int(pull)))
+    source, expected_repos = select_full_instances(instances_path)
+    source_pairs = [(str(item["repo"]), int(item["pull_number"])) for item in source]
+    if len(source_pairs) != len(set(source_pairs)):
+        raise ValueError("JSONL contains duplicate repo/closing-PR pairs")
+    if set(workbook_pairs) != set(source_pairs):
+        raise ValueError("workbook closing-PR mapping does not match JSONL source")
+    if len(workbook_pairs) != 88 or len(set(workbook_pairs)) != 84:
+        raise ValueError(
+            f"expected exact 88-row -> 84-instance mapping; got "
+            f"{len(workbook_pairs)} -> {len(set(workbook_pairs))}"
+        )
+    return source, expected_repos, {
+        "workbook_row_count": len(workbook_pairs),
+        "unique_closing_pr_count": len(set(workbook_pairs)),
+    }
+
+
+def preflight_claude_tools(base_url: str, api_key: str, model: str) -> dict:
+    """Make one authenticated tool-use request; return only sanitized metadata."""
+    payload = json.dumps(
+        {
+            "model": model,
+            "max_tokens": 64,
+            "messages": [{"role": "user", "content": "Call the ping tool once."}],
+            "tools": [
+                {
+                    "name": "ping",
+                    "description": "Connectivity preflight",
+                    "input_schema": {"type": "object", "properties": {}},
+                }
+            ],
+            "tool_choice": {"type": "tool", "name": "ping"},
+        }
+    ).encode()
+    request = urllib.request.Request(
+        base_url.rstrip("/") + "/v1/messages",
+        data=payload,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "anthropic-version": "2023-06-01",
+        },
+    )
+    admitted_at = time.time()
+    try:
+        with urllib.request.urlopen(request, timeout=120) as response:
+            result = json.loads(response.read())
+            status = response.status
+    except urllib.error.HTTPError as exc:
+        if exc.code in {400, 401, 403, 404, 422}:
+            raise FatalProviderError(f"preflight rejected with HTTP {exc.code}") from exc
+        raise RuntimeError(f"preflight transient failure HTTP {exc.code}") from exc
+    except (OSError, urllib.error.URLError, TimeoutError) as exc:
+        raise RuntimeError("preflight connection failure") from exc
+    content = result.get("content", []) if isinstance(result, dict) else []
+    if not any(isinstance(item, dict) and item.get("type") == "tool_use" for item in content):
+        raise FatalProviderError("preflight model did not return required tool use")
+    return {
+        "status": status,
+        "tool_use": True,
+        "model": model,
+        "admitted_at": admitted_at,
+    }
 
 
 def _sha256_bytes(data: bytes) -> str:
@@ -165,19 +293,26 @@ def _manifest_config(
     timeout: int,
     workers: int,
     wave_size: int,
+    excel_path: Path | None = None,
+    endpoint: str | None = None,
+    rpm: int | None = None,
+    workbook_mapping: dict[str, int] | None = None,
 ) -> dict:
     prompts = [
         {"instance_id": item["instance_id"], "prompt": build_pilot_prompt(item)}
         for item in instances
     ]
-    return {
+    sources = [{"path": str(instances_path), "sha256": _file_hash(instances_path)}]
+    if excel_path is not None:
+        sources.append({"path": str(excel_path), "sha256": _file_hash(excel_path)})
+    manifest = {
         "manifest_version": MANIFEST_VERSION,
         "model": model,
         "timeout_seconds": timeout,
         "workers": workers,
         "wave_size": wave_size,
         "expected_repos": expected_repos,
-        "sources": [{"path": str(instances_path), "sha256": _file_hash(instances_path)}],
+        "sources": sources,
         "prompt_hash": _canonical_hash(prompts),
         "instance_selection_hash": _canonical_hash(
             [
@@ -193,6 +328,13 @@ def _manifest_config(
         "abnormal_file_threshold": ABNORMAL_FILE_COUNT,
         "fetch_max_attempts": MAX_FETCH_ATTEMPTS,
     }
+    if endpoint is not None:
+        manifest["endpoint"] = endpoint
+    if rpm is not None:
+        manifest["requests_per_minute"] = rpm
+    if workbook_mapping is not None:
+        manifest["workbook_mapping"] = workbook_mapping
+    return manifest
 
 
 def _validate_recovery_manifest(existing: dict, requested: dict) -> None:
@@ -629,7 +771,7 @@ def _fetch_with_retries(
             errors.append(f"attempt {attempt}: {exc}")
             if attempt < MAX_FETCH_ATTEMPTS:
                 time.sleep(min(attempt, 2))
-    raise RuntimeError(
+    raise CheckoutFetchError(
         f"fetch failed for {instance['instance_id']} after {MAX_FETCH_ATTEMPTS} "
         f"attempts: {'; '.join(errors)}"
     )
@@ -645,6 +787,7 @@ def _run_wave(
     workers: int,
     github_token: str | None,
     run_one: Callable[..., tuple[dict, dict]] = _run_one,
+    gateway: ClaudeStreamGateway | None = None,
 ) -> Iterable[tuple[dict, dict]]:
     """Fetch the entire wave first, then yield each finalized agent result."""
     worktrees: dict[str, Path] = {}
@@ -666,17 +809,31 @@ def _run_wave(
         raise fetch_errors[0]
 
     with ThreadPoolExecutor(max_workers=min(workers, len(wave))) as pool:
-        futures = {
-            pool.submit(
-                run_one,
+        futures = {}
+        for item in wave:
+            arguments = (
                 item,
                 worktrees[item["instance_id"]],
                 output_dir,
                 model,
                 timeout,
-            ): item
-            for item in wave
-        }
+            )
+            if gateway is None:
+                future = pool.submit(run_one, *arguments)
+            else:
+                instance_base = (
+                    gateway.local_base
+                    + "/instance/"
+                    + urllib.parse.quote(item["instance_id"], safe="")
+                )
+                process_env = {
+                    **os.environ,
+                    "ANTHROPIC_BASE_URL": instance_base,
+                    "ANTHROPIC_AUTH_TOKEN": gateway.api_key,
+                    "ANTHROPIC_API_KEY": "",
+                }
+                future = pool.submit(run_one, *arguments, process_env=process_env)
+            futures[future] = item
         for future in as_completed(futures):
             item = futures[future]
             checkout = worktrees[item["instance_id"]]
@@ -1032,6 +1189,7 @@ def run_full(
     wave_size: int,
     github_token: str | None,
     expected_repos: dict[str, int],
+    gateway: ClaudeStreamGateway | None = None,
 ) -> list[dict]:
     ordered_ids = [item["instance_id"] for item in instances]
     if resume:
@@ -1069,41 +1227,84 @@ def run_full(
         output_dir, ordered_ids, checkpoints, model=model, timeout=timeout
     )
 
+    if gateway:
+        gateway.start()
+
     pending = [item for item in instances if item["instance_id"] not in checkpoints]
     private_root = inference_worktree_root("claude-offline-full")
     checkout_root = Path(tempfile.mkdtemp(prefix="run_", dir=private_root))
-    stopped_for_rate_limit = False
+    retry_attempts: dict[str, int] = {}
+    checkout_retry_attempt = 0
     try:
-        for start in range(0, len(pending), wave_size):
-            wave = pending[start : start + wave_size]
-            for prediction, audit in _run_wave(
-                wave,
-                checkout_root,
-                output_dir,
-                model=model,
-                timeout=timeout,
-                workers=workers,
-                github_token=github_token,
-            ):
-                if prediction.get("error") == "rate_limit":
-                    stopped_for_rate_limit = True
-                    break
-                _save_checkpoint(
+        while pending:
+            wave = pending[:wave_size]
+            pending = pending[wave_size:]
+            retry_items: list[dict] = []
+            fatal_instances: list[str] = []
+            try:
+                for prediction, audit in _run_wave(
+                    wave,
+                    checkout_root,
                     output_dir,
-                    prediction,
-                    audit,
-                    checkpoints,
-                    ordered_ids,
                     model=model,
                     timeout=timeout,
+                    workers=workers,
+                    github_token=github_token,
+                    gateway=gateway,
+                ):
+                    instance_id = prediction["instance_id"]
+                    provider_failure = gateway.failure_for(instance_id) if gateway else None
+                    error = prediction.get("error")
+                    if provider_failure == "fatal":
+                        fatal_instances.append(instance_id)
+                        continue
+                    if provider_failure == "transient" or error in {
+                        "rate_limit",
+                        "timeout",
+                        "process_error",
+                    }:
+                        retry_items.append(
+                            next(
+                                item
+                                for item in wave
+                                if item["instance_id"] == instance_id
+                            )
+                        )
+                        continue
+                    _save_checkpoint(
+                        output_dir,
+                        prediction,
+                        audit,
+                        checkpoints,
+                        ordered_ids,
+                        model=model,
+                        timeout=timeout,
+                    )
+            except CheckoutFetchError:
+                checkout_retry_attempt += 1
+                pending = wave + pending
+                time.sleep(retry_delay(checkout_retry_attempt, None))
+                continue
+            checkout_retry_attempt = 0
+            if fatal_instances:
+                raise FatalProviderError(
+                    "provider rejected instance(s): " + ", ".join(fatal_instances)
                 )
-            if stopped_for_rate_limit:
-                break
+            if retry_items:
+                delays = []
+                for item in retry_items:
+                    instance_id = item["instance_id"]
+                    retry_attempts[instance_id] = retry_attempts.get(instance_id, 0) + 1
+                    retry_after = gateway.retry_after_for(instance_id) if gateway else None
+                    delays.append(retry_delay(retry_attempts[instance_id], retry_after))
+                    if gateway:
+                        gateway.clear_failure(instance_id)
+                time.sleep(max(delays))
+                pending.extend(retry_items)
     finally:
         shutil.rmtree(checkout_root, ignore_errors=True)
-
-    if stopped_for_rate_limit:
-        raise RateLimitStop(prediction["instance_id"])
+        if gateway:
+            gateway.close()
 
     if len(checkpoints) != len(instances):
         raise RuntimeError(
@@ -1118,13 +1319,21 @@ def run_full(
 def make_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--instances", type=Path, required=True)
+    parser.add_argument("--excel", type=Path)
+    parser.add_argument("--env-file", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
-    parser.add_argument("--model", default=MODEL)
+    parser.add_argument("--model")
+    parser.add_argument("--rpm", type=int, default=20)
     parser.add_argument("--timeout", type=int, default=TIMEOUT)
-    parser.add_argument("--workers", type=int, default=3)
-    parser.add_argument("--wave-size", type=int, default=3)
+    parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument("--wave-size", type=int, default=2)
     parser.add_argument("--github-token", default=os.environ.get("GITHUB_TOKEN"))
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument(
+        "--auto-resume",
+        action="store_true",
+        help="resume automatically when output-dir already has a run manifest",
+    )
     parser.add_argument("--recover-old-inference", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     return parser
@@ -1132,25 +1341,49 @@ def make_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = make_parser().parse_args(argv)
+    resume_requested = args.resume or (
+        args.auto_resume and (args.output_dir / "run_manifest.json").is_file()
+    )
     if args.timeout <= 0 or args.timeout > TIMEOUT:
         raise SystemExit(f"timeout must be in 1..{TIMEOUT}")
     if args.workers < 1 or args.workers > 3:
         raise SystemExit("workers must be in 1..3")
     if args.wave_size < 1 or args.wave_size > 3:
         raise SystemExit("wave-size must be in 1..3")
-    if args.recover_old_inference and not args.resume:
+    if args.rpm < 1:
+        raise SystemExit("rpm must be positive")
+    if args.recover_old_inference and not resume_requested:
         raise SystemExit("--recover-old-inference requires --resume")
-    if args.resume and args.dry_run and not args.recover_old_inference:
+    if resume_requested and args.dry_run and not args.recover_old_inference:
         raise SystemExit("--resume and --dry-run cannot be combined")
-    instances, expected_repos = select_full_instances(args.instances)
+    env_values: dict[str, str] = {}
+    endpoint = None
+    if args.env_file:
+        try:
+            env_values = load_env_file(args.env_file)
+            endpoint = normalize_openrouter_endpoint(env_values["ENDPOINT"])
+        except (OSError, ValueError) as exc:
+            raise SystemExit(str(exc)) from exc
+    model = args.model or env_values.get("MODEL_NAME") or MODEL
+    if args.excel:
+        instances, expected_repos, workbook_mapping = select_workbook_instances(
+            args.excel, args.instances
+        )
+    else:
+        instances, expected_repos = select_full_instances(args.instances)
+        workbook_mapping = None
     manifest = _manifest_config(
         instances_path=args.instances,
         instances=instances,
         expected_repos=expected_repos,
-        model=args.model,
+        model=model,
         timeout=args.timeout,
         workers=args.workers,
         wave_size=args.wave_size,
+        excel_path=args.excel,
+        endpoint=endpoint,
+        rpm=args.rpm if endpoint else None,
+        workbook_mapping=workbook_mapping,
     )
     if args.dry_run and not args.recover_old_inference:
         print(
@@ -1176,7 +1409,7 @@ def main(argv: list[str] | None = None) -> int:
         report = recover_old_inference(
             frozen_instances,
             args.output_dir,
-            model=args.model,
+            model=model,
             timeout=args.timeout,
             github_token=args.github_token,
             expected_repos=expected_repos,
@@ -1184,22 +1417,42 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(json.dumps(report, indent=2))
         return 0
+    gateway = None
+    if env_values:
+        try:
+            preflight = preflight_claude_tools(
+                endpoint, env_values["API_KEY"], model
+            )
+        except (FatalProviderError, RuntimeError) as exc:
+            raise SystemExit(str(exc)) from exc
+        gateway = ClaudeStreamGateway(
+            endpoint,
+            env_values["API_KEY"],
+            args.output_dir / "gateway",
+            rpm=args.rpm,
+            initial_admissions=[preflight["admitted_at"]],
+        )
+        _atomic_json(args.output_dir.with_suffix(".preflight.json"), preflight)
     try:
         run_full(
             instances,
             args.output_dir,
             manifest=manifest,
-            resume=args.resume,
-            model=args.model,
+            resume=resume_requested,
+            model=model,
             timeout=args.timeout,
             workers=args.workers,
             wave_size=args.wave_size,
             github_token=args.github_token,
             expected_repos=expected_repos,
+            gateway=gateway,
         )
     except RateLimitStop as exc:
         print(f"stopped: {exc}")
         return 3
+    except FatalProviderError as exc:
+        print(f"stopped: {exc}")
+        return 4
     return 0
 
 

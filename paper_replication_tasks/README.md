@@ -1,8 +1,8 @@
 # SciBench paper-replication functional tests (v4)
 
-> Curation status (2026-08-17): the catalog is restricted to 11 papers in leading
-> field venues. Its three existing functional tasks (0011, 0014, and 0017) are
-> validated from two clean official runs and an independent scientific audit.
+> Curation status: the active catalog contains eight validated functional tasks.
+> Each is backed by pinned official reproduction and an independent scientific
+> audit; task-specific provenance records the exact case count and environment.
 > Task 0017 is the first R-based task, reproducing sobiEquity's balanced/
 > conventional floating catchment area accessibility methods via a curator
 > Rscript adapter; agents still submit pure Python solutions.
@@ -16,7 +16,9 @@ The unified paper catalog is [`papers.json`](papers.json). It records paper
 titles, canonical paper URLs, GitHub repositories, task IDs, and current build
 statuses for validated tasks and candidates.
 
-Each task is one paper-level functional replication. The public bundle contains the complete paper, a JSON CLI schema, and every curated public input/output case. Exactly five parameter-perturbed cases remain hidden.
+Each task is one paper-level functional replication. The public bundle contains
+the complete paper, a JSON CLI schema, and every curated public input/output case.
+Hidden-case counts are task-specific and validated against the registry.
 
 ## Contract
 

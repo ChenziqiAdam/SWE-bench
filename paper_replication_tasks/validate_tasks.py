@@ -16,7 +16,8 @@ from task_registry import TASK_REGISTRY, active_task_ids, validated_task_ids
 
 ROOT = Path(__file__).resolve().parent
 LEGACY = {"masked_paper.pdf", "submission_schema.json", "gold_output.json", "evaluator.py", "results.json", ".DS_Store"}
-PUBLIC_COUNTS = {"scibench_replication_0011": 1, "scibench_replication_0014": 3, "scibench_replication_0017": 3, "scibench_replication_0015": 3, "scibench_replication_0019": 3, "scibench_replication_0018": 1, "scibench_replication_0020": 1, "scibench_replication_0021": 3}
+PUBLIC_COUNTS = {"scibench_replication_0011": 1, "scibench_replication_0014": 3, "scibench_replication_0017": 3, "scibench_replication_0015_core": 3, "scibench_replication_0019": 3, "scibench_replication_0018": 1, "scibench_replication_0020": 1, "scibench_replication_0021": 3}
+HIDDEN_COUNTS = {task_id: (8 if task_id == "scibench_replication_0015_core" else 5) for task_id in PUBLIC_COUNTS}
 
 
 class ValidationError(RuntimeError):
@@ -68,7 +69,8 @@ def validate_official(root: Path) -> None:
             validate_checkout(root / task_id[-4:], task_id)
             pending.append(task_id)
             continue
-        checkout_roots = [root / task_id[-4:] / name for name in ("run_1", "run_2")]
+        checkout_key = TASK_REGISTRY[task_id].get("official_checkout_key", task_id[-4:])
+        checkout_roots = [root / checkout_key / name for name in ("run_1", "run_2")]
         for checkout in checkout_roots:
             validate_checkout(checkout, task_id)
         require(provenance.get("gold_source") == "pinned_official_checkout", f"non-official gold source: {task_id}")
@@ -100,11 +102,12 @@ def validate_official(root: Path) -> None:
                 for split in ("public", "hidden"):
                     for case in sorted((ROOT / task_id / split / "cases").iterdir()):
                         with tempfile.TemporaryDirectory(prefix="scibench_official_output_") as output_dir:
-                            output = Path(output_dir) / "output.json"
+                            output_root = Path(output_dir) / "result"
+                            output = output_root / "output.json" if TASK_REGISTRY[task_id].get("adapter_output_is_directory") else output_root
                             command = [
                                 "conda", "run", "--prefix", environment_dir, "python", str(adapter),
-                                "--task", task_id[-4:], "--checkout", str(checkout),
-                                "--input", str(case / "input.json"), "--output", str(output),
+                                "--task", TASK_REGISTRY[task_id].get("adapter_task_arg", task_id[-4:]), "--checkout", str(checkout),
+                                "--input", str(case / "input.json"), "--output", str(output_root),
                             ]
                             subprocess.run(command, check=True)
                             require(sha256_file(output) == sha256_file(case / "output.json"), f"regenerated gold mismatch: {task_id}/{split}/{case.name}/run_{run_number}")
@@ -145,7 +148,7 @@ def validate_bundle() -> tuple[int, int]:
         require(schema["properties"]["schema_version"]["const"] == 4, f"interface schema mismatch: {task_id}")
         public_cases = sorted(path for path in (public / "cases").iterdir() if path.is_dir())
         hidden_cases = sorted(path for path in (hidden / "cases").iterdir() if path.is_dir())
-        require(len(public_cases) == PUBLIC_COUNTS[task_id] and len(hidden_cases) == 5, f"case count mismatch: {task_id}")
+        require(len(public_cases) == PUBLIC_COUNTS[task_id] and len(hidden_cases) == HIDDEN_COUNTS[task_id], f"case count mismatch: {task_id}")
         provenance = read_json(hidden / "provenance.json")
         require(provenance.get("repository") == registry["repository"], f"repository mismatch: {task_id}")
         require(provenance.get("commit") == registry["commit"], f"commit mismatch: {task_id}")

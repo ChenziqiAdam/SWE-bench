@@ -111,7 +111,7 @@ Override repository-specific behavior with `--coverage_setup_command`,
 `--coverage_results_command`, `--mutation_command`,
 `--mutation_results_command`, or `--coverage_tool_install_command`. Run the
 pipeline in a dedicated Python/Conda environment because setup and tests execute
-trusted repository code on the host. Claude Code/Codex also work in their own
+trusted repository code on the host. Claude Code/Codex/mini-swe-agent also work in their own
 clean clone; the evaluator never trusts agent-reported metrics.
 
 The editable default is important for scientific packages with compiled
