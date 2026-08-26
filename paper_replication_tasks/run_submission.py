@@ -75,15 +75,21 @@ def execute(submission_dir: Path, task_dir: Path, report_path: Path, timeout: fl
             output_dir = output_root / split / case_dir.name
             output_dir.mkdir(parents=True)
             with tempfile.TemporaryDirectory(prefix="scibench_case_") as temporary:
-                isolated_input = Path(temporary) / "input.json"
+                isolated_root = Path(temporary)
+                isolated_input = isolated_root / "input.json"
                 shutil.copyfile(case_dir / "input.json", isolated_input)
+                public_data = task_dir / "public/data"
+                isolated_data = isolated_root / "public_data"
+                if public_data.is_dir():
+                    shutil.copytree(public_data, isolated_data)
                 started = time.monotonic()
                 timed_out = False
                 try:
                     completed = subprocess.run(
                         [*command, "--input", str(isolated_input), "--output", str(output_dir)],
                         cwd=submission_dir,
-                        env={**os.environ, "SCIBENCH_TASK_ID": task_dir.name, "SCIBENCH_CASE_ID": case_dir.name},
+                        env={**os.environ, "SCIBENCH_TASK_ID": task_dir.name, "SCIBENCH_CASE_ID": case_dir.name,
+                             "SCIBENCH_PUBLIC_DATA_DIR": str(isolated_data) if isolated_data.is_dir() else ""},
                         shell=False,
                         timeout=timeout,
                         check=False,

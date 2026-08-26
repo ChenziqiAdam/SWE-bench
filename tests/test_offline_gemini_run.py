@@ -112,7 +112,7 @@ def test_manifest_records_frozen_safety_configuration_and_hash():
     assert manifest["antigravity_safety_configuration"] == pilot.safety_settings()
     assert manifest["antigravity_safety_configuration_sha256"] == pilot.safety_settings_hash()
     assert manifest["network_isolation"] == pilot.NETWORK_ISOLATION_LABEL
-    assert manifest["agent_backend"] == "antigravity_cli"
+    assert manifest["agent_backend"] == "agy"
 
 
 def test_command_is_headless_frozen_and_sandboxed(monkeypatch):
@@ -199,7 +199,7 @@ def test_run_one_redacts_prompt_audits_stream_and_captures_test_patch(tmp_path):
     assert "A scientific result is wrong" not in json.dumps(command_audit)
     assert command_audit["safety_settings_sha256"] == pilot.safety_settings_hash()
     assert command_audit["argv"][-1] == "<redacted_issue_prompt>"
-    assert record["agent_backend"] == "antigravity_cli"
+    assert record["agent_backend"] == "agy"
     assert "tests/test_generated.py" in record["model_patch"]
     assert audit["status"] == "passed"
 

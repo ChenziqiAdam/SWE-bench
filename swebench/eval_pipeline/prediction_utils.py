@@ -7,6 +7,14 @@ from typing import Iterable
 
 
 LEGACY_BACKENDS = {"builtin", "sweagent"}
+BACKEND_ALIASES = {
+    # Renamed in b88180a; the runner and prediction contract stayed the same.
+    "claude_code_offline_pilot": "claude_code",
+}
+
+
+def _canonical_backend(backend: str) -> str:
+    return BACKEND_ALIASES.get(backend, backend)
 
 
 def prediction_matches_backend(
@@ -32,7 +40,7 @@ def prediction_matches_backend(
         return False
     row_backend = row.get("agent_backend")
     if row_backend:
-        return row_backend == backend
+        return _canonical_backend(row_backend) == _canonical_backend(backend)
     return backend in LEGACY_BACKENDS
 
 

@@ -1,0 +1,170 @@
+{
+  "adapter_patch": "Inject input G in place of the notebook kernel's random draw; all downstream computation unchanged.",
+  "adapter_patch_sha256": "efd078d19a4a280e5a6b329a9ca654e704c856fd35c240d13561554d257a9b1a",
+  "case_design": [
+    {
+      "case_id": "case_01",
+      "hazard": "Wishart diagonal; rejects S*A, G-independent, and diagonal-estimator shortcuts"
+    },
+    {
+      "case_id": "case_02",
+      "hazard": "Wishart band boundary m=s+2"
+    },
+    {
+      "case_id": "case_03",
+      "hazard": "paper hard-coloring pattern with off-pattern mass"
+    },
+    {
+      "case_id": "case_04",
+      "hazard": "coloring-favorable blocks with strong off-block mass"
+    },
+    {
+      "case_id": "case_05",
+      "hazard": "Trefethen-primes inverse with multiband boundary rows"
+    },
+    {
+      "case_id": "case_06",
+      "hazard": "wide rectangular, asymmetric nonuniform supports"
+    },
+    {
+      "case_id": "case_07",
+      "hazard": "tall rectangular with multiscale rows"
+    },
+    {
+      "case_id": "case_08",
+      "condition_number": 1775.4564106457963,
+      "hazard": "iid-Gaussian realization with a moderately ill-conditioned legal row solve"
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "case_01",
+      "input_sha256": "d9b7bc36e2d2d18b1bdb170c28c12b39b22c23c7bb672c6f76421b6accad723b",
+      "normalized_output_sha256": "01c3cb7b2876a2abd920fb798127e2151648668c7d56502ec0999abd8d948116",
+      "output_sha256": "01c3cb7b2876a2abd920fb798127e2151648668c7d56502ec0999abd8d948116",
+      "raw_official_sha256": "01c3cb7b2876a2abd920fb798127e2151648668c7d56502ec0999abd8d948116",
+      "split": "public"
+    },
+    {
+      "case_id": "case_02",
+      "input_sha256": "6006435a274b8050ed46ff4505ae859f3c825e87b8a89d9839baaa12097818d0",
+      "normalized_output_sha256": "bf0f1607ca5281c1438c7cee9683407584a84efc91b4b2fc27bd5784ce57e948",
+      "output_sha256": "bf0f1607ca5281c1438c7cee9683407584a84efc91b4b2fc27bd5784ce57e948",
+      "raw_official_sha256": "bf0f1607ca5281c1438c7cee9683407584a84efc91b4b2fc27bd5784ce57e948",
+      "split": "public"
+    },
+    {
+      "case_id": "case_03",
+      "input_sha256": "3509fa4156869cf122e66a3553bb5c024b4569929b5c53659a060325aeca1869",
+      "normalized_output_sha256": "ead89304603c432e4acac29b2d214364aa664c86b397e68d5e6ad727dd414981",
+      "output_sha256": "ead89304603c432e4acac29b2d214364aa664c86b397e68d5e6ad727dd414981",
+      "raw_official_sha256": "ead89304603c432e4acac29b2d214364aa664c86b397e68d5e6ad727dd414981",
+      "split": "public"
+    },
+    {
+      "case_id": "case_01",
+      "input_sha256": "22cac45fcf00d97d02c175ccb8bcb74a39e1816af3d60bc552398764d15df129",
+      "normalized_output_sha256": "e18fbaa461a08d77075ddc2e95e0ada89adfc5223a387bc72861039fa313d9bc",
+      "output_sha256": "e18fbaa461a08d77075ddc2e95e0ada89adfc5223a387bc72861039fa313d9bc",
+      "raw_official_sha256": "e18fbaa461a08d77075ddc2e95e0ada89adfc5223a387bc72861039fa313d9bc",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_02",
+      "input_sha256": "bcb9186fd0367c91939a046aa645972daf4cfc907571372847be95d490e5fbd5",
+      "normalized_output_sha256": "8df5d5872a5e7a8f8c2265aa458976f7ae5dc5f968a76bc12f446232872c7c95",
+      "output_sha256": "8df5d5872a5e7a8f8c2265aa458976f7ae5dc5f968a76bc12f446232872c7c95",
+      "raw_official_sha256": "8df5d5872a5e7a8f8c2265aa458976f7ae5dc5f968a76bc12f446232872c7c95",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_03",
+      "input_sha256": "9d4b5cc9a924dba42ce8632fc4bebb51074da0f83a231ff298620e534a3b2298",
+      "normalized_output_sha256": "616f6771472d2a407060c567215367a85454faabf19100b0c378e6c4b2c02b71",
+      "output_sha256": "616f6771472d2a407060c567215367a85454faabf19100b0c378e6c4b2c02b71",
+      "raw_official_sha256": "616f6771472d2a407060c567215367a85454faabf19100b0c378e6c4b2c02b71",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_04",
+      "input_sha256": "39f49a316eb05132eb1153a29d3f8d8520d47da272a195e1c7533bc6f93215bc",
+      "normalized_output_sha256": "fd41c800877b0333d958ba41cea98a9350c688b51c2c81f6254bde3b101caa28",
+      "output_sha256": "fd41c800877b0333d958ba41cea98a9350c688b51c2c81f6254bde3b101caa28",
+      "raw_official_sha256": "fd41c800877b0333d958ba41cea98a9350c688b51c2c81f6254bde3b101caa28",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_05",
+      "input_sha256": "c511df31911304506d6c47b167b2b97155ff279611a68a6fa907e5a4cceffa12",
+      "normalized_output_sha256": "95675423cb89f3358a9917b95b261ac5b02d1f00c6c3b56ae3ffefb907d97a0f",
+      "output_sha256": "95675423cb89f3358a9917b95b261ac5b02d1f00c6c3b56ae3ffefb907d97a0f",
+      "raw_official_sha256": "95675423cb89f3358a9917b95b261ac5b02d1f00c6c3b56ae3ffefb907d97a0f",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_06",
+      "input_sha256": "0b7f0e4ef88cd42fbde13120646990af3f0d00229a45653b937fc7e49cce2d58",
+      "normalized_output_sha256": "98c03db9d23df82b169fe415057c83e3cb715f323c4f89e53e43c8434698e9fd",
+      "output_sha256": "98c03db9d23df82b169fe415057c83e3cb715f323c4f89e53e43c8434698e9fd",
+      "raw_official_sha256": "98c03db9d23df82b169fe415057c83e3cb715f323c4f89e53e43c8434698e9fd",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_07",
+      "input_sha256": "5381af3ded303cb1bb89429a325357752c398b5cd5928a6bd257cd4d7aa962e0",
+      "normalized_output_sha256": "6f90fdc371d19d0d72e22609bfa154ee5b03ce4bdf8de38d95977117d0f0e97d",
+      "output_sha256": "6f90fdc371d19d0d72e22609bfa154ee5b03ce4bdf8de38d95977117d0f0e97d",
+      "raw_official_sha256": "6f90fdc371d19d0d72e22609bfa154ee5b03ce4bdf8de38d95977117d0f0e97d",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_08",
+      "input_sha256": "01ccf7938bd6f8fd85981ada6d05f225b743572b4da995bbade176c38aa78e8d",
+      "normalized_output_sha256": "2cf1d400a6485e4af296b12e0f32e966b46b7007e686d64b896cc96ed812adb0",
+      "output_sha256": "2cf1d400a6485e4af296b12e0f32e966b46b7007e686d64b896cc96ed812adb0",
+      "raw_official_sha256": "2cf1d400a6485e4af296b12e0f32e966b46b7007e686d64b896cc96ed812adb0",
+      "split": "hidden"
+    }
+  ],
+  "commit": "6da600d95dbcf8a2f6f8424432601e31a243ba5e",
+  "dependency_artifact_sha256": null,
+  "environment": {
+    "numpy": "1.26.4",
+    "platform": "macOS-26.4.1-arm64-arm-64bit",
+    "python": "3.12.7"
+  },
+  "environment_lock_sha256": "2370b410d6fc05d072563b76a591da1091c02e34824ea8c92c234ca7c87a3a3f",
+  "gold_source": "pinned_official_checkout",
+  "independent_audit": {
+    "derived_tolerances": {
+      "atol": 1e-10,
+      "comparison": "mixed",
+      "rtol": 1.2127467935935725e-05
+    },
+    "implementation": "independent NumPy reduced-QR row least-squares",
+    "maximum_absolute_discrepancy": 5.3788085097039584e-12,
+    "maximum_relative_discrepancy": 1.2127467935935724e-06,
+    "status": "passed"
+  },
+  "legacy_predecessor": "scibench_replication_0015",
+  "lifecycle": "validated",
+  "notebook_sha256": "2b89484a821498766daed105a29ca09ceebd137c661d1c284f4568e162c3cd99",
+  "official_output_bundle_sha256": [
+    "1393eec6fee06fbf8d41ced35828aa6bac0e551848ea3532caf38b5411574eaa",
+    "1393eec6fee06fbf8d41ced35828aa6bac0e551848ea3532caf38b5411574eaa"
+  ],
+  "official_reproduction": {
+    "adapter_sha256": "e32327b10c2e8037cf349aba77251fb8c95e1858c52e6b1a800b0c8bb51afc74",
+    "clean_checkout_bundle_sha256": [
+      "1393eec6fee06fbf8d41ced35828aa6bac0e551848ea3532caf38b5411574eaa",
+      "1393eec6fee06fbf8d41ced35828aa6bac0e551848ea3532caf38b5411574eaa"
+    ],
+    "dependency_artifact_sha256": null,
+    "environment_lock_sha256": "2370b410d6fc05d072563b76a591da1091c02e34824ea8c92c234ca7c87a3a3f",
+    "raw_and_normalized_outputs": "curation_reports/official_runs/0015_core"
+  },
+  "paper_sha256": "b1f124097fed43903ef37f434904ee140b727b30f593a6a8bb895c42a8ea53cc",
+  "repository": "https://github.com/tchen-research/fixed_sparsity_matrix_approximation",
+  "schema_version": 4,
+  "task_id": "scibench_replication_0015_core"
+}

@@ -162,6 +162,29 @@ def test_selected_predictions_are_backend_specific(tmp_path):
     assert {row["instance_id"] for row in selected} == {"i1", "i2"}
 
 
+def test_selected_predictions_accept_renamed_claude_code_backend():
+    legacy = {
+        "instance_id": "i1",
+        "model_name_or_path": "glm",
+        "model_patch": "legacy patch",
+        "agent_backend": "claude_code_offline_pilot",
+        "eval_mode": "test_generation",
+    }
+
+    assert selected_prediction_rows(
+        [legacy],
+        "claude_code",
+        "glm",
+        eval_mode="test_generation",
+    ) == [legacy]
+    assert selected_prediction_rows(
+        [legacy],
+        "codex",
+        "glm",
+        eval_mode="test_generation",
+    ) == []
+
+
 def test_selected_predictions_are_eval_mode_specific(tmp_path):
     rows = [
         {
