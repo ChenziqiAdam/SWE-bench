@@ -1,0 +1,5 @@
+{
+  "comparison": "absolute_rmse",
+  "max_abs": 1e-11,
+  "rmse": 2e-12
+}

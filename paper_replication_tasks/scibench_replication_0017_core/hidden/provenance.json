@@ -1,0 +1,378 @@
+{
+  "cases": [
+    {
+      "case_id": "case_01",
+      "independent_error": {
+        "max_abs": 5.773159728050814e-15,
+        "rmse": 7.709234170257941e-17
+      },
+      "input_sha256": "7ef502a3753447403634e9a43fa91b07be1cb41188692e067487f4bad60c3631",
+      "normalized_output_sha256": "5460889998925419d2ef54601ba634180ac281190b3d15031a818fd0ff0633ac",
+      "output_sha256": "5460889998925419d2ef54601ba634180ac281190b3d15031a818fd0ff0633ac",
+      "raw_official_sha256": "4eab214d3e101f4872867b1552ac0a755015f58497fc86df08e1f436ad81dd28",
+      "split": "public"
+    },
+    {
+      "case_id": "case_02",
+      "independent_error": {
+        "max_abs": 5.773159728050814e-15,
+        "rmse": 7.244782631597973e-17
+      },
+      "input_sha256": "55d38d473ce03323da988e67c14a2545834913ccb6434f6230c4d3934991ce55",
+      "normalized_output_sha256": "f9d4aef18484e1e5a24181996d6ae0c5a96c2345ce31781d1fd29321ba8a7fda",
+      "output_sha256": "f9d4aef18484e1e5a24181996d6ae0c5a96c2345ce31781d1fd29321ba8a7fda",
+      "raw_official_sha256": "663f62e54380269ed4afd6953e7819237ae2afb9d6cc0d6a791003673dc3a43a",
+      "split": "public"
+    },
+    {
+      "case_id": "case_03",
+      "independent_error": {
+        "max_abs": 1.1102230246251565e-16,
+        "rmse": 1.9439193679061595e-18
+      },
+      "input_sha256": "05d252e83058f5e68b42efeadc26dc7271685108b3f89f88b19f4a958b3b2451",
+      "normalized_output_sha256": "bbcf1631f7a208d206cb7071708a790290c94ee9618ff598abb174d370558b09",
+      "output_sha256": "bbcf1631f7a208d206cb7071708a790290c94ee9618ff598abb174d370558b09",
+      "raw_official_sha256": "9dbface309c11bf1ff1e8b5773fdee5f962cec3f76aecf1ab12b821cea661d50",
+      "split": "public"
+    },
+    {
+      "case_id": "case_01",
+      "independent_error": {
+        "max_abs": 2.042810365310288e-14,
+        "rmse": 2.056024456177645e-15
+      },
+      "input_sha256": "692f0cb626eb1ed2683e68e9b8b1e21b64f75ad8679c6b3031c6a67e64c07b99",
+      "normalized_output_sha256": "f8b30e4a959a9f65b440814c42922dd685d0dfbc2ae304e7ab3a4a328c84a3f7",
+      "output_sha256": "f8b30e4a959a9f65b440814c42922dd685d0dfbc2ae304e7ab3a4a328c84a3f7",
+      "raw_official_sha256": "a42682602dd0b13d17a00b9957e2e434714e1195e315cdc59006fd9b33eca743",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_02",
+      "independent_error": {
+        "max_abs": 1.5987211554602254e-14,
+        "rmse": 2.0427060448322368e-16
+      },
+      "input_sha256": "6484dfc32c75afa00b49202c8e3ed2fabcf72b47bac6f8afd42e2ede105f89e6",
+      "normalized_output_sha256": "742e069daa143efe511c5e592e284f37aa4e48a47dfec432d6f406e11f8345e5",
+      "output_sha256": "742e069daa143efe511c5e592e284f37aa4e48a47dfec432d6f406e11f8345e5",
+      "raw_official_sha256": "ffb6453dac367f070e6aa88294420ca8aa7ec2eaf740aa36f97ad4b2f7800595",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_03",
+      "independent_error": {
+        "max_abs": 8.881784197001252e-16,
+        "rmse": 9.282504636774175e-18
+      },
+      "input_sha256": "335c7a9d68e81a2953f442de50d0580d7f06688895fc4197a9ef85cec674afc8",
+      "normalized_output_sha256": "dc9c111d877af4bf5962046a725b1fc4bef3d12f1c2a645f318e35be465b657b",
+      "output_sha256": "dc9c111d877af4bf5962046a725b1fc4bef3d12f1c2a645f318e35be465b657b",
+      "raw_official_sha256": "d5a8143fa067229da5320a1eafa8d6644b03093086cc411773e7761d9a28e1f5",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_04",
+      "independent_error": {
+        "max_abs": 8.326672684688674e-17,
+        "rmse": 1.3830678519134083e-18
+      },
+      "input_sha256": "706aff439cd9ff06f7af1cb05e37dce16b817517fa1f91a2e44eb667a66ba93c",
+      "normalized_output_sha256": "88e147f4fd460f718624f5e1b046a92bb2306d1f280256d80bd1e062aae0d185",
+      "output_sha256": "88e147f4fd460f718624f5e1b046a92bb2306d1f280256d80bd1e062aae0d185",
+      "raw_official_sha256": "fa31ded7b3c7d43fc998c80493e940fe4aa4aa5f1220c580990b85a3afc50591",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_05",
+      "independent_error": {
+        "max_abs": 1.734723475976807e-16,
+        "rmse": 1.960534764278112e-18
+      },
+      "input_sha256": "793a0ea1f1b9d1b57c26e32ab9f22126d6f59883832ab55e991c30038642882a",
+      "normalized_output_sha256": "d9a9a1bf42aee39f88537972d621b07e9040f00f1ff7671541ffa2222a70eb49",
+      "output_sha256": "d9a9a1bf42aee39f88537972d621b07e9040f00f1ff7671541ffa2222a70eb49",
+      "raw_official_sha256": "f779113c5c40cb08eb53d2d60d5170f56eb3896faf8bea0927a84d3153df4916",
+      "split": "hidden"
+    }
+  ],
+  "commit": "80b6516acb0936a4c3e75d15fc3885f1d398021f",
+  "dependency_artifact_sha256": null,
+  "environment": {
+    "numpy": "1.26.4",
+    "platform": "macOS-26.4.1-arm64-arm-64bit",
+    "python": "3.12.7"
+  },
+  "environment_lock_sha256": "6ec8b22b577c54bcc8dea06b29da73c51fda2666269a66de8551cd2150e52e10",
+  "gold_source": "pinned_official_checkout",
+  "hidden_case_metrics": [
+    {
+      "case_id": "case_01",
+      "filtered_hubs": 14,
+      "filtered_rows": 21426,
+      "hub_weight_max_error": 0.0,
+      "max_hub_degree": 4,
+      "max_origin_degree": 2,
+      "origin_weight_max_error": 0.0,
+      "overlap_rate": 0.0053475935828877,
+      "population_conservation_error": 0.0,
+      "reachable_hubs": 103,
+      "reachable_origins": 187,
+      "reachable_rows": 188,
+      "service_conservation_error": 2.842170943040401e-14,
+      "unreachable_hubs": 16,
+      "unreachable_origins": 10546
+    },
+    {
+      "case_id": "case_02",
+      "filtered_hubs": 2,
+      "filtered_rows": 2615,
+      "hub_weight_max_error": 1.1102230246251565e-16,
+      "max_hub_degree": 64,
+      "max_origin_degree": 5,
+      "origin_weight_max_error": 0.0,
+      "overlap_rate": 0.2448298865910607,
+      "population_conservation_error": 0.0,
+      "reachable_hubs": 129,
+      "reachable_origins": 4497,
+      "reachable_rows": 5889,
+      "service_conservation_error": 7.105427357601002e-15,
+      "unreachable_hubs": 2,
+      "unreachable_origins": 6245
+    },
+    {
+      "case_id": "case_03",
+      "filtered_hubs": 14,
+      "filtered_rows": 21426,
+      "hub_weight_max_error": 1.1102230246251565e-16,
+      "max_hub_degree": 211,
+      "max_origin_degree": 13,
+      "origin_weight_max_error": 0.0,
+      "overlap_rate": 0.6836795252225519,
+      "population_conservation_error": 0.0,
+      "reachable_hubs": 119,
+      "reachable_origins": 6740,
+      "reachable_rows": 18586,
+      "service_conservation_error": 1.7763568394002505e-15,
+      "unreachable_hubs": 0,
+      "unreachable_origins": 3993
+    },
+    {
+      "case_id": "case_04",
+      "filtered_hubs": 2,
+      "filtered_rows": 2615,
+      "hub_weight_max_error": 1.1102230246251565e-16,
+      "max_hub_degree": 856,
+      "max_origin_degree": 31,
+      "origin_weight_max_error": 0.0,
+      "overlap_rate": 0.8631303208906352,
+      "population_conservation_error": 2.9103830456733704e-11,
+      "reachable_hubs": 131,
+      "reachable_origins": 9162,
+      "reachable_rows": 80969,
+      "service_conservation_error": 0.0,
+      "unreachable_hubs": 0,
+      "unreachable_origins": 1580
+    },
+    {
+      "case_id": "case_05",
+      "filtered_hubs": 14,
+      "filtered_rows": 21426,
+      "hub_weight_max_error": 1.1102230246251565e-16,
+      "max_hub_degree": 2244,
+      "max_origin_degree": 56,
+      "origin_weight_max_error": 1.1102230246251565e-16,
+      "overlap_rate": 0.895555762601323,
+      "population_conservation_error": 2.9103830456733704e-11,
+      "reachable_hubs": 119,
+      "reachable_origins": 10733,
+      "reachable_rows": 190179,
+      "service_conservation_error": 0.0,
+      "unreachable_hubs": 0,
+      "unreachable_origins": 0
+    }
+  ],
+  "independent_audit": {
+    "derived_tolerances": {
+      "comparison": "absolute_rmse",
+      "max_abs": 1e-11,
+      "rmse": 2e-12
+    },
+    "implementation": "independent pandas formulation from the source paper",
+    "implementation_sha256": "8cdaf63289f46a660a7addd15a2222d9c11f61eb5cfa7dd2dbccaa58f9a0b310",
+    "maximum_absolute_discrepancy": 2.042810365310288e-14,
+    "maximum_rmse": 2.056024456177645e-15,
+    "status": "passed"
+  },
+  "legacy_predecessor": "scibench_replication_0017",
+  "lifecycle": "validated",
+  "official_output_bundle_sha256": [
+    "50ec5f8d03b320493db4a0af725c847862178e961052369a200f4e60c1417927",
+    "50ec5f8d03b320493db4a0af725c847862178e961052369a200f4e60c1417927"
+  ],
+  "official_reproduction": {
+    "adapter_sha256": "cc71b5f8eb785f70b585871a2bb512978d91e65ae8b0d389ab840120dbeb8f8c",
+    "clean_checkout_bundle_sha256": [
+      "50ec5f8d03b320493db4a0af725c847862178e961052369a200f4e60c1417927",
+      "50ec5f8d03b320493db4a0af725c847862178e961052369a200f4e60c1417927"
+    ],
+    "dependency_artifact_sha256": null,
+    "driver_sha256": "a264861f75c2a02b2539c48575ebc63811af13d2f765b3e6cca51c28987f9a82",
+    "environment_lock_sha256": "6ec8b22b577c54bcc8dea06b29da73c51fda2666269a66de8551cd2150e52e10",
+    "evidence": "curation_reports/official_runs/0017_core",
+    "raw_and_normalized_outputs": "curation_reports/official_runs/0017_core",
+    "raw_evidence_note": "Reversible structured view of the adapter's official R result, reconstructed from its lossless normalized projection.",
+    "two_clean_checkouts": true
+  },
+  "paper_sha256": "997614b78010b3fbe8cd7858a1f1821c3dc40d34f0fcbd60490451088908e5de",
+  "repository": "https://github.com/paezha/Accessibility-Sobi-Hamilton",
+  "schema_version": 4,
+  "scientific_hazard_catalog": [
+    {
+      "construction": "0.5-minute binary threshold on original Hamilton network",
+      "evidence": "Sections 'A numerical example' and 'Suboptimal system configurations': peripheral origins and zero-reach structure expose demand/supply inflation and undefined denominators.",
+      "expected_invariants": [
+        "origin weights sum to one over reachable hubs",
+        "hub weights sum to one over reachable origins",
+        "reachable population is allocated once",
+        "level of service is allocated once",
+        "sum accessibility equals sum level of service",
+        "only nonzero-denominator entities are output"
+      ],
+      "failure_mode": "sparse and disconnected catchments",
+      "faults": [
+        "retain_zero_denominators",
+        "global_normalization",
+        "conventional_2sfca"
+      ],
+      "hazard_id": "HZ1",
+      "hidden_cases": [
+        "case_01"
+      ],
+      "source": {
+        "doi": "10.1371/journal.pone.0218773",
+        "paper": "Paez, Higgins & Vivona (2019)",
+        "sha256": "65c4c14ab406b881362b4150f92995b5944756ab0b299f788cc47f67f11de603",
+        "version": "PLOS ONE 14(6):e0218773 printable PDF"
+      }
+    },
+    {
+      "construction": "new 4-minute threshold including exact-boundary paths and ERI stations",
+      "evidence": "The baseline defines inclusive threshold catchments and introduces distance-zone decay; BFCA retains the binary inclusive boundary without importing that extension.",
+      "expected_invariants": [
+        "origin weights sum to one over reachable hubs",
+        "hub weights sum to one over reachable origins",
+        "reachable population is allocated once",
+        "level of service is allocated once",
+        "sum accessibility equals sum level of service",
+        "only nonzero-denominator entities are output"
+      ],
+      "failure_mode": "threshold endpoint or distance-decay model substituted for BFCA",
+      "faults": [
+        "strict_threshold",
+        "ignore_hub_filter",
+        "distance_decay"
+      ],
+      "hazard_id": "HZ2",
+      "hidden_cases": [
+        "case_02"
+      ],
+      "source": {
+        "doi": "10.1016/j.healthplace.2009.06.002",
+        "paper": "Luo & Qi (2009)",
+        "sha256": "4685848da1752eef691bdc3c50a71b1089ccd5c60fa4d7be9baa3d9e9d983930",
+        "version": "Health & Place 15(4), publisher HTML"
+      }
+    },
+    {
+      "construction": "8-minute conventional-active system",
+      "evidence": "Accessibility peaks near five minutes and decreases substantially after eight minutes as demand reaches limited supply.",
+      "expected_invariants": [
+        "origin weights sum to one over reachable hubs",
+        "hub weights sum to one over reachable origins",
+        "reachable population is allocated once",
+        "level of service is allocated once",
+        "sum accessibility equals sum level of service",
+        "only nonzero-denominator entities are output"
+      ],
+      "failure_mode": "congestion transition hidden by one-sided or conventional normalization",
+      "faults": [
+        "origin_only",
+        "hub_only",
+        "conventional_2sfca"
+      ],
+      "hazard_id": "HZ3",
+      "hidden_cases": [
+        "case_03"
+      ],
+      "source": {
+        "doi": "10.1016/j.trd.2021.103091",
+        "paper": "Desjardins, Higgins & Paez (2022)",
+        "sha256": "997614b78010b3fbe8cd7858a1f1821c3dc40d34f0fcbd60490451088908e5de",
+        "version": "Transportation Research Part D 102:103091"
+      }
+    },
+    {
+      "construction": "unreported 17-minute threshold with all active stations",
+      "evidence": "The paper compares 3, 5, 10 and 15 minutes and the inclusion of twelve equity stations.",
+      "expected_invariants": [
+        "origin weights sum to one over reachable hubs",
+        "hub weights sum to one over reachable origins",
+        "reachable population is allocated once",
+        "level of service is allocated once",
+        "sum accessibility equals sum level of service",
+        "only nonzero-denominator entities are output"
+      ],
+      "failure_mode": "interpolation/memorization over reported thresholds or conventional-only stations",
+      "faults": [
+        "ignore_hub_filter",
+        "public_memorizer",
+        "uniform_rack_capacity"
+      ],
+      "hazard_id": "HZ4",
+      "hidden_cases": [
+        "case_04"
+      ],
+      "source": {
+        "doi": "10.1016/j.trd.2021.103091",
+        "paper": "Desjardins, Higgins & Paez (2022)",
+        "sha256": "997614b78010b3fbe8cd7858a1f1821c3dc40d34f0fcbd60490451088908e5de",
+        "version": "Transportation Research Part D 102:103091"
+      }
+    },
+    {
+      "construction": "maximum supported 30-minute matrix threshold with conventional stations",
+      "evidence": "Row/column standardization is required to avoid inflation under overlapping catchments; the numerical analysis emphasizes conservation as overlap grows.",
+      "expected_invariants": [
+        "origin weights sum to one over reachable hubs",
+        "hub weights sum to one over reachable origins",
+        "reachable population is allocated once",
+        "level of service is allocated once",
+        "sum accessibility equals sum level of service",
+        "only nonzero-denominator entities are output"
+      ],
+      "failure_mode": "extreme overlap, scale, and accumulation error",
+      "faults": [
+        "conventional_2sfca",
+        "origin_only",
+        "hub_only",
+        "swapped_denominators",
+        "uniform_population",
+        "uniform_rack_capacity"
+      ],
+      "hazard_id": "HZ5",
+      "hidden_cases": [
+        "case_05"
+      ],
+      "source": {
+        "doi": "10.1371/journal.pone.0218773",
+        "paper": "Paez, Higgins & Vivona (2019)",
+        "sha256": "65c4c14ab406b881362b4150f92995b5944756ab0b299f788cc47f67f11de603",
+        "version": "PLOS ONE 14(6):e0218773 printable PDF"
+      }
+    }
+  ],
+  "task_id": "scibench_replication_0017_core",
+  "travel_time_matrix_sha256": "b5ae188e25523f62d8bd2b064c7cdeeb207d023fb8b9b378143e980de96ec452"
+}
