@@ -8,6 +8,7 @@ import logging
 import os
 import re
 import shutil
+import subprocess
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -276,6 +277,93 @@ def _docker_unavailable_reason() -> str | None:
     return None
 
 
+def _configure_eval_container_boundary(args) -> None:
+    """Expose pipeline CLI limits to the shared SWE-bench harness."""
+    os.environ["SWEBENCH_EVAL_MEMORY"] = str(args.eval_memory)
+    os.environ["SWEBENCH_EVAL_CPUS"] = str(args.eval_cpus)
+    os.environ["SWEBENCH_EVAL_PIDS_LIMIT"] = str(args.eval_pids_limit)
+    os.environ["SWEBENCH_EVAL_NETWORK_DISABLED"] = (
+        "0" if args.allow_eval_network else "1"
+    )
+    os.environ["SWEBENCH_EVAL_HARDENING"] = (
+        "0" if args.disable_eval_hardening else "1"
+    )
+
+
+def _container_preflight_findings() -> dict:
+    """Report pre-existing SWE-bench containers without mutating engine state."""
+    import docker
+
+    findings = {"api_containers": [], "podman_external_containers": [], "errors": []}
+    client = None
+    is_podman = False
+    known_api_ids: set[str] = set()
+    try:
+        client = docker.from_env()
+        try:
+            is_podman = "podman" in json.dumps(client.version()).lower()
+        except Exception:
+            is_podman = "podman" in os.environ.get("DOCKER_HOST", "").lower()
+        for container in client.containers.list(all=True):
+            container_id = getattr(container, "id", "") or ""
+            if container_id:
+                known_api_ids.add(container_id)
+            name = getattr(container, "name", "") or ""
+            if name.lower().startswith("sweb."):
+                findings["api_containers"].append(
+                    {
+                        "id": container_id,
+                        "name": name,
+                        "status": getattr(container, "status", "unknown"),
+                    }
+                )
+    except Exception as error:
+        findings["errors"].append(f"container API inspection failed: {error}")
+    finally:
+        if client is not None:
+            try:
+                client.close()
+            except Exception:
+                pass
+
+    if is_podman and shutil.which("podman"):
+        command = ["podman"]
+        docker_host = os.environ.get("DOCKER_HOST", "")
+        if docker_host:
+            command.extend(["--url", docker_host])
+        command.extend(["ps", "--all", "--external", "--format", "json"])
+        try:
+            completed = subprocess.run(
+                command,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+            if completed.returncode != 0:
+                findings["errors"].append(
+                    "podman external-container inspection failed: "
+                    + (completed.stderr.strip() or f"exit {completed.returncode}")
+                )
+            else:
+                rows = json.loads(completed.stdout or "[]")
+                for row in rows if isinstance(rows, list) else []:
+                    if not isinstance(row, dict):
+                        continue
+                    row_id = str(row.get("Id") or row.get("ID") or "")
+                    if row_id and any(
+                        known.startswith(row_id) or row_id.startswith(known)
+                        for known in known_api_ids
+                    ):
+                        continue
+                    findings["podman_external_containers"].append(row)
+        except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as error:
+            findings["errors"].append(
+                f"podman external-container inspection failed: {error}"
+            )
+    return findings
+
+
 def _write_evaluation_failure(
     path: Path, reason: str, stage: str = "docker_preflight"
 ) -> None:
@@ -521,6 +609,56 @@ def parse_args():
     p.add_argument(
         "--docker_workers", type=int, default=2,
         help="Parallel workers for image validation and Docker evaluation (default 2).",
+    )
+    p.add_argument(
+        "--build_timeout",
+        type=int,
+        default=10800,
+        help="Wall-clock seconds allowed per image build (default 10800; 0 disables).",
+    )
+    p.add_argument(
+        "--build_no_output_timeout",
+        type=int,
+        default=2700,
+        help="Seconds an image build may emit no output (default 2700; 0 disables).",
+    )
+    p.add_argument(
+        "--build_memory",
+        default="32g",
+        help="Memory limit for each image build (default 32g; 0 disables).",
+    )
+    p.add_argument(
+        "--build_cpus",
+        type=float,
+        default=8.0,
+        help="CPU quota for each Podman image build (default 8; 0 disables).",
+    )
+    p.add_argument(
+        "--eval_memory",
+        default="32g",
+        help="Memory limit for each evaluation container (default 32g; 0 disables).",
+    )
+    p.add_argument(
+        "--eval_cpus",
+        type=float,
+        default=8.0,
+        help="CPU quota for each evaluation container (default 8; 0 disables).",
+    )
+    p.add_argument(
+        "--eval_pids_limit",
+        type=int,
+        default=2048,
+        help="PID limit for each evaluation container (default 2048; -1 disables).",
+    )
+    p.add_argument(
+        "--allow_eval_network",
+        action="store_true",
+        help="Allow network access in evaluation containers (unsafe; default disabled).",
+    )
+    p.add_argument(
+        "--disable_eval_hardening",
+        action="store_true",
+        help="Do not drop capabilities or set no-new-privileges (unsafe compatibility escape hatch).",
     )
     p.add_argument("--max_cost", type=float, default=None,
                    help="Max inference cost in USD before stopping")
@@ -1541,6 +1679,7 @@ def _run_standalone_coverage(args, inference_model: str, github_token: str | Non
 
 def main():
     args = parse_args()
+    _configure_eval_container_boundary(args)
     if (
         args.comparison_protocol == "agent_led_shared_targets"
         and args.pynguin_module
@@ -1708,6 +1847,23 @@ def main():
             _write_evaluation_failure(evaluation_failure_path, evaluation_failure)
         elif evaluation_failure_path.exists():
             evaluation_failure_path.unlink()
+        if not evaluation_failure:
+            container_preflight = _container_preflight_findings()
+            (output_dir / "container_preflight.json").write_text(
+                json.dumps(container_preflight, indent=2) + "\n"
+            )
+            existing_count = len(container_preflight["api_containers"]) + len(
+                container_preflight["podman_external_containers"]
+            )
+            if existing_count:
+                logger.warning(
+                    "Container preflight found %d pre-existing SWE-bench/Buildah "
+                    "container(s); no automatic cleanup was performed. See %s",
+                    existing_count,
+                    output_dir / "container_preflight.json",
+                )
+            for error in container_preflight["errors"]:
+                logger.warning("Container preflight: %s", error)
 
     # ── Stage 2.5: Base-commit Build Validation ──────────────────────────────
     build_validation: dict[str, dict] = {}
@@ -1720,6 +1876,10 @@ def main():
             max_workers=args.docker_workers,
             force=args.revalidate,
             clean_images=args.clean_images,
+            build_timeout=args.build_timeout,
+            build_no_output_timeout=args.build_no_output_timeout,
+            build_memory=args.build_memory,
+            build_cpus=args.build_cpus,
         )
         n_bad = sum(1 for iid in (i["instance_id"] for i in instances)
                     if not build_validation.get(iid, {}).get("buildable", True))
@@ -1992,6 +2152,15 @@ def main():
         "max_tokens": args.max_tokens,
         "max_workers": args.max_workers,
         "docker_workers": args.docker_workers,
+        "build_timeout": args.build_timeout,
+        "build_no_output_timeout": args.build_no_output_timeout,
+        "build_memory": args.build_memory,
+        "build_cpus": args.build_cpus,
+        "eval_memory": args.eval_memory,
+        "eval_cpus": args.eval_cpus,
+        "eval_pids_limit": args.eval_pids_limit,
+        "allow_eval_network": args.allow_eval_network,
+        "disable_eval_hardening": args.disable_eval_hardening,
         "max_cost": args.max_cost,
         "agent_backend": args.agent_backend,
         "limit": args.limit,

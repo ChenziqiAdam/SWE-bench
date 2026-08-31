@@ -128,6 +128,37 @@ def test_mini_backend_captures_patch_trajectory_and_metrics(tmp_path, monkeypatc
     assert (logs / "demo__repo-1.stderr.log").exists()
 
 
+def test_relative_output_does_not_write_trajectory_inside_repo(tmp_path, monkeypatch):
+    _install_fake_mini(tmp_path, monkeypatch)
+    repo = _make_git_repo(tmp_path / "repo")
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.mini_swe_agent_inference._clone_repo_at_commit",
+        lambda *args, **kwargs: repo,
+    )
+    monkeypatch.chdir(tmp_path)
+
+    output = "outputs/predictions.jsonl"
+    run_mini_swe_agent_inference(
+        [_instance()],
+        output,
+        "gpt-test",
+        max_workers=1,
+        timeout=30,
+        command_timeout=17,
+    )
+
+    row = json.loads((tmp_path / output).read_text())
+    assert "module.py" in row["model_patch"]
+    assert "mini_swe_agent_logs" not in row["model_patch"]
+    assert not (repo / "outputs").exists()
+    assert (
+        tmp_path
+        / "outputs"
+        / "mini_swe_agent_logs"
+        / "demo__repo-1.traj.json"
+    ).exists()
+
+
 def test_custom_endpoint_uses_litellm_config_without_persisting_key(
     tmp_path, monkeypatch
 ):

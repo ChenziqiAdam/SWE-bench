@@ -1,4 +1,4 @@
-from pathlib import Path
+import json
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -129,3 +129,21 @@ def test_smoke_validate_does_not_retry_real_failure(monkeypatch):
     assert ok is False
     assert "sklearn" in error
     assert len(calls) == 1
+
+
+def test_read_build_diagnostics_returns_structured_timeout(monkeypatch, tmp_path):
+    spec = _spec("demo__repo-1")
+    build_dir = tmp_path / spec.instance_image_key.replace(":", "__")
+    build_dir.mkdir(parents=True)
+    expected = {
+        "status": "no-output_timeout",
+        "elapsed_seconds": 2700.1,
+        "no_output_timeout_seconds": 2700,
+    }
+    (build_dir / "build_diagnostics.json").write_text(json.dumps(expected))
+    monkeypatch.setattr(validate_base, "INSTANCE_IMAGE_BUILD_DIR", tmp_path, raising=False)
+    monkeypatch.setattr(
+        "swebench.harness.docker_build.INSTANCE_IMAGE_BUILD_DIR", tmp_path
+    )
+
+    assert validate_base._read_build_diagnostics(spec) == expected

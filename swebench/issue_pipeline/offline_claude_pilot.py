@@ -160,8 +160,8 @@ def build_pilot_prompt(instance: dict) -> str:
     )
 
 
-def claude_command(model: str = MODEL) -> list[str]:
-    return [
+def claude_command(model: str = MODEL, effort: str | None = None) -> list[str]:
+    command = [
         _claude_bin(),
         "-p",
         "--output-format",
@@ -174,6 +174,9 @@ def claude_command(model: str = MODEL) -> list[str]:
         "--disallowedTools",
         ",".join(DISALLOWED_TOOLS),
     ]
+    if effort is not None:
+        command += ["--effort", effort]
+    return command
 
 
 def _tool_payload(event: dict) -> tuple[str, str] | None:
@@ -394,13 +397,14 @@ def _run_one(
     timeout: int,
     runner: Callable[..., subprocess.CompletedProcess] = subprocess.run,
     process_env: dict[str, str] | None = None,
+    effort: str | None = None,
 ) -> tuple[dict, dict]:
     instance_id = instance["instance_id"]
     trajectory_path = output_dir / "trajectories" / f"{instance_id}.jsonl"
     stderr_path = output_dir / "trajectories" / f"{instance_id}.stderr.log"
     command_path = output_dir / "trajectories" / f"{instance_id}.command.json"
     prompt = build_pilot_prompt(instance)
-    command = claude_command(model=model)
+    command = claude_command(model=model, effort=effort)
     command_path.write_text(json.dumps(command, indent=2) + "\n")
     started = time.perf_counter()
     stdout = ""

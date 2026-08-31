@@ -7,6 +7,9 @@ import itertools
 import json
 import logging
 import os
+import queue
+import signal
+import shutil
 import subprocess
 import sys
 import threading
@@ -16,6 +19,7 @@ import traceback
 import requests
 
 from pathlib import Path
+from docker.utils import parse_bytes
 
 from swebench.harness.constants import (
     BASE_IMAGE_BUILD_DIR,
@@ -48,6 +52,309 @@ class BuildImageError(Exception):
         )
 
 
+class BuildTimeoutError(TimeoutError):
+    """An image build exceeded its wall-clock or output-idle budget."""
+
+    def __init__(self, reason: str, elapsed: float, limit: float):
+        super().__init__(
+            f"image build {reason} timeout after {elapsed:.1f}s "
+            f"(limit {limit:.1f}s)"
+        )
+        self.reason = reason
+        self.elapsed = elapsed
+        self.limit = limit
+
+
+DEFAULT_BUILD_TIMEOUT = 3 * 60 * 60
+DEFAULT_BUILD_NO_OUTPUT_TIMEOUT = 45 * 60
+DEFAULT_BUILD_MEMORY = "32g"
+DEFAULT_BUILD_CPUS = 8.0
+BUILD_HEARTBEAT_INTERVAL = 5 * 60
+_BUILD_DIAGNOSTICS = "build_diagnostics.json"
+_STREAM_END = object()
+
+
+def _effective_timeout(value: float | None, default: float) -> float | None:
+    """Resolve an optional timeout; zero explicitly disables that watchdog."""
+    resolved = default if value is None else value
+    return resolved if resolved and resolved > 0 else None
+
+
+def _effective_memory(value: str | None, default: str) -> str | None:
+    resolved = default if value is None else str(value).strip()
+    return None if resolved.lower() in {"", "0", "none", "unlimited"} else resolved
+
+
+def _write_build_diagnostics(
+    build_dir: Path,
+    *,
+    image_name: str,
+    status: str,
+    started_at: float,
+    timeout: float | None,
+    no_output_timeout: float | None,
+    error: str = "",
+    memory: str | None = None,
+    cpus: float | None = None,
+) -> None:
+    disk = shutil.disk_usage(build_dir)
+    try:
+        load_average = list(os.getloadavg())
+    except OSError:
+        load_average = []
+    memory_kib = {}
+    try:
+        for line in Path("/proc/meminfo").read_text().splitlines():
+            key, value = line.split(":", 1)
+            if key in {"MemTotal", "MemAvailable", "SwapTotal", "SwapFree"}:
+                memory_kib[key] = int(value.strip().split()[0])
+    except (OSError, ValueError, IndexError):
+        memory_kib = {}
+    log_path = build_dir / "build_image.log"
+    try:
+        last_log_lines = log_path.read_text(errors="replace").splitlines()[-20:]
+    except OSError:
+        last_log_lines = []
+    payload = {
+        "image_name": image_name,
+        "status": status,
+        "elapsed_seconds": round(time.monotonic() - started_at, 3),
+        "wallclock_timeout_seconds": timeout,
+        "no_output_timeout_seconds": no_output_timeout,
+        "error": error,
+        "resource_limits": {"memory": memory, "cpus": cpus},
+        "host_snapshot": {
+            "load_average": load_average,
+            "memory_kib": memory_kib,
+            "disk_total_bytes": disk.total,
+            "disk_used_bytes": disk.used,
+            "disk_free_bytes": disk.free,
+        },
+        "last_log_lines": last_log_lines,
+    }
+    path = build_dir / _BUILD_DIAGNOSTICS
+    temporary = path.with_suffix(".tmp")
+    temporary.write_text(json.dumps(payload, indent=2) + "\n")
+    temporary.replace(path)
+
+
+def _iter_with_build_timeouts(
+    response,
+    *,
+    timeout: float | None,
+    no_output_timeout: float | None,
+    started_at: float,
+    logger=None,
+):
+    """Yield a blocking SDK response stream while enforcing both watchdogs."""
+    events: queue.Queue = queue.Queue()
+
+    def read_response():
+        try:
+            for chunk in response:
+                events.put(("chunk", chunk))
+        except BaseException as error:
+            events.put(("error", error))
+        finally:
+            events.put(("end", _STREAM_END))
+
+    reader = threading.Thread(target=read_response, daemon=True)
+    reader.start()
+    last_output_at = time.monotonic()
+    last_heartbeat_at = started_at
+    while True:
+        now = time.monotonic()
+        if timeout is not None and now - started_at >= timeout:
+            close = getattr(response, "close", None)
+            if close:
+                close()
+            raise BuildTimeoutError("wall-clock", now - started_at, timeout)
+        if no_output_timeout is not None and now - last_output_at >= no_output_timeout:
+            close = getattr(response, "close", None)
+            if close:
+                close()
+            raise BuildTimeoutError(
+                "no-output", now - last_output_at, no_output_timeout
+            )
+
+        deadlines = [1.0]
+        if timeout is not None:
+            deadlines.append(max(0.01, timeout - (now - started_at)))
+        if no_output_timeout is not None:
+            deadlines.append(max(0.01, no_output_timeout - (now - last_output_at)))
+        try:
+            kind, value = events.get(timeout=min(deadlines))
+        except queue.Empty:
+            heartbeat_now = time.monotonic()
+            if (
+                logger is not None
+                and heartbeat_now - last_heartbeat_at >= BUILD_HEARTBEAT_INTERVAL
+            ):
+                logger.info(
+                    "Build heartbeat: elapsed %.0fs, no engine output for %.0fs",
+                    heartbeat_now - started_at,
+                    heartbeat_now - last_output_at,
+                )
+                last_heartbeat_at = heartbeat_now
+            continue
+        if kind == "chunk":
+            last_output_at = time.monotonic()
+            yield value
+        elif kind == "error":
+            raise value
+        else:
+            return
+
+
+def _terminate_process_group(process: subprocess.Popen, grace_seconds: float = 10) -> None:
+    """Terminate only the process group created for one native image build."""
+    if process.poll() is not None:
+        return
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+    except (ProcessLookupError, PermissionError):
+        return
+    try:
+        process.wait(timeout=grace_seconds)
+        return
+    except subprocess.TimeoutExpired:
+        pass
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        return
+    try:
+        process.wait(timeout=grace_seconds)
+    except subprocess.TimeoutExpired:
+        # An uninterruptible I/O sleep can survive SIGKILL until the kernel
+        # operation returns. Do not let that defeat the pipeline watchdog.
+        return
+
+
+def _podman_build_command(
+    image_name: str,
+    build_dir: Path,
+    platform: str,
+    nocache: bool,
+    memory: str | None = None,
+    cpus: float | None = None,
+) -> list[str]:
+    command = ["podman"]
+    docker_host = os.environ.get("DOCKER_HOST", "")
+    if docker_host:
+        command.extend(["--url", docker_host])
+    command.extend(
+        [
+            "build",
+            "--tag",
+            image_name,
+            "--rm",
+            "--force-rm",
+            "--platform",
+            platform,
+        ]
+    )
+    if nocache:
+        command.append("--no-cache")
+    if memory:
+        command.extend(["--memory", memory])
+    if cpus and cpus > 0:
+        command.extend(
+            ["--cpu-period", "100000", "--cpu-quota", str(int(cpus * 100000))]
+        )
+    command.append(str(build_dir))
+    return command
+
+
+def _run_native_podman_build(
+    *,
+    image_name: str,
+    build_dir: Path,
+    platform: str,
+    nocache: bool,
+    logger,
+    timeout: float | None,
+    no_output_timeout: float | None,
+    started_at: float,
+    memory: str | None = None,
+    cpus: float | None = None,
+) -> str:
+    """Run one Podman build in its own process group so it can be cancelled."""
+    command = _podman_build_command(
+        image_name, build_dir, platform, nocache, memory, cpus
+    )
+    try:
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+            start_new_session=True,
+        )
+    except FileNotFoundError as error:
+        raise RuntimeError(
+            "Podman-backed image builds require the podman CLI on PATH"
+        ) from error
+
+    events: queue.Queue = queue.Queue()
+
+    def read_output():
+        try:
+            assert process.stdout is not None
+            for line in process.stdout:
+                events.put(line)
+        finally:
+            events.put(_STREAM_END)
+
+    threading.Thread(target=read_output, daemon=True).start()
+    output: list[str] = []
+    last_output_at = time.monotonic()
+    last_heartbeat_at = started_at
+    try:
+        stream_ended = False
+        while not stream_ended or process.poll() is None:
+            now = time.monotonic()
+            if timeout is not None and now - started_at >= timeout:
+                raise BuildTimeoutError("wall-clock", now - started_at, timeout)
+            if no_output_timeout is not None and now - last_output_at >= no_output_timeout:
+                raise BuildTimeoutError(
+                    "no-output", now - last_output_at, no_output_timeout
+                )
+            try:
+                event = events.get(timeout=0.5)
+            except queue.Empty:
+                heartbeat_now = time.monotonic()
+                if heartbeat_now - last_heartbeat_at >= BUILD_HEARTBEAT_INTERVAL:
+                    logger.info(
+                        "Build heartbeat: elapsed %.0fs, no engine output for %.0fs",
+                        heartbeat_now - started_at,
+                        heartbeat_now - last_output_at,
+                    )
+                    last_heartbeat_at = heartbeat_now
+                continue
+            if event is _STREAM_END:
+                stream_ended = True
+                continue
+            last_output_at = time.monotonic()
+            output.append(event)
+            logger.info(event.rstrip())
+        returncode = process.wait()
+    except BaseException:
+        _terminate_process_group(process)
+        raise
+    finally:
+        if process.stdout is not None:
+            process.stdout.close()
+
+    buildlog = "".join(output)
+    if returncode != 0:
+        raise docker.errors.BuildError(
+            f"podman build exited with status {returncode}", buildlog
+        )
+    return buildlog
+
+
 def _client_is_podman(client) -> bool:
     """Detect a Podman-backed docker-py client (rootless Podman's Docker-compatible API)."""
     try:
@@ -60,6 +367,66 @@ def _client_is_podman(client) -> bool:
 
 _gpu_assignment_counter = itertools.count()
 _gpu_assignment_lock = threading.Lock()
+_qgis_build_lock = threading.Lock()
+_EVAL_ALLOWED_CAPABILITIES = (
+    "CHOWN",
+    "DAC_OVERRIDE",
+    "FOWNER",
+    "FSETID",
+    "KILL",
+    "SETGID",
+    "SETUID",
+    "NET_BIND_SERVICE",
+    "SYS_CHROOT",
+)
+
+
+def _env_flag(name: str, default: bool) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() not in {"0", "false", "no", "off"}
+
+
+def _eval_container_options(run_args: dict | None = None) -> dict:
+    """Return the common fail-closed runtime boundary for eval containers."""
+    run_args = run_args or {}
+    options: dict = {
+        "network_disabled": run_args.get(
+            "network_disabled",
+            _env_flag("SWEBENCH_EVAL_NETWORK_DISABLED", True),
+        ),
+    }
+    if run_args.get("harden", _env_flag("SWEBENCH_EVAL_HARDENING", True)):
+        options["cap_drop"] = list(run_args.get("cap_drop", ["ALL"]))
+        options["security_opt"] = list(
+            run_args.get("security_opt", ["no-new-privileges:true"])
+        )
+        requested_capabilities = [
+            *_EVAL_ALLOWED_CAPABILITIES,
+            *run_args.get("cap_add", []),
+        ]
+    else:
+        requested_capabilities = list(run_args.get("cap_add", []))
+    if requested_capabilities:
+        options["cap_add"] = list(dict.fromkeys(requested_capabilities))
+
+    memory = str(
+        run_args.get("memory", os.environ.get("SWEBENCH_EVAL_MEMORY", "32g"))
+    ).strip()
+    if memory.lower() not in {"", "0", "none", "unlimited"}:
+        options["mem_limit"] = memory
+    cpus = float(run_args.get("cpus", os.environ.get("SWEBENCH_EVAL_CPUS", "8")))
+    if cpus > 0:
+        options["nano_cpus"] = int(cpus * 1_000_000_000)
+    pids_limit = int(
+        run_args.get(
+            "pids_limit", os.environ.get("SWEBENCH_EVAL_PIDS_LIMIT", "2048")
+        )
+    )
+    if pids_limit >= 0:
+        options["pids_limit"] = pids_limit
+    return options
 
 
 def _next_gpu_index(gpu_count: int) -> int:
@@ -104,7 +471,22 @@ def _create_podman_gpu_container(
             "label=disable",
         ]
     )
-    for capability in run_args.get("cap_add", []):
+    boundary = _eval_container_options(run_args)
+    if boundary.get("network_disabled"):
+        command.extend(["--network", "none"])
+    for capability in boundary.get("cap_drop", []):
+        command.extend(["--cap-drop", capability])
+    for security_option in boundary.get("security_opt", []):
+        command.extend(["--security-opt", security_option])
+    if boundary.get("mem_limit"):
+        command.extend(["--memory", str(boundary["mem_limit"])])
+    if boundary.get("nano_cpus"):
+        command.extend(
+            ["--cpus", str(boundary["nano_cpus"] / 1_000_000_000)]
+        )
+    if "pids_limit" in boundary:
+        command.extend(["--pids-limit", str(boundary["pids_limit"])])
+    for capability in boundary.get("cap_add", []):
         command.extend(["--cap-add", capability])
     command.extend([test_spec.instance_image_key, "tail", "-f", "/dev/null"])
 
@@ -140,7 +522,7 @@ def _create_eval_container(client, test_spec: TestSpec, run_id: str, logger):
         "detach": True,
         "command": "tail -f /dev/null",
         "platform": test_spec.platform,
-        "cap_add": run_args.get("cap_add", []),
+        **_eval_container_options(run_args),
     }
     requests_gpu = run_args.get("gpu", False)
     is_podman = _client_is_podman(client)
@@ -252,6 +634,10 @@ def build_image(
     client: docker.DockerClient,
     build_dir: Path,
     nocache: bool = False,
+    timeout: float | None = None,
+    no_output_timeout: float | None = None,
+    memory: str | None = None,
+    cpus: float | None = None,
 ):
     """
     Builds a docker image with the given name, setup scripts, dockerfile, and platform.
@@ -264,7 +650,18 @@ def build_image(
         client (docker.DockerClient): Docker client to use for building the image
         build_dir (Path): Directory for the build context (will also contain logs, scripts, and artifacts)
         nocache (bool): Whether to use the cache when building
+        timeout (float): Maximum wall-clock seconds for this image build; zero disables it.
+        no_output_timeout (float): Maximum seconds without build output; zero disables it.
+        memory (str): Build-container memory limit; zero disables it.
+        cpus (float): Build-container CPU quota on Podman; zero disables it.
     """
+    timeout = _effective_timeout(timeout, DEFAULT_BUILD_TIMEOUT)
+    no_output_timeout = _effective_timeout(
+        no_output_timeout, DEFAULT_BUILD_NO_OUTPUT_TIMEOUT
+    )
+    memory = _effective_memory(memory, DEFAULT_BUILD_MEMORY)
+    cpus = _effective_timeout(cpus, DEFAULT_BUILD_CPUS)
+    started_at = time.monotonic()
     # Create a logger for the build process
     logger = setup_logger(image_name, build_dir / "build_image.log")
     logger.info(
@@ -298,6 +695,49 @@ def build_image(
         )
         max_attempts = 3
         for attempt in range(max_attempts):
+            if _client_is_podman(client):
+                try:
+                    _run_native_podman_build(
+                        image_name=image_name,
+                        build_dir=build_dir,
+                        platform=platform,
+                        nocache=nocache,
+                        logger=logger,
+                        timeout=timeout,
+                        no_output_timeout=no_output_timeout,
+                        started_at=started_at,
+                        memory=memory,
+                        cpus=cpus,
+                    )
+                    break
+                except docker.errors.BuildError as error:
+                    detail = str(error)
+                    build_log = getattr(error, "build_log", "")
+                    if isinstance(build_log, str):
+                        detail += "\n" + build_log
+                    lower_detail = detail.lower()
+                    is_transient = any(
+                        marker in lower_detail
+                        for marker in (
+                            "layer not known",
+                            "identifier is not a container",
+                            "deleting build container",
+                        )
+                    )
+                    if attempt < max_attempts - 1 and is_transient:
+                        logger.warning(
+                            "Transient Podman error while building %s "
+                            "(attempt %d/%d); retrying",
+                            image_name,
+                            attempt + 1,
+                            max_attempts,
+                        )
+                        continue
+                    raise
+
+            container_limits = {}
+            if memory:
+                container_limits["memory"] = parse_bytes(memory)
             response = client.api.build(
                 path=str(build_dir),
                 tag=image_name,
@@ -306,6 +746,7 @@ def build_image(
                 decode=True,
                 platform=platform,
                 nocache=nocache,
+                container_limits=container_limits or None,
             )
 
             # Log the build process continuously. Podman can briefly retain a
@@ -320,7 +761,13 @@ def build_image(
             # instance-level evaluation errors.
             buildlog = ""
             retry_transient = False
-            for chunk in response:
+            for chunk in _iter_with_build_timeouts(
+                response,
+                timeout=timeout,
+                no_output_timeout=no_output_timeout,
+                started_at=started_at,
+                logger=logger,
+            ):
                 if "stream" in chunk:
                     # Remove ANSI escape sequences from the log
                     chunk_stream = ansi_escape(chunk["stream"])
@@ -355,11 +802,57 @@ def build_image(
                 close()
             response = None
         logger.info("Image built successfully!")
+        _write_build_diagnostics(
+            build_dir,
+            image_name=image_name,
+            status="success",
+            started_at=started_at,
+            timeout=timeout,
+            no_output_timeout=no_output_timeout,
+            memory=memory,
+            cpus=cpus,
+        )
     except docker.errors.BuildError as e:
         logger.error(f"docker.errors.BuildError during {image_name}: {e}")
+        _write_build_diagnostics(
+            build_dir,
+            image_name=image_name,
+            status="build_error",
+            started_at=started_at,
+            timeout=timeout,
+            no_output_timeout=no_output_timeout,
+            error=str(e),
+            memory=memory,
+            cpus=cpus,
+        )
+        raise BuildImageError(image_name, str(e), logger) from e
+    except BuildTimeoutError as e:
+        logger.error(f"Build timeout during {image_name}: {e}")
+        _write_build_diagnostics(
+            build_dir,
+            image_name=image_name,
+            status=f"{e.reason}_timeout",
+            started_at=started_at,
+            timeout=timeout,
+            no_output_timeout=no_output_timeout,
+            error=str(e),
+            memory=memory,
+            cpus=cpus,
+        )
         raise BuildImageError(image_name, str(e), logger) from e
     except Exception as e:
         logger.error(f"Error building image {image_name}: {e}")
+        _write_build_diagnostics(
+            build_dir,
+            image_name=image_name,
+            status="error",
+            started_at=started_at,
+            timeout=timeout,
+            no_output_timeout=no_output_timeout,
+            error=str(e),
+            memory=memory,
+            cpus=cpus,
+        )
         raise BuildImageError(image_name, str(e), logger) from e
     finally:
         close = getattr(response, "close", None)
@@ -378,6 +871,10 @@ def build_base_images(
     namespace: str = None,
     instance_image_tag: str = None,
     env_image_tag: str = None,
+    build_timeout: float | None = None,
+    build_no_output_timeout: float | None = None,
+    build_memory: str | None = None,
+    build_cpus: float | None = None,
 ):
     """
     Builds the base images required for the dataset if they do not already exist.
@@ -420,6 +917,10 @@ def build_base_images(
             platform=platform,
             client=client,
             build_dir=BASE_IMAGE_BUILD_DIR / image_name.replace(":", "__"),
+            timeout=build_timeout,
+            no_output_timeout=build_no_output_timeout,
+            memory=build_memory,
+            cpus=build_cpus,
         )
     print("Base images built successfully.")
 
@@ -486,6 +987,10 @@ def build_env_images(
     namespace: str = None,
     instance_image_tag: str = None,
     env_image_tag: str = None,
+    build_timeout: float | None = None,
+    build_no_output_timeout: float | None = None,
+    build_memory: str | None = None,
+    build_cpus: float | None = None,
 ):
     """
     Builds the environment images required for the dataset if they do not already exist.
@@ -510,7 +1015,16 @@ def build_env_images(
         for key in env_image_keys:
             remove_image(client, key, "quiet")
     build_base_images(
-        client, dataset, force_rebuild, namespace, instance_image_tag, env_image_tag
+        client,
+        dataset,
+        force_rebuild,
+        namespace,
+        instance_image_tag,
+        env_image_tag,
+        build_timeout,
+        build_no_output_timeout,
+        build_memory,
+        build_cpus,
     )
     configs_to_build = get_env_configs_to_build(
         client, dataset, namespace, instance_image_tag, env_image_tag
@@ -530,6 +1044,11 @@ def build_env_images(
                 config["platform"],
                 client,
                 ENV_IMAGE_BUILD_DIR / image_name.replace(":", "__"),
+                False,
+                build_timeout,
+                build_no_output_timeout,
+                build_memory,
+                build_cpus,
             )
         )
 
@@ -554,6 +1073,10 @@ def build_instance_images(
     env_image_tag: str = None,
     force_rebuild_env: bool | None = None,
     nocache: bool = False,
+    build_timeout: float | None = None,
+    build_no_output_timeout: float | None = None,
+    build_memory: str | None = None,
+    build_cpus: float | None = None,
 ):
     """
     Builds the instance images required for the dataset if they do not already exist.
@@ -585,7 +1108,16 @@ def build_instance_images(
         for spec in test_specs:
             remove_image(client, spec.instance_image_key, "quiet")
     rebuild_env = force_rebuild if force_rebuild_env is None else force_rebuild_env
-    _, env_failed = build_env_images(client, test_specs, rebuild_env, max_workers)
+    _, env_failed = build_env_images(
+        client,
+        test_specs,
+        rebuild_env,
+        max_workers,
+        build_timeout=build_timeout,
+        build_no_output_timeout=build_no_output_timeout,
+        build_memory=build_memory,
+        build_cpus=build_cpus,
+    )
 
     failed_env_keys = {
         failure[0] if isinstance(failure, tuple) else failure
@@ -606,7 +1138,19 @@ def build_instance_images(
     successful, failed = list(), list()
 
     # `logger` is set to None b/c logger is created in build-instage_image
-    payloads = [(spec, client, None, nocache) for spec in test_specs]
+    payloads = [
+        (
+            spec,
+            client,
+            None,
+            nocache,
+            build_timeout,
+            build_no_output_timeout,
+            build_memory,
+            build_cpus,
+        )
+        for spec in test_specs
+    ]
     # Build the instance images
     successful, failed = run_threadpool(build_instance_image, payloads, max_workers)
     # Show how many images failed to build
@@ -624,6 +1168,10 @@ def build_instance_image(
     client: docker.DockerClient,
     logger: logging.Logger | None,
     nocache: bool,
+    build_timeout: float | None = None,
+    build_no_output_timeout: float | None = None,
+    build_memory: str | None = None,
+    build_cpus: float | None = None,
 ):
     """
     Builds the instance image for the given test spec if it does not already exist.
@@ -670,6 +1218,10 @@ def build_instance_image(
                 platform=test_spec.platform,
                 client=client,
                 build_dir=BASE_IMAGE_BUILD_DIR / test_spec.base_image_key.replace(":", "__"),
+                timeout=build_timeout,
+                no_output_timeout=build_no_output_timeout,
+                memory=build_memory,
+                cpus=build_cpus,
             )
         try:
             build_image(
@@ -679,6 +1231,10 @@ def build_instance_image(
                 platform=test_spec.platform,
                 client=client,
                 build_dir=ENV_IMAGE_BUILD_DIR / env_image_name.replace(":", "__"),
+                timeout=build_timeout,
+                no_output_timeout=build_no_output_timeout,
+                memory=build_memory,
+                cpus=build_cpus,
             )
         except Exception as e:
             raise BuildImageError(
@@ -702,17 +1258,29 @@ def build_instance_image(
 
     # Build the instance image
     if not image_exists:
-        build_image(
-            image_name=image_name,
-            setup_scripts={
-                "setup_repo.sh": test_spec.install_repo_script,
-            },
-            dockerfile=dockerfile,
-            platform=test_spec.platform,
-            client=client,
-            build_dir=build_dir,
-            nocache=nocache,
-        )
+        qgis_build = getattr(test_spec, "repo", "").lower() == "qgis/qgis"
+        if qgis_build:
+            logger.info("Waiting for the single-QGIS-build concurrency slot")
+            _qgis_build_lock.acquire()
+        try:
+            build_image(
+                image_name=image_name,
+                setup_scripts={
+                    "setup_repo.sh": test_spec.install_repo_script,
+                },
+                dockerfile=dockerfile,
+                platform=test_spec.platform,
+                client=client,
+                build_dir=build_dir,
+                nocache=nocache,
+                timeout=build_timeout,
+                no_output_timeout=build_no_output_timeout,
+                memory=build_memory,
+                cpus=build_cpus,
+            )
+        finally:
+            if qgis_build:
+                _qgis_build_lock.release()
     else:
         logger.info(f"Image {image_name} already exists, skipping build.")
 

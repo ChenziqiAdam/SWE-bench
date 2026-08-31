@@ -24,7 +24,11 @@ from pathlib import Path
 
 import docker
 
-from swebench.harness.docker_build import build_env_images, build_instance_images
+from swebench.harness.docker_build import (
+    _eval_container_options,
+    build_env_images,
+    build_instance_images,
+)
 from swebench.harness.test_spec.test_spec import MAP_REPO_VERSION_TO_SPECS, make_test_spec
 
 logger = logging.getLogger(__name__)
@@ -78,6 +82,7 @@ def _smoke_validate_image(client, image_name: str, command: str) -> tuple[bool, 
                 image_name,
                 command=["/bin/bash", "-lc", shell_command],
                 remove=True,
+                **_eval_container_options(),
             )
             return True, ""
         except Exception as exc:
@@ -112,6 +117,10 @@ def validate_buildable(
     max_workers: int = 4,
     force: bool = False,
     clean_images: bool = False,
+    build_timeout: float | None = None,
+    build_no_output_timeout: float | None = None,
+    build_memory: str | None = None,
+    build_cpus: float | None = None,
 ) -> dict[str, dict]:
     """For each instance, build env+instance image at base_commit. Return id→{buildable, error}.
 
@@ -207,6 +216,10 @@ def validate_buildable(
             max_workers=max_workers,
             instance_image_tag="latest",
             env_image_tag="latest",
+            build_timeout=build_timeout,
+            build_no_output_timeout=build_no_output_timeout,
+            build_memory=build_memory,
+            build_cpus=build_cpus,
         )
         # build_env_images returns payload tuples; element 0 is the env image_name (key).
         failed_env_keys = {f[0] if isinstance(f, tuple) else f for f in env_failed}
@@ -260,6 +273,10 @@ def validate_buildable(
                     env_image_tag="latest",
                     force_rebuild_env=False,
                     nocache=force,
+                    build_timeout=build_timeout,
+                    build_no_output_timeout=build_no_output_timeout,
+                    build_memory=build_memory,
+                    build_cpus=build_cpus,
                 )
                 batch_by_id = {inst["instance_id"]: inst for inst in batch}
                 for built in batch_successful:
@@ -348,7 +365,14 @@ def validate_buildable(
                     cache[iid] = {"buildable": True, "error": "", "spec_hash": spec_hashes[iid]}
                 else:
                     reason = _read_build_log(spec_map[iid])
-                    cache[iid] = {"buildable": False, "error": reason or "instance image build failed", "spec_hash": spec_hashes[iid]}
+                    diagnostics = _read_build_diagnostics(spec_map[iid])
+                    cache[iid] = {
+                        "buildable": False,
+                        "error": reason or "instance image build failed",
+                        "spec_hash": spec_hashes[iid],
+                    }
+                    if diagnostics:
+                        cache[iid]["build_diagnostics"] = diagnostics
 
         _write_cache(cache, cache_path)
         n_ok = sum(1 for v in cache.values() if v["buildable"])
@@ -370,3 +394,20 @@ def _read_build_log(spec) -> str:
         tail = log.read_text(errors="replace").splitlines()[-3:]
         return " | ".join(line.strip() for line in tail if line.strip())[:300]
     return ""
+
+
+def _read_build_diagnostics(spec) -> dict:
+    from swebench.harness.docker_build import INSTANCE_IMAGE_BUILD_DIR
+
+    path = (
+        INSTANCE_IMAGE_BUILD_DIR
+        / spec.instance_image_key.replace(":", "__")
+        / "build_diagnostics.json"
+    )
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}

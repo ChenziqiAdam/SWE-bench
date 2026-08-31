@@ -1,4 +1,7 @@
 import itertools
+import json
+import threading
+import time
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -95,6 +98,252 @@ def test_build_image_raises_after_exhausting_transient_retries(monkeypatch, tmp_
     assert api.build.call_count == 3
 
 
+class _BlockingBuildResponse:
+    def __init__(self):
+        self.closed = threading.Event()
+
+    def __iter__(self):
+        self.closed.wait(5)
+        return
+        yield
+
+    def close(self):
+        self.closed.set()
+
+
+def test_build_stream_emits_heartbeat_without_resetting_idle_timeout(monkeypatch):
+    response = _BlockingBuildResponse()
+    logger = Mock()
+    monkeypatch.setattr(docker_build, "BUILD_HEARTBEAT_INTERVAL", 0.01)
+    stream = docker_build._iter_with_build_timeouts(
+        response,
+        timeout=1,
+        no_output_timeout=0.05,
+        started_at=time.monotonic(),
+        logger=logger,
+    )
+
+    try:
+        next(stream)
+        assert False, "expected BuildTimeoutError"
+    except docker_build.BuildTimeoutError as error:
+        assert error.reason == "no-output"
+
+    assert any(
+        call.args and "Build heartbeat" in call.args[0]
+        for call in logger.info.call_args_list
+    )
+
+
+def test_build_image_no_output_timeout_closes_stream_and_records_diagnostics(tmp_path):
+    response = _BlockingBuildResponse()
+    client = SimpleNamespace(
+        api=SimpleNamespace(build=Mock(return_value=response)),
+        version=Mock(return_value={"Engine": "docker"}),
+    )
+
+    try:
+        docker_build.build_image(
+            image_name="sweb.eval.timeout:latest",
+            setup_scripts={},
+            dockerfile="FROM scratch",
+            platform="linux/x86_64",
+            client=client,
+            build_dir=tmp_path,
+            timeout=1,
+            no_output_timeout=0.05,
+        )
+        assert False, "expected BuildImageError"
+    except docker_build.BuildImageError as error:
+        assert isinstance(error.__cause__, docker_build.BuildTimeoutError)
+        assert error.__cause__.reason == "no-output"
+
+    assert response.closed.is_set()
+    diagnostics = json.loads((tmp_path / "build_diagnostics.json").read_text())
+    assert diagnostics["status"] == "no-output_timeout"
+    assert diagnostics["no_output_timeout_seconds"] == 0.05
+
+
+def test_build_image_wallclock_timeout_wins_while_output_continues(tmp_path):
+    class ChattyResponse:
+        def __init__(self):
+            self.closed = False
+
+        def __iter__(self):
+            while not self.closed:
+                time.sleep(0.005)
+                yield {"stream": "still building\n"}
+
+        def close(self):
+            self.closed = True
+
+    response = ChattyResponse()
+    client = SimpleNamespace(
+        api=SimpleNamespace(build=Mock(return_value=response)),
+        version=Mock(return_value={"Engine": "docker"}),
+    )
+
+    try:
+        docker_build.build_image(
+            image_name="sweb.eval.wallclock:latest",
+            setup_scripts={},
+            dockerfile="FROM scratch",
+            platform="linux/x86_64",
+            client=client,
+            build_dir=tmp_path,
+            timeout=0.05,
+            no_output_timeout=1,
+        )
+        assert False, "expected BuildImageError"
+    except docker_build.BuildImageError as error:
+        assert isinstance(error.__cause__, docker_build.BuildTimeoutError)
+        assert error.__cause__.reason == "wall-clock"
+
+    diagnostics = json.loads((tmp_path / "build_diagnostics.json").read_text())
+    assert diagnostics["status"] == "wall-clock_timeout"
+
+
+def test_podman_build_command_uses_selected_socket_and_no_cache(monkeypatch, tmp_path):
+    monkeypatch.setenv("DOCKER_HOST", "unix:///run/user/1000/podman/podman.sock")
+
+    command = docker_build._podman_build_command(
+        "sweb.eval.demo:latest", tmp_path, "linux/x86_64", True
+    )
+
+    assert command[:3] == [
+        "podman",
+        "--url",
+        "unix:///run/user/1000/podman/podman.sock",
+    ]
+    assert command[-2:] == ["--no-cache", str(tmp_path)]
+    assert command[command.index("--platform") + 1] == "linux/x86_64"
+
+
+def test_podman_build_command_applies_memory_and_cpu_quota(monkeypatch, tmp_path):
+    monkeypatch.delenv("DOCKER_HOST", raising=False)
+
+    command = docker_build._podman_build_command(
+        "sweb.eval.demo:latest", tmp_path, "linux/x86_64", False, "24g", 6.5
+    )
+
+    assert command[command.index("--memory") + 1] == "24g"
+    assert command[command.index("--cpu-period") + 1] == "100000"
+    assert command[command.index("--cpu-quota") + 1] == "650000"
+
+
+def test_native_podman_timeout_terminates_only_its_process_group(
+    monkeypatch, tmp_path
+):
+    class BlockingStdout:
+        def __init__(self):
+            self.closed = threading.Event()
+
+        def __iter__(self):
+            self.closed.wait(5)
+            return
+            yield
+
+        def close(self):
+            self.closed.set()
+
+    process = SimpleNamespace(
+        pid=4321,
+        stdout=BlockingStdout(),
+        poll=Mock(return_value=None),
+    )
+    terminated = []
+    monkeypatch.setattr(docker_build.subprocess, "Popen", Mock(return_value=process))
+    monkeypatch.setattr(
+        docker_build,
+        "_terminate_process_group",
+        lambda candidate: terminated.append(candidate),
+    )
+
+    started_at = time.monotonic()
+    try:
+        docker_build._run_native_podman_build(
+            image_name="sweb.eval.demo:latest",
+            build_dir=tmp_path,
+            platform="linux/x86_64",
+            nocache=False,
+            logger=Mock(),
+            timeout=1,
+            no_output_timeout=0.05,
+            started_at=started_at,
+        )
+        assert False, "expected BuildTimeoutError"
+    except docker_build.BuildTimeoutError as error:
+        assert error.reason == "no-output"
+
+    assert terminated == [process]
+    assert process.stdout.closed.is_set()
+
+
+def test_build_image_uses_native_podman_runner(monkeypatch, tmp_path):
+    client = SimpleNamespace(
+        api=SimpleNamespace(build=Mock()),
+        version=Mock(return_value={"Platform": {"Name": "Podman Engine"}}),
+    )
+    native_build = Mock(return_value="success\n")
+    monkeypatch.setattr(docker_build, "_run_native_podman_build", native_build)
+
+    docker_build.build_image(
+        image_name="sweb.eval.demo:latest",
+        setup_scripts={},
+        dockerfile="FROM scratch",
+        platform="linux/x86_64",
+        client=client,
+        build_dir=tmp_path,
+        timeout=123,
+        no_output_timeout=45,
+    )
+
+    native_build.assert_called_once()
+    client.api.build.assert_not_called()
+    diagnostics = json.loads((tmp_path / "build_diagnostics.json").read_text())
+    assert diagnostics["status"] == "success"
+
+
+def test_qgis_instance_build_uses_single_build_lock(monkeypatch, tmp_path):
+    class RecordingLock:
+        def __init__(self):
+            self.events = []
+
+        def acquire(self):
+            self.events.append("acquire")
+
+        def release(self):
+            self.events.append("release")
+
+    lock = RecordingLock()
+    spec = SimpleNamespace(
+        repo="qgis/QGIS",
+        instance_id="qgis__QGIS-1",
+        instance_image_key="sweb.eval.qgis:latest",
+        env_image_key="sweb.env.qgis:latest",
+        instance_dockerfile="FROM env",
+        install_repo_script="true",
+        platform="linux/x86_64",
+    )
+
+    def get_image(name):
+        if name == spec.env_image_key:
+            return object()
+        raise docker.errors.ImageNotFound("missing")
+
+    client = SimpleNamespace(images=SimpleNamespace(get=get_image))
+    build = Mock()
+    monkeypatch.setattr(docker_build, "INSTANCE_IMAGE_BUILD_DIR", tmp_path)
+    monkeypatch.setattr(docker_build, "_qgis_build_lock", lock)
+    monkeypatch.setattr(docker_build, "build_image", build)
+
+    docker_build.build_instance_image(spec, client, Mock(), False, 123, 45)
+
+    assert lock.events == ["acquire", "release"]
+    assert build.call_args.kwargs["timeout"] == 123
+    assert build.call_args.kwargs["no_output_timeout"] == 45
+
+
 def _spec(docker_specs=None):
     return SimpleNamespace(
         instance_id="demo__repo-1",
@@ -153,6 +402,27 @@ def test_create_eval_container_without_gpu_request_omits_gpu_kwargs():
     kwargs = client.containers.create.call_args.kwargs
     assert "device_requests" not in kwargs
     assert "devices" not in kwargs
+    assert kwargs["network_disabled"] is True
+    assert kwargs["cap_drop"] == ["ALL"]
+    assert kwargs["security_opt"] == ["no-new-privileges:true"]
+    assert "SETUID" in kwargs["cap_add"]
+    assert "SETGID" in kwargs["cap_add"]
+    assert "NET_RAW" not in kwargs["cap_add"]
+    assert kwargs["mem_limit"] == "32g"
+    assert kwargs["nano_cpus"] == 8_000_000_000
+    assert kwargs["pids_limit"] == 2048
+
+
+def test_eval_container_boundary_has_explicit_compatibility_overrides(monkeypatch):
+    monkeypatch.setenv("SWEBENCH_EVAL_NETWORK_DISABLED", "0")
+    monkeypatch.setenv("SWEBENCH_EVAL_HARDENING", "0")
+    monkeypatch.setenv("SWEBENCH_EVAL_MEMORY", "0")
+    monkeypatch.setenv("SWEBENCH_EVAL_CPUS", "0")
+    monkeypatch.setenv("SWEBENCH_EVAL_PIDS_LIMIT", "-1")
+
+    options = docker_build._eval_container_options()
+
+    assert options == {"network_disabled": False}
 
 
 def test_create_eval_container_requests_gpu_on_docker(monkeypatch):
@@ -190,6 +460,12 @@ def test_create_eval_container_requests_gpu_on_podman(monkeypatch):
     assert command[:2] == ["podman", "create"]
     assert command[command.index("--device") + 1] == "nvidia.com/gpu=2"
     assert command[command.index("--security-opt") + 1] == "label=disable"
+    assert command[command.index("--network") + 1] == "none"
+    assert "ALL" in command
+    assert "no-new-privileges:true" in command
+    assert command[command.index("--memory") + 1] == "32g"
+    assert command[command.index("--cpus") + 1] == "8.0"
+    assert command[command.index("--pids-limit") + 1] == "2048"
 
 
 def test_create_eval_container_detects_podman_via_docker_host(monkeypatch):
@@ -296,7 +572,7 @@ def test_force_instance_rebuild_can_preserve_prebuilt_environment(monkeypatch):
     monkeypatch.setattr(
         docker_build,
         "build_env_images",
-        lambda _client, _specs, force, workers: env_calls.append((force, workers))
+        lambda _client, _specs, force, workers, **_kwargs: env_calls.append((force, workers))
         or ([], []),
     )
 
@@ -318,7 +594,7 @@ def test_force_instance_rebuild_can_preserve_prebuilt_environment(monkeypatch):
 
     assert removed == ["sweb.eval.demo:latest"]
     assert env_calls == [(False, 2)]
-    assert payloads_seen == [(spec, client, None, True)]
+    assert payloads_seen == [(spec, client, None, True, None, None, None, None)]
     assert successful == payloads_seen
     assert failed == []
 

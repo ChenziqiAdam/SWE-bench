@@ -15,7 +15,7 @@ TASK_REGISTRY = {
 }
 
 CANDIDATE_REGISTRY = {
-    "scibench_replication_0018_core": {"status": "revise", "repository": "https://github.com/ahilbers/a_posteriori_tsa_storage", "commit": "c162068f61bafbe640bbd40ee4a47312498ed153", "environment_file": None, "curator_environment_file": None, "adapter_path": "curation_tools/energy_tsa_core_adapter.py", "official_adapter": "pending: pinned six-region Calliope workflow generalized only by injection of x/n/p/q", "functional_target": "two-stage storage-aware a-posteriori representative-day aggregation and final capacity redesign", "promotion_blockers": ["G6", "G7", "G8"]},
+    "scibench_replication_0018_core": {"status": "revise", "repository": "https://github.com/ahilbers/a_posteriori_tsa_storage", "commit": "c162068f61bafbe640bbd40ee4a47312498ed153", "environment_file": None, "curator_environment_file": None, "adapter_path": "curation_tools/energy_tsa_core_adapter.py", "official_adapter": "pinned six-region Calliope workflow generalized only by injection of x/n/p/q", "functional_target": "two-stage storage-aware a-posteriori representative-day aggregation and final capacity redesign", "promotion_blockers": ["G6", "G7"]},
 }
 
 

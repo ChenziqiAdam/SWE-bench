@@ -297,6 +297,7 @@ def _manifest_config(
     endpoint: str | None = None,
     rpm: int | None = None,
     workbook_mapping: dict[str, int] | None = None,
+    effort: str | None = None,
 ) -> dict:
     prompts = [
         {"instance_id": item["instance_id"], "prompt": build_pilot_prompt(item)}
@@ -334,6 +335,8 @@ def _manifest_config(
         manifest["requests_per_minute"] = rpm
     if workbook_mapping is not None:
         manifest["workbook_mapping"] = workbook_mapping
+    if effort is not None:
+        manifest["effort"] = effort
     return manifest
 
 
@@ -788,6 +791,7 @@ def _run_wave(
     github_token: str | None,
     run_one: Callable[..., tuple[dict, dict]] = _run_one,
     gateway: ClaudeStreamGateway | None = None,
+    effort: str | None = None,
 ) -> Iterable[tuple[dict, dict]]:
     """Fetch the entire wave first, then yield each finalized agent result."""
     worktrees: dict[str, Path] = {}
@@ -819,7 +823,7 @@ def _run_wave(
                 timeout,
             )
             if gateway is None:
-                future = pool.submit(run_one, *arguments)
+                future = pool.submit(run_one, *arguments, effort=effort)
             else:
                 instance_base = (
                     gateway.local_base
@@ -832,7 +836,9 @@ def _run_wave(
                     "ANTHROPIC_AUTH_TOKEN": gateway.api_key,
                     "ANTHROPIC_API_KEY": "",
                 }
-                future = pool.submit(run_one, *arguments, process_env=process_env)
+                future = pool.submit(
+                    run_one, *arguments, process_env=process_env, effort=effort
+                )
             futures[future] = item
         for future in as_completed(futures):
             item = futures[future]
@@ -1190,6 +1196,7 @@ def run_full(
     github_token: str | None,
     expected_repos: dict[str, int],
     gateway: ClaudeStreamGateway | None = None,
+    effort: str | None = None,
 ) -> list[dict]:
     ordered_ids = [item["instance_id"] for item in instances]
     if resume:
@@ -1251,6 +1258,7 @@ def run_full(
                     workers=workers,
                     github_token=github_token,
                     gateway=gateway,
+                    effort=effort,
                 ):
                     instance_id = prediction["instance_id"]
                     provider_failure = gateway.failure_for(instance_id) if gateway else None
@@ -1323,6 +1331,9 @@ def make_parser() -> argparse.ArgumentParser:
     parser.add_argument("--env-file", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--model")
+    parser.add_argument(
+        "--effort", choices=["low", "medium", "high", "xhigh", "max"], default=None
+    )
     parser.add_argument("--rpm", type=int, default=20)
     parser.add_argument("--timeout", type=int, default=TIMEOUT)
     parser.add_argument("--workers", type=int, default=2)
@@ -1384,6 +1395,7 @@ def main(argv: list[str] | None = None) -> int:
         endpoint=endpoint,
         rpm=args.rpm if endpoint else None,
         workbook_mapping=workbook_mapping,
+        effort=args.effort,
     )
     if args.dry_run and not args.recover_old_inference:
         print(
@@ -1446,6 +1458,7 @@ def main(argv: list[str] | None = None) -> int:
             github_token=args.github_token,
             expected_repos=expected_repos,
             gateway=gateway,
+            effort=args.effort,
         )
     except RateLimitStop as exc:
         print(f"stopped: {exc}")

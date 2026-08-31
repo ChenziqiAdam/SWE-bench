@@ -1252,7 +1252,9 @@ _QGIS_QT6_BUILD_IMAGE = (
     "qgis/qgis3-build-deps-ubuntu-qt6@"
     "sha256:81b4d845b8704c068e2cc94238d45fee4fcd8d603744d635edea8a2966202005"
 )
-_QGIS_BUILD_JOBS = 8
+# QGIS with Python bindings compiles the full project. Keep the default
+# conservative on shared evaluation hosts while allowing an explicit override.
+_QGIS_BUILD_JOBS = "${SWEBENCH_QGIS_BUILD_JOBS:-4}"
 
 
 def _qgis_spec(

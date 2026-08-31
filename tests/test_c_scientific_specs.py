@@ -141,7 +141,9 @@ def test_qgis_ctest_runs_from_build_directory_for_legacy_cmake():
 
     assert command.startswith("cd build && ")
     assert "ctest --test-dir" not in command
-    assert spec["build"][-1] == "cmake --build build --parallel 8"
+    assert spec["build"][-1] == (
+        "cmake --build build --parallel ${SWEBENCH_QGIS_BUILD_JOBS:-4}"
+    )
 
 
 def test_qgis_60631_uses_modern_cmake_build_image():

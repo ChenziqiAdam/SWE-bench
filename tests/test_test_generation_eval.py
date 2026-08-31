@@ -64,6 +64,46 @@ def test_clean_images_cli_is_opt_in(monkeypatch):
     assert parse_args().clean_images is True
 
 
+def test_container_boundary_cli_defaults_and_overrides(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["run_pipeline"])
+    defaults = parse_args()
+    assert defaults.build_memory == "32g"
+    assert defaults.build_cpus == 8.0
+    assert defaults.eval_memory == "32g"
+    assert defaults.eval_cpus == 8.0
+    assert defaults.eval_pids_limit == 2048
+    assert defaults.allow_eval_network is False
+    assert defaults.disable_eval_hardening is False
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_pipeline",
+            "--build_memory",
+            "0",
+            "--build_cpus",
+            "0",
+            "--eval_memory",
+            "24g",
+            "--eval_cpus",
+            "6",
+            "--eval_pids_limit",
+            "1024",
+            "--allow_eval_network",
+            "--disable_eval_hardening",
+        ],
+    )
+    overridden = parse_args()
+    assert overridden.build_memory == "0"
+    assert overridden.build_cpus == 0
+    assert overridden.eval_memory == "24g"
+    assert overridden.eval_cpus == 6
+    assert overridden.eval_pids_limit == 1024
+    assert overridden.allow_eval_network is True
+    assert overridden.disable_eval_hardening is True
+
+
 def test_report_is_saved_before_instance_image_cleanup(monkeypatch, tmp_path):
     report_path = tmp_path / "report.json"
     events = []

@@ -308,7 +308,11 @@ def run_mini_swe_agent_inference(
         raise FileNotFoundError(f"mini-swe-agent config not found: {config_path}")
     validate_network_policy(network_policy, api_base)
 
-    out_path = Path(output_file)
+    # The mini process runs with ``cwd=repo_dir``.  Keep every harness-owned
+    # path absolute so mini cannot resolve a relative ``--output`` path inside
+    # the cloned repository and have patch capture mistake its trajectory for
+    # a model edit.
+    out_path = Path(output_file).expanduser().resolve()
     unique_instances = unique_instances_by_id(instances)
     input_hashes = {
         inst["instance_id"]: inference_input_hash(inst) for inst in unique_instances

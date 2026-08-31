@@ -169,6 +169,39 @@ The harness generates logs in two directories:
 
 Final evaluation results are stored in the `evaluation_results` directory.
 
+## Image-build watchdogs
+
+Scientific repositories can spend substantial time compiling during the image
+build, before the test-execution timeout applies. The scientific evaluation
+pipeline therefore limits every image build to three hours and fails a build
+that emits no output for 45 minutes. Override these limits with
+`--build_timeout` and `--build_no_output_timeout`; setting either value to `0`
+disables only that watchdog.
+
+On Podman, builds run in a dedicated native CLI process group so a timeout can
+terminate that build without selecting unrelated containers. A
+`build_diagnostics.json` beside `build_image.log` records the outcome, elapsed
+time, final log lines, host load, memory, and disk state. QGIS instance builds
+are serialized and use four compiler jobs by default; set
+`SWEBENCH_QGIS_BUILD_JOBS` to override the compiler parallelism.
+
+Build containers default to 32 GiB and eight CPUs. Configure these with
+`--build_memory` and `--build_cpus`; `0` disables the corresponding limit.
+Podman enforces both limits. The Docker-compatible build API enforces the
+memory limit but does not expose an equivalent absolute CPU quota. Rootless
+Podman requires cgroup v2 for CPU and memory enforcement.
+
+Evaluation containers default to no network, the default capability set
+replaced by a minimal allow-list, `no-new-privileges`, 32 GiB memory, eight
+CPUs, and 2048 PIDs. The resource
+limits are configurable with `--eval_memory`, `--eval_cpus`, and
+`--eval_pids_limit`. `--allow_eval_network` and
+`--disable_eval_hardening` are explicit unsafe compatibility escape hatches.
+Before evaluation, `container_preflight.json` records matching pre-existing
+SWE-bench and external Buildah containers; the pipeline never removes them
+automatically. Long-running builds emit a five-minute heartbeat that does not
+reset the no-output watchdog.
+
 ## Troubleshooting
 
 If you encounter issues:

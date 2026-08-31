@@ -1,4 +1,6 @@
 import json
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 import docker
 
@@ -21,6 +23,81 @@ def test_docker_preflight_pings_daemon_and_reports_failure(monkeypatch):
     assert "daemon did not start" in reason
 
 
+def test_configure_eval_container_boundary_exports_cli_values(monkeypatch):
+    for key in (
+        "SWEBENCH_EVAL_MEMORY",
+        "SWEBENCH_EVAL_CPUS",
+        "SWEBENCH_EVAL_PIDS_LIMIT",
+        "SWEBENCH_EVAL_NETWORK_DISABLED",
+        "SWEBENCH_EVAL_HARDENING",
+    ):
+        # Register an undo operation even when the variable was initially
+        # absent; the function under test mutates os.environ directly.
+        monkeypatch.setenv(key, "test-sentinel")
+    args = SimpleNamespace(
+        eval_memory="24g",
+        eval_cpus=6.0,
+        eval_pids_limit=1024,
+        allow_eval_network=True,
+        disable_eval_hardening=False,
+    )
+
+    run_pipeline._configure_eval_container_boundary(args)
+
+    assert run_pipeline.os.environ["SWEBENCH_EVAL_MEMORY"] == "24g"
+    assert run_pipeline.os.environ["SWEBENCH_EVAL_CPUS"] == "6.0"
+    assert run_pipeline.os.environ["SWEBENCH_EVAL_PIDS_LIMIT"] == "1024"
+    assert run_pipeline.os.environ["SWEBENCH_EVAL_NETWORK_DISABLED"] == "0"
+    assert run_pipeline.os.environ["SWEBENCH_EVAL_HARDENING"] == "1"
+
+
+def test_container_preflight_reports_without_removing(monkeypatch):
+    container = SimpleNamespace(id="abc", name="sweb.eval.demo", status="exited")
+    client = SimpleNamespace(
+        containers=SimpleNamespace(list=Mock(return_value=[container])),
+        version=Mock(return_value={"Engine": "docker"}),
+        close=Mock(),
+    )
+    monkeypatch.setattr(docker, "from_env", lambda: client)
+
+    findings = run_pipeline._container_preflight_findings()
+
+    assert findings["api_containers"] == [
+        {"id": "abc", "name": "sweb.eval.demo", "status": "exited"}
+    ]
+    assert findings["podman_external_containers"] == []
+    assert not hasattr(container, "remove")
+    client.close.assert_called_once()
+
+
+def test_container_preflight_reads_podman_external_builders(monkeypatch):
+    client = SimpleNamespace(
+        containers=SimpleNamespace(list=Mock(return_value=[])),
+        version=Mock(return_value={"Platform": {"Name": "Podman Engine"}}),
+        close=Mock(),
+    )
+    monkeypatch.setattr(docker, "from_env", lambda: client)
+    monkeypatch.setattr(run_pipeline.shutil, "which", lambda _name: "/usr/bin/podman")
+    run = Mock(
+        return_value=SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                [{"Id": "builder1", "Image": "sweb.env.demo:latest"}]
+            ),
+            stderr="",
+        )
+    )
+    monkeypatch.setattr(run_pipeline.subprocess, "run", run)
+
+    findings = run_pipeline._container_preflight_findings()
+
+    assert findings["podman_external_containers"] == [
+        {"Id": "builder1", "Image": "sweb.env.demo:latest"}
+    ]
+    command = run.call_args.args[0]
+    assert command[-4:] == ["--all", "--external", "--format", "json"]
+
+
 def test_validate_buildable_caches_docker_unavailable(monkeypatch, tmp_path):
     inst = {"instance_id": "repo__pkg-1", "repo": "repo/pkg", "version": "v1"}
 
@@ -40,12 +117,16 @@ def test_validate_buildable_caches_docker_unavailable(monkeypatch, tmp_path):
     assert json.loads(cache_path.read_text()) == result
 
 
-def test_post_build_validation_reports_import_failure():
+def test_post_build_validation_reports_import_failure(monkeypatch):
+    monkeypatch.setenv("SWEBENCH_EVAL_NETWORK_DISABLED", "1")
+    monkeypatch.setenv("SWEBENCH_EVAL_HARDENING", "1")
     class Containers:
-        def run(self, image, command, remove):
+        def run(self, image, command, remove, **options):
             assert image == "instance:latest"
             assert command[:2] == ["/bin/bash", "-lc"]
             assert remove is True
+            assert options["network_disabled"] is True
+            assert options["cap_drop"] == ["ALL"]
             raise docker.errors.ContainerError(
                 container=None,
                 exit_status=1,
