@@ -1,0 +1,19 @@
+{
+  "G8": "PASS",
+  "adapter_patch_sha256": "efd078d19a4a280e5a6b329a9ca654e704c856fd35c240d13561554d257a9b1a",
+  "adapter_sha256": "e32327b10c2e8037cf349aba77251fb8c95e1858c52e6b1a800b0c8bb51afc74",
+  "byte_exact_case_count": 11,
+  "environment_lock_sha256": "2370b410d6fc05d072563b76a591da1091c02e34824ea8c92c234ca7c87a3a3f",
+  "maximum_absolute_discrepancy": 5.3788085097039584e-12,
+  "maximum_relative_discrepancy": 1.2127467935935724e-06,
+  "official_output_bundle_sha256": "1393eec6fee06fbf8d41ced35828aa6bac0e551848ea3532caf38b5411574eaa",
+  "pinned_environment_two_checkout_reproduction": true,
+  "status": "oracle_passed",
+  "task_id": "scibench_replication_0015_core",
+  "tolerances": {
+    "atol": 1e-10,
+    "comparison": "mixed",
+    "rtol": 1.2127467935935725e-05
+  },
+  "two_clean_checkouts_match": true
+}

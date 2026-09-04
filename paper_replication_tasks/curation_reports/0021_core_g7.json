@@ -1,0 +1,104 @@
+{
+  "G7": "PASS",
+  "cases": [
+    {
+      "case_id": "case_01",
+      "exit_code": 0,
+      "split": "public",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_02",
+      "exit_code": 0,
+      "split": "public",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_03",
+      "exit_code": 0,
+      "split": "public",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_01",
+      "exit_code": 0,
+      "split": "hidden",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_02",
+      "exit_code": 0,
+      "split": "hidden",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_03",
+      "exit_code": 0,
+      "split": "hidden",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_04",
+      "exit_code": 0,
+      "split": "hidden",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_05",
+      "exit_code": 0,
+      "split": "hidden",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_06",
+      "exit_code": 0,
+      "split": "hidden",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_07",
+      "exit_code": 0,
+      "split": "hidden",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_08",
+      "exit_code": 0,
+      "split": "hidden",
+      "timed_out": false
+    }
+  ],
+  "codex_version": "codex-cli 0.153.2",
+  "environment": {
+    "platform": "macOS-26.4.1-arm64-arm-64bit",
+    "python": "3.12.7"
+  },
+  "full_success": true,
+  "generated_at": "2026-09-04T12:00:38.224495+00:00",
+  "hidden_score": 1.0,
+  "isolation": {
+    "agent_workspace": "temporary final-public-bundle copy",
+    "context": "fresh ephemeral",
+    "hidden_data": "introduced only after agent exit",
+    "network_research": "not requested or permitted",
+    "repository_reads": "denied by sandbox-exec"
+  },
+  "model": "gpt-5.6-sol",
+  "model_final_answer": "Implemented [solution.py](/tmp/scibench_0021_core_g7_pgekzzeh/workspace/solution.py).\n\nIt exactly matches every output array, key, shape, ordering, and index convention across all three public cases. Also validated order-1 and vector-target handling.",
+  "prompt": "Act as the blind implementation agent for this scientific benchmark. You may use only this directory containing the final public bundle; no repository, curator code, hidden cases, prior responses, or network research is permitted. Infer the required method from public/paper.pdf and public numeric I/O. Implement the general solution in solution.py only. The evaluator runs `python solution.py --input INPUT_JSON --output OUTPUT_DIRECTORY`; write OUTPUT_DIRECTORY/output.json. Reproduce every output key, index convention, numeric array, ordering, and shape. NumPy and SciPy are available. Inspect and test all public cases; do not hard-code public outputs.",
+  "prompt_sha256": "dc98b309156c18e36504b07bb28f21772b980790988cab214c4dbaf7d967dc66",
+  "public_bundle_sha256": "57e754e50bbff47ac21d03b01f661ed751b1cb4770aa6ae09ba94f1d059c7af4",
+  "public_score": 1.0,
+  "runner_sha256": "148380e5f48218cd603b9b506183c46e4fb6cabb937b462bf9a1cbba6486cf95",
+  "schema_version": 1,
+  "score": 1.0,
+  "solution_sha256": "aa1da19a55ca826fed4519288ee33720430f2303e657b4fe386c16272250b4dd",
+  "task_id": "scibench_replication_0021_core",
+  "usage": {
+    "cache_write_input_tokens": 0,
+    "cached_input_tokens": 393344,
+    "input_tokens": 430842,
+    "output_tokens": 4072,
+    "reasoning_output_tokens": 1118
+  }
+}

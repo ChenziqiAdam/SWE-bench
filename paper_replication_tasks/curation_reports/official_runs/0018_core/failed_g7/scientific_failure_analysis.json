@@ -1,0 +1,35 @@
+{
+  "analysis": {
+    "primary_failure": "All processes completed within budget, but every case failed output comparison.",
+    "root_causes": [
+      "The capacity LP omits the Appendix B 100-unit charge and discharge bounds.",
+      "Technology, transmission, storage-efficiency, and cost perturbations are approximated rather than reproduced exactly.",
+      "Preliminary capacities are not rounded to six decimals and floored at 0.0001 before full-series operation.",
+      "Operation variables are not rounded to three decimals before importance ranking and storage-aware clustering.",
+      "The q=0 path adds undocumented demand and wind tie-break terms and does not implement the positive-unserved-energy extreme filter.",
+      "The storage chronology formulation is not the paper's inter/intraday representative-period decomposition."
+    ],
+    "runtime_failure": false,
+    "task_identification_signal": "All public z/r/w fields matched exactly, so the agent identified the aggregation structure; the scientific optimization remained incorrect."
+  },
+  "g7_report_sha256": "fa96e21b8be1ba5ba5b57b4cd90897e8d058dec511fcd59fca7d6ee501e4d0db",
+  "hidden_field_results": {
+    "case_01": {"r_exact": false, "w_exact": false, "y_max_abs_error": 643.440167099031, "z_exact": false},
+    "case_02": {"r_exact": true, "w_exact": true, "y_max_abs_error": 513.0174146530512, "z_exact": true},
+    "case_03": {"r_exact": false, "w_exact": false, "y_max_abs_error": 204.12119725345428, "z_exact": false},
+    "case_04": {"r_exact": false, "w_exact": true, "y_max_abs_error": 34.26468662139405, "z_exact": true},
+    "case_05": {"r_exact": false, "w_exact": false, "y_max_abs_error": 387.0972866714601, "z_exact": false},
+    "case_06": {"r_exact": false, "w_exact": false, "y_max_abs_error": 7.283163275960078, "z_exact": false},
+    "case_07": {"r_exact": false, "w_exact": true, "y_max_abs_error": 245.03263687578118, "z_exact": true},
+    "case_08": {"r_exact": false, "w_exact": false, "y_max_abs_error": 619.7345023638004, "z_exact": false}
+  },
+  "public_field_results": {
+    "case_01": {"r_exact": true, "w_exact": true, "y_max_abs_error": 3354.287776536048, "z_exact": true},
+    "case_02": {"r_exact": true, "w_exact": true, "y_max_abs_error": 6.739054472130647, "z_exact": true},
+    "case_03": {"r_exact": true, "w_exact": true, "y_max_abs_error": 0.04088128758291987, "z_exact": true}
+  },
+  "runner_sha256": "94d4cc92e1832c3ff16c2eed65f912b70b08ae3d6356600938d450cb6269ae52",
+  "schema_version": 1,
+  "solution_sha256": "6e3ba4e4350e03babf841493bcd3198b10c872d65eaebb17561a4bc805e4d74f",
+  "task_id": "scibench_replication_0018_core"
+}

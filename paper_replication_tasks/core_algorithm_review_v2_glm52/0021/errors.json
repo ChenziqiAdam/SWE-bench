@@ -1,0 +1,659 @@
+[
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:42:45.668628+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "attempt": 2,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:42:51.005945+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "attempt": 3,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:42:56.352510+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "attempt": 4,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:43:01.673800+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "attempt": 5,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:43:06.944490+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "attempt": 6,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:43:12.542096+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "attempt": 7,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:43:18.376631+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "attempt": 8,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:43:24.010637+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "attempt": 9,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:43:29.333060+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "attempt": 10,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:43:35.046513+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "attempt": 11,
+    "message": "$.evidence_catalog[4].excerpt does not match PDF page 4",
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:43:48.890808+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 12,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:44:19.271329+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "attempt": 13,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:44:24.657516+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "attempt": 14,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:44:30.005674+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review failed after 14 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T03:44:30.009410+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:48:11.700842+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T03:48:11.703071+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:09:15.096184+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:09:15.097887+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:10:27.109152+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:10:27.109947+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:11:28.742223+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:11:28.744735+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:12:29.495357+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:12:29.497392+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:13:28.377472+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:13:28.380287+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:14:27.268802+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:14:27.271621+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:15:26.289616+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:15:26.292806+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:16:34.169022+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:16:34.171317+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:18:04.059580+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:18:04.061669+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:19:04.549792+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:19:04.552890+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:20:30.647521+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:20:30.652465+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:21:30.056014+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:21:30.059702+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:22:29.802991+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:22:29.808358+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:23:28.721880+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:23:28.724808+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:24:49.112427+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:24:49.115946+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:25:48.357192+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:25:48.358663+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:26:47.778204+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:26:47.780601+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:27:52.880933+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:27:52.884099+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:28:46.422089+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:28:46.424857+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:29:39.879426+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:29:39.882570+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:31:12.735356+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:31:12.739083+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:32:05.929694+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:32:05.932616+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:32:59.035453+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:32:59.038173+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "$.evidence_catalog[4].excerpt does not match PDF page 4",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:34:13.493836+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 2,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:34:14.884821+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 2 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:34:14.888546+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:35:08.729105+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:35:08.732983+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:36:44.660545+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:36:44.663835+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:37:37.574621+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:37:37.577367+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:38:31.047278+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:38:31.050611+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:39:24.329101+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:39:24.331556+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:40:17.263581+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:40:17.267106+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:41:13.203020+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:41:13.207008+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:42:04.372974+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:42:04.376433+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:42:59.868755+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:42:59.872892+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:43:53.492113+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:43:53.495404+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:44:47.091432+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:44:47.094279+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:45:39.640879+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:45:39.645551+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:46:33.145791+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:46:33.147405+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:47:34.554754+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:47:34.558515+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:48:27.580791+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:48:27.584952+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:49:21.190003+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:49:21.194382+00:00",
+    "type": "ReviewError"
+  },
+  {
+    "attempt": 1,
+    "message": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:51:07.712735+00:00",
+    "type": "_RetryableHTTPError"
+  },
+  {
+    "message": "full-review-resume-correction failed after 1 attempts: HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "stage": "paper",
+    "timestamp": "2026-08-24T15:51:07.716873+00:00",
+    "type": "ReviewError"
+  }
+]

@@ -1,0 +1,278 @@
+[
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T03:47:25.188678+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:08:33.568256+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:09:33.096030+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:10:47.295247+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:11:46.379850+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:12:47.501310+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:13:46.416079+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:14:45.285888+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": "stop",
+    "message_fields": [
+      "content",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787584544-tuInApWieguA0ZBO2AzB",
+    "stage": "full-review",
+    "text": "{\"schema_version\":\"core-algorithm-review-v2\",\"paper_id\":\"0014\",\"evidence_catalog\":[{\"id\":\"E1\",\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"We study the numerical stability of the Sherman–Morrison–Woodbury (SMW) identity.\"},{\"id\":\"E2\",\"page\":1,\"section\":\"1 Introduction\",\"excerpt\":\"Our work provides forward and backward error bounds for the update formula of eqn. (1).\"},{\"id\":\"E3\",\"page\":1,\"section\":\"1 Introduction\",\"excerpt\":\"Forward Error (Theorem 2): Is eB−1 close to B−1?\"},{\"id\":\"E4\",\"page\":1,\"section\":\"1 Introduction\",\"excerpt\":\"Backward Error (Theorem 6): Is eB close to B?\"},{\"id\":\"E5\",\"page\":10,\"section\":\"4 Numerical Experiments\",\"excerpt\":\"The goal of our numerical experiments is to verify the tightness of our forward and backward error bounds\"},{\"id\":\"E6\",\"page\":1,\"section\":\"1 Introduction\",\"excerpt\":\"B−1 = A−1 − A−1U(I + VT A−1U)−1VT A−1.\"}],\"research_goal\":{\"summary\":\"Study numerical stability of the SMW formula when only approximate inverses are available.\",\"evidence\":[\"E1\"]},\"main_contributions\":[{\"id\":\"C1\",\"summary\":\"Forward error bound for SMW formula with approximate inverses (Theorem 2).\",\"evidence\":[\"E3\"]},{\"id\":\"C2\",\"summary\":\"Backward error bound for SMW formula with approximate inverses (Theorem 6).\",\"evidence\":[\"E4\"]}],\"contribution_graph\":[{\"from\":\"Research Goal\",\"to\":\"C1\",\"relation\":\"goal motivates forward error bound\",\"evidence\":[\"E1\"]},{\"from\":\"Research Goal\",\"to\":\"C2\",\"relation\":\"goal motivates backward error bound\",\"evidence\":[\"E1\"]},{\"from\":\"C1\",\"to\":\"Numerical Experiments\",\"relation\":\"verified by experiments in Section 4\",\"evidence\":[\"E5\"]},{\"from\":\"C2\",\"to\":\"Numerical Experiments\",\"relation\":\"verified by experiments in Section 4\",\"evidence\":[\"E5\"]}],\"candidate_algorithms\":[{\"name\":\"SMW formula with approximate inverses (eqn 1)\",\"role\":\"supporting\",\"description\":\"Standard Woodbury identity applied with approximate inverses eA−1 and Z−1 to compute eB−1.\",\"evidence\":[\"E6\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"The SMW formula is a standard tool; the paper's contribution is analyzing its stability, not proposing it.\",\"evidence\":[\"E6\"]}},{\"name\":\"Forward error bound (Theorem 2)\",\"role\":\"core\",\"description\":\"Theoretical upper bound on forward error of approximate SMW inverse as function of approximation errors.\",\"evidence\":[\"E3\"],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"Removing the forward error bound eliminates half the paper's main contribution.\",\"evidence\":[\"E3\"]}},{\"name\":\"Backward error bound (Theorem 6)\",\"role\":\"core\",\"description\":\"Theoretical upper bound on backward error of approximate SMW inverse as function of approximation errors.\",\"evidence\":[\"E4\"],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"Removing the backward error bound eliminates half the paper's main contribution.\",\"evidence\":[\"E4\"]}},{\"name\":\"Numerical experiment procedure (Section 4)\",\"role\":\"evaluation\",\"description\":\"Generate random matrices, apply SMW with approximate inverses, compute errors, compare to bounds.\",\"evidence\":[\"E5\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Experiments verify the bounds; they are not the core scientific contribution themselves.\",\"evidence\":[\"E5\"]}}],\"selected_core_algorithm\":null,\"uniqueness_reason\":\"Two candidates (forward and backward error bounds) satisfy core contribution criteria with equal status; no single unique core algorithm exists.\",\"scientific_contract\":{\"algorithm\":null,\"scientific_purpose\":\"\",\"inputs\":[],\"outputs\":[],\"core_operations\":[],\"assumptions\":[],\"parameters\":[],\"scientific_invariants\":[],\"dependent_contributions\":[],\"dependent_experiments_results\":[],\"specificity_reason\":\"The core contributions are mathematical theorems (error bounds), not executable algorithms. The SMW formula itself is a standard tool. The numerical experiments are evaluation, not the contribution.\",\"evidence\":[\"E2\"]},\"gates\":{\"G1\":{\"status\":\"REJECT\",\"reason\":\"Core contributions are theoretical bounds (Theorems 2 and 6), not algorithms. No single algorithm directly carries the contribution.\",\"evidence\":[\"E2\"]},\"G2\":{\"status\":\"REJECT\",\"reason\":\"Two equally important core contributions (forward and backward error bounds) exist; no unique core algorithm can be selected.\",\"evidence\":[\"E3\"]},\"G3\":{\"status\":\"REJECT\",\"reason\":\"The SMW formula is a standard off-the-shelf procedure; the error bounds are theorems, not algorithms requiring scientific reasoning to implement.\",\"evidence\":[\"E6\"]},\"G4\":{\"status\":\"REJECT\",\"reason\":\"The core contributions are mathematical bounds, not procedures with a clear input-output executable contract.\",\"evidence\":[\"E2\"]},\"G5\":{\"status\":\"REJECT\",\"reason\":\"No executable algorithm with generalizable inputs identified; the paper presents theorems verified by experiments.\",\"evidence\":[\"E5\"]},\"G6\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G7\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G8\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]}},\"evidence_gaps\":[\"No executable algorithm identified as the core contribution; paper is a theoretical analysis paper with numerical verification.\"],\"decision\":\"REJECT_PAPER\"}",
+    "timestamp": "2026-08-24T15:15:50.943013+00:00",
+    "usage": {
+      "completion_tokens": 2792,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1561
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 18321,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 21113
+    }
+  },
+  {
+    "attempt": 2,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:15:52.288583+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:16:52.108123+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:18:22.148247+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:19:22.516587+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:20:48.643212+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:21:47.937541+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:22:47.867849+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:24:08.284947+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:25:07.134992+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": "stop",
+    "message_fields": [
+      "content",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787585165-RKUPCawOzwjEhKHJUIn4",
+    "stage": "full-review-resume-correction",
+    "text": "{\"schema_version\":\"core-algorithm-review-v2\",\"paper_id\":\"0014\",\"evidence_catalog\":[{\"id\":\"E1\",\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"We study the numerical stability of the Sherman–Morrison–Woodbury (SMW) identity.\"},{\"id\":\"E2\",\"page\":1,\"section\":\"1 Introduction\",\"excerpt\":\"Our work provides forward and backward error bounds for the update formula of eqn. (1).\"},{\"id\":\"E3\",\"page\":1,\"section\":\"1 Introduction\",\"excerpt\":\"Forward Error (Theorem 2): Is eB−1 close to B−1?\"},{\"id\":\"E4\",\"page\":1,\"section\":\"1 Introduction\",\"excerpt\":\"Backward Error (Theorem 6): Is eB close to B?\"},{\"id\":\"E5\",\"page\":10,\"section\":\"4 Numerical Experiments\",\"excerpt\":\"The goal of our numerical experiments is to verify the tightness of our forward and backward error bounds\"},{\"id\":\"E6\",\"page\":1,\"section\":\"1 Introduction\",\"excerpt\":\"B−1 = A−1 − A−1U(I + VT A−1U)−1VT A−1.\"}],\"research_goal\":{\"summary\":\"Study numerical stability of the SMW formula when only approximate inverses are available.\",\"evidence\":[\"E1\"]},\"main_contributions\":[{\"id\":\"C1\",\"summary\":\"Forward error bound for SMW formula with approximate inverses (Theorem 2).\",\"evidence\":[\"E3\"]},{\"id\":\"C2\",\"summary\":\"Backward error bound for SMW formula with approximate inverses (Theorem 6).\",\"evidence\":[\"E4\"]}],\"contribution_graph\":[{\"from\":\"Research Goal\",\"to\":\"C1\",\"relation\":\"goal motivates forward error bound\",\"evidence\":[\"E1\"]},{\"from\":\"Research Goal\",\"to\":\"C2\",\"relation\":\"goal motivates backward error bound\",\"evidence\":[\"E1\"]},{\"from\":\"C1\",\"to\":\"Numerical Experiments\",\"relation\":\"verified by experiments in Section 4\",\"evidence\":[\"E5\"]},{\"from\":\"C2\",\"to\":\"Numerical Experiments\",\"relation\":\"verified by experiments in Section 4\",\"evidence\":[\"E5\"]}],\"candidate_algorithms\":[{\"name\":\"SMW formula with approximate inverses (eqn 1)\",\"role\":\"supporting\",\"description\":\"Standard Woodbury identity applied with approximate inverses eA−1 and Z−1 to compute eB−1.\",\"evidence\":[\"E6\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"The SMW formula is a standard tool; the paper's contribution is analyzing its stability, not proposing it.\",\"evidence\":[\"E6\"]}},{\"name\":\"Forward error bound (Theorem 2)\",\"role\":\"core\",\"description\":\"Theoretical upper bound on forward error of approximate SMW inverse as function of approximation errors.\",\"evidence\":[\"E3\"],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"Removing the forward error bound eliminates half the paper's main contribution.\",\"evidence\":[\"E3\"]}},{\"name\":\"Backward error bound (Theorem 6)\",\"role\":\"core\",\"description\":\"Theoretical upper bound on backward error of approximate SMW inverse as function of approximation errors.\",\"evidence\":[\"E4\"],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"Removing the backward error bound eliminates half the paper's main contribution.\",\"evidence\":[\"E4\"]}},{\"name\":\"Numerical experiment procedure (Section 4)\",\"role\":\"evaluation\",\"description\":\"Generate random matrices, apply SMW with approximate inverses, compute errors, compare to bounds.\",\"evidence\":[\"E5\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Experiments verify the bounds; they are not the core scientific contribution themselves.\",\"evidence\":[\"E5\"]}}],\"selected_core_algorithm\":null,\"uniqueness_reason\":\"Two candidates (forward and backward error bounds) satisfy core contribution criteria with equal status; no single unique core algorithm exists.\",\"scientific_contract\":null,\"gates\":{\"G1\":{\"status\":\"REJECT\",\"reason\":\"Core contributions are theoretical bounds (Theorems 2 and 6), not algorithms. No single algorithm directly carries the contribution.\",\"evidence\":[\"E2\"]},\"G2\":{\"status\":\"REJECT\",\"reason\":\"Two equally important core contributions (forward and backward error bounds) exist; no unique core algorithm can be selected.\",\"evidence\":[\"E3\"]},\"G3\":{\"status\":\"REJECT\",\"reason\":\"The SMW formula is a standard off-the-shelf procedure; the error bounds are theorems, not algorithms requiring scientific reasoning to implement.\",\"evidence\":[\"E6\"]},\"G4\":{\"status\":\"REJECT\",\"reason\":\"The core contributions are mathematical bounds, not procedures with a clear input-output executable contract.\",\"evidence\":[\"E2\"]},\"G5\":{\"status\":\"REJECT\",\"reason\":\"No executable algorithm with generalizable inputs identified; the paper presents theorems verified by experiments.\",\"evidence\":[\"E5\"]},\"G6\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G7\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G8\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]}},\"evidence_gaps\":[\"No executable algorithm identified as the core contribution; paper is a theoretical analysis paper with numerical verification.\"],\"decision\":\"REJECT_PAPER\"}",
+    "timestamp": "2026-08-24T15:26:08.333705+00:00",
+    "usage": {
+      "completion_tokens": 1204,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 60
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 19631,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 20835
+    }
+  }
+]

@@ -1,0 +1,25 @@
+{
+  "comparison": "fieldwise",
+  "field_rules": {
+    "coefficients": {
+      "atol": 2e-12,
+      "rtol": 2e-11
+    },
+    "dictionary_indices": {
+      "atol": 0.0,
+      "rtol": 0.0
+    },
+    "interpolation_matrix": {
+      "atol": 2e-12,
+      "rtol": 2e-11
+    },
+    "predictions": {
+      "atol": 2e-12,
+      "rtol": 2e-11
+    },
+    "sample_indices": {
+      "atol": 0.0,
+      "rtol": 0.0
+    }
+  }
+}

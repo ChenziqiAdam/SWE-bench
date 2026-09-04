@@ -1,0 +1,324 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E1"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "Removing SUR-SLM eliminates the entire spatio-temporal contagion modeling contribution and all reported results"
+      },
+      "description": "Spatial Seemingly Unrelated Regression with spatially lagged dependent variable, estimated by ML, with time-varying and constrained coefficients",
+      "evidence": [
+        "E3"
+      ],
+      "name": "SUR-SLM estimation via maximum likelihood",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E10"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Data preprocessing step; core contribution is the SUR-SLM model, not the lag computation"
+      },
+      "description": "Compute lag8, lag11, lag11w moving averages of temperature, humidity, sunshine using log-normal weights from incubation period",
+      "evidence": [
+        "E10"
+      ],
+      "name": "Lagged environmental variable computation",
+      "role": "preprocessing"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E8"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Standard spatial weights construction; not the core scientific contribution"
+      },
+      "description": "Build adjacency-based spatial weights matrix W using queen contiguity criterion for Spanish provinces",
+      "evidence": [
+        "E8"
+      ],
+      "name": "Spatial weights matrix construction (queen contiguity)",
+      "role": "preprocessing"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E9"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Post-estimation interpretation of SUR-SLM results; not the core algorithm itself but a derived analysis"
+      },
+      "description": "Compute direct, indirect, and total effects from SUR-SLM partial derivatives to interpret spatial spillover impacts",
+      "evidence": [
+        "E5"
+      ],
+      "name": "Direct/indirect/total effects decomposition",
+      "role": "evaluation"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E6"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Exploratory baseline analysis; not the core modeling contribution"
+      },
+      "description": "Daily simple correlations of log-transformed independent variables with COVID-19 incidence for exploratory analysis",
+      "evidence": [
+        "E6"
+      ],
+      "name": "Correlation analysis of variables with incidence",
+      "role": "baseline"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E1"
+      ],
+      "from": "Research Goal",
+      "relation": "addresses",
+      "to": "C1"
+    },
+    {
+      "evidence": [
+        "E3"
+      ],
+      "from": "C1",
+      "relation": "implemented by",
+      "to": "SUR-SLM estimation"
+    },
+    {
+      "evidence": [
+        "E5"
+      ],
+      "from": "C1",
+      "relation": "interpreted by",
+      "to": "Direct/indirect effects computation"
+    },
+    {
+      "evidence": [
+        "E1"
+      ],
+      "from": "C1",
+      "relation": "produces",
+      "to": "C2"
+    },
+    {
+      "evidence": [
+        "E6"
+      ],
+      "from": "SUR-SLM estimation",
+      "relation": "generates",
+      "to": "Reported coefficients and effects"
+    }
+  ],
+  "decision": "ACCEPT_FOR_DESIGN",
+  "evidence_catalog": [
+    {
+      "excerpt": "Use of spatial Seemingly Unrelated Regressions (SUR) allows us to model the incidence of reported cases of the disease per 100,000 population as an interregional contagion process",
+      "id": "E1",
+      "page": 1,
+      "section": "Abstract"
+    },
+    {
+      "excerpt": "The Seemingly Unrelated Regression equations model (SUR hereafter) is a multivariate econometric model used in diﬀerent ﬁelds when the structure of the data consists of cross-sections for diﬀerent time periods",
+      "id": "E2",
+      "page": 7,
+      "section": "4. Methods: the Spatial SUR Model"
+    },
+    {
+      "excerpt": "The stack expresion for the SUR model with a spatially lagged dependent variable (SUR-SLM) is as follows",
+      "id": "E3",
+      "page": 9,
+      "section": "4. Methods: the Spatial SUR Model"
+    },
+    {
+      "excerpt": "The SUR-SLM model can be estimated using maximum likelihood (López et al. (2014)) or instrumental variables (Mínguez et al. (2019))",
+      "id": "E4",
+      "page": 9,
+      "section": "4. Methods: the Spatial SUR Model"
+    },
+    {
+      "excerpt": "the spatially lagged dependent variable represents a process of contagion, where the disease in neighboring provinces can spillover",
+      "id": "E5",
+      "page": 9,
+      "section": "4. Methods: the Spatial SUR Model"
+    },
+    {
+      "excerpt": "we estimate three spatial SUR models to test the diﬀerences between the various temporal lags and weighting schemes for the environmental variables",
+      "id": "E6",
+      "page": 13,
+      "section": "5.2. SUR Models"
+    },
+    {
+      "excerpt": "we introduce restrictions so that the coeﬃcients of two of our control variables are constant over time, namely GDP per capita and percentage of older adults",
+      "id": "E7",
+      "page": 16,
+      "section": "5.2. SUR Models"
+    },
+    {
+      "excerpt": "A = ITN−Γ⊗W is the spatially lagged dependent variable, and Γ = diag(ρ1,···,ρT)",
+      "id": "E8",
+      "page": 9,
+      "section": "4. Methods: the Spatial SUR Model"
+    },
+    {
+      "excerpt": "the appropriate way to estimate the eﬀects is to calculate both the own eﬀect and the eﬀect due to contagion, or in other words the direct and indirect eﬀects",
+      "id": "E9",
+      "page": 22,
+      "section": "6. Discussion"
+    },
+    {
+      "excerpt": "we consider a lagged 8-day average, from date-minus-12 to date-minus-5 days (hereafter lag8)",
+      "id": "E10",
+      "page": 7,
+      "section": "3.2. Data"
+    }
+  ],
+  "evidence_gaps": [
+    "Exact ML estimation procedure details (log-likelihood, optimization) are referenced to López et al. (2014) and the spsur R package rather than fully specified in the paper"
+  ],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E1"
+      ],
+      "reason": "SUR-SLM directly implements the paper's main contribution of modeling COVID-19 as spatio-temporal contagion with environmental correlates; without it the contribution vanishes",
+      "status": "PASS"
+    },
+    "G2": {
+      "evidence": [
+        "E3"
+      ],
+      "reason": "Only one candidate (SUR-SLM) satisfies core definition; all others are preprocessing, baseline, or post-estimation evaluation",
+      "status": "PASS"
+    },
+    "G3": {
+      "evidence": [
+        "E3"
+      ],
+      "reason": "Requires paper-specific scientific reasoning: spatial lag for contagion, SUR for temporal structure, constrained coefficients, and environmental lag schemes",
+      "status": "PASS"
+    },
+    "G4": {
+      "evidence": [
+        "E4"
+      ],
+      "reason": "Clear input-output contract: panel data and W matrix in, coefficient estimates and effects out; estimation via ML is well-defined",
+      "status": "PASS"
+    },
+    "G5": {
+      "evidence": [
+        "E6"
+      ],
+      "reason": "Can generalize to different time periods, spatial configurations, variable sets, or coefficient constraint patterns",
+      "status": "PASS"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E1"
+      ],
+      "id": "C1",
+      "summary": "Spatio-temporal SUR-SLM model of COVID-19 incidence as interregional contagion with environmental and control variables"
+    },
+    {
+      "evidence": [
+        "E1"
+      ],
+      "id": "C2",
+      "summary": "Evidence that temperature and humidity reduce COVID-19 incidence; sunshine increases it under lockdown"
+    }
+  ],
+  "paper_id": "0020",
+  "research_goal": {
+    "evidence": [
+      "E1"
+    ],
+    "summary": "Investigate influence of environmental factors (temperature, humidity, sunshine) on COVID-19 incidence in Spain using spatio-temporal modeling"
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": {
+    "algorithm": "SUR-SLM estimation via maximum likelihood",
+    "assumptions": [
+      "Residuals follow multivariate normal with cross-equation covariance Sigma",
+      "Spatial weights matrix W based on queen contiguity",
+      "Log-log transformation appropriate for nonlinear relationships",
+      "Incubation period justifies lagged environmental variables"
+    ],
+    "core_operations": [
+      "Stack T cross-sectional equations into SUR system",
+      "Incorporate spatial lag of dependent variable via A = I - Gamma x W",
+      "Impose coefficient restrictions for GDP and Older variables",
+      "Estimate via maximum likelihood",
+      "Compute direct and indirect effects from partial derivatives"
+    ],
+    "dependent_contributions": [
+      "C1: Spatio-temporal SUR-SLM model of COVID-19 incidence",
+      "C2: Evidence for environmental correlates of COVID-19 seasonality"
+    ],
+    "dependent_experiments_results": [
+      "Table 2: Summary of estimation results",
+      "Table 3: Direct, indirect, and total effects",
+      "Figure 5: Goodness of fit comparison",
+      "Figure 6: Temporal evolution of rho and intercept",
+      "Figure 8: Temporal evolution of environmental variable coefficients",
+      "Figure 9: Direct, indirect, and total effects by date"
+    ],
+    "evidence": [
+      "E3"
+    ],
+    "inputs": [
+      "Panel data: N provinces x T days of COVID-19 incidence",
+      "Environmental variables: temperature, humidity, sunshine (log-transformed, lagged)",
+      "Control variables: GDP per capita, older adults percentage, population density, transit (log-transformed except transit)",
+      "Spatial weights matrix W (queen contiguity)",
+      "Coefficient constraints: GDP and Older fixed over time"
+    ],
+    "outputs": [
+      "Time-varying coefficient estimates beta_t for each equation",
+      "Spatial autocorrelation parameters rho_t for each time period",
+      "Direct, indirect, and total effects for each variable",
+      "Goodness-of-fit statistics (R-squared, pooled R-squared)"
+    ],
+    "parameters": [
+      "Number of time periods T",
+      "Number of spatial units N",
+      "Spatial weights matrix W",
+      "Coefficient constraints (which variables fixed over time)",
+      "Lag specification for environmental variables (lag8, lag11, lag11w)"
+    ],
+    "scientific_invariants": [
+      "SUR error covariance structure E[epsilon epsilon'] = Sigma x I_N",
+      "Spatial lag structure A = I_TN - Gamma x W",
+      "Direct effects are mean of diagonal elements of partial derivative matrix",
+      "Indirect effects are mean of off-diagonal elements"
+    ],
+    "scientific_purpose": "Model COVID-19 incidence across provinces and time as function of environmental variables and controls with spatial contagion spillover via spatially lagged dependent variable",
+    "specificity_reason": "SUR-SLM with spatially lagged dependent variable, time-varying coefficients, and constrained coefficients is a specific spatial econometric methodology adapted for contagion modeling; not a standard off-the-shelf procedure but requires paper-specific configuration"
+  },
+  "selected_core_algorithm": "SUR-SLM estimation via maximum likelihood",
+  "uniqueness_reason": "SUR-SLM is the only algorithm that directly implements the paper's central scientific contribution of modeling COVID-19 incidence as a spatio-temporal contagion process with environmental correlates; all other candidates are preprocessing, baseline, or post-estimation evaluation steps"
+}

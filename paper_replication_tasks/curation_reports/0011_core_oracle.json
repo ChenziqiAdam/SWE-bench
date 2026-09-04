@@ -1,0 +1,39 @@
+{
+  "G8": "PASS",
+  "independent_within_frozen_tolerance": true,
+  "maximum_relative_errors": {
+    "mean": 0.019919727577014403,
+    "q2.5": 0.062392094126283035,
+    "q50": 0.03368005614083841,
+    "q97.5": 0.017950308981383164,
+    "variance": 0.0559844200969794
+  },
+  "official_output_bundle_sha256": "122dbf1a2cec4d986f1adba9823c1cf418dafd8c7d184956bb23e29163976f4c",
+  "official_output_bundle_sha256_by_run": [
+    "122dbf1a2cec4d986f1adba9823c1cf418dafd8c7d184956bb23e29163976f4c",
+    "122dbf1a2cec4d986f1adba9823c1cf418dafd8c7d184956bb23e29163976f4c"
+  ],
+  "schema_version": 1,
+  "status": "oracle_passed",
+  "task_id": "scibench_replication_0011_core",
+  "tolerances": {
+    "comparison": "fieldwise",
+    "field_rules": {
+      "mean": {
+        "atol": 1.2379526307401312e-09,
+        "rtol": 0.14128577244209775
+      },
+      "quantiles": {
+        "atol": 1.8214551404165366e-09,
+        "rtol": 0.22271139569310916
+      },
+      "variance": {
+        "atol": 2.8103545682349086e-13,
+        "rtol": 0.3908891745646146
+      }
+    },
+    "frozen_source": "curation_reports/official_runs/0011_core_feasibility/frozen_tolerance.json",
+    "quantile_rule": "most conservative of the three pre-hidden frozen quantile bounds"
+  },
+  "two_clean_checkouts_match": true
+}

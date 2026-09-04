@@ -1,0 +1,208 @@
+{
+  "curator_reference": {
+    "score": 1.0,
+    "sha256": "dc074d78879130ffe10ccd603178d77a4289eccc309b15ad8a59c9b3480260ff"
+  },
+  "gate_evidence": {
+    "G1": "The target paper's main contribution is the approximate Bayesian MSD regression; deleting it removes the claimed estimator and uncertainty method.",
+    "G2": "The numeric input/output selects posterior diffusion summaries, distinguishing the target from OLS, WLS, GLS point estimates, and random-walk generation.",
+    "G3": "Requires the paper-specific Eq. 6 covariance approximation, effective-count rescaling, reconditioning, fit regime, and nonnegative posterior.",
+    "G4": "All numerical inputs, fit boundary, condition bound, dimension, and seed are explicit.",
+    "G5": "curation_reports/0011_core_hazards.json and shortcut_audit.results",
+    "G6": "core_algorithm_audits/0011_core_blind.json",
+    "G7": "curation_reports/0011_core_g7.json",
+    "G8": "curation_reports/0011_core_oracle.json"
+  },
+  "gates": {
+    "G1_core_centrality": true,
+    "G2_unique_core": true,
+    "G3_scientific_specificity": true,
+    "G4_executable_closure": true,
+    "G5_hidden_generalization": true,
+    "G6_blind_identification": true,
+    "G7_blind_implementation": false,
+    "G8_oracle_validity": true,
+    "all_scientific_shortcuts_fail_hidden": true,
+    "curator_reference_score_one": true,
+    "hazard_catalog_covers_hidden": true,
+    "independent_all_cases": true,
+    "malformed_nonfinite_shape_input_rejected": true,
+    "neutral_case_labels": true,
+    "public_bundle_exact": true,
+    "public_memorizer_reported_separately": true,
+    "public_text_leakage_scan": true,
+    "runner_timeout_enforced": true,
+    "source_archive_complete": true,
+    "symlink_rejected": true,
+    "task_only_names_solution": true,
+    "traversal_rejected": true,
+    "two_official_evidence_runs_exact": true,
+    "wrong_nonfinite_output_rejected": true
+  },
+  "public_memorizer": {
+    "hidden_score": 0.0,
+    "public_score": 1.0,
+    "score": 0.4
+  },
+  "schema_version": 1,
+  "shortcut_audit": {
+    "conclusion": "All 8 tested scientific shortcuts fail at least one hidden case; maximum hidden score is 0.875.",
+    "distinct_scientific_shortcut_count": 8,
+    "maximum_hidden_score": 0.875,
+    "results": {
+      "diagonal_covariance": {
+        "cases": {
+          "hidden:case_01": false,
+          "hidden:case_02": false,
+          "hidden:case_03": false,
+          "hidden:case_04": false,
+          "hidden:case_05": true,
+          "hidden:case_06": false,
+          "hidden:case_07": false,
+          "hidden:case_08": true,
+          "public:case_01": false,
+          "public:case_02": false,
+          "public:case_03": true
+        },
+        "hidden_score": 0.25,
+        "public_score": 0.3333333333333333,
+        "score": 0.2833333333333333
+      },
+      "ignore_nonnegative_prior": {
+        "cases": {
+          "hidden:case_01": true,
+          "hidden:case_02": false,
+          "hidden:case_03": true,
+          "hidden:case_04": true,
+          "hidden:case_05": true,
+          "hidden:case_06": false,
+          "hidden:case_07": true,
+          "hidden:case_08": true,
+          "public:case_01": true,
+          "public:case_02": false,
+          "public:case_03": true
+        },
+        "hidden_score": 0.75,
+        "public_score": 0.6666666666666666,
+        "score": 0.7166666666666666
+      },
+      "ols": {
+        "cases": {
+          "hidden:case_01": false,
+          "hidden:case_02": false,
+          "hidden:case_03": false,
+          "hidden:case_04": false,
+          "hidden:case_05": false,
+          "hidden:case_06": false,
+          "hidden:case_07": false,
+          "hidden:case_08": true,
+          "public:case_01": false,
+          "public:case_02": false,
+          "public:case_03": false
+        },
+        "hidden_score": 0.125,
+        "public_score": 0.0,
+        "score": 0.075
+      },
+      "skip_reconditioning": {
+        "cases": {
+          "hidden:case_01": false,
+          "hidden:case_02": false,
+          "hidden:case_03": false,
+          "hidden:case_04": false,
+          "hidden:case_05": true,
+          "hidden:case_06": false,
+          "hidden:case_07": true,
+          "hidden:case_08": true,
+          "public:case_01": true,
+          "public:case_02": false,
+          "public:case_03": true
+        },
+        "hidden_score": 0.375,
+        "public_score": 0.6666666666666666,
+        "score": 0.49166666666666664
+      },
+      "wls": {
+        "cases": {
+          "hidden:case_01": false,
+          "hidden:case_02": false,
+          "hidden:case_03": false,
+          "hidden:case_04": false,
+          "hidden:case_05": true,
+          "hidden:case_06": false,
+          "hidden:case_07": false,
+          "hidden:case_08": true,
+          "public:case_01": false,
+          "public:case_02": false,
+          "public:case_03": true
+        },
+        "hidden_score": 0.25,
+        "public_score": 0.3333333333333333,
+        "score": 0.2833333333333333
+      },
+      "wrong_eq6": {
+        "cases": {
+          "hidden:case_01": true,
+          "hidden:case_02": false,
+          "hidden:case_03": false,
+          "hidden:case_04": false,
+          "hidden:case_05": true,
+          "hidden:case_06": false,
+          "hidden:case_07": false,
+          "hidden:case_08": true,
+          "public:case_01": false,
+          "public:case_02": false,
+          "public:case_03": false
+        },
+        "hidden_score": 0.375,
+        "public_score": 0.0,
+        "score": 0.22499999999999998
+      },
+      "wrong_fit_window": {
+        "cases": {
+          "hidden:case_01": true,
+          "hidden:case_02": true,
+          "hidden:case_03": true,
+          "hidden:case_04": false,
+          "hidden:case_05": true,
+          "hidden:case_06": true,
+          "hidden:case_07": true,
+          "hidden:case_08": true,
+          "public:case_01": true,
+          "public:case_02": true,
+          "public:case_03": false
+        },
+        "hidden_score": 0.875,
+        "public_score": 0.6666666666666666,
+        "score": 0.7916666666666667
+      },
+      "wrong_neff": {
+        "cases": {
+          "hidden:case_01": false,
+          "hidden:case_02": false,
+          "hidden:case_03": false,
+          "hidden:case_04": false,
+          "hidden:case_05": false,
+          "hidden:case_06": false,
+          "hidden:case_07": false,
+          "hidden:case_08": true,
+          "public:case_01": false,
+          "public:case_02": false,
+          "public:case_03": false
+        },
+        "hidden_score": 0.125,
+        "public_score": 0.0,
+        "score": 0.075
+      }
+    }
+  },
+  "status": "ready_g7_waived",
+  "task_id": "scibench_replication_0011_core",
+  "validation_waivers": [
+    {
+      "gate": "G7_blind_implementation",
+      "granted_on": "2026-09-04",
+      "reason": "Explicit curator decision; original failed G7 report and submission are retained."
+    }
+  ]
+}

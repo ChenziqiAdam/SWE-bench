@@ -1,0 +1,370 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E8"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "Removing this method eliminates the paper's central contribution of efficient D* estimation with accurate uncertainty from single trajectories."
+      },
+      "description": "Complete scheme: estimate variance via rescaling (Eqn 7), construct analytical covariance matrix (Eqn 6), recondition matrix, sample posterior via MCMC to obtain D* and uncertainty.",
+      "evidence": [
+        "E8"
+      ],
+      "name": "Approximate Bayesian regression for D* estimation",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E3"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "OLS is a standard baseline method used for comparison, not the paper's contribution."
+      },
+      "description": "Standard linear regression fitting MSD data; shown to be statistically inefficient and underestimate uncertainty for MSD data.",
+      "evidence": [
+        "E3"
+      ],
+      "name": "Ordinary least squares (OLS)",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E4"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "WLS is a comparison baseline, not the paper's novel contribution."
+      },
+      "description": "Linear regression weighted by reciprocal of variance; improves over OLS but neglects correlations and still underestimates uncertainty.",
+      "evidence": [
+        "E4"
+      ],
+      "name": "Weighted least squares (WLS)",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E5"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "GLS with numerical covariance is used as benchmark for optimal performance, not the paper's method."
+      },
+      "description": "Linear regression using full covariance matrix; theoretical optimum but requires known covariance matrix from multiple simulations.",
+      "evidence": [
+        "E5"
+      ],
+      "name": "Generalised least squares (GLS)",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E10"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Block renormalisation is an alternative compared against the paper's preferred variance rescaling method."
+      },
+      "description": "Alternative variance estimation method compared in SI; less accurate than variance rescaling for this application.",
+      "evidence": [
+        "E10"
+      ],
+      "name": "Block renormalisation (Flyvbjerg-Petersen)",
+      "role": "supporting"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E13"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "LLZO simulation is a test system for validating the method, not the method itself."
+      },
+      "description": "Classical MD simulation of cubic Li7La3Zr2O12 at 700K used as real-world validation case for the core algorithm.",
+      "evidence": [
+        "E13"
+      ],
+      "name": "LLZO molecular dynamics simulation",
+      "role": "evaluation"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E1"
+      ],
+      "from": "Research Goal",
+      "relation": "addresses",
+      "to": "C1"
+    },
+    {
+      "evidence": [
+        "E2"
+      ],
+      "from": "Research Goal",
+      "relation": "addresses",
+      "to": "C2"
+    },
+    {
+      "evidence": [
+        "E8"
+      ],
+      "from": "C1",
+      "relation": "realized by",
+      "to": "Approximate Bayesian regression algorithm"
+    },
+    {
+      "evidence": [
+        "E10"
+      ],
+      "from": "C2",
+      "relation": "subroutine of",
+      "to": "Variance rescaling + covariance construction"
+    },
+    {
+      "evidence": [
+        "E12"
+      ],
+      "from": "Approximate Bayesian regression algorithm",
+      "relation": "validated by",
+      "to": "Random walk validation"
+    },
+    {
+      "evidence": [
+        "E13"
+      ],
+      "from": "Approximate Bayesian regression algorithm",
+      "relation": "validated by",
+      "to": "LLZO validation"
+    },
+    {
+      "evidence": [
+        "E3"
+      ],
+      "from": "Approximate Bayesian regression algorithm",
+      "relation": "benchmarked against",
+      "to": "Comparison with OLS/WLS/GLS"
+    }
+  ],
+  "decision": "ACCEPT_FOR_DESIGN",
+  "evidence_catalog": [
+    {
+      "excerpt": "We present a scheme for estimatingD ∗ from a single simulation trajectory with high statis- tical efficiency and accurately estimating the uncertainty in the predicted value.",
+      "id": "E1",
+      "page": 1,
+      "section": "Abstract"
+    },
+    {
+      "excerpt": "Here, we describe an approximate Bayesian regression method for estimatingD ∗ with near-maximal statistical efficiency while accurately estimating the corresponding statistical uncertainty using data from a single simulation.",
+      "id": "E2",
+      "page": 2,
+      "section": "I. INTRODUCTION"
+    },
+    {
+      "excerpt": "Neither of these conditions holds for MSD data obtained from simulation, which instead are serially correlated and usually have unequal variances.",
+      "id": "E3",
+      "page": 1,
+      "section": "I. INTRODUCTION"
+    },
+    {
+      "excerpt": "Some improvement can be made by using weighted least squares (WLS) (Fig. 1b), where the residual for each observed MSD value is weighted by the reciprocal of its variance",
+      "id": "E4",
+      "page": 2,
+      "section": "II. BACKGROUND"
+    },
+    {
+      "excerpt": "Within the framework of linear regression, this can be achieved using generalised least squares (GLS).",
+      "id": "E5",
+      "page": 2,
+      "section": "II. BACKGROUND"
+    },
+    {
+      "excerpt": "We model the covariance matrix for the observed MSD from a given simulation using the covariance matrix for the MSD of an equivalent system of freely diffusing particles,Σ ′.",
+      "id": "E6",
+      "page": 3,
+      "section": "III. APPROXIMATING Σ FROM SIMULATION DATA"
+    },
+    {
+      "excerpt": "we recondition the estimated covariance matrix obtained from Eqn. 6 using the minimum eigenvalue method",
+      "id": "E7",
+      "page": 4,
+      "section": "III. APPROXIMATING Σ FROM SIMULATION DATA"
+    },
+    {
+      "excerpt": "We have introduced and demonstrated an approximate Bayesian regression method for estimating the self-diffusion coefficient,D ∗, from molecular dynamics simulation data.",
+      "id": "E8",
+      "page": 7,
+      "section": "VI. SUMMARY AND DISCUSSION"
+    },
+    {
+      "excerpt": "We use Markov-Chain Monte Carlo to sample the posterior distribution of linear models compatible with the observed MSD data.",
+      "id": "E9",
+      "page": 7,
+      "section": "VI. SUMMARY AND DISCUSSION"
+    },
+    {
+      "excerpt": "we compute an estimated variance bσ2[xi] by rescaling the observed variance of the squared displacement for time interval i by the number of numerically-independent contributing sub-trajectories",
+      "id": "E10",
+      "page": 4,
+      "section": "III. APPROXIMATING Σ FROM SIMULATION DATA"
+    },
+    {
+      "excerpt": "kinisi-1.1.0 was used for all analyses presented in this work.",
+      "id": "E11",
+      "page": 8,
+      "section": "VII. METHODS"
+    },
+    {
+      "excerpt": "The close agreement between these two distribu-tions demonstrates that our approximate Bayesian re-gression scheme yields nearly optimal estimates of D ∗",
+      "id": "E12",
+      "page": 5,
+      "section": "IV. VALIDATION"
+    },
+    {
+      "excerpt": "we consider an exam-ple real-world system, the lithium-ion solid electrolyte Li7La3Zr2O12 (LLZO)",
+      "id": "E13",
+      "page": 5,
+      "section": "IV. VALIDATION"
+    }
+  ],
+  "evidence_gaps": [
+    "Exact MCMC sampling parameters may need verification from kinisi source code",
+    "SI derivation details for covariance matrix (Eqn 6) span multiple pages but core formula is clear"
+  ],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E8"
+      ],
+      "reason": "The approximate Bayesian regression method directly implements the paper's main scientific contribution of efficient D* estimation with accurate uncertainty from single simulations.",
+      "status": "PASS"
+    },
+    "G2": {
+      "evidence": [
+        "E3"
+      ],
+      "reason": "Only one candidate satisfies core-algorithm requirements; OLS, WLS, GLS are baselines, block renormalisation is a supporting comparison, and LLZO simulation is evaluation.",
+      "status": "PASS"
+    },
+    "G3": {
+      "evidence": [
+        "E6"
+      ],
+      "reason": "Requires paper-specific scientific reasoning: analytical covariance matrix derivation, variance rescaling for correlated sub-trajectories, and MCMC posterior sampling with improper prior.",
+      "status": "PASS"
+    },
+    "G4": {
+      "evidence": [
+        "E1"
+      ],
+      "reason": "Clear input-output contract: MSD data from simulation trajectory produces D* point estimate and uncertainty distribution.",
+      "status": "PASS"
+    },
+    "G5": {
+      "evidence": [
+        "E12"
+      ],
+      "reason": "Method applies to any MSD data from diffusive regime; validated on random walks of varying sizes and real LLZO system with different parameters.",
+      "status": "PASS"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E2"
+      ],
+      "id": "C1",
+      "summary": "Approximate Bayesian regression method using analytical covariance matrix for freely diffusing particles to estimate D* with high statistical efficiency and accurate uncertainty from single simulations."
+    },
+    {
+      "evidence": [
+        "E6"
+      ],
+      "id": "C2",
+      "summary": "Analytical covariance matrix model parameterised from single-trajectory data via variance rescaling, enabling near-optimal estimation without requiring multiple replica simulations."
+    }
+  ],
+  "paper_id": "0011",
+  "research_goal": {
+    "evidence": [
+      "E1"
+    ],
+    "summary": "Accurately estimate self-diffusion coefficients and their statistical uncertainties from single molecular dynamics simulation trajectories."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": {
+    "algorithm": "Approximate Bayesian regression for D* estimation",
+    "assumptions": [
+      "MSD data in long-time diffusive regime where Einstein relation holds",
+      "Sufficient observations for central limit theorem to apply",
+      "Freely diffusing particle model approximates true covariance structure",
+      "Non-overlapping time windows give independent squared displacements"
+    ],
+    "core_operations": [
+      "Compute observed MSD by averaging squared displacements over particles and time origins",
+      "Estimate variance of observed MSD via rescaling by number of independent sub-trajectories (Eqn 7)",
+      "Construct analytical covariance matrix Sigma' using Eqn 6",
+      "Recondition covariance matrix using minimum eigenvalue method",
+      "Sample posterior distribution of linear models via MCMC (emcee) with prior D*>=0",
+      "Extract marginal posterior p(D*|x) for point estimate and uncertainty"
+    ],
+    "dependent_contributions": [
+      "C1",
+      "C2"
+    ],
+    "dependent_experiments_results": [
+      "Random walk validation (Fig 4)",
+      "LLZO validation (Fig 5)",
+      "Scaling comparison with OLS/WLS/GLS (Fig 6)"
+    ],
+    "evidence": [
+      "E8"
+    ],
+    "inputs": [
+      "Observed MSD vector x(t) from simulation",
+      "Number of mobile particles N_atoms",
+      "Total timesteps N_t",
+      "Diffusive regime start time threshold"
+    ],
+    "outputs": [
+      "Point estimate of D* (posterior mean)",
+      "Estimated variance of D* (posterior spread)",
+      "Full posterior distribution p(D*|x)"
+    ],
+    "parameters": [
+      "Maximum condition number for matrix reconditioning (default 1e16)",
+      "Number of MCMC walkers (32)",
+      "Number of MCMC steps (1500)",
+      "Burn-in steps (500)",
+      "Thinning interval (10)",
+      "Diffusive regime start threshold"
+    ],
+    "scientific_invariants": [
+      "Covariance matrix structure follows Eqn 6 for freely diffusing particles",
+      "Posterior mean equals GLS estimate in absence of prior",
+      "Method achieves near-Cramer-Rao bound statistical efficiency"
+    ],
+    "scientific_purpose": "Estimate self-diffusion coefficient D* and its statistical uncertainty from a single MD simulation trajectory with near-optimal statistical efficiency.",
+    "specificity_reason": "This algorithm combines novel scientific reasoning: analytical covariance matrix for freely diffusing particles, variance rescaling for correlated sub-trajectories, and Bayesian regression via MCMC. It is not a standard off-the-shelf procedure but a paper-specific method."
+  },
+  "selected_core_algorithm": "Approximate Bayesian regression for D* estimation",
+  "uniqueness_reason": "Only one algorithm directly implements the paper's main contribution: combining analytical covariance matrix construction, variance rescaling, matrix reconditioning, and MCMC posterior sampling to estimate D* from single simulation trajectories. All other methods (OLS, WLS, GLS) are baselines or comparisons."
+}

@@ -1,0 +1,95 @@
+{
+  "call_count": 3,
+  "call_mode": "single_full_call",
+  "character_count": 52483,
+  "completed_at": "2026-08-23T19:23:45.820017+00:00",
+  "model": "stealth/ox-alpha",
+  "nonempty_page_ratio": 1.0,
+  "page_count": 18,
+  "paper_id": "0018",
+  "prompt_sha256": "56c4f9a8572488138637eb12e7d99279c16f7964314092f3b3bf2ac490cc9cac",
+  "redaction_markers": [],
+  "request_config": {
+    "max_output_tokens": 8000,
+    "reasoning": {
+      "effort": "minimal",
+      "exclude": true
+    },
+    "temperature": 0
+  },
+  "rubric_sha256": "80416258156139723a755924885396f7a54ce77809154816bace9db96702cfca",
+  "schema_version": "core-algorithm-review-v2",
+  "source_path": "/Users/adamchen/Desktop/VSCode/SWE-bench/paper_replication_tasks/scibench_replication_0018/public/paper.pdf",
+  "source_sha256": "f7de9fe507fe2bb0bff801bbc9975deb13c0a4b0853fd588935bd04f3af39dfa",
+  "token_usage": [
+    {
+      "completion_tokens": 1857,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 18100,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2752,
+        "video_tokens": 0
+      },
+      "total_tokens": 19957
+    },
+    {
+      "completion_tokens": 1709,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 18100,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 18048,
+        "video_tokens": 0
+      },
+      "total_tokens": 19809
+    },
+    {
+      "completion_tokens": 1501,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 18100,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 18048,
+        "video_tokens": 0
+      },
+      "total_tokens": 19601
+    }
+  ]
+}

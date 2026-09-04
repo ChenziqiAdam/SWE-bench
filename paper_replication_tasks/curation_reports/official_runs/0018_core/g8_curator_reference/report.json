@@ -1,0 +1,111 @@
+{
+  "G8_curator_reference": "PASS",
+  "cases": [
+    {
+      "case_id": "case_01",
+      "exit_code": 0,
+      "output_sha256": "4b79bbbdca1f2ed4a5f42feb282df6896394dd73951e80eb711fab4b295f45ee",
+      "split": "public",
+      "timed_out": false,
+      "wall_seconds": 17.36387545899197
+    },
+    {
+      "case_id": "case_02",
+      "exit_code": 0,
+      "output_sha256": "33baaf49925c7a98c5f3618a263db7a4ad2d33ce9dddf458f18a6a97a41934a9",
+      "split": "public",
+      "timed_out": false,
+      "wall_seconds": 50.617730332989595
+    },
+    {
+      "case_id": "case_03",
+      "exit_code": 0,
+      "output_sha256": "939274926b0477ca7070a5f3be8dbb152ea25d90deb04415ea9abc0e6e0a4602",
+      "split": "public",
+      "timed_out": false,
+      "wall_seconds": 71.36751154200465
+    },
+    {
+      "case_id": "case_01",
+      "exit_code": 0,
+      "output_sha256": "ce7e9933c2551b41983b11f0edeeed854ea26cbc6bbc206c537a376a66857ba7",
+      "split": "hidden",
+      "timed_out": false,
+      "wall_seconds": 25.71946720899723
+    },
+    {
+      "case_id": "case_02",
+      "exit_code": 0,
+      "output_sha256": "cde28d684d643180cbc8336cf38a3885194a54c1cb8d97b65d2e653e34537c43",
+      "split": "hidden",
+      "timed_out": false,
+      "wall_seconds": 26.75088391698955
+    },
+    {
+      "case_id": "case_03",
+      "exit_code": 0,
+      "output_sha256": "9b0f324e171e6526b094eb52b6c834f6fb2b86a73465b00ae65aff9031f4beee",
+      "split": "hidden",
+      "timed_out": false,
+      "wall_seconds": 22.152567707991693
+    },
+    {
+      "case_id": "case_04",
+      "exit_code": 0,
+      "output_sha256": "a69932611d4fe2985caa58522db7fd312f7ead08e6ef4e6f87e4e1f1bebcdcc1",
+      "split": "hidden",
+      "timed_out": false,
+      "wall_seconds": 41.595115832999
+    },
+    {
+      "case_id": "case_05",
+      "exit_code": 0,
+      "output_sha256": "5a04845984cb08ec72577a822fc80c5cfe31098cdf4f2a20c89897034313449b",
+      "split": "hidden",
+      "timed_out": false,
+      "wall_seconds": 21.766861583004356
+    },
+    {
+      "case_id": "case_06",
+      "exit_code": 0,
+      "output_sha256": "14b19521c6f2ffcb90fa206e1d19575e3bc022c8709866fb0881cbfe404e25c1",
+      "split": "hidden",
+      "timed_out": false,
+      "wall_seconds": 14.991881541995099
+    },
+    {
+      "case_id": "case_07",
+      "exit_code": 0,
+      "output_sha256": "9223b04a8c411f1220ed911e78d303195c4f1a29ba87f1006f131764acde58d0",
+      "split": "hidden",
+      "timed_out": false,
+      "wall_seconds": 63.95103283300705
+    },
+    {
+      "case_id": "case_08",
+      "exit_code": 0,
+      "output_sha256": "bb5bf7e4d77b393b9eeeafc5f43e3a8c5fd569fd0e9c6b2ef20c70b21d75ef05",
+      "split": "hidden",
+      "timed_out": false,
+      "wall_seconds": 76.05116929099313
+    }
+  ],
+  "environment": {
+    "platform": "macOS-26.4.1-arm64-arm-64bit",
+    "python": "3.12.7"
+  },
+  "full_success": true,
+  "generated_at": "2026-09-01T13:00:00.648417+00:00",
+  "hidden_score": 1.0,
+  "provenance": "Curator-authored evaluator reference wrapper over the registered scientific implementation. It is distinct from the official adapter and blind agent, and validates only the unified runner/full-score path; it is not claimed as a second independent scientific derivation.",
+  "public_score": 1.0,
+  "redaction": "No credentials, endpoint, provider/user/request IDs, or external calls.",
+  "runner_sha256": "148380e5f48218cd603b9b506183c46e4fb6cabb937b462bf9a1cbba6486cf95",
+  "schema_version": 1,
+  "scientific_dispatch_sha256": "335d6d1bf48abadf61b9b572f7a37f0f255bf21625e7d0692961c030d5187081",
+  "scientific_implementation_sha256": "855ce81d33312f519e880baf6ba990fce972d7398221371f0f0eb89225e05257",
+  "score": 1.0,
+  "submission_manifest_sha256": "6977ab8f85751f09eb34b5ad018d84499cb5177fd0301ff8a5290b5ee62d3cad",
+  "submission_sha256": "aa7a9273d786218e28e1e44f1dbc52c8b29e2602a6ec656c9bcf6859ddc61d65",
+  "task_id": "scibench_replication_0018_core"
+}

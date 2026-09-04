@@ -1,0 +1,36 @@
+[
+  {
+    "attempt": 1,
+    "message": "endpoint returned empty message.content (finish_reason='length', fields=['content', 'reasoning', 'reasoning_details', 'refusal', 'role'])",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T18:38:52.272070+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 2,
+    "message": "endpoint returned empty message.content (finish_reason='length', fields=['content', 'reasoning', 'reasoning_details', 'refusal', 'role'])",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T18:41:56.521240+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 3,
+    "message": "endpoint returned empty message.content (finish_reason='length', fields=['content', 'reasoning', 'reasoning_details', 'refusal', 'role'])",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T18:45:07.410605+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 4,
+    "message": "invalid JSON: Unterminated string starting at: line 1 column 10681 (char 10680)",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T18:48:23.960599+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "message": "full-review failed after 4 attempts: invalid JSON: Unterminated string starting at: line 1 column 10681 (char 10680)",
+    "stage": "paper",
+    "timestamp": "2026-08-23T18:48:23.961075+00:00",
+    "type": "ReviewError"
+  }
+]

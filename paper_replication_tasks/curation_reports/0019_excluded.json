@@ -1,0 +1,13 @@
+{
+  "bundle_file_count": 21,
+  "bundle_file_map_sha256": "20969fc5a2a3cf24e12abba6c539df231891e666e17163a9cea65e195a035df7",
+  "decision": "REJECT_PAPER",
+  "excluded_at": "2026-09-04",
+  "former_manifest_entry_sha256": "ad90eaec64829e12fc5707cfb0d266d943300e6aae34b4833dad3e8bfb35c89c",
+  "gate_basis": ["G1", "G2", "G3"],
+  "historical_artifacts": "preserved",
+  "reason": "The paper's central contribution is theorem-driven geometry. The curvature routines are supporting experiment functions rather than a unique new core scientific algorithm.",
+  "schema_version": 1,
+  "status": "excluded_no_core_algorithm",
+  "task_id": "scibench_replication_0019"
+}

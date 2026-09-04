@@ -1,0 +1,183 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E2",
+          "E4"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "The paper's main results are universal inequalities and proofs, not merely numerical evaluation."
+      },
+      "description": "Evaluate known canonical or Euclidean curvature formulas for supplied tangent matrices.",
+      "evidence": [
+        "E2",
+        "E4"
+      ],
+      "name": "Closed-form sectional-curvature evaluation",
+      "role": "supporting"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E3",
+          "E5"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "The theorems and maximizer characterization stand without the illustrative experiment."
+      },
+      "description": "Generate structured tangent sections of increasing rank and evaluate curvature.",
+      "evidence": [
+        "E3",
+        "E5"
+      ],
+      "name": "Parametric rank-versus-curvature experiment",
+      "role": "evaluation"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E1",
+        "E5"
+      ],
+      "from": "C1",
+      "relation": "enables characterization of",
+      "to": "C2"
+    },
+    {
+      "evidence": [
+        "E3"
+      ],
+      "from": "C2",
+      "relation": "is illustrated by",
+      "to": "numerical illustrations"
+    }
+  ],
+  "decision": "REJECT_PAPER",
+  "evidence_catalog": [
+    {
+      "excerpt": "We provide refined inequalities for such terms and pay special attention to the maximizers of the curvature bounds.",
+      "id": "E1",
+      "page": 1,
+      "section": "Abstract"
+    },
+    {
+      "excerpt": "we prove the conjectured global curvature bounds",
+      "id": "E2",
+      "page": 2,
+      "section": "1 Introduction"
+    },
+    {
+      "excerpt": "we illustrate the behavior of the sectional curvature on SO(n), Gr(n, p) and St(n, p) at special parametric sections",
+      "id": "E3",
+      "page": 20,
+      "section": "4 Numerical Experiments"
+    },
+    {
+      "excerpt": "we establish that the curvature on the Stiefel manifold equipped with this metric globally does not exceed 5/4.",
+      "id": "E4",
+      "page": 24,
+      "section": "5 Summary"
+    },
+    {
+      "excerpt": "these tangent space sections are necessarily spanned by special rank-two matrices.",
+      "id": "E5",
+      "page": 24,
+      "section": "5 Summary"
+    }
+  ],
+  "evidence_gaps": [
+    "No unique algorithm is introduced for the theorem-driven scientific contribution."
+  ],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E1",
+        "E2",
+        "E4"
+      ],
+      "reason": "The central contributions are proofs of trace inequalities and sharp curvature bounds, not an algorithm.",
+      "status": "REJECT"
+    },
+    "G2": {
+      "evidence": [
+        "E1",
+        "E3"
+      ],
+      "reason": "No executable candidate uniquely carries the theorem-level contribution.",
+      "status": "REJECT"
+    },
+    "G3": {
+      "evidence": [
+        "E1",
+        "E5"
+      ],
+      "reason": "Direct curvature evaluation uses stated formulas, while the paper-specific novelty lies in proofs and maximizer characterization.",
+      "status": "REJECT"
+    },
+    "G4": {
+      "evidence": [
+        "E2",
+        "E4"
+      ],
+      "reason": "The paper does not specify a core algorithmic input-output contract for its main contribution.",
+      "status": "REJECT"
+    },
+    "G5": {
+      "evidence": [
+        "E3",
+        "E5"
+      ],
+      "reason": "Parametric experiments illustrate the proved geometry but do not test generalization of a selected core algorithm.",
+      "status": "REJECT"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E1",
+        "E2",
+        "E4"
+      ],
+      "id": "C1",
+      "summary": "Refined matrix trace inequalities and proofs of global curvature bounds."
+    },
+    {
+      "evidence": [
+        "E5"
+      ],
+      "id": "C2",
+      "summary": "Low-rank characterization of extremal tangent sections."
+    }
+  ],
+  "paper_id": "0019",
+  "research_goal": {
+    "evidence": [
+      "E1",
+      "E2",
+      "E4",
+      "E5"
+    ],
+    "summary": "Establish sharp sectional-curvature bounds and characterize their low-rank maximizers on Grassmann and Stiefel manifolds."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": null,
+  "selected_core_algorithm": null,
+  "uniqueness_reason": "The mathematical proofs and extremal characterizations are central, but neither is an input-output scientific algorithm; formula evaluation and numerical sweeps are supporting evaluation procedures."
+}

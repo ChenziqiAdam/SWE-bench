@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "task_id": "scibench_replication_0011_core",
+  "sources": [
+    {
+      "role": "target",
+      "title": "Accurate Estimation of Diffusion Coefficients and their Uncertainties from Computer Simulation",
+      "version": "arXiv:2305.18244v9 / JCTC 2025",
+      "doi": "10.1021/acs.jctc.4c01249",
+      "file": "target_mccluskey_coles_morgan.pdf",
+      "sha256": "4503b909fb05528f6bde5f58dd1a7705152914fcfa0853f8dd21de12483345ab"
+    },
+    {
+      "role": "minimum_eigenvalue_reconditioning",
+      "title": "Improving the condition number of estimated covariance matrices",
+      "version": "arXiv:1810.10984 / Tellus A 72 (2020)",
+      "doi": "10.1080/16000870.2019.1696646",
+      "file": "minimum_eigenvalue_tabeart_2020.pdf",
+      "sha256": "d3a2888d53c55a753a61d95679358b3ddac4bff2bbe911ff722dc3134713c63f"
+    },
+    {
+      "role": "generalised_least_squares",
+      "title": "On the Estimation of Statistical Parameters",
+      "version": "Proceedings of the Royal Society of Edinburgh 61 (1942)",
+      "doi": "10.1017/S008045410000618X",
+      "file": "gls_aitken_silverstone_1942.pdf",
+      "sha256": "72e655345e4fc029b9e54eb9bdfd1e305f8e1d649654ebda670a2f5f52f5cef4"
+    },
+    {
+      "role": "bayesian_posterior_sampling",
+      "title": "Ensemble samplers with affine invariance",
+      "version": "CAMCoS 5(1) (2010)",
+      "doi": "10.2140/camcos.2010.5.65",
+      "file": "bayesian_sampling_goodman_weare_2010.pdf",
+      "sha256": "95b2285b087c6c45ab65cd74c9711c8dc0a469407382ac04468b62f1ef30fb0f"
+    }
+  ]
+}

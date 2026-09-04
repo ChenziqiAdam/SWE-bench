@@ -1,0 +1,118 @@
+{
+  "call_count": 4,
+  "call_mode": "single_full_call",
+  "character_count": 61681,
+  "failed_at": "2026-08-23T19:33:16.740608+00:00",
+  "model": "stealth/ox-alpha",
+  "nonempty_page_ratio": 1.0,
+  "page_count": 25,
+  "paper_id": "0022",
+  "prompt_sha256": "98e3a1338dd75ed7505089e1477e5885434945a6631f5869869d1de640440681",
+  "redaction_markers": [],
+  "request_config": {
+    "max_output_tokens": 8000,
+    "reasoning": {
+      "effort": "minimal",
+      "exclude": true
+    },
+    "temperature": 0
+  },
+  "rubric_sha256": "80416258156139723a755924885396f7a54ce77809154816bace9db96702cfca",
+  "schema_version": "core-algorithm-review-v2",
+  "source_path": "/Users/adamchen/Desktop/VSCode/SWE-bench/paper_replication_tasks/curation_tools/ssarnoldi_paper/paper_original_arxiv_v3.pdf",
+  "source_sha256": "ba434fecc9ffe9c73279e1a51921c589abc6df3f0cd0619b6b9dab31d21570f0",
+  "token_usage": [
+    {
+      "completion_tokens": 2018,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 21720,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 2752,
+        "video_tokens": 0
+      },
+      "total_tokens": 23738
+    },
+    {
+      "completion_tokens": 2006,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 21720,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 21696,
+        "video_tokens": 0
+      },
+      "total_tokens": 23726
+    },
+    {
+      "completion_tokens": 1942,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 21720,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 21696,
+        "video_tokens": 0
+      },
+      "total_tokens": 23662
+    },
+    {
+      "completion_tokens": 2117,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 21720,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 21696,
+        "video_tokens": 0
+      },
+      "total_tokens": 23837
+    }
+  ]
+}

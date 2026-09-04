@@ -1,0 +1,11 @@
+{
+  "call_count": 4,
+  "error": {
+    "message": "full-review failed after 4 attempts: selected_core_algorithm is not a candidate",
+    "stage": "paper",
+    "timestamp": "2026-08-23T19:11:34.094726+00:00",
+    "type": "ReviewError"
+  },
+  "paper_id": "0011",
+  "status": "FAILED"
+}

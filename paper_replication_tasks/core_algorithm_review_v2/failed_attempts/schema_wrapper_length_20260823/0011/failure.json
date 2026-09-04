@@ -1,0 +1,5 @@
+{
+  "error": "'NoneType' object has no attribute 'strip'",
+  "paper_id": "0011",
+  "status": "FAILED"
+}

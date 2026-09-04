@@ -1,0 +1,192 @@
+[
+  {
+    "attempt": 1,
+    "finish_reason": "stop",
+    "message_fields": [
+      "content",
+      "reasoning",
+      "reasoning_details",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787508893-dwSR5L7kJ8bu5f4nhOKc",
+    "stage": "full-review",
+    "text": "{\"schema_version\":\"core-algorithm-review-v2\",\"paper_id\":\"0011\",\"research_goal\":{\"summary\":\"Estimate self-diffusion coefficients and their uncertainties from single molecular dynamics trajectories with high statistical efficiency.\",\"evidence\":[{\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"We present a scheme for estimating D∗ from a single simulation trajectory with high statistical efficiency\"}]},\"main_contributions\":[{\"id\":\"C1\",\"summary\":\"Approximate Bayesian regression scheme giving statistically efficient D* estimates and accurate uncertainties from one trajectory.\",\"evidence\":[{\"page\":2,\"section\":\"Introduction\",\"excerpt\":\"we describe an approximate Bayesian regression method for estimating D∗ with near-maximal statistical efficiency while accurately estimating the corresponding statistical uncertainty\"}]},{\"id\":\"C2\",\"summary\":\"Analytical long-time-limit model covariance matrix for freely diffusing particles, parameterised from simulation data and reconditioned.\",\"evidence\":[{\"page\":3,\"section\":\"III. APPROXIMATING Σ FROM SIMULATION DATA\",\"excerpt\":\"we approximate Σ with a model covariance matrix, Σ′, with a known analytical form, that we parameterise from the available simulation data\"}]},{\"id\":\"C3\",\"summary\":\"Validation on lattice random walks and LLZO demonstrating near-optimal efficiency and improved uncertainty versus standard regressions.\",\"evidence\":[{\"page\":5,\"section\":\"IV. VALIDATION\",\"excerpt\":\"the close agreement between these two distributions demonstrates that our approximate Bayesian regression scheme yields nearly optimal estimates of D∗\"}]}],\"contribution_graph\":[{\"from\":\"research_goal\",\"to\":\"C1\",\"relation\":\"motivates development of efficient single-trajectory estimator\",\"evidence\":[{\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"An optimal scheme for estimating D∗ minimises this uncertainty, i.e., it will have high statis-tical efficiency\"}]},{\"from\":\"C1\",\"to\":\"approximate_bayesian_regression_scheme\",\"relation\":\"is realised by\",\"evidence\":[{\"page\":2,\"section\":\"Introduction\",\"excerpt\":\"This method is implemented in the open-source Python package kinisi\"}]},{\"from\":\"C2\",\"to\":\"approximate_bayesian_regression_scheme\",\"relation\":\"supplies parameterised covariance enabling likelihood\",\"evidence\":[{\"page\":3,\"section\":\"III. APPROXIMATING Σ FROM SIMULATION DATA\",\"excerpt\":\"Providing the correlation structure of Σ′ is similar to that of Σ, this model correlation matrix can be used\"}]},{\"from\":\"C1\",\"to\":\"random_walk_validation_fig4\",\"relation\":\"validated by\",\"evidence\":[{\"page\":5,\"section\":\"IV. VALIDATION\",\"excerpt\":\"this distribution is approximately Gaussian and is centred close to the true self-diffusion coefficient D∗ = 1\"}]},{\"from\":\"C1\",\"to\":\"llzo_validation_fig5\",\"relation\":\"demonstrated on real material\",\"evidence\":[{\"page\":5,\"section\":\"IV. VALIDATION\",\"excerpt\":\"confirms that our method yields accurate and statistically efficient estimates for D∗, even for real-world simulation data\"}]},{\"from\":\"C1\",\"to\":\"scaling_comparison_fig6\",\"relation\":\"benchmarked against baselines\",\"evidence\":[{\"page\":7,\"section\":\"V. SCALING AND COMPARISON\",\"excerpt\":\"Our approximate Bayesian regression method performs similarly to GLS with a numerically converged covariance matrix, and gives significantly reduced uncertainty\"}]}],\"candidate_algorithms\":[{\"name\":\"approximate_bayesian_regression_scheme\",\"role\":\"core\",\"description\":\"Full pipeline: sliding-window MSD, variance rescaling, model covariance construction with reconditioning, MAP initialisation, MCMC posterior sampling for D* and uncertainty.\",\"evidence\":[{\"page\":8,\"section\":\"VII. METHODS A\",\"excerpt\":\"kinisi uses the emcee package [40], which implements Goodman and Weare's affine invariant Markov chain Monte Carlo ensemble sampler\"}],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"All headline results and the stated central contribution vanish; no alternative single-trajectory efficient estimator remains.\",\"evidence\":[{\"page\":2,\"section\":\"Introduction\",\"excerpt\":\"We then use Markov-chain Monte Carlo to sample the posterior distribution of linear models compatible with this multivariate normal model\"}]}},{\"name\":\"variance_rescaling_estimator\",\"role\":\"supporting\",\"description\":\"Rescales observed squared-displacement variance by independent non-overlapping sub-trajectory count to estimate MSD variance from one trajectory.\",\"evidence\":[{\"page\":4,\"section\":\"III. APPROXIMATING Σ FROM SIMULATION DATA\",\"excerpt\":\"we compute an estimated variance by rescaling the observed variance of the squared displacement for time interval i\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Supplement offers block renormalisation alternative giving similar posteriors; stage folds into core scheme rather than standing alone.\",\"evidence\":[{\"page\":15,\"section\":\"S-II\",\"excerpt\":\"Both methods give unbiased estimates of D∗ and similar distributions\"}]}},{\"name\":\"model_covariance_reconditioning\",\"role\":\"supporting\",\"description\":\"Builds analytical covariance from estimated variances and applies minimum-eigenvalue reconditioning enforcing invertibility and stable likelihood evaluation.\",\"evidence\":[{\"page\":4,\"section\":\"III. APPROXIMATING Σ FROM SIMULATION DATA\",\"excerpt\":\"we recondition the estimated covariance matrix obtained from Eqn. 6 using the minimum eigenvalue method\"}],\"deletion_test\":{\"outcome\":\"UNCERTAIN\",\"reason\":\"Numerically required subroutine of the core scheme, in principle substitutable; carries no standalone scientific claim.\",\"evidence\":[{\"page\":4,\"section\":\"III. APPROXIMATING Σ FROM SIMULATION DATA\",\"excerpt\":\"using these to directly parameterise Σ′ can yield matrices with high condition numbers, resulting in numerical instabilities\"}]}},{\"name\":\"ols_regression\",\"role\":\"baseline\",\"description\":\"Ordinary least squares linear fit to MSD giving slope-based D* and textbook uncertainty; shown statistically inefficient.\",\"evidence\":[{\"page\":1,\"section\":\"I. INTRODUCTION\",\"excerpt\":\"As a consequence, OLS is statistically inefficient, giving a relatively large statistical uncertainty in D∗\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Comparator only; removing it leaves contribution and conclusions intact.\",\"evidence\":[{\"page\":7,\"section\":\"V. SCALING AND COMPARISON\",\"excerpt\":\"We compare four methods for estimating D∗ from the observed MSD data: OLS, WLS, the approximate Bayesian regression method described here, and GLS\"}]}},{\"name\":\"wls_regression\",\"role\":\"baseline\",\"description\":\"Variance-weighted least squares ignoring correlations; intermediate efficiency with underestimated uncertainties.\",\"evidence\":[{\"page\":2,\"section\":\"II. BACKGROUND\",\"excerpt\":\"WLS still neglects correlations in x, however, and is therefore statistically inefficient\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Baseline comparator; conclusions survive its removal.\",\"evidence\":[{\"page\":7,\"section\":\"V. SCALING AND COMPARISON\",\"excerpt\":\"We compare four methods for estimating D∗ from the observed MSD data: OLS, WLS, the approximate Bayesian regression method described here, and GLS\"}]}},{\"name\":\"gls_regression\",\"role\":\"baseline\",\"description\":\"Generalised least squares with numerically converged covariance; theoretical optimum serving as benchmark ceiling.\",\"evidence\":[{\"page\":2,\"section\":\"II. BACKGROUND\",\"excerpt\":\"GLS offers the theoretical maximum statistical efficiency—it achieves the Cramér–Rao bound\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Benchmark ceiling only; claims stand without it although optimality comparisons weaken.\",\"evidence\":[{\"page\":7,\"section\":\"V. SCALING AND COMPARISON\",\"excerpt\":\"The GLS dataset corresponds to an optimally efficient estimator for linear regression of observed MSD data\"}]}},{\"name\":\"flyvbjerg_peterson_block_renormalisation\",\"role\":\"baseline\",\"description\":\"Iterative blocking variance-of-mean estimator compared in supplement; noisier, less accurate alternative for variance estimation.\",\"evidence\":[{\"page\":15,\"section\":\"S-II\",\"excerpt\":\"the block renormalisation method also provides reasonable estimates of the true numerically determined variance, but is generally less accurate\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Rejected alternative discussed only in supplement; main-text method unaffected.\",\"evidence\":[{\"page\":15,\"section\":\"S-II\",\"excerpt\":\"we consider overestimation of σ2[D∗] to always be preferable to underestimation\"}]}},{\"name\":\"llzo_md_simulation_protocol\",\"role\":\"preprocessing\",\"description\":\"Classical MD protocol generating LLZO trajectories; data generation, not an estimation algorithm.\",\"evidence\":[{\"page\":8,\"section\":\"VII. METHODS B\",\"excerpt\":\"Classical molecular dynamics simulations were run using the metalwalls code\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Produces one case-study dataset; random-walk validation independently supports the contribution.\",\"evidence\":[{\"page\":5,\"section\":\"IV. VALIDATION\",\"excerpt\":\"Second, we consider an example real-world system, the lithium-ion solid electrolyte Li7La3Zr2O12\"}]}},{\"name\":\"map_initialisation_via_ols\",\"role\":\"supporting\",\"description\":\"Uses OLS fit as starting guess for maximising posterior peak before MCMC sampling.\",\"evidence\":[{\"page\":8,\"section\":\"VII. METHODS A\",\"excerpt\":\"kinisi uses ordinary least squares to obtain an initial guess for the gradient and intercept of the linear model\"}],\"deletion_test\":{\"outcome\":\"UNCERTAIN\",\"reason\":\"Internal optimisation convenience inside core scheme; other starting points conceivable, no standalone claim.\",\"evidence\":[{\"page\":8,\"section\":\"VII. METHODS A\",\"excerpt\":\"This initial guess is then used as the starting point for minimising the negative maximum a posteriori\"}]}}],\"selected_core_algorithm\":\"approximate_bayesian_regression_scheme\",\"uniqueness_reason\":\"Exactly one candidate implements the central contribution; others are explicit baselines, a rejected alternative, or inseparable internal stages of that scheme.\",\"scientific_contract\":{\"algorithm\":\"approximate_bayesian_regression_scheme\",\"scientific_purpose\":\"Estimate self-diffusion coefficient and its statistical uncertainty from a single simulation trajectory with near-maximal statistical efficiency.\",\"inputs\":[\"Particle displacement trajectories with timestep metadata\",\"Diffusive-regime start threshold\",\"Maximum condition number for reconditioning\"],\"outputs\":[\"Posterior samples of linear model parameters\",\"Point estimate of self-diffusion coefficient\",\"Estimated variance of the diffusion coefficient\"],\"core_operations\":[\"Overlapping sliding-window MSD computation\",\"Variance rescaling by independent sub-trajectory count\",\"Analytical covariance construction and eigenvalue reconditioning\",\"MAP initialisation then affine-invariant MCMC posterior sampling\"],\"assumptions\":[\"Long-time Einstein diffusive regime is sampled\",\"MSD population approximately multivariate normal\",\"Freely diffusing particles share rescaled covariance structure\"],\"parameters\":[\"Diffusive-regime start threshold\",\"Maximum condition number 1e16\",\"MCMC walker count, steps, burn-in, thinning\"],\"scientific_invariants\":[\"Posterior mean matches GLS under uninformative prior\",\"Estimated variance approximates true sample variance\",\"Near-Cramér–Rao statistical efficiency retained\"],\"dependent_contributions\":[\"C1\",\"C2\"],\"dependent_experiments_results\":[\"Figure 4 random-walk posterior and variance validation\",\"Figure 5 LLZO effective-trajectory validation\",\"Figure 6 scaling comparison against OLS, WLS, GLS\"],\"specificity_reason\":\"Requires paper-specific analytical covariance parameterisation and bespoke Bayesian regression design; not achievable via off-the-shelf estimators.\",\"evidence\":[{\"page\":3,\"section\":\"III. APPROXIMATING Σ FROM SIMULATION DATA\",\"excerpt\":\"We model the covariance matrix for the observed MSD from a given simulation using the covariance matrix for the MSD of an equivalent system of freely diffusing particles\"}]},\"gates\":{\"G1\":{\"status\":\"PASS\",\"reason\":\"Deleting the scheme removes the paper's central contribution; every headline figure depends on it.\",\"evidence\":[{\"page\":2,\"section\":\"Introduction\",\"excerpt\":\"we describe an approximate Bayesian regression method for estimating D∗ with near-maximal statistical efficiency while accurately estimating the corresponding statistical uncertainty\"}]},\"G2\":{\"status\":\"PASS\",\"reason\":\"OLS, WLS, GLS are explicit comparators; remaining candidates are inseparable stages of one coherent scheme.\",\"evidence\":[{\"page\":7,\"section\":\"V. SCALING AND COMPARISON\",\"excerpt\":\"We compare four methods for estimating D∗ from the observed MSD data: OLS, WLS, the approximate Bayesian regression method described here, and GLS\"}]},\"G3\":{\"status\":\"PASS\",\"reason\":\"Novel covariance modelling plus MCMC posterior inference; exceeds standard library regression calls.\",\"evidence\":[{\"page\":3,\"section\":\"III. APPROXIMATING Σ FROM SIMULATION DATA\",\"excerpt\":\"we approximate Σ with a model covariance matrix, Σ′, with a known analytical form, that we parameterise from the available simulation data\"}]},\"G4\":{\"status\":\"PASS\",\"reason\":\"Trajectories map deterministically to posterior samples and summary statistics; Methods fully specify the numerical procedure.\",\"evidence\":[{\"page\":8,\"section\":\"VII. METHODS A\",\"excerpt\":\"These points can then be plotted as a histogram, and summary statistics D∗ and σ2[D∗] can be derived\"}]},\"G5\":{\"status\":\"PASS\",\"reason\":\"Hidden cases can vary particle counts, timescales, dimensionalities, and diffusive thresholds testing generalisation.\",\"evidence\":[{\"page\":7,\"section\":\"V. SCALING AND COMPARISON\",\"excerpt\":\"Our approximate Bayesian regression method performs similarly to GLS with a numerically converged covariance matrix, and gives significantly reduced uncertainty\"}]},\"G6\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G7\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G8\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]}},\"evidence_gaps\":[\"MCMC settings specified only for demonstrated examples; default behaviour for arbitrary new inputs unstated.\"],\"decision\":\"ACCEPT_FOR_DESIGN\"}",
+    "timestamp": "2026-08-23T18:17:58.643547+00:00",
+    "usage": {
+      "completion_tokens": 7839,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 23692,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 64,
+        "video_tokens": 0
+      },
+      "total_tokens": 31531
+    }
+  },
+  {
+    "attempt": 1,
+    "finish_reason": "length",
+    "message_fields": [
+      "content",
+      "reasoning",
+      "reasoning_details",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787509364-BsOG6NdD2ziRFmuYoURy",
+    "stage": "full-review",
+    "text": null,
+    "timestamp": "2026-08-23T18:26:04.609383+00:00",
+    "usage": {
+      "completion_tokens": 8000,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 23692,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 23680,
+        "video_tokens": 0
+      },
+      "total_tokens": 31692
+    }
+  },
+  {
+    "attempt": 2,
+    "finish_reason": "length",
+    "message_fields": [
+      "content",
+      "reasoning",
+      "reasoning_details",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787509565-rPBor49XmsxbyeI8tViX",
+    "stage": "full-review",
+    "text": null,
+    "timestamp": "2026-08-23T18:29:16.574750+00:00",
+    "usage": {
+      "completion_tokens": 8000,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 23692,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 23680,
+        "video_tokens": 0
+      },
+      "total_tokens": 31692
+    }
+  },
+  {
+    "attempt": 3,
+    "finish_reason": "length",
+    "message_fields": [
+      "content",
+      "reasoning",
+      "reasoning_details",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787509758-sdYmfafyAhDedaVqxBxb",
+    "stage": "full-review",
+    "text": null,
+    "timestamp": "2026-08-23T18:32:31.023381+00:00",
+    "usage": {
+      "completion_tokens": 8000,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 23692,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 23680,
+        "video_tokens": 0
+      },
+      "total_tokens": 31692
+    }
+  },
+  {
+    "attempt": 4,
+    "finish_reason": "stop",
+    "message_fields": [
+      "content",
+      "reasoning",
+      "reasoning_details",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787509955-EmjhtrcUErr4TgwbyWeU",
+    "stage": "full-review",
+    "text": "{\"schema_version\":\"core-algorithm-review-v2\",\"paper_id\":\"0011\",\"research_goal\":{\"summary\":\"Estimate self-diffusion coefficients and their uncertainties accurately from single molecular dynamics trajectories with high statistical efficiency.\",\"evidence\":[{\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"We present a scheme for estimating D* from a single simulation trajectory with high statistical efficiency and accurately estimating the uncertainty\"}]},\"main_contributions\":[{\"id\":\"C1\",\"summary\":\"Approximate Bayesian regression scheme giving statistically efficient D* estimates and accurate uncertainties from one trajectory.\",\"evidence\":[{\"page\":7,\"section\":\"VI. SUMMARY AND DISCUSSION\",\"excerpt\":\"We have introduced and demonstrated an approximate Bayesian regression method for estimating the self-diffusion coefficient\"}]},{\"id\":\"C2\",\"summary\":\"Analytical long-time-limit covariance matrix for freely diffusing particles, parameterised from single-trajectory variance rescaling.\",\"evidence\":[{\"page\":4,\"section\":\"III. APPROXIMATING Σ FROM SIMULATION DATA\",\"excerpt\":\"we compute an estimated variance bσ2[xi] by rescaling the observed variance of the squared displacement\"}]}],\"contribution_graph\":[{\"from\":\"Research goal\",\"to\":\"C1\",\"relation\":\"motivates development of efficient single-trajectory diffusion estimation\",\"evidence\":[{\"page\":1,\"section\":\"I. INTRODUCTION\",\"excerpt\":\"An optimal scheme for estimating D* minimises this uncertainty, i.e., it will have high statistical efficiency\"}]},{\"from\":\"C2\",\"to\":\"C1\",\"relation\":\"provides parameterised model covariance enabling Bayesian regression\",\"evidence\":[{\"page\":3,\"section\":\"III. APPROXIMATING Σ FROM SIMULATION DATA\",\"excerpt\":\"We model the covariance matrix for the observed MSD from a given simulation using the covariance matrix\"}]},{\"from\":\"C1\",\"to\":\"Validation experiments\",\"relation\":\"benchmarked on random walks and LLZO against OLS, WLS, GLS\",\"evidence\":[{\"page\":5,\"section\":\"IV. VALIDATION\",\"excerpt\":\"our approximate Bayesian regression scheme yields nearly optimal estimates of D* using data from individual simulations\"}]}],\"candidate_algorithms\":[{\"name\":\"ordinary least squares (OLS) fitting\",\"role\":\"baseline\",\"description\":\"Textbook linear fit to MSD; statistically inefficient with underestimated uncertainties; also used only as initial guess.\",\"evidence\":[{\"page\":1,\"section\":\"I. INTRODUCTION\",\"excerpt\":\"The simplest approach to fitting a linear model to MSD data from simulation is ordinary least squares regression\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Comparator baseline; the paper's contribution is the new scheme outperforming it.\",\"evidence\":[{\"page\":7,\"section\":\"VI. SUMMARY AND DISCUSSION\",\"excerpt\":\"more accurate single-point estimates of the self-diffusion coefficient than the commonly used OLS or WLS methods\"}]}},{\"name\":\"weighted least squares (WLS) fitting\",\"role\":\"baseline\",\"description\":\"Variance-weighted linear fit ignoring correlations; intermediate-efficiency baseline with underestimated uncertainties.\",\"evidence\":[{\"page\":2,\"section\":\"II. BACKGROUND\",\"excerpt\":\"Some improvement can be made by using weighted least squares (WLS)\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Pure comparison baseline; contribution survives without it.\",\"evidence\":[{\"page\":7,\"section\":\"VI. SUMMARY AND DISCUSSION\",\"excerpt\":\"significant improvement over more conventional methods such as OLS and WLS\"}]}},{\"name\":\"generalised least squares (GLS) with numerical covariance\",\"role\":\"baseline\",\"description\":\"Optimal estimator requiring numerically converged covariance from many replicas; benchmark upper bound.\",\"evidence\":[{\"page\":2,\"section\":\"II. BACKGROUND\",\"excerpt\":\"GLS offers the theoretical maximum statistical efficiency—it achieves the Cramér–Rao bound\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Benchmark needing replica ensembles; defines optimality target, not the contribution itself.\",\"evidence\":[{\"page\":7,\"section\":\"V. σ²[D*] SCALING AND COMPARISON TO OLS, WLS, AND GLS\",\"excerpt\":\"The GLS dataset corresponds to an optimally efficient estimator for linear regression of observed MSD data\"}]}},{\"name\":\"Flyvbjerg–Peterson block renormalisation\",\"role\":\"supporting\",\"description\":\"Alternative variance-of-mean estimator compared against variance rescaling in supplementary material only.\",\"evidence\":[{\"page\":14,\"section\":\"S-II: Estimating σ²[xi]: variance rescaling versus block renormalisation\",\"excerpt\":\"A popular form of block averaging is the block renormalisation method of Flyvbjerg and Peterson\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Supplementary alternative; main scheme uses variance rescaling instead.\",\"evidence\":[{\"page\":15,\"section\":\"S-II\",\"excerpt\":\"the block renormalisation method also provides reasonable estimates of the true numerically determined variance\"}]}},{\"name\":\"variance rescaling estimator (Eqn 7)\",\"role\":\"supporting\",\"description\":\"Rescales squared-displacement variance by independent non-overlapping sub-trajectory count to estimate MSD variances.\",\"evidence\":[{\"page\":4,\"section\":\"III. APPROXIMATING Σ FROM SIMULATION DATA\",\"excerpt\":\"we compute an estimated variance bσ2[xi] by rescaling the observed variance of the squared displacement\"}],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"Inseparable stage parameterising the model covariance matrix of the presented scheme.\",\"evidence\":[{\"page\":4,\"section\":\"III. APPROXIMATING Σ FROM SIMULATION DATA\",\"excerpt\":\"which can then be used to parameterise the model covariance matrixΣ′ via Eqn. 6\"}]}},{\"name\":\"model covariance construction and reconditioning (Eqn 6)\",\"role\":\"supporting\",\"description\":\"Builds analytical covariance from variances and independent counts, then enforces invertibility via minimum eigenvalue method.\",\"evidence\":[{\"page\":4,\"section\":\"III. APPROXIMATING Σ FROM SIMULATION DATA\",\"excerpt\":\"recondition the estimated covariance matrix obtained from Eqn. 6 using the minimum eigenvalue method\"}],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"Required for numerically stable likelihood evaluation; singular matrices break the regression.\",\"evidence\":[{\"page\":4,\"section\":\"III. APPROXIMATING Σ FROM SIMULATION DATA\",\"excerpt\":\"matrices that are singular and non-invertible\"}]}},{\"name\":\"approximate Bayesian regression pipeline\",\"role\":\"core\",\"description\":\"Unified scheme: sliding-window MSD, variance rescaling, analytical covariance, reconditioning, MAP guess, MCMC posterior sampling of linear model.\",\"evidence\":[{\"page\":2,\"section\":\"II. BACKGROUND\",\"excerpt\":\"We use Markov-chain Monte Carlo to sample the posterior distribution of linear models compatible with this multivariate normal model\"}],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"Deleting it removes the paper's entire central contribution and all headline results.\",\"evidence\":[{\"page\":7,\"section\":\"VI. SUMMARY AND DISCUSSION\",\"excerpt\":\"We have introduced and demonstrated an approximate Bayesian regression method for estimating the self-diffusion coefficient\"}]}},{\"name\":\"LLZO molecular dynamics simulation protocol\",\"role\":\"preprocessing\",\"description\":\"MetalWalls NVT simulation generating input trajectory data; application system, not an estimation algorithm.\",\"evidence\":[{\"page\":8,\"section\":\"VII. METHODS B. LLZO simulations\",\"excerpt\":\"Classical molecular dynamics simulations were run using the metalwalls code\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Data-generation step; contribution concerns analysis of trajectories, not their production.\",\"evidence\":[{\"page\":5,\"section\":\"IV. VALIDATION\",\"excerpt\":\"full simulation details are given in the Methods section\"}]}}],\"selected_core_algorithm\":\"approximate Bayesian regression pipeline\",\"uniqueness_reason\":\"Only the unified pipeline delivers the claimed single-trajectory contribution; OLS/WLS/GLS are baselines, and rescaling plus reconditioning are inseparable internal stages of it.\",\"scientific_contract\":{\"algorithm\":\"approximate Bayesian regression pipeline\",\"scientific_purpose\":\"Produce statistically efficient D* point estimates and accurate uncertainty from one MD trajectory.\",\"inputs\":[\"particle displacement trajectories with timestep and dimensionality\",\"diffusive-regime start index\",\"maximum allowed condition number\"],\"outputs\":[\"marginal posterior samples of D*\",\"point estimate D*\",\"uncertainty σ²[D*]\"],\"core_operations\":[\"compute MSD via overlapping sliding windows\",\"estimate σ²[xi] by rescaling with independent sub-trajectory count\",\"assemble Σ' via Eqn 6\",\"recondition Σ' by minimum eigenvalue method\",\"MAP initialisation then affine-invariant MCMC sampling with Gaussian likelihood and D*≥0 prior\"],\"assumptions\":[\"data lie in long-time Einstein diffusive regime\",\"MSD vector approximately multivariate normal by central limit theorem\",\"freely diffusing covariance structure approximates true Σ\"],\"parameters\":[\"diffusive-regime threshold\",\"condition number cap 1×10^16\",\"32 walkers, 1500 steps, 500 burn-in, thinning 10\"],\"scientific_invariants\":[\"posterior mean matches GLS estimate for identical Σ'\",\"estimated σ²[D*] agrees with true replica-sample variance\",\"Σ'[xi,xj]=σ²[xi]N'i/N'j preserved after reconditioning\"],\"dependent_contributions\":[\"C1\",\"C2\"],\"dependent_experiments_results\":[\"Fig 4 random-walk validation\",\"Fig 5 LLZO benchmark\",\"Fig 6 scaling comparison\"],\"specificity_reason\":\"Requires paper-specific analytical covariance derivation, rescaling, reconditioning, and Bayesian MCMC; no off-the-shelf regression API suffices.\",\"evidence\":[{\"page\":8,\"section\":\"VII. METHODS A. Numerical implementation in KINISI\",\"excerpt\":\"To sample the joint posterior probability distribution of the linear model, kinisi uses the emcee package\"}]},\"gates\":{\"G1\":{\"status\":\"PASS\",\"reason\":\"The pipeline embodies the paper's sole main contribution; removing it eliminates all headline claims.\",\"evidence\":[{\"page\":7,\"section\":\"VI. SUMMARY AND DISCUSSION\",\"excerpt\":\"We have introduced and demonstrated an approximate Bayesian regression method for estimating the self-diffusion coefficient\"}]},\"G2\":{\"status\":\"PASS\",\"reason\":\"Exactly one core candidate; others are baselines, preprocessing, or inseparable stages of the same method.\",\"evidence\":[{\"page\":7,\"section\":\"V. σ²[D*] SCALING AND COMPARISON TO OLS, WLS, AND GLS\",\"excerpt\":\"We compare four methods for estimating D* from the observed MSD data: OLS, WLS, the approximate Bayesian regression method described here, and GLS\"}]},\"G3\":{\"status\":\"PASS\",\"reason\":\"Novel analytical covariance, rescaling, and reconditioning demand paper-specific reasoning beyond standard libraries.\",\"evidence\":[{\"page\":4,\"section\":\"III. APPROXIMATING Σ FROM SIMULATION DATA\",\"excerpt\":\"recondition the estimated covariance matrix obtained from Eqn. 6 using the minimum eigenvalue method\"}]},\"G4\":{\"status\":\"PASS\",\"reason\":\"Clear contract: trajectory inputs yield posterior samples, D*, and σ²[D*] deterministically configurable.\",\"evidence\":[{\"page\":8,\"section\":\"VII. METHODS A. Numerical implementation in KINISI\",\"excerpt\":\"The sampling process uses 32 walkers for 1500 steps, with the first 500 steps discarded as a burn-in period\"}]},\"G5\":{\"status\":\"PASS\",\"reason\":\"Hidden inputs can vary dimensionality, particle counts, timescales, and diffusive-regime thresholds.\",\"evidence\":[{\"page\":8,\"section\":\"VII. METHODS A. Numerical implementation in KINISI\",\"excerpt\":\"When calculating the observed mean squared displacement at each time interval, kinisi uses overlapping sliding window sampling\"}]},\"G6\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G7\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G8\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]}},\"evidence_gaps\":[\"Diffusive-regime threshold choice left to user judgement, potentially ambiguous for hidden inputs\",\"Convergence diagnostics for MCMC beyond fixed walker/step counts unspecified\"],\"decision\":\"ACCEPT_FOR_DESIGN\"}",
+    "timestamp": "2026-08-23T18:35:24.372392+00:00",
+    "usage": {
+      "completion_tokens": 7148,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 23692,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 64,
+        "video_tokens": 0
+      },
+      "total_tokens": 30840
+    }
+  }
+]

@@ -1,0 +1,28 @@
+{
+  "G4": "PASS",
+  "all_registered_variants_public_hidden_pass": true,
+  "conclusion": "The 2B redesign removes the demonstrated hidden dependence on paper-unspecified parameters without relaxing tolerances or scientific shortcut coverage.",
+  "historical_failure": {
+    "description": "The former hidden case_02 distinguished 150.15 from paper-consistent 150.05.",
+    "evidence": "curation_reports/official_runs/0018_core/identifiability/report.json",
+    "status": "superseded_by_hidden_redesign"
+  },
+  "limitation": "This is constructive robustness over the registered public-equivalent uncertainty set, not a proof over every possible implementation. G7 remains required before promotion.",
+  "official_commit": "c162068f61bafbe640bbd40ee4a47312498ed153",
+  "paper_sha256": "f7de9fe507fe2bb0bff801bbc9975deb13c0a4b0853fd588935bd04f3af39dfa",
+  "parameter_robustness_evidence": "curation_reports/official_runs/0018_core/parameter_robustness/report.json",
+  "parameter_robustness_sha256": "738349f08c1a310799795c04f93dc87784f209ed71c0c479570e10e3227c7a63",
+  "rederived_tolerances": {
+    "atol": 0.0006967848662498,
+    "rtol": 2.962871958782513e-07
+  },
+  "registered_variants": [
+    "paper_low",
+    "paper_mid",
+    "paper_high"
+  ],
+  "schema_version": 1,
+  "shortcut_evidence": "curation_reports/official_runs/0018_core/g5_shortcuts/report.json",
+  "shortcut_evidence_sha256": "4a6dedabd688ed589992ede4d90dec8a6255d5b81d5fa52da8b232c52cc42ebd",
+  "task_id": "scibench_replication_0018_core"
+}

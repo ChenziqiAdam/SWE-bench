@@ -1,0 +1,353 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E2"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "Paper's entire contribution is this a posteriori framework; without it no novel method remains."
+      },
+      "description": "Two-stage a posteriori aggregation: preliminary design, importance-based partition, final design with chronology-preserving representative periods.",
+      "evidence": [
+        "E3"
+      ],
+      "name": "Storage importance subsampling framework",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E13"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "These are baselines for comparison, not the paper's contribution."
+      },
+      "description": "Standard a priori time series aggregation using cluster mean, medoid, or heuristic extreme inclusion.",
+      "evidence": [
+        "E13"
+      ],
+      "name": "A priori clustering methods (A-C)",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E15"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Standard planning model used as a tool, not the paper's novel contribution."
+      },
+      "description": "Standard optimization model minimizing install and operation costs given demand and weather data.",
+      "evidence": [
+        "E15"
+      ],
+      "name": "Capacity expansion planning model",
+      "role": "supporting"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E5"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Standard subroutine used within the core algorithm, not the contribution itself."
+      },
+      "description": "Production cost model fixing design and optimizing operation across full time series.",
+      "evidence": [
+        "E5"
+      ],
+      "name": "Operational model",
+      "role": "supporting"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E12"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Prior work technique incorporated into the framework, not the paper's novel contribution."
+      },
+      "description": "Decomposing storage levels into inter-period and intra-period contributions for chronology preservation.",
+      "evidence": [
+        "E12"
+      ],
+      "name": "Storage level decomposition (Kotzur et al.)",
+      "role": "supporting"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E1"
+      ],
+      "from": "Research Goal",
+      "relation": "a posteriori aggregation reduces computational cost while preserving accuracy",
+      "to": "C1"
+    },
+    {
+      "evidence": [
+        "E3"
+      ],
+      "from": "C1",
+      "relation": "core algorithm implementing the contribution",
+      "to": "Storage importance subsampling"
+    },
+    {
+      "evidence": [
+        "E10"
+      ],
+      "from": "Storage importance subsampling",
+      "relation": "validates accuracy of design estimates DA1",
+      "to": "Validation experiment"
+    },
+    {
+      "evidence": [
+        "E10"
+      ],
+      "from": "Storage importance subsampling",
+      "relation": "applied to 30-year time series",
+      "to": "Example experiment"
+    },
+    {
+      "evidence": [
+        "E13"
+      ],
+      "from": "C1",
+      "relation": "baselines for comparison",
+      "to": "A priori methods A-C"
+    },
+    {
+      "evidence": [
+        "E15"
+      ],
+      "from": "Storage importance subsampling",
+      "relation": "uses planning model as subroutine",
+      "to": "Planning model"
+    }
+  ],
+  "decision": "ACCEPT_FOR_DESIGN",
+  "evidence_catalog": [
+    {
+      "excerpt": "we introduce a posteriori time series aggregation schemes for models with storage.",
+      "id": "E1",
+      "page": 1,
+      "section": "Abstract"
+    },
+    {
+      "excerpt": "we introduce a posteriori time series aggregation schemes for capacity expansion planning models with storage.",
+      "id": "E2",
+      "page": 5,
+      "section": "2. This paper's contribution"
+    },
+    {
+      "excerpt": "We estimate it by DA1, determined from the following algorithm.",
+      "id": "E3",
+      "page": 6,
+      "section": "3.2. Framework: storage importance subsampling"
+    },
+    {
+      "excerpt": "nA: number of unique representative periods to aggregate into",
+      "id": "E4",
+      "page": 6,
+      "section": "3.2. Framework: storage importance subsampling"
+    },
+    {
+      "excerpt": "Determine system operation across full time series: (Ot)t∈T = Φoperate((ξt)t∈T | DA0).",
+      "id": "E5",
+      "page": 6,
+      "section": "3.2. Framework: storage importance subsampling"
+    },
+    {
+      "excerpt": "Suppose we have a planning model Φplan and want to estimate the optimal design",
+      "id": "E6",
+      "page": 6,
+      "section": "3.2. Framework: storage importance subsampling"
+    },
+    {
+      "excerpt": "These variables are used in a second planning model with a posteriori aggregation.",
+      "id": "E7",
+      "page": 6,
+      "section": "3.1. Overview and intuition"
+    },
+    {
+      "excerpt": "Output: DA1: optimal design estimate",
+      "id": "E8",
+      "page": 6,
+      "section": "3.2. Framework: storage importance subsampling"
+    },
+    {
+      "excerpt": "The method above is an a posteriori scheme that tailors aggregation to the underlying planning model using (estimated) operational variables.",
+      "id": "E9",
+      "page": 7,
+      "section": "3.3. Remarks"
+    },
+    {
+      "excerpt": "Method F (a posteriori): Medoid repr., model days with high generation cost at higher resolution, cluster on time series inputs and storage patterns.",
+      "id": "E10",
+      "page": 8,
+      "section": "4.2. Setup"
+    },
+    {
+      "excerpt": "It builds on work by Hilbers et al. (2020) and Teichgraeber et al. (2021) — which uses operational variables in aggregation for models without storage",
+      "id": "E11",
+      "page": 5,
+      "section": "2. This paper's contribution"
+    },
+    {
+      "excerpt": "Kotzur et al. (2018b) exploit this assumption by decomposing storage levels into inter-period",
+      "id": "E12",
+      "page": 4,
+      "section": "1.3. Inter-period links and storage"
+    },
+    {
+      "excerpt": "Method A (a priori): Use cluster mean as representative day.",
+      "id": "E13",
+      "page": 8,
+      "section": "4.2. Setup"
+    },
+    {
+      "excerpt": "Method C (a priori): Medoid repr., include maximum demand and mininum wind days.",
+      "id": "E14",
+      "page": 8,
+      "section": "4.2. Setup"
+    },
+    {
+      "excerpt": "and weather data at time t. The planning problem is to minimise",
+      "id": "E15",
+      "page": 14,
+      "section": "Appendix B"
+    }
+  ],
+  "evidence_gaps": [
+    "Blind identification test not yet performed",
+    "Dependency closure and oracle validity not yet assessed"
+  ],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E2"
+      ],
+      "reason": "Deleting this algorithm removes the paper's entire novel contribution of a posteriori chronology-preserving aggregation for storage.",
+      "status": "PASS"
+    },
+    "G2": {
+      "evidence": [
+        "E3"
+      ],
+      "reason": "Only one candidate satisfies core requirements; all others are baselines or supporting subroutines.",
+      "status": "PASS"
+    },
+    "G3": {
+      "evidence": [
+        "E9"
+      ],
+      "reason": "Requires paper-specific scientific reasoning about using operational variables to identify system-relevant extremes and preserve chronology for storage.",
+      "status": "PASS"
+    },
+    "G4": {
+      "evidence": [
+        "E8"
+      ],
+      "reason": "Clear input-output contract: time series, nA, pe, IMP as inputs; DA1 as output with well-defined steps.",
+      "status": "PASS"
+    },
+    "G5": {
+      "evidence": [
+        "E7"
+      ],
+      "reason": "Can test with different time series, pe values, importance functions, and clustering methods as noted in paper extensions.",
+      "status": "PASS"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E2"
+      ],
+      "id": "C1",
+      "summary": "A posteriori time series aggregation framework for capacity expansion planning models with storage."
+    },
+    {
+      "evidence": [
+        "E11"
+      ],
+      "id": "C2",
+      "summary": "Combining model-adaptive aggregation with chronology preservation for storage technologies."
+    }
+  ],
+  "paper_id": "0018",
+  "research_goal": {
+    "evidence": [
+      "E1"
+    ],
+    "summary": "Reduce computational cost in energy system planning with storage while preserving accuracy via a posteriori time series aggregation."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": {
+    "algorithm": "Storage importance subsampling framework",
+    "assumptions": [
+      "Storage discharge decisions identical in replications of same representative period",
+      "Importance function identifies events requiring peak capacities",
+      "Equal representative periods for extreme and regular subsets"
+    ],
+    "core_operations": [
+      "First-stage a priori aggregation to get preliminary design DA0",
+      "Run operational model on full time series given DA0",
+      "Calculate importance of each period using IMP",
+      "Partition into extreme and regular periods",
+      "Aggregate extreme and regular periods separately with chronology preservation",
+      "Second-stage planning model on aggregated time series to get DA1"
+    ],
+    "dependent_contributions": [
+      "C1: a posteriori time series aggregation for models with storage",
+      "C2: combining model-adaptive aggregation with chronology preservation"
+    ],
+    "dependent_experiments_results": [
+      "Validation experiment comparing DA1 to true DT on 3-year series",
+      "Example experiment on 30-year series showing reduced unserved energy",
+      "Comparison of a priori vs a posteriori methods (Table 1, Figures 6-7)"
+    ],
+    "evidence": [
+      "E3"
+    ],
+    "inputs": [
+      "Demand and weather time series (ξt)t∈T",
+      "Number of representative periods nA",
+      "Proportion of extreme periods pe",
+      "Importance function IMP"
+    ],
+    "outputs": [
+      "Optimal design estimate DA1"
+    ],
+    "parameters": [
+      "nA: number of unique representative periods",
+      "pe: proportion of extreme periods",
+      "Importance function choice (generation cost or unserved energy)",
+      "Clustering method choice (k-means/medoids or hierarchical)"
+    ],
+    "scientific_invariants": [
+      "Chronology of representative periods preserved for storage modeling",
+      "A posteriori aggregation adapts to underlying energy system model"
+    ],
+    "scientific_purpose": "Estimate optimal system design across long time series by aggregating into representative periods using operational variables to identify and preserve relevant extreme events.",
+    "specificity_reason": "Uses operational variables from the planning model to identify system-relevant extremes and preserve chronology, which is novel scientific reasoning not available in standard off-the-shelf procedures."
+  },
+  "selected_core_algorithm": "Storage importance subsampling framework",
+  "uniqueness_reason": "Only candidate directly implementing the paper's main contribution of a posteriori, model-adaptive, chronology-preserving aggregation for storage models."
+}

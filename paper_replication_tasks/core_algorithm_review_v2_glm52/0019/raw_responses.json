@@ -1,0 +1,638 @@
+[
+  {
+    "attempt": 12,
+    "finish_reason": "stop",
+    "message_fields": [
+      "content",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787542817-LDXls2Cm5VHi4fEkO81f",
+    "stage": "full-review",
+    "text": "{\"schema_version\":\"core-algorithm-review-v2\",\"paper_id\":\"0019\",\"evidence_catalog\":[{\"id\":\"E1\",\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"We provide refined inequalities for such terms and pay special attention to the maximizers of the curvature bounds.\"},{\"id\":\"E2\",\"page\":1,\"section\":\"1. Introduction\",\"excerpt\":\"In this work, we investigate the sectional curvature on the Stiefel and Grassmann manifolds.\"},{\"id\":\"E3\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"we prove the conjectured global curvature bounds of 0 ≤ Kc ≤ 5/4 (canonical metric) and −1/2 ≤ Ke ≤ 1 (Euclidean metric).\"},{\"id\":\"E4\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"we observe that 'high curvature means low-rank'.\"},{\"id\":\"E5\",\"page\":6,\"section\":\"2.2. Canonical curvature formulae on Grassmann and Stiefel\",\"excerpt\":\"a straightforward evaluation of (3) yields K Gr(X, Y) = 1/4 ∥[X, Y]mGr∥²[I] + ∥[X, Y]hGr∥²[I]\"},{\"id\":\"E6\",\"page\":6,\"section\":\"2.2. Canonical curvature formulae on Grassmann and Stiefel\",\"excerpt\":\"K St_c (X, Y) = 1/2 ∥B2B1^T − B1B2^T∥²F + 1/4 ∥B1A2 − B2A1∥²F + 1/8 ∥[A1, A2] − (B1^T B2 − B2^T B1)∥²F\"},{\"id\":\"E7\",\"page\":10,\"section\":\"3. Matrix norm inequalities and curvature estimates\",\"excerpt\":\"The next theorem includes (and refines) the inequality of Wu and Chen.\"},{\"id\":\"E8\",\"page\":12,\"section\":\"3.2. Bounds on the canonical sectional curvature on Stiefel\",\"excerpt\":\"The sectional curvature under the canonical metric on the Stiefel manifold St(n, p), n ≥ p, is globally bounded by 0 ≤ K St_c (X, Y) ≤ 5/4.\"},{\"id\":\"E9\",\"page\":16,\"section\":\"3.3. Bounds on the Euclidean sectional curvature on Stiefel\",\"excerpt\":\"The sectional curvature under the Euclidean metric on the Stiefel manifold St(n, p), n ≥ p, is globally bounded by −1/2 ≤ K St_e (X, Y) ≤ 1.\"},{\"id\":\"E10\",\"page\":20,\"section\":\"4. Numerical Experiments\",\"excerpt\":\"In this section, we illustrate the behavior of the sectional curvature on SO(n), Gr(n, p) and St(n, p) at special parametric sections\"},{\"id\":\"E11\",\"page\":20,\"section\":\"4.1. Experiment 1\",\"excerpt\":\"we start with the rank-one matrices B1 and B2... Then we fill the remaining diagonal entries of B2 and the super- and sub-diagonal entries of B1\"},{\"id\":\"E12\",\"page\":21,\"section\":\"4.2. Experiment 2: Curvature associated with pseudo-random sections\",\"excerpt\":\"we create random skew-symmetric matrices... For each p = 2, . . . ,1000, a number of 100 random pairs X, Y ∈ skew(2p) are computed and the sectional curvature\"}],\"research_goal\":{\"summary\":\"Prove sharp global bounds on sectional curvature of Stiefel and Grassmann manifolds under canonical and Euclidean metrics.\",\"evidence\":[\"E2\"]},\"main_contributions\":[{\"id\":\"C1\",\"summary\":\"Prove global curvature bounds 0≤Kc≤5/4 (canonical) and −1/2≤Ke≤1 (Euclidean) for Stiefel manifold.\",\"evidence\":[\"E3\"]},{\"id\":\"C2\",\"summary\":\"Show high curvature means low-rank: extrema attained at rank-two (canonical) or rank-one (Euclidean) tangent matrices.\",\"evidence\":[\"E4\"]},{\"id\":\"C3\",\"summary\":\"Provide refined matrix trace inequalities for skew-symmetric commutator brackets.\",\"evidence\":[\"E1\"]},{\"id\":\"C4\",\"summary\":\"Numerical experiments illustrating curvature behavior with increasing rank and dimension.\",\"evidence\":[\"E10\"]}],\"contribution_graph\":[{\"from\":\"Research Goal\",\"to\":\"C1\",\"relation\":\"theoretical proof of curvature bounds\",\"evidence\":[\"E3\"]},{\"from\":\"Research Goal\",\"to\":\"C2\",\"relation\":\"characterization of curvature maximizers\",\"evidence\":[\"E4\"]},{\"from\":\"Research Goal\",\"to\":\"C3\",\"relation\":\"refined matrix inequalities enabling proofs\",\"evidence\":[\"E1\"]},{\"from\":\"C1\",\"to\":\"Theorem 8\",\"relation\":\"canonical metric bound proof\",\"evidence\":[\"E8\"]},{\"from\":\"C1\",\"to\":\"Theorem 10\",\"relation\":\"Euclidean metric bound proof\",\"evidence\":[\"E9\"]},{\"from\":\"C3\",\"to\":\"Theorem 7\",\"relation\":\"Wu-Chen inequality refinement\",\"evidence\":[\"E7\"]},{\"from\":\"C2\",\"to\":\"Numerical Experiments\",\"relation\":\"illustration of low-rank curvature maxima\",\"evidence\":[\"E10\"]},{\"from\":\"Numerical Experiments\",\"to\":\"Figures 1-4\",\"relation\":\"curvature vs rank and dimension plots\",\"evidence\":[\"E10\"]}],\"candidate_algorithms\":[{\"name\":\"Sectional curvature computation on Stiefel/Grassmann\",\"role\":\"supporting\",\"description\":\"Evaluate formulas (6), (8), (26) to compute sectional curvature from tangent vector blocks A1, A2, B1, B2.\",\"evidence\":[\"E6\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Curvature formulas are standard textbook material; the contribution is proving bounds, not the computation itself.\",\"evidence\":[\"E5\"]}},{\"name\":\"Matrix trace inequality optimization (Theorem 7)\",\"role\":\"core\",\"description\":\"SVD-based optimization of trace terms to establish refined Wu-Chen inequality and curvature bounds.\",\"evidence\":[\"E7\"],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"The refined matrix inequalities are the key mathematical tool enabling all curvature bound proofs.\",\"evidence\":[\"E7\"]}},{\"name\":\"Numerical experiment procedure (Section 4)\",\"role\":\"evaluation\",\"description\":\"Construct parametric tangent vectors with increasing rank, compute sectional curvatures, plot results.\",\"evidence\":[\"E11\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Experiments are illustrative; the theoretical contributions stand without them.\",\"evidence\":[\"E10\"]}},{\"name\":\"Random curvature sampling experiment\",\"role\":\"evaluation\",\"description\":\"Generate random skew-symmetric matrices, project to horizontal spaces, compute averaged curvature vs dimension.\",\"evidence\":[\"E12\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"This is a supporting numerical illustration, not a core contribution.\",\"evidence\":[\"E12\"]}}],\"selected_core_algorithm\":\"Matrix trace inequality optimization (Theorem 7)\",\"uniqueness_reason\":\"Theorem 7 is the central mathematical tool; without it the curvature bound proofs collapse. However, it is a proof technique rather than an executable algorithm with clear I/O.\",\"scientific_contract\":{\"algorithm\":\"Matrix trace inequality optimization (Theorem 7)\",\"scientific_purpose\":\"Establish refined bounds on trace terms involving skew-symmetric matrix commutators to prove curvature bounds.\",\"inputs\":[\"Matrices B1, B2 in R^{m×p} with SVDs\"],\"outputs\":[\"Upper bounds on trace expressions\"],\"core_operations\":[\"SVD-based coordinate transformation\",\"Optimization of trace terms over normalized matrices\",\"Combining bounds to derive curvature inequalities\"],\"assumptions\":[\"B1, B2 are real matrices with given Frobenius norm constraints\"],\"parameters\":[\"Matrix dimensions m, p\",\"Singular values σ1, σ2\"],\"scientific_invariants\":[\"Wu-Chen inequality 1/2∥B1^T B2 − B2^T B1∥²F ≤ ∥B1∥²F ∥B2∥²F\"],\"dependent_contributions\":[\"C1: curvature bounds on Stiefel\",\"C2: low-rank maximizer characterization\"],\"dependent_experiments_results\":[\"Theorem 8: canonical Stiefel bounds\",\"Theorem 10: Euclidean Stiefel bounds\"],\"specificity_reason\":\"This is a mathematical proof technique involving SVD optimization, not a standard off-the-shelf computational procedure.\",\"evidence\":[\"E7\"]},\"gates\":{\"G1\":{\"status\":\"REJECT\",\"reason\":\"The core contribution is a theoretical proof of inequalities, not an executable algorithm with clear input-output contract. The paper is a pure mathematics paper proving theorems.\",\"evidence\":[\"E3\"]},\"G2\":{\"status\":\"PASS\",\"reason\":\"The matrix trace inequality optimization is the unique central mathematical tool enabling all curvature bound proofs.\",\"evidence\":[\"E7\"]},\"G3\":{\"status\":\"PASS\",\"reason\":\"The SVD-based trace optimization is paper-specific scientific reasoning, not a standard API or baseline.\",\"evidence\":[\"E7\"]},\"G4\":{\"status\":\"REJECT\",\"reason\":\"The core contribution is a proof technique, not an executable algorithm with deterministic input→output. It produces inequalities, not computable outputs from given inputs.\",\"evidence\":[\"E7\"]},\"G5\":{\"status\":\"REJECT\",\"reason\":\"Cannot construct hidden inputs to test generalization of a proof technique; the output is a bound, not a computable quantity from variable inputs.\",\"evidence\":[\"E8\"]}},\"evidence_gaps\":[\"No executable algorithm with clear I/O contract exists; the paper is theoretical mathematics with illustrative numerical experiments.\",\"The numerical experiments in Section 4 are evaluation/illustration, not the core scientific contribution.\",\"The curvature computation formulas are standard textbook material, not novel algorithms.\"],\"decision\":\"REJECT_PAPER\"}",
+    "timestamp": "2026-08-24T03:40:24.592271+00:00",
+    "usage": {
+      "completion_tokens": 2844,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 763
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 31489,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 34333
+    }
+  },
+  {
+    "attempt": 14,
+    "finish_reason": "stop",
+    "message_fields": [
+      "content",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787542860-yyceEMj0VyyoiZHZ9Zdt",
+    "stage": "full-review",
+    "text": "{\"schema_version\":\"core-algorithm-review-v2\",\"paper_id\":\"0019\",\"evidence_catalog\":[{\"id\":\"E1\",\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"We provide refined inequalities for such terms and pay special attention to the maximizers of the curvature bounds.\"},{\"id\":\"E2\",\"page\":1,\"section\":\"1. Introduction\",\"excerpt\":\"In this work, we investigate the sectional curvature on the Stiefel and Grassmann manifolds.\"},{\"id\":\"E3\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"we prove the conjectured global curvature bounds of 0 ≤ Kc ≤ 5/4 (canonical metric) and −1/2 ≤ Ke ≤ 1 (Euclidean metric).\"},{\"id\":\"E4\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"we observe that 'high curvature means low-rank'.\"},{\"id\":\"E5\",\"page\":6,\"section\":\"2.2. Canonical curvature formulae on Grassmann and Stiefel\",\"excerpt\":\"a straightforward evaluation of (3) yields K Gr(X, Y) = 1/4 ∥[X, Y]mGr∥²[I] + ∥[X, Y]hGr∥²[I]\"},{\"id\":\"E6\",\"page\":6,\"section\":\"2.2. Canonical curvature formulae on Grassmann and Stiefel\",\"excerpt\":\"K St_c (X, Y) = 1/2 ∥B2B1^T − B1B2^T∥²F + 1/4 ∥B1A2 − B2A1∥²F + 1/8 ∥[A1, A2] − (B1^T B2 − B2^T B1)∥²F\"},{\"id\":\"E7\",\"page\":10,\"section\":\"3. Matrix norm inequalities and curvature estimates\",\"excerpt\":\"The next theorem includes (and refines) the inequality of Wu and Chen.\"},{\"id\":\"E8\",\"page\":12,\"section\":\"3.2. Bounds on the canonical sectional curvature on Stiefel\",\"excerpt\":\"The sectional curvature under the canonical metric on the Stiefel manifold St(n, p), n ≥ p, is globally bounded by 0 ≤ K St_c (X, Y) ≤ 5/4.\"},{\"id\":\"E9\",\"page\":16,\"section\":\"3.3. Bounds on the Euclidean sectional curvature on Stiefel\",\"excerpt\":\"The sectional curvature under the Euclidean metric on the Stiefel manifold St(n, p), n ≥ p, is globally bounded by −1/2 ≤ K St_e (X, Y) ≤ 1.\"},{\"id\":\"E10\",\"page\":20,\"section\":\"4. Numerical Experiments\",\"excerpt\":\"In this section, we illustrate the behavior of the sectional curvature on SO(n), Gr(n, p) and St(n, p) at special parametric sections\"},{\"id\":\"E11\",\"page\":20,\"section\":\"4.1. Experiment 1\",\"excerpt\":\"we start with the rank-one matrices B1 and B2... Then we fill the remaining diagonal entries of B2 and the super- and sub-diagonal entries of B1\"},{\"id\":\"E12\",\"page\":21,\"section\":\"4.2. Experiment 2: Curvature associated with pseudo-random sections\",\"excerpt\":\"we create random skew-symmetric matrices... For each p = 2, . . . ,1000, a number of 100 random pairs X, Y ∈ skew(2p) are computed and the sectional curvature\"}],\"research_goal\":{\"summary\":\"Prove sharp global bounds on sectional curvature of Stiefel and Grassmann manifolds under canonical and Euclidean metrics.\",\"evidence\":[\"E2\"]},\"main_contributions\":[{\"id\":\"C1\",\"summary\":\"Prove global curvature bounds 0≤Kc≤5/4 (canonical) and −1/2≤Ke≤1 (Euclidean) for Stiefel manifold.\",\"evidence\":[\"E3\"]},{\"id\":\"C2\",\"summary\":\"Show high curvature means low-rank: extrema attained at rank-two (canonical) or rank-one (Euclidean) tangent matrices.\",\"evidence\":[\"E4\"]},{\"id\":\"C3\",\"summary\":\"Provide refined matrix trace inequalities for skew-symmetric commutator brackets.\",\"evidence\":[\"E1\"]},{\"id\":\"C4\",\"summary\":\"Numerical experiments illustrating curvature behavior with increasing rank and dimension.\",\"evidence\":[\"E10\"]}],\"contribution_graph\":[{\"from\":\"Research Goal\",\"to\":\"C1\",\"relation\":\"theoretical proof of curvature bounds\",\"evidence\":[\"E3\"]},{\"from\":\"Research Goal\",\"to\":\"C2\",\"relation\":\"characterization of curvature maximizers\",\"evidence\":[\"E4\"]},{\"from\":\"Research Goal\",\"to\":\"C3\",\"relation\":\"refined matrix inequalities enabling proofs\",\"evidence\":[\"E1\"]},{\"from\":\"C1\",\"to\":\"Theorem 8\",\"relation\":\"canonical metric bound proof\",\"evidence\":[\"E8\"]},{\"from\":\"C1\",\"to\":\"Theorem 10\",\"relation\":\"Euclidean metric bound proof\",\"evidence\":[\"E9\"]},{\"from\":\"C3\",\"to\":\"Theorem 7\",\"relation\":\"Wu-Chen inequality refinement\",\"evidence\":[\"E7\"]},{\"from\":\"C2\",\"to\":\"Numerical Experiments\",\"relation\":\"illustration of low-rank curvature maxima\",\"evidence\":[\"E10\"]},{\"from\":\"Numerical Experiments\",\"to\":\"Figures 1-4\",\"relation\":\"curvature vs rank and dimension plots\",\"evidence\":[\"E10\"]}],\"candidate_algorithms\":[{\"name\":\"Sectional curvature computation on Stiefel/Grassmann\",\"role\":\"supporting\",\"description\":\"Evaluate formulas (6), (8), (26) to compute sectional curvature from tangent vector blocks A1, A2, B1, B2.\",\"evidence\":[\"E6\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Curvature formulas are standard textbook material; the contribution is proving bounds, not the computation itself.\",\"evidence\":[\"E5\"]}},{\"name\":\"Matrix trace inequality optimization (Theorem 7)\",\"role\":\"core\",\"description\":\"SVD-based optimization of trace terms to establish refined Wu-Chen inequality and curvature bounds.\",\"evidence\":[\"E7\"],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"The refined matrix inequalities are the key mathematical tool enabling all curvature bound proofs.\",\"evidence\":[\"E7\"]}},{\"name\":\"Numerical experiment procedure (Section 4)\",\"role\":\"evaluation\",\"description\":\"Construct parametric tangent vectors with increasing rank, compute sectional curvatures, plot results.\",\"evidence\":[\"E11\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Experiments are illustrative; the theoretical contributions stand without them.\",\"evidence\":[\"E10\"]}},{\"name\":\"Random curvature sampling experiment\",\"role\":\"evaluation\",\"description\":\"Generate random skew-symmetric matrices, project to horizontal spaces, compute averaged curvature vs dimension.\",\"evidence\":[\"E12\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"This is a supporting numerical illustration, not a core contribution.\",\"evidence\":[\"E12\"]}}],\"selected_core_algorithm\":\"Matrix trace inequality optimization (Theorem 7)\",\"uniqueness_reason\":\"Theorem 7 is the central mathematical tool; without it the curvature bound proofs collapse. However, it is a proof technique rather than an executable algorithm with clear I/O.\",\"scientific_contract\":{\"algorithm\":\"Matrix trace inequality optimization (Theorem 7)\",\"scientific_purpose\":\"Establish refined bounds on trace terms involving skew-symmetric matrix commutators to prove curvature bounds.\",\"inputs\":[\"Matrices B1, B2 in R^{m×p} with SVDs\"],\"outputs\":[\"Upper bounds on trace expressions\"],\"core_operations\":[\"SVD-based coordinate transformation\",\"Optimization of trace terms over normalized matrices\",\"Combining bounds to derive curvature inequalities\"],\"assumptions\":[\"B1, B2 are real matrices with given Frobenius norm constraints\"],\"parameters\":[\"Matrix dimensions m, p\",\"Singular values σ1, σ2\"],\"scientific_invariants\":[\"Wu-Chen inequality 1/2∥B1^T B2 − B2^T B1∥²F ≤ ∥B1∥²F ∥B2∥²F\"],\"dependent_contributions\":[\"C1: curvature bounds on Stiefel\",\"C2: low-rank maximizer characterization\"],\"dependent_experiments_results\":[\"Theorem 8: canonical Stiefel bounds\",\"Theorem 10: Euclidean Stiefel bounds\"],\"specificity_reason\":\"This is a mathematical proof technique involving SVD optimization, not a standard off-the-shelf computational procedure.\",\"evidence\":[\"E7\"]},\"gates\":{\"G1\":{\"status\":\"REJECT\",\"reason\":\"The core contribution is a theoretical proof of inequalities, not an executable algorithm with clear input-output contract. The paper is a pure mathematics paper proving theorems.\",\"evidence\":[\"E3\"]},\"G2\":{\"status\":\"PASS\",\"reason\":\"The matrix trace inequality optimization is the unique central mathematical tool enabling all curvature bound proofs.\",\"evidence\":[\"E7\"]},\"G3\":{\"status\":\"PASS\",\"reason\":\"The SVD-based trace optimization is paper-specific scientific reasoning, not a standard API or baseline.\",\"evidence\":[\"E7\"]},\"G4\":{\"status\":\"REJECT\",\"reason\":\"The core contribution is a proof technique, not an executable algorithm with deterministic input→output. It produces inequalities, not computable outputs from given inputs.\",\"evidence\":[\"E7\"]},\"G5\":{\"status\":\"REJECT\",\"reason\":\"Cannot construct hidden inputs to test generalization of a proof technique; the output is a bound, not a computable quantity from variable inputs.\",\"evidence\":[\"E8\"]},\"G6\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G7\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G8\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]}},\"evidence_gaps\":[\"No executable algorithm with clear I/O contract exists; the paper is theoretical mathematics with illustrative numerical experiments.\",\"The numerical experiments in Section 4 are evaluation/illustration, not the core scientific contribution.\",\"The curvature computation formulas are standard textbook material, not novel algorithms.\"],\"decision\":\"REJECT_PAPER\"}",
+    "timestamp": "2026-08-24T03:41:04.848832+00:00",
+    "usage": {
+      "completion_tokens": 2210,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 54
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 33651,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 35861
+    }
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T03:48:05.678727+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:09:03.158723+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:10:14.754674+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:11:16.441191+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:12:19.506148+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:13:16.436230+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:14:15.338956+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:15:14.297211+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:16:22.194106+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:17:52.136043+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:18:52.558910+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:20:18.700900+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:21:18.104821+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:22:17.778024+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:23:16.713506+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:24:37.425467+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:25:35.966827+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:26:35.542648+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:27:40.724746+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:28:34.591268+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:29:27.887378+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:31:00.705752+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:31:53.798615+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:32:47.063990+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:33:40.520736+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:34:56.707904+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:36:32.586756+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:37:25.879834+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:38:19.229863+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:39:12.334432+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:40:05.366893+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:40:58.357177+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:41:51.688859+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:42:47.732267+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:43:41.454812+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:44:34.664814+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:45:27.911008+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:46:22.528013+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": "error",
+    "message_fields": [
+      "content",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787586433-8vA5NFnXJ2XxcabMplRN",
+    "stage": "full-review-resume-correction",
+    "text": "{\"schema_version\":\"core-algorithm-review-v2\",\"paper_id\":\"0019\",\"evidence_catalog\":[{\"id\":\"E1\",\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"We provide refined inequalities for such terms and pay special attention to the maximizers of the curvature bounds.\"},{\"id\":\"E2\",\"page\":1,\"section\":\"1. Introduction\",\"excerpt\":\"In this work, we investigate the sectional curvature on the Stiefel and Grassmann manifolds.\"},{\"id\":\"E3\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"In this way, we prove the conjectured global curvature bounds of\"},{\"id\":\"E4\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"we observe that 'high curvature means low-rank'.\"},{\"id\":\"E5\",\"page\":6,\"section\":\"2.2. Canonical curvature formulae on Grassmann and Stiefel\",\"excerpt\":\"a straightforward evaluation of (3) yields\"},{\"id\":\"E6\",\"page\":6,\"section\":\"2.2. Canonical curvature formulae on Grassmann and Stiefel\",\"excerpt\":\"This is in line with the result of [22, Prop 4.2, eq. (34)].\"},{\"id\":\"E7\",\"page\":10,\"section\":\"3. Matrix norm inequalities and curvature estimates\",\"excerpt\":\"The next theorem includes (and refines) the inequality of Wu and Chen.\"},{\"id\":\"E8\",\"page\":12,\"section\":\"3.2. Bounds on the canonical sectional curvature on Stiefel\",\"excerpt\":\"The sectional curvature under the canonical metric on the Stiefel manifold St(n, p), n ≥ p, is globally bounded by\"},{\"id\":\"E9\",\"page\":16,\"section\":\"3.3. Bounds on the Euclidean sectional curvature on Stiefel\",\"excerpt\":\"The sectional curvature under the Euclidean metric on the Stiefel manifold St(n, p), n ≥ p, is globally bounded by\"},{\"id\":\"E10\",\"page\":20,\"section\":\"4. Numerical Experiments\",\"excerpt\":\"In this section, we illustrate the behavior of the sectional curvature on SO(n), Gr(n, p) and St(n, p) at special parametric sections\"},{\"id\":\"E11\",\"page\":20,\"section\":\"4.1. Experiment 1\",\"excerpt\":\"In the first experiment, we start with the rank-one matrices\"},{\"id\":\"E12\",\"page\":21,\"section\":\"4.2. Experiment 2: Curvature associated with pseudo-random sections\",\"excerpt\":\"we create random skew-symmetric matrices\"}],\"research_goal\":{\"summary\":\"Prove sharp global bounds on sectional curvature of Stiefel and Grassmann manifolds under canonical and Euclidean metrics.\",\"evidence\":[\"E2\"]},\"main_contributions\":[{\"id\":\"C1\",\"summary\":\"Prove global curvature bounds for Stiefel manifold under canonical and Euclidean metrics.\",\"evidence\":[\"E3\"]},{\"id\":\"C2\",\"summary\":\"Show high curvature means low-rank: extrema at rank-two or rank-one tangent matrices.\",\"evidence\":[\"E4\"]},{\"id\":\"C3\",\"summary\":\"Provide refined matrix trace inequalities for skew-symmetric commutator brackets.\",\"evidence\":[\"E1\"]},{\"id\":\"C4\",\"summary\":\"Numerical experiments illustrating curvature behavior with increasing rank and dimension.\",\"evidence\":[\"E10\"]}],\"contribution_graph\":[{\"from\":\"Research Goal\",\"to\":\"C1\",\"relation\":\"theoretical proof of curvature bounds\",\"evidence\":[\"E3\"]},{\"from\":\"Research Goal\",\"to\":\"C2\",\"relation\":\"characterization of curvature maximizers\",\"evidence\":[\"E4\"]},{\"from\":\"Research Goal\",\"to\":\"C3\",\"relation\":\"refined matrix inequalities enabling proofs\",\"evidence\":[\"E1\"]},{\"from\":\"C1\",\"to\":\"Theorem 8\",\"relation\":\"canonical metric bound proof\",\"evidence\":[\"E8\"]},{\"from\":\"C1\",\"to\":\"Theorem 10\",\"relation\":\"Euclidean metric bound proof\",\"evidence\":[\"E9\"]},{\"from\":\"C3\",\"to\":\"Theorem 7\",\"relation\":\"Wu-Chen inequality refinement\",\"evidence\":[\"E7\"]},{\"from\":\"C2\",\"to\":\"Numerical Experiments\",\"relation\":\"illustration of low-rank curvature maxima\",\"evidence\":[\"E10\"]},{\"from\":\"Numerical Experiments\",\"to\":\"Figures 1-4\",\"relation\":\"curvature vs rank and dimension plots\",\"evidence\":[\"E10\"]}],\"candidate_algorithms\":[{\"name\":\"Sectional curvature computation on Stiefel/Grassmann\",\"role\":\"supporting\",\"description\":\"Evaluate formulas (6), (8), (26) to compute sectional curvature from tangent vector blocks A1, A2, B1, B2.\",\"evidence\":[\"E6\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Curvature formulas are standard textbook material; the contribution is proving bounds, not the computation itself.\",\"evidence\":[\"E5\"]}},{\"name\":\"Matrix trace inequality optimization (Theorem 7)\",\"role\":\"core\",\"description\":\"SVD-based optimization of trace terms to establish refined Wu-Chen inequality and curvature bounds.\",\"evidence\":[\"E7\"],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"The refined matrix inequalities are the key mathematical tool enabling all curvature bound proofs.\",\"evidence\":[\"E7\"]}},{\"name\":\"Numerical experiment procedure (Section 4)\",\"role\":\"evaluation\",\"description\":\"Construct parametric tangent vectors with increasing rank, compute sectional curvatures, plot results.\",\"evidence\":[\"E11\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Experiments are illustrative; the theoretical contributions stand without them.\",\"evidence\":[\"E10\"]}},{\"name\":\"Random curvature sampling experiment\",\"role\":\"evaluation\",\"description\":\"Generate random skew-symmetric matrices, project to horizontal spaces, compute averaged curvature vs dimension.\",\"evidence\":[\"E12\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"This is a supporting numerical illustration, not a core contribution.\",\"evidence\":[\"E12\"]}}],\"selected_core_algorithm\":\"Matrix trace inequality optimization (Theorem 7)\",\"uniqueness_reason\":\"Theorem 7 is the central mathematical tool; without it the curvature bound proofs collapse. However, it is a proof technique rather than an executable algorithm with clear I/O.\",\"scientific_contract\":{\"algorithm\":\"Matrix trace inequality optimization (Theorem 7)\",\"scientific_purpose\":\"Establish refined bounds on trace terms involving skew-symmetric matrix commutators to prove curvature bounds.\",\"inputs\":[\"Matrices B1, B2 in R^{m×p} with SVDs\"],\"outputs\":[\"Upper bounds on trace expressions\"],\"core_operations\":[\"SVD-based coordinate transformation\",\"Optimization of trace terms over normalized matrices\",\"Combining bounds to derive curvature inequalities\"],\"assumptions\":[\"B1, B2 are real matrices with given Frobenius norm constraints\"],\"parameters\":[\"Matrix dimensions m, p\",\"Singular values sigma1, sigma2\"],\"scientific_invariants\":[\"Wu-Chen inequality for skew-symmetric commutator brackets\"],\"dependent_contributions\":[\"C1: curvature bounds on Stiefel\",\"C2: low-rank maximizer characterization\"],\"dependent_experiments_results\":[\"Theorem 8: canonical Stiefel bounds\",\"Theorem 10: Euclidean Stiefel bounds\"],\"specificity_reason\":\"This is a mathematical proof technique involving SVD optimization, not a standard off-the-shelf computational procedure.\",\"evidence\":[\"E7\"]},\"gates\":{\"G1\":{\"status\":\"REJECT\",\"reason\":\"The core contribution is a theoretical proof of inequalities, not an executable algorithm with clear input-output contract.\",\"evidence\":[\"E3\"]},\"G2\":{\"status\":\"PASS\",\"reason\":\"The matrix trace inequality optimization is the unique central mathematical tool enabling all curvature bound proofs.\",\"evidence\":[\"E7\"]},\"G3\":{\"status\":\"PASS\",\"reason\":\"The SVD-based trace optimization is paper-specific scientific reasoning, not a standard API or baseline.\",\"evidence\":[\"E7\"]},\"G4\":{\"status\":\"REJECT\",\"reason\":\"The core contribution is a proof technique, not an executable algorithm with deterministic input to output.\",\"evidence\":[\"E7\"]},\"G5\":{\"status\":\"REJECT\",\"reason\":\"Cannot construct hidden inputs to test generalization of a proof technique; the output is a bound.\",\"evidence\":[\"E8\"]},\"G6\":{\"status\":\"",
+    "timestamp": "2026-08-24T15:47:20.973492+00:00",
+    "usage": {
+      "completion_tokens": 2187,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 325
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 27329,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 29516
+    }
+  },
+  {
+    "attempt": 2,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:47:22.319860+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:48:15.835091+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:49:09.253303+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": "stop",
+    "message_fields": [
+      "content",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787586638-3GSWRznXpLdmewEz7sBV",
+    "stage": "full-review-resume-correction",
+    "text": "{\"schema_version\":\"core-algorithm-review-v2\",\"paper_id\":\"0019\",\"evidence_catalog\":[{\"id\":\"E1\",\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"We provide refined inequalities for such terms and pay special attention to the maximizers of the curvature bounds.\"},{\"id\":\"E2\",\"page\":1,\"section\":\"1. Introduction\",\"excerpt\":\"In this work, we investigate the sectional curvature on the Stiefel and Grassmann manifolds.\"},{\"id\":\"E3\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"In this way, we prove the conjectured global curvature bounds of\"},{\"id\":\"E4\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"we observe that 'high curvature means low-rank'.\"},{\"id\":\"E5\",\"page\":6,\"section\":\"2.2. Canonical curvature formulae on Grassmann and Stiefel\",\"excerpt\":\"a straightforward evaluation of (3) yields\"},{\"id\":\"E6\",\"page\":6,\"section\":\"2.2. Canonical curvature formulae on Grassmann and Stiefel\",\"excerpt\":\"This is in line with the result of [22, Prop 4.2, eq. (34)].\"},{\"id\":\"E7\",\"page\":10,\"section\":\"3. Matrix norm inequalities and curvature estimates\",\"excerpt\":\"The next theorem includes (and refines) the inequality of Wu and Chen.\"},{\"id\":\"E8\",\"page\":12,\"section\":\"3.2. Bounds on the canonical sectional curvature on Stiefel\",\"excerpt\":\"The sectional curvature under the canonical metric on the Stiefel manifold St(n, p), n ≥ p, is globally bounded by\"},{\"id\":\"E9\",\"page\":16,\"section\":\"3.3. Bounds on the Euclidean sectional curvature on Stiefel\",\"excerpt\":\"The sectional curvature under the Euclidean metric on the Stiefel manifold St(n, p), n ≥ p, is globally bounded by\"},{\"id\":\"E10\",\"page\":20,\"section\":\"4. Numerical Experiments\",\"excerpt\":\"In this section, we illustrate the behavior of the sectional curvature on SO(n), Gr(n, p) and St(n, p) at special parametric sections\"},{\"id\":\"E11\",\"page\":20,\"section\":\"4.1. Experiment 1\",\"excerpt\":\"In the first experiment, we start with the rank-one matrices\"},{\"id\":\"E12\",\"page\":21,\"section\":\"4.2. Experiment 2: Curvature associated with pseudo-random sections\",\"excerpt\":\"we create random skew-symmetric matrices\"}],\"research_goal\":{\"summary\":\"Prove sharp global bounds on sectional curvature of Stiefel and Grassmann manifolds under canonical and Euclidean metrics.\",\"evidence\":[\"E2\"]},\"main_contributions\":[{\"id\":\"C1\",\"summary\":\"Prove global curvature bounds for Stiefel manifold under canonical and Euclidean metrics.\",\"evidence\":[\"E3\"]},{\"id\":\"C2\",\"summary\":\"Show high curvature means low-rank: extrema at rank-two or rank-one tangent matrices.\",\"evidence\":[\"E4\"]},{\"id\":\"C3\",\"summary\":\"Provide refined matrix trace inequalities for skew-symmetric commutator brackets.\",\"evidence\":[\"E1\"]},{\"id\":\"C4\",\"summary\":\"Numerical experiments illustrating curvature behavior with increasing rank and dimension.\",\"evidence\":[\"E10\"]}],\"contribution_graph\":[{\"from\":\"Research Goal\",\"to\":\"C1\",\"relation\":\"theoretical proof of curvature bounds\",\"evidence\":[\"E3\"]},{\"from\":\"Research Goal\",\"to\":\"C2\",\"relation\":\"characterization of curvature maximizers\",\"evidence\":[\"E4\"]},{\"from\":\"Research Goal\",\"to\":\"C3\",\"relation\":\"refined matrix inequalities enabling proofs\",\"evidence\":[\"E1\"]},{\"from\":\"C1\",\"to\":\"Theorem 8\",\"relation\":\"canonical metric bound proof\",\"evidence\":[\"E8\"]},{\"from\":\"C1\",\"to\":\"Theorem 10\",\"relation\":\"Euclidean metric bound proof\",\"evidence\":[\"E9\"]},{\"from\":\"C3\",\"to\":\"Theorem 7\",\"relation\":\"Wu-Chen inequality refinement\",\"evidence\":[\"E7\"]},{\"from\":\"C2\",\"to\":\"Numerical Experiments\",\"relation\":\"illustration of low-rank curvature maxima\",\"evidence\":[\"E10\"]},{\"from\":\"Numerical Experiments\",\"to\":\"Figures 1-4\",\"relation\":\"curvature vs rank and dimension plots\",\"evidence\":[\"E10\"]}],\"candidate_algorithms\":[{\"name\":\"Sectional curvature computation\",\"role\":\"supporting\",\"description\":\"Evaluate formulas (6), (8), (26) to compute sectional curvature from tangent vector blocks.\",\"evidence\":[\"E6\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Curvature formulas are standard textbook material; the contribution is proving bounds, not computation.\",\"evidence\":[\"E5\"]}},{\"name\":\"Matrix trace inequality optimization\",\"role\":\"core\",\"description\":\"SVD-based optimization of trace terms to establish refined Wu-Chen inequality and curvature bounds.\",\"evidence\":[\"E7\"],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"The refined matrix inequalities are the key mathematical tool enabling all curvature bound proofs.\",\"evidence\":[\"E7\"]}},{\"name\":\"Numerical experiment procedure\",\"role\":\"evaluation\",\"description\":\"Construct parametric tangent vectors with increasing rank, compute sectional curvatures, plot results.\",\"evidence\":[\"E11\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Experiments are illustrative; theoretical contributions stand without them.\",\"evidence\":[\"E10\"]}},{\"name\":\"Random curvature sampling experiment\",\"role\":\"evaluation\",\"description\":\"Generate random skew-symmetric matrices, project to horizontal spaces, compute averaged curvature.\",\"evidence\":[\"E12\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"This is a supporting numerical illustration, not a core contribution.\",\"evidence\":[\"E12\"]}}],\"selected_core_algorithm\":\"Matrix trace inequality optimization\",\"uniqueness_reason\":\"Theorem 7 is the central mathematical tool; without it the curvature bound proofs collapse. However, it is a proof technique rather than an executable algorithm with clear I/O.\",\"scientific_contract\":{\"algorithm\":\"Matrix trace inequality optimization\",\"scientific_purpose\":\"Establish refined bounds on trace terms involving skew-symmetric matrix commutators to prove curvature bounds.\",\"inputs\":[\"Matrices B1, B2 in R^(m x p) with SVDs\"],\"outputs\":[\"Upper bounds on trace expressions\"],\"core_operations\":[\"SVD-based coordinate transformation\",\"Optimization of trace terms over normalized matrices\",\"Combining bounds to derive curvature inequalities\"],\"assumptions\":[\"B1, B2 are real matrices with Frobenius norm constraints\"],\"parameters\":[\"Matrix dimensions m, p\",\"Singular values sigma1, sigma2\"],\"scientific_invariants\":[\"Wu-Chen inequality for skew-symmetric commutator brackets\"],\"dependent_contributions\":[\"C1: curvature bounds on Stiefel\",\"C2: low-rank maximizer characterization\"],\"dependent_experiments_results\":[\"Theorem 8: canonical Stiefel bounds\",\"Theorem 10: Euclidean Stiefel bounds\"],\"specificity_reason\":\"This is a mathematical proof technique involving SVD optimization, not a standard computational procedure.\",\"evidence\":[\"E7\"]},\"gates\":{\"G1\":{\"status\":\"REJECT\",\"reason\":\"The core contribution is a theoretical proof of inequalities, not an executable algorithm with clear input-output contract.\",\"evidence\":[\"E3\"]},\"G2\":{\"status\":\"PASS\",\"reason\":\"The matrix trace inequality optimization is the unique central mathematical tool enabling all curvature bound proofs.\",\"evidence\":[\"E7\"]},\"G3\":{\"status\":\"PASS\",\"reason\":\"The SVD-based trace optimization is paper-specific scientific reasoning, not a standard API or baseline.\",\"evidence\":[\"E7\"]},\"G4\":{\"status\":\"REJECT\",\"reason\":\"The core contribution is a proof technique, not an executable algorithm with deterministic input to output.\",\"evidence\":[\"E7\"]},\"G5\":{\"status\":\"REJECT\",\"reason\":\"Cannot construct hidden inputs to test generalization of a proof technique; the output is a bound.\",\"evidence\":[\"E8\"]},\"G6\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G7\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G8\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]}},\"evidence_gaps\":[\"No executable algorithm with clear I/O contract exists; the paper is a theoretical mathematics paper proving inequalities and curvature bounds.\",\"The numerical experiments in Section 4 are illustrative evaluations, not core algorithms.\"],\"decision\":\"REJECT_PAPER\"}",
+    "timestamp": "2026-08-24T15:50:57.491771+00:00",
+    "usage": {
+      "completion_tokens": 1866,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 78
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 33297,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 35163
+    }
+  }
+]

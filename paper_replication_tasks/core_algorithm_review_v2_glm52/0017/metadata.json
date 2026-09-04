@@ -1,0 +1,130 @@
+{
+  "call_count": 73,
+  "call_mode": "resume_correction",
+  "character_count": 70119,
+  "completed_at": "2026-08-24T17:23:12.905751+00:00",
+  "model": "z-ai/glm-5.2:free",
+  "nonempty_page_ratio": 1.0,
+  "page_count": 45,
+  "paper_id": "0017",
+  "prompt_sha256": "3d8826509e9f64ce88f992a61b8274d98382f93e084f46f6a6d78cf21322c3f7",
+  "redaction_markers": [],
+  "request_config": {
+    "max_output_tokens": 8000,
+    "reasoning": {
+      "effort": "minimal",
+      "exclude": true
+    },
+    "temperature": 0
+  },
+  "rubric_sha256": "80416258156139723a755924885396f7a54ce77809154816bace9db96702cfca",
+  "schema_version": "core-algorithm-review-v2",
+  "source_path": "/Users/adamchen/Desktop/VSCode/SWE-bench/paper_replication_tasks/scibench_replication_0017/public/paper.pdf",
+  "source_sha256": "997614b78010b3fbe8cd7858a1f1821c3dc40d34f0fcbd60490451088908e5de",
+  "token_usage": [
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {
+      "completion_tokens": 2944,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 1006
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 21818,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 24762
+    },
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {
+      "completion_tokens": 2211,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 273
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 23842,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 26053
+    }
+  ]
+}

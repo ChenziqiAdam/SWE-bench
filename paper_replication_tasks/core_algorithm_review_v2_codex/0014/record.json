@@ -1,0 +1,171 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E1",
+          "E2"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "The paper's novel contribution is the error analysis of this pre-existing identity, not the identity itself."
+      },
+      "description": "Apply the established low-rank inverse-update identity with approximate inverses.",
+      "evidence": [
+        "E1",
+        "E2"
+      ],
+      "name": "Sherman–Morrison–Woodbury inverse update",
+      "role": "supporting"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E3"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "The formal bounds remain the principal contribution without the evaluation procedure."
+      },
+      "description": "Perturb approximate inverses and compare observed errors with the derived bounds.",
+      "evidence": [
+        "E3"
+      ],
+      "name": "Random-matrix stability experiment",
+      "role": "evaluation"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E2"
+      ],
+      "from": "goal",
+      "relation": "is answered by proofs of",
+      "to": "C1"
+    },
+    {
+      "evidence": [
+        "E3"
+      ],
+      "from": "C1",
+      "relation": "is empirically checked by",
+      "to": "C2"
+    }
+  ],
+  "decision": "REJECT_PAPER",
+  "evidence_catalog": [
+    {
+      "excerpt": "We study the numerical stability of the Sherman–Morrison–Woodbury (SMW) identity.",
+      "id": "E1",
+      "page": 1,
+      "section": "Abstract"
+    },
+    {
+      "excerpt": "Our work provides forward and backward error bounds for the update formula of eqn. (1).",
+      "id": "E2",
+      "page": 1,
+      "section": "1 Introduction"
+    },
+    {
+      "excerpt": "The goal of our numerical experiments is to verify the tightness of our forward and backward error bounds as well as examining the dominating terms.",
+      "id": "E3",
+      "page": 10,
+      "section": "4 Numerical Experiments"
+    },
+    {
+      "excerpt": "Theorems 2 and 6 provide general error bounds, they do not fully explain this observed correlation between update magnitude and bound tightness.",
+      "id": "E4",
+      "page": 12,
+      "section": "5 Future Work"
+    }
+  ],
+  "evidence_gaps": [
+    "No novel, uniquely central algorithmic input-output procedure is stated."
+  ],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E1",
+        "E2"
+      ],
+      "reason": "The main contribution is a theorem-level stability analysis, not a new scientific algorithm.",
+      "status": "REJECT"
+    },
+    "G2": {
+      "evidence": [
+        "E1",
+        "E2",
+        "E3"
+      ],
+      "reason": "No candidate algorithm uniquely carries the forward and backward error-bound contribution.",
+      "status": "REJECT"
+    },
+    "G3": {
+      "evidence": [
+        "E1",
+        "E2"
+      ],
+      "reason": "The executable SMW update is a pre-existing identity; the new content is mathematical analysis.",
+      "status": "REJECT"
+    },
+    "G4": {
+      "evidence": [
+        "E2",
+        "E3"
+      ],
+      "reason": "The paper does not define a paper-specific algorithmic input-output contract beyond evaluating a standard identity and its bounds.",
+      "status": "REJECT"
+    },
+    "G5": {
+      "evidence": [
+        "E3",
+        "E4"
+      ],
+      "reason": "New matrices can test bound tightness, but that evaluates theorems rather than generalization of a core algorithm.",
+      "status": "REJECT"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E2"
+      ],
+      "id": "C1",
+      "summary": "Forward and backward error bounds for SMW with approximate inverses."
+    },
+    {
+      "evidence": [
+        "E3",
+        "E4"
+      ],
+      "id": "C2",
+      "summary": "Numerical evaluation of tightness and dominant error terms."
+    }
+  ],
+  "paper_id": "0014",
+  "research_goal": {
+    "evidence": [
+      "E1",
+      "E2"
+    ],
+    "summary": "Derive and empirically assess forward and backward stability bounds for approximate SMW inversion."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": null,
+  "selected_core_algorithm": null,
+  "uniqueness_reason": "The paper contributes stability theorems. Its executable SMW update predates the paper and the random-matrix procedure only evaluates the theorems, so no candidate is a core scientific algorithm."
+}

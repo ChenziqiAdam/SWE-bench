@@ -1,0 +1,285 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E1",
+          "E2",
+          "E3",
+          "E4",
+          "E5"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "Removing the two-stage importance subsampling removes the paper's adaptive aggregation contribution."
+      },
+      "description": "Use a preliminary design and full-series operation to identify extremes, build a chronology-preserving aggregation, and re-optimize design.",
+      "evidence": [
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E5"
+      ],
+      "name": "Storage importance subsampling framework",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E3",
+          "E6"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "It supplies the preliminary design and comparator but is not the introduced adaptive method."
+      },
+      "description": "Aggregate from time-series inputs before model outputs are available.",
+      "evidence": [
+        "E3",
+        "E6"
+      ],
+      "name": "A priori representative-period clustering",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E3"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "These solvers are necessary components, but the paper's core novelty is how their outputs drive aggregation."
+      },
+      "description": "Produce preliminary/final designs and operational variables.",
+      "evidence": [
+        "E3"
+      ],
+      "name": "Capacity planning and operational optimization models",
+      "role": "supporting"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E4",
+          "E6"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "They are interchangeable configurations within the common framework."
+      },
+      "description": "Alternative scalar functions for ranking extreme periods.",
+      "evidence": [
+        "E4",
+        "E6"
+      ],
+      "name": "Unserved-energy and generation-cost importance functions",
+      "role": "supporting"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E1",
+        "E2"
+      ],
+      "from": "goal",
+      "relation": "is addressed by",
+      "to": "C1"
+    },
+    {
+      "evidence": [
+        "E6"
+      ],
+      "from": "C1",
+      "relation": "is validated by",
+      "to": "C2"
+    }
+  ],
+  "decision": "ACCEPT_FOR_DESIGN",
+  "evidence_catalog": [
+    {
+      "excerpt": "we introduce a posteriori time series aggregation schemes for capacity expansion planning models with storage.",
+      "id": "E1",
+      "page": 5,
+      "section": "2 This paper's contribution"
+    },
+    {
+      "excerpt": "These schemes (1) tailor aggregation to the underlying energy system model and (2) preserve chronology, allowing the representation of long-term storage patterns.",
+      "id": "E2",
+      "page": 5,
+      "section": "2 This paper's contribution"
+    },
+    {
+      "excerpt": "We determine a first-stage optimal design estimate DA0 using a priori aggregation.",
+      "id": "E3",
+      "page": 6,
+      "section": "3.2 Framework: storage importance subsampling"
+    },
+    {
+      "excerpt": "Partition time series T into",
+      "id": "E4",
+      "page": 6,
+      "section": "3.2 Framework: storage importance subsampling"
+    },
+    {
+      "excerpt": "We preserve chronology for storage technologies using ordered and linked representative days",
+      "id": "E5",
+      "page": 7,
+      "section": "3.3 Remarks"
+    },
+    {
+      "excerpt": "The a posteriori Methods D-F have significantly lower levels of unmet demand than A-C.",
+      "id": "E6",
+      "page": 9,
+      "section": "4.3 Validation"
+    },
+    {
+      "excerpt": "This paper introduces a framework for a posteriori time series aggregation schemes for energy system (capacity expansion) planning models with storage.",
+      "id": "E7",
+      "page": 11,
+      "section": "5.1 Conclusions"
+    }
+  ],
+  "evidence_gaps": [],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E1",
+        "E7"
+      ],
+      "reason": "The introduced framework is the paper's main scientific contribution.",
+      "status": "PASS"
+    },
+    "G2": {
+      "evidence": [
+        "E1",
+        "E3",
+        "E4"
+      ],
+      "reason": "Alternative importance functions and clustering choices instantiate one framework rather than independent core algorithms.",
+      "status": "PASS"
+    },
+    "G3": {
+      "evidence": [
+        "E2",
+        "E5"
+      ],
+      "reason": "It requires storage chronology and model-derived extreme-event reasoning.",
+      "status": "PASS"
+    },
+    "G4": {
+      "evidence": [
+        "E3",
+        "E4",
+        "E5"
+      ],
+      "reason": "The staged optimization and aggregation define a deterministic contract given solver and clustering choices.",
+      "status": "PASS"
+    },
+    "G5": {
+      "evidence": [
+        "E6",
+        "E7"
+      ],
+      "reason": "The same framework is evaluated across time-series lengths, model runs, and aggregation budgets.",
+      "status": "PASS"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E1",
+        "E2",
+        "E3",
+        "E5"
+      ],
+      "id": "C1",
+      "summary": "A two-stage a posteriori aggregation framework customized by operational variables and storage chronology."
+    },
+    {
+      "evidence": [
+        "E6",
+        "E7"
+      ],
+      "id": "C2",
+      "summary": "Reduced unmet demand relative to a priori aggregation in capacity-planning simulations."
+    }
+  ],
+  "paper_id": "0018",
+  "research_goal": {
+    "evidence": [
+      "E1",
+      "E2"
+    ],
+    "summary": "Compress long climate and demand time series for storage-aware capacity planning while retaining system-relevant extremes and chronology."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": {
+    "algorithm": "Storage importance subsampling framework",
+    "assumptions": [
+      "operational model can evaluate a fixed design",
+      "representative periods remain chronologically linked for storage"
+    ],
+    "core_operations": [
+      "build a priori aggregation",
+      "solve preliminary planning design",
+      "simulate full-series operation",
+      "rank and stratify extremes",
+      "aggregate extreme and regular periods",
+      "solve final design"
+    ],
+    "dependent_contributions": [
+      "C1",
+      "C2"
+    ],
+    "dependent_experiments_results": [
+      "three-year validation",
+      "thirty-year aggregation",
+      "unserved-energy comparison"
+    ],
+    "evidence": [
+      "E1",
+      "E2",
+      "E3",
+      "E4",
+      "E5"
+    ],
+    "inputs": [
+      "demand/weather time series",
+      "planning model",
+      "operational model",
+      "representative-period budget"
+    ],
+    "outputs": [
+      "final capacity design estimate",
+      "aggregated chronology"
+    ],
+    "parameters": [
+      "number of representative periods",
+      "extreme proportion",
+      "importance function",
+      "clustering rule"
+    ],
+    "scientific_invariants": [
+      "chronology is preserved",
+      "extreme and regular samples exhaust the timeline",
+      "final design is computed from the adaptive aggregation"
+    ],
+    "scientific_purpose": "Estimate storage-aware capacity designs from long time series at reduced cost and climate-sampling risk.",
+    "specificity_reason": "It couples energy-system operation, extreme-event selection, storage chronology, and capacity re-optimization."
+  },
+  "selected_core_algorithm": "Storage importance subsampling framework",
+  "uniqueness_reason": "The paper presents one overarching two-stage a posteriori framework; clustering, optimizers, and alternative importance measures are replaceable components or baselines."
+}

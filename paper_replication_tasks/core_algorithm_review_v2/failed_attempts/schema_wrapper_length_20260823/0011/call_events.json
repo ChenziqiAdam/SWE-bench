@@ -1,0 +1,32 @@
+[
+  {
+    "attempt": 1,
+    "sequence": 1,
+    "stage": "full-review",
+    "timestamp": "2026-08-23T17:48:48.549967+00:00"
+  },
+  {
+    "attempt": 1,
+    "sequence": 1,
+    "stage": "full-review",
+    "timestamp": "2026-08-23T17:50:33.658483+00:00"
+  },
+  {
+    "attempt": 2,
+    "sequence": 2,
+    "stage": "full-review",
+    "timestamp": "2026-08-23T17:54:21.639846+00:00"
+  },
+  {
+    "attempt": 3,
+    "sequence": 3,
+    "stage": "full-review",
+    "timestamp": "2026-08-23T17:58:00.420180+00:00"
+  },
+  {
+    "attempt": 4,
+    "sequence": 4,
+    "stage": "full-review",
+    "timestamp": "2026-08-23T18:01:05.272410+00:00"
+  }
+]

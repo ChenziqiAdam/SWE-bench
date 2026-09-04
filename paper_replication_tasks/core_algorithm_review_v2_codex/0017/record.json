@@ -1,0 +1,266 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E2",
+          "E3",
+          "E6"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "Without balanced allocation the accessibility measure and no-inflation contribution disappear."
+      },
+      "description": "Normalize origin and destination impedance weights, allocate demand and service proportionally, and compute accessibility.",
+      "evidence": [
+        "E2",
+        "E3",
+        "E6"
+      ],
+      "name": "Balanced floating catchment area accessibility calculation",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E2",
+          "E6"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "BFCA and its equity analysis remain defined without the comparator."
+      },
+      "description": "Unbalanced comparison method used to expose demand and supply inflation.",
+      "evidence": [
+        "E2",
+        "E6"
+      ],
+      "name": "Conventional two-step floating catchment area",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E4"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "It improves spatial resolution but is not the accessibility algorithm."
+      },
+      "description": "Disaggregate census population to small cells while preserving totals.",
+      "evidence": [
+        "E4"
+      ],
+      "name": "Pycnophylactic population interpolation",
+      "role": "preprocessing"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E5"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "It evaluates robustness rather than defining accessibility."
+      },
+      "description": "Repeat accessibility calculations over travel-time thresholds.",
+      "evidence": [
+        "E5"
+      ],
+      "name": "Walking-threshold sensitivity analysis",
+      "role": "evaluation"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E1",
+        "E2"
+      ],
+      "from": "goal",
+      "relation": "is operationalized by",
+      "to": "C1"
+    },
+    {
+      "evidence": [
+        "E5",
+        "E6"
+      ],
+      "from": "C1",
+      "relation": "supplies accessibility estimates for",
+      "to": "C2"
+    }
+  ],
+  "decision": "ACCEPT_FOR_DESIGN",
+  "evidence_catalog": [
+    {
+      "excerpt": "we investigate differentials in accessibility to stations using a balanced floating catchment area approach and compare accessibility with and without the equity stations.",
+      "id": "E1",
+      "page": 1,
+      "section": "Abstract"
+    },
+    {
+      "excerpt": "The BFCA method was developed to address issues with demand and supply inflation that result from the overlapping catchment areas produced by earlier FCA methods",
+      "id": "E2",
+      "page": 12,
+      "section": "4.1 Balanced Floating Catchment Area"
+    },
+    {
+      "excerpt": "With these weights, accessibility can be calculated without risk of demand or supply inflation",
+      "id": "E3",
+      "page": 13,
+      "section": "4.1 Balanced Floating Catchment Area"
+    },
+    {
+      "excerpt": "Pycnophylactic interpolation involves smoothing out the population from each DA while preserving total volume.",
+      "id": "E4",
+      "page": 14,
+      "section": "4.2 Pycnophylactic Interpolation"
+    },
+    {
+      "excerpt": "accessibility calculated using the BFCA method increased with a threshold between two and four minutes, but was then maximized at five minutes.",
+      "id": "E5",
+      "page": 16,
+      "section": "5.1 Accessibility by Distance Thresholds"
+    },
+    {
+      "excerpt": "Unlike the 2SFCA method, there was no inflation or deflation in our accessibility estimates because population and level of service were preserved",
+      "id": "E6",
+      "page": 29,
+      "section": "6 Discussion"
+    }
+  ],
+  "evidence_gaps": [],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E1",
+        "E6"
+      ],
+      "reason": "BFCA directly produces the accessibility quantities supporting the equity conclusions.",
+      "status": "PASS"
+    },
+    "G2": {
+      "evidence": [
+        "E2",
+        "E3",
+        "E4"
+      ],
+      "reason": "The other computational procedures are preprocessing, baseline, or evaluation.",
+      "status": "PASS"
+    },
+    "G3": {
+      "evidence": [
+        "E2",
+        "E3"
+      ],
+      "reason": "Balanced spatial allocation enforces domain-specific demand and supply conservation.",
+      "status": "PASS"
+    },
+    "G4": {
+      "evidence": [
+        "E2",
+        "E3"
+      ],
+      "reason": "Population, station supply, and impedance weights determine accessibility outputs.",
+      "status": "PASS"
+    },
+    "G5": {
+      "evidence": [
+        "E5",
+        "E6"
+      ],
+      "reason": "The same method supports new thresholds, station configurations, and service areas.",
+      "status": "PASS"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E2",
+        "E3",
+        "E6"
+      ],
+      "id": "C1",
+      "summary": "A BFCA-based micro-scale accessibility analysis that preserves total population and service."
+    },
+    {
+      "evidence": [
+        "E1",
+        "E5"
+      ],
+      "id": "C2",
+      "summary": "A sensitivity and equity comparison across walking thresholds and station configurations."
+    }
+  ],
+  "paper_id": "0017",
+  "research_goal": {
+    "evidence": [
+      "E1"
+    ],
+    "summary": "Measure whether added equity stations changed bike-share accessibility across populations and income groups."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": {
+    "algorithm": "Balanced floating catchment area accessibility calculation",
+    "assumptions": [
+      "nonnegative population and supply",
+      "reachable pairs are encoded by impedance",
+      "normalization denominators are nonzero where used"
+    ],
+    "core_operations": [
+      "normalize weights by origin",
+      "normalize weights by station",
+      "compute station service ratios",
+      "sum weighted service at origins"
+    ],
+    "dependent_contributions": [
+      "C1",
+      "C2"
+    ],
+    "dependent_experiments_results": [
+      "with/without equity stations",
+      "walking-threshold sensitivity",
+      "income-group comparison"
+    ],
+    "evidence": [
+      "E1",
+      "E2",
+      "E3",
+      "E6"
+    ],
+    "inputs": [
+      "population by origin",
+      "station rack supply",
+      "origin-station impedance weights"
+    ],
+    "outputs": [
+      "accessibility per population unit",
+      "aggregate accessibility summaries"
+    ],
+    "parameters": [
+      "walking-time threshold",
+      "distance-decay weights"
+    ],
+    "scientific_invariants": [
+      "normalized origin weights sum to one",
+      "normalized station weights sum to one",
+      "population and level of service are preserved"
+    ],
+    "scientific_purpose": "Quantify balanced access to bike-share station capacity without double-counting demand or supply.",
+    "specificity_reason": "The doubly normalized spatial allocation and conservation properties are specialized accessibility reasoning."
+  },
+  "selected_core_algorithm": "Balanced floating catchment area accessibility calculation",
+  "uniqueness_reason": "BFCA alone generates the paper's defining accessibility measure; interpolation prepares demand, 2SFCA is a baseline, and threshold sweeps evaluate sensitivity."
+}

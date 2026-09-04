@@ -1,0 +1,647 @@
+{
+  "G5": "PASS",
+  "case_shortcut_pass_matrix": {
+    "case_01": {
+      "a_priori_only": false,
+      "break_chronology": false,
+      "ignore_storage_variables": true,
+      "mean_instead_medoid": false,
+      "no_second_planning": false,
+      "no_stratification": false,
+      "public_memorizer": false,
+      "wrong_extreme_allocation": false,
+      "wrong_importance": false,
+      "wrong_normalization": false
+    },
+    "case_02": {
+      "a_priori_only": false,
+      "break_chronology": false,
+      "ignore_storage_variables": true,
+      "mean_instead_medoid": false,
+      "no_second_planning": false,
+      "no_stratification": false,
+      "public_memorizer": false,
+      "wrong_extreme_allocation": false,
+      "wrong_importance": false,
+      "wrong_normalization": false
+    },
+    "case_03": {
+      "a_priori_only": true,
+      "break_chronology": false,
+      "ignore_storage_variables": true,
+      "mean_instead_medoid": false,
+      "no_second_planning": true,
+      "no_stratification": true,
+      "public_memorizer": false,
+      "wrong_extreme_allocation": true,
+      "wrong_importance": false,
+      "wrong_normalization": false
+    },
+    "case_04": {
+      "a_priori_only": false,
+      "break_chronology": false,
+      "ignore_storage_variables": true,
+      "mean_instead_medoid": false,
+      "no_second_planning": false,
+      "no_stratification": false,
+      "public_memorizer": false,
+      "wrong_extreme_allocation": false,
+      "wrong_importance": false,
+      "wrong_normalization": false
+    },
+    "case_05": {
+      "a_priori_only": false,
+      "break_chronology": false,
+      "ignore_storage_variables": false,
+      "mean_instead_medoid": false,
+      "no_second_planning": false,
+      "no_stratification": false,
+      "public_memorizer": false,
+      "wrong_extreme_allocation": false,
+      "wrong_importance": false,
+      "wrong_normalization": false
+    },
+    "case_06": {
+      "a_priori_only": false,
+      "break_chronology": false,
+      "ignore_storage_variables": true,
+      "mean_instead_medoid": false,
+      "no_second_planning": false,
+      "no_stratification": false,
+      "public_memorizer": false,
+      "wrong_extreme_allocation": false,
+      "wrong_importance": true,
+      "wrong_normalization": false
+    },
+    "case_07": {
+      "a_priori_only": false,
+      "break_chronology": false,
+      "ignore_storage_variables": true,
+      "mean_instead_medoid": false,
+      "no_second_planning": false,
+      "no_stratification": false,
+      "public_memorizer": false,
+      "wrong_extreme_allocation": false,
+      "wrong_importance": true,
+      "wrong_normalization": false
+    },
+    "case_08": {
+      "a_priori_only": false,
+      "break_chronology": false,
+      "ignore_storage_variables": true,
+      "mean_instead_medoid": false,
+      "no_second_planning": false,
+      "no_stratification": false,
+      "public_memorizer": false,
+      "wrong_extreme_allocation": false,
+      "wrong_importance": false,
+      "wrong_normalization": false
+    }
+  },
+  "generated_at_unix": 1788267613.4228091,
+  "hazard_hidden_shortcut_matrix": {
+    "H1": {
+      "cells": {
+        "case_01": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "a_priori_only": true,
+            "no_stratification": true
+          }
+        },
+        "case_02": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "a_priori_only": true,
+            "no_stratification": true
+          }
+        },
+        "case_03": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "a_priori_only": false,
+            "no_stratification": false
+          }
+        },
+        "case_04": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "a_priori_only": true,
+            "no_stratification": true
+          }
+        },
+        "case_05": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "a_priori_only": true,
+            "no_stratification": true
+          }
+        },
+        "case_06": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "a_priori_only": true,
+            "no_stratification": true
+          }
+        },
+        "case_07": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "a_priori_only": true,
+            "no_stratification": true
+          }
+        },
+        "case_08": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "a_priori_only": true,
+            "no_stratification": true
+          }
+        }
+      },
+      "covered": true,
+      "faults": [
+        "a_priori_only",
+        "no_stratification"
+      ],
+      "hazard_id": "H1",
+      "hidden_cases": [
+        "case_01",
+        "case_02"
+      ],
+      "source": "target"
+    },
+    "H2": {
+      "cells": {
+        "case_01": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_importance": true
+          }
+        },
+        "case_02": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_importance": true
+          }
+        },
+        "case_03": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "wrong_importance": true
+          }
+        },
+        "case_04": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "wrong_importance": true
+          }
+        },
+        "case_05": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_importance": true
+          }
+        },
+        "case_06": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_importance": false
+          }
+        },
+        "case_07": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_importance": false
+          }
+        },
+        "case_08": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_importance": true
+          }
+        }
+      },
+      "covered": true,
+      "faults": [
+        "wrong_importance"
+      ],
+      "hazard_id": "H2",
+      "hidden_cases": [
+        "case_03",
+        "case_04"
+      ],
+      "source": "importance"
+    },
+    "H3": {
+      "cells": {
+        "case_01": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "break_chronology": true
+          }
+        },
+        "case_02": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "break_chronology": true
+          }
+        },
+        "case_03": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "break_chronology": true
+          }
+        },
+        "case_04": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "break_chronology": true
+          }
+        },
+        "case_05": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "break_chronology": true
+          }
+        },
+        "case_06": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "break_chronology": true
+          }
+        },
+        "case_07": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "break_chronology": true
+          }
+        },
+        "case_08": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "break_chronology": true
+          }
+        }
+      },
+      "covered": true,
+      "faults": [
+        "break_chronology"
+      ],
+      "hazard_id": "H3",
+      "hidden_cases": [
+        "case_02",
+        "case_07"
+      ],
+      "source": "chronology"
+    },
+    "H4": {
+      "cells": {
+        "case_01": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "mean_instead_medoid": true
+          }
+        },
+        "case_02": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "mean_instead_medoid": true
+          }
+        },
+        "case_03": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "mean_instead_medoid": true
+          }
+        },
+        "case_04": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "mean_instead_medoid": true
+          }
+        },
+        "case_05": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "mean_instead_medoid": true
+          }
+        },
+        "case_06": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "mean_instead_medoid": true
+          }
+        },
+        "case_07": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "mean_instead_medoid": true
+          }
+        },
+        "case_08": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "mean_instead_medoid": true
+          }
+        }
+      },
+      "covered": true,
+      "faults": [
+        "mean_instead_medoid"
+      ],
+      "hazard_id": "H4",
+      "hidden_cases": [
+        "case_01",
+        "case_04",
+        "case_07"
+      ],
+      "source": "apriori_baseline"
+    },
+    "H5": {
+      "cells": {
+        "case_01": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "ignore_storage_variables": false
+          }
+        },
+        "case_02": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "ignore_storage_variables": false
+          }
+        },
+        "case_03": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "ignore_storage_variables": false
+          }
+        },
+        "case_04": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "ignore_storage_variables": false
+          }
+        },
+        "case_05": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "ignore_storage_variables": true
+          }
+        },
+        "case_06": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "ignore_storage_variables": false
+          }
+        },
+        "case_07": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "ignore_storage_variables": false
+          }
+        },
+        "case_08": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "ignore_storage_variables": false
+          }
+        }
+      },
+      "covered": true,
+      "faults": [
+        "ignore_storage_variables"
+      ],
+      "hazard_id": "H5",
+      "hidden_cases": [
+        "case_05"
+      ],
+      "source": "target"
+    },
+    "H6": {
+      "cells": {
+        "case_01": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_normalization": true
+          }
+        },
+        "case_02": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_normalization": true
+          }
+        },
+        "case_03": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_normalization": true
+          }
+        },
+        "case_04": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_normalization": true
+          }
+        },
+        "case_05": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "wrong_normalization": true
+          }
+        },
+        "case_06": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_normalization": true
+          }
+        },
+        "case_07": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_normalization": true
+          }
+        },
+        "case_08": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_normalization": true
+          }
+        }
+      },
+      "covered": true,
+      "faults": [
+        "wrong_normalization"
+      ],
+      "hazard_id": "H6",
+      "hidden_cases": [
+        "case_05"
+      ],
+      "source": "target"
+    },
+    "H7": {
+      "cells": {
+        "case_01": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_extreme_allocation": true
+          }
+        },
+        "case_02": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_extreme_allocation": true
+          }
+        },
+        "case_03": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_extreme_allocation": false
+          }
+        },
+        "case_04": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_extreme_allocation": true
+          }
+        },
+        "case_05": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_extreme_allocation": true
+          }
+        },
+        "case_06": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "wrong_extreme_allocation": true
+          }
+        },
+        "case_07": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_extreme_allocation": true
+          }
+        },
+        "case_08": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "wrong_extreme_allocation": true
+          }
+        }
+      },
+      "covered": true,
+      "faults": [
+        "wrong_extreme_allocation"
+      ],
+      "hazard_id": "H7",
+      "hidden_cases": [
+        "case_06"
+      ],
+      "source": "target"
+    },
+    "H8": {
+      "cells": {
+        "case_01": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "no_second_planning": true
+          }
+        },
+        "case_02": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "no_second_planning": true
+          }
+        },
+        "case_03": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "no_second_planning": false
+          }
+        },
+        "case_04": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "no_second_planning": true
+          }
+        },
+        "case_05": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "no_second_planning": true
+          }
+        },
+        "case_06": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "no_second_planning": true
+          }
+        },
+        "case_07": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "no_second_planning": true
+          }
+        },
+        "case_08": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "no_second_planning": true
+          }
+        }
+      },
+      "covered": true,
+      "faults": [
+        "no_second_planning"
+      ],
+      "hazard_id": "H8",
+      "hidden_cases": [
+        "case_03",
+        "case_04",
+        "case_08"
+      ],
+      "source": "target"
+    }
+  },
+  "hidden_inputs_sha256": {
+    "case_01": "a82ccf81ef8f462965b8a6a4276ad5838dfd45c35dc56f7672adea20679993b5",
+    "case_02": "25ac8761469cc063ed50a5809084b8a30860aa28fa829f1965331ee29fbb54ee",
+    "case_03": "0da9ab7f516dfe433b2442d22fa769695efdc22c146b106a7d3694d368c2dc9d",
+    "case_04": "71c34955070c778e8482a7eb7b5666ea553c9138fa86360e093c72c640d54df0",
+    "case_05": "7f6d19ce9e5ffb2ea3399d066a95e55a42eef2966b8f91c9a5deb7efca57fb85",
+    "case_06": "ebb8859f36b1e39ded105656c4112e6075978e10c0e1ddbc76e69a286194deef",
+    "case_07": "cc35a6ddc3eb0e583684bc00c630abfdb095836457457c13e7cbe7451a4ab7be",
+    "case_08": "d7f0b5d2652f90be67375748f7002aee9504fa0a921e9e6357b473cde213cbd4"
+  },
+  "hidden_outputs_sha256": {
+    "case_01": "9281b5c09dfa32f1516ea5c4855ff410f69f26a074bb0668c9e5604388928490",
+    "case_02": "50b333ad155fb535e4f39b635011e18752dcb12999a521fbc67546115b329002",
+    "case_03": "ae7ce7c9f5f7f397376b292160914345c634be44ba69e1e7be30e0f23649ed2b",
+    "case_04": "9cb30d8f7965150d7670f65f9181b3f39605c5f8aa31d7a6b44adbe4119aa44e",
+    "case_05": "ed67af6ea52485e21ded85b96404e3ff2131241acdd722bdfe4cb694e46fff65",
+    "case_06": "5fbc08fd8a410bc7a4a9e4141cf37339986027109d97cbd59cdac5714a15ec3d",
+    "case_07": "ff37ec0300716a708ab9e3663d10d3daf953a3742d84d8e5d6920fdd61362d3e",
+    "case_08": "f20c136705c4dd97e6913d49e4f16da398562afb12cc22739b5b1c26c575327d"
+  },
+  "maximum_shortcut_hidden_score": 0.875,
+  "recorder_sha256": "45468c3c214b910cf1ad53df4800eb2b097f5b5eb6bb858081645e32e41fab0e",
+  "runtime_seconds": 443.3065831249987,
+  "schema_version": 1,
+  "scientific_implementation_sha256": "855ce81d33312f519e880baf6ba990fce972d7398221371f0f0eb89225e05257",
+  "shared_numeric_sha256": "9bf6e2ad4955ec599d966d432e61a4483914daef5532e02fb89c3605cfa0ff35",
+  "shortcut_hidden_scores": {
+    "a_priori_only": 0.125,
+    "break_chronology": 0.0,
+    "ignore_storage_variables": 0.875,
+    "mean_instead_medoid": 0.0,
+    "no_second_planning": 0.125,
+    "no_stratification": 0.125,
+    "public_memorizer": 0.0,
+    "wrong_extreme_allocation": 0.125,
+    "wrong_importance": 0.25,
+    "wrong_normalization": 0.0
+  },
+  "task_id": "scibench_replication_0018_core"
+}

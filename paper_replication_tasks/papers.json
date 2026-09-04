@@ -1,109 +1,107 @@
 {
-  "schema_version": 1,
-  "updated_at": "2026-09-04",
-  "status_definitions": {
-    "validated": "Formal v4 task validated with official gold and an independent scientific audit.",
-    "excluded_no_core_algorithm": "Excluded from the active benchmark because PAPER.md's core-algorithm admission gates reject the paper; historical artifacts are retained for audit.",
-    "curator_reproduction": "Selected for curator reproduction but not yet promoted to a formal task.",
-    "blocked_missing_paper_data": "Blocked because required paper data are unavailable.",
-    "blocked_missing_paper_experiments": "Blocked because the official repository lacks the paper experiments.",
-    "scoped_pilot": "Selected for a scoped feasibility pilot.",
-    "deferred": "Deferred after a reproduction pilot failed a runtime, dependency, or independent-science promotion gate.",
-    "collected_candidate": "Collected as a paper-codebase candidate but not yet selected for the curation queue."
-  },
   "papers": [
     {
-      "task_id": "scibench_replication_0011",
+      "build_status": "validated",
+      "github_url": "https://github.com/arm61/msd-errors",
       "paper_title": "Accurate Estimation of Diffusion Coefficients and their Uncertainties from Computer Simulation",
       "paper_url": "https://doi.org/10.1021/acs.jctc.4c01249",
-      "github_url": "https://github.com/arm61/msd-errors",
-      "build_status": "validated"
+      "task_id": "scibench_replication_0011"
     },
     {
-      "task_id": "scibench_replication_0017",
+      "build_status": "validated",
+      "github_url": "https://github.com/paezha/Accessibility-Sobi-Hamilton",
       "paper_title": "Examining Equity in Accessibility to Bike Share: A Balanced Floating Catchment Area Approach",
       "paper_url": "https://doi.org/10.1016/j.trd.2021.103091",
-      "github_url": "https://github.com/paezha/Accessibility-Sobi-Hamilton",
-      "build_status": "validated"
+      "task_id": "scibench_replication_0017"
     },
     {
-      "task_id": null,
+      "build_status": "blocked_missing_paper_data",
+      "github_url": "https://github.com/bio-phys/DiffusionGLS",
       "paper_title": "Optimal Estimates of Self-Diffusion Coefficients from Molecular Dynamics Simulations",
       "paper_url": "https://doi.org/10.1063/5.0008312",
-      "github_url": "https://github.com/bio-phys/DiffusionGLS",
-      "build_status": "blocked_missing_paper_data"
+      "task_id": null
     },
     {
-      "task_id": null,
+      "build_status": "blocked_missing_paper_experiments",
+      "github_url": "https://github.com/baddoo/piDMD",
       "paper_title": "Physics-Informed Dynamic Mode Decomposition (piDMD)",
       "paper_url": "https://doi.org/10.1098/rspa.2022.0576",
-      "github_url": "https://github.com/baddoo/piDMD",
-      "build_status": "blocked_missing_paper_experiments"
+      "task_id": null
     },
     {
-      "task_id": null,
+      "build_status": "validated",
+      "github_url": "https://github.com/paezha/covid19-environmental-correlates",
       "paper_title": "A Spatio-Temporal Analysis of the Environmental Correlates of COVID-19 Incidence in Spain",
       "paper_url": "https://doi.org/10.1111/gean.12241",
-      "github_url": "https://github.com/paezha/covid19-environmental-correlates",
-      "task_id": "scibench_replication_0020",
-      "build_status": "validated"
+      "task_id": "scibench_replication_0020"
     },
     {
-      "task_id": null,
+      "build_status": "scoped_pilot",
+      "github_url": "https://github.com/paezha/Reproductive-Rate-and-Density-US-Reanalyzed",
       "paper_title": "Reproducibility of Research During COVID-19: Examining the Case of Population Density and the Basic Reproductive Rate from the Perspective of Spatial Analysis",
       "paper_url": "https://doi.org/10.1111/gean.12307",
-      "github_url": "https://github.com/paezha/Reproductive-Rate-and-Density-US-Reanalyzed",
-      "build_status": "scoped_pilot"
+      "task_id": null
     },
     {
-      "task_id": null,
+      "build_status": "validated",
+      "github_url": "https://github.com/ahilbers/a_posteriori_tsa_storage",
       "paper_title": "Reducing Climate Risk in Energy System Planning: A Posteriori Time Series Aggregation for Models with Storage",
       "paper_url": "https://doi.org/10.1016/j.apenergy.2022.120624",
-      "github_url": "https://github.com/ahilbers/a_posteriori_tsa_storage",
-      "task_id": "scibench_replication_0018",
-      "build_status": "validated"
+      "task_id": "scibench_replication_0018_core"
     },
     {
-      "task_id": null,
+      "build_status": "blocked_hpc_only_results",
+      "github_url": "https://github.com/davydden/large-strain-matrix-free",
       "paper_title": "A Matrix-Free Approach for Finite-Strain Hyperelastic Problems Using Geometric Multigrid",
       "paper_url": "https://doi.org/10.1002/nme.6336",
-      "github_url": "https://github.com/davydden/large-strain-matrix-free",
-      "build_status": "blocked_hpc_only_results"
+      "task_id": null
     },
     {
-      "task_id": "scibench_replication_0021",
+      "build_status": "validated",
+      "github_url": "https://github.com/yuwenli925/REIM",
       "paper_title": "A New Rational Approximation Algorithm via the Empirical Interpolation Method",
       "paper_url": "https://doi.org/10.1137/24M1674832",
-      "github_url": "https://github.com/yuwenli925/REIM",
-      "build_status": "validated"
+      "task_id": "scibench_replication_0021_core"
     },
     {
-      "task_id": null,
+      "build_status": "collected_candidate",
+      "github_url": "https://github.com/simunec/sketch-select-arnoldi",
       "paper_title": "A Sketch-and-Select Arnoldi Process",
       "paper_url": "https://doi.org/10.1137/23M1588007",
-      "github_url": "https://github.com/simunec/sketch-select-arnoldi",
-      "build_status": "collected_candidate"
+      "task_id": null
     },
     {
-      "task_id": "scibench_replication_0015",
+      "build_status": "validated",
+      "github_url": "https://github.com/tchen-research/fixed_sparsity_matrix_approximation",
       "paper_title": "Fixed-Sparsity Matrix Approximation from Matrix-Vector Products",
       "paper_url": "https://doi.org/10.1137/25M1742710",
-      "github_url": "https://github.com/tchen-research/fixed_sparsity_matrix_approximation",
-      "build_status": "validated"
+      "task_id": "scibench_replication_0015"
     },
     {
-      "task_id": "scibench_replication_0014",
-      "paper_title": "A Note on the Stability of the Sherman–Morrison–Woodbury Formula",
-      "paper_url": "https://doi.org/10.1137/25M1747087",
+      "build_status": "excluded_no_core_algorithm",
       "github_url": "https://github.com/LinkaiMa/SMW",
-      "build_status": "excluded_no_core_algorithm"
+      "paper_title": "A Note on the Stability of the Sherman\u2013Morrison\u2013Woodbury Formula",
+      "paper_url": "https://doi.org/10.1137/25M1747087",
+      "task_id": "scibench_replication_0014"
     },
     {
-      "task_id": "scibench_replication_0019",
+      "build_status": "excluded_no_core_algorithm",
+      "github_url": "https://github.com/RalfZimmermannSDU/StiefelCurvatureSIMAX",
       "paper_title": "High Curvature Means Low Rank: On the Sectional Curvature of Grassmann and Stiefel Manifolds and the Underlying Matrix Trace Inequalities",
       "paper_url": "https://doi.org/10.1137/24M1655755",
-      "github_url": "https://github.com/RalfZimmermannSDU/StiefelCurvatureSIMAX",
-      "build_status": "excluded_no_core_algorithm"
+      "task_id": "scibench_replication_0019"
     }
-  ]
+  ],
+  "schema_version": 1,
+  "status_definitions": {
+    "blocked_missing_paper_data": "Blocked because required paper data are unavailable.",
+    "blocked_missing_paper_experiments": "Blocked because the official repository lacks the paper experiments.",
+    "collected_candidate": "Collected as a paper-codebase candidate but not yet selected for the curation queue.",
+    "curator_reproduction": "Selected for curator reproduction but not yet promoted to a formal task.",
+    "deferred": "Deferred after a reproduction pilot failed a runtime, dependency, or independent-science promotion gate.",
+    "excluded_no_core_algorithm": "Excluded from the active benchmark because PAPER.md's core-algorithm admission gates reject the paper; historical artifacts are retained for audit.",
+    "scoped_pilot": "Selected for a scoped feasibility pilot.",
+    "validated": "Formal v4 task validated with official gold and an independent scientific audit."
+  },
+  "updated_at": "2026-09-04"
 }

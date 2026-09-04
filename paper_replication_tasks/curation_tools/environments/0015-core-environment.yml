@@ -1,0 +1,14 @@
+name: scibench-replication-0015-core
+channels:
+  - defaults
+dependencies:
+  - python=3.12.7=h99e199e_0
+  - numpy=1.26.4=py312h7f4fdc5_0
+  - numpy-base=1.26.4=py312he047099_0
+  - libopenblas=0.3.21=h269037a_0
+variables:
+  OPENBLAS_NUM_THREADS: "1"
+  OMP_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  VECLIB_MAXIMUM_THREADS: "1"
+  NUMEXPR_NUM_THREADS: "1"

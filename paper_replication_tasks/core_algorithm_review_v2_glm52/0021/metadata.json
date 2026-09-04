@@ -1,0 +1,137 @@
+{
+  "call_count": 58,
+  "call_mode": "resume_correction",
+  "character_count": 60255,
+  "completed_at": "2026-08-24T15:56:56.893993+00:00",
+  "model": "z-ai/glm-5.2:free",
+  "nonempty_page_ratio": 1.0,
+  "page_count": 24,
+  "paper_id": "0021",
+  "prompt_sha256": "2b81c9dd54583f1f3391132ee2a2d3a94f3f5d69f6b26da8b57126224c7c477d",
+  "redaction_markers": [],
+  "request_config": {
+    "max_output_tokens": 8000,
+    "reasoning": {
+      "effort": "minimal",
+      "exclude": true
+    },
+    "temperature": 0
+  },
+  "rubric_sha256": "80416258156139723a755924885396f7a54ce77809154816bace9db96702cfca",
+  "schema_version": "core-algorithm-review-v2",
+  "source_path": "/Users/adamchen/Desktop/VSCode/SWE-bench/paper_replication_tasks/core_algorithm_review_v2_glm52/sources/0021_arxiv_2406.19339v3.pdf",
+  "source_sha256": "b7f61555afe1e784318af286c6120a0f8b86cd39f06f9b9d3b69a9988e4ea453",
+  "token_usage": [
+    {
+      "completion_tokens": 2820,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 406
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 26614,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 29434
+    },
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {
+      "completion_tokens": 2702,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 312
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 29114,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 31816
+    },
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {
+      "completion_tokens": 4935,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2578
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 29090,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 34025
+    }
+  ]
+}

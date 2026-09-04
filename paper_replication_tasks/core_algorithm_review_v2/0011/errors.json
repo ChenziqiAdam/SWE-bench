@@ -1,0 +1,36 @@
+[
+  {
+    "attempt": 1,
+    "message": "$.evidence_catalog[9].excerpt does not match PDF page 13",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:09:21.688654+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 2,
+    "message": "$.evidence_catalog[1].excerpt does not match PDF page 2",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:10:03.637164+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 3,
+    "message": "$.evidence_catalog[8].excerpt does not match PDF page 6",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:10:44.528828+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 4,
+    "message": "selected_core_algorithm is not a candidate",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:11:34.093440+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "message": "full-review failed after 4 attempts: selected_core_algorithm is not a candidate",
+    "stage": "paper",
+    "timestamp": "2026-08-23T19:11:34.094726+00:00",
+    "type": "ReviewError"
+  }
+]

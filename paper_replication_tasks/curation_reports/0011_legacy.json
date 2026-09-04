@@ -1,0 +1,30 @@
+{
+  "hidden_files": {
+    "cases/case_01/input.json": "691a7ec00602cc9deb865e68e082bd8c6e6e177747ff24aae152b96ad889188a",
+    "cases/case_01/output.json": "194c3c819d6effec565196d7f477f7f97d3b574c2986b744600dc78cda0cb080",
+    "cases/case_02/input.json": "e8400f629eb450a3476575943cc5798a24db3602e1e48707316b6849775de1d2",
+    "cases/case_02/output.json": "656005d7424fb578b04d110fad70de6c31b7a4adb3f5d6353e667c584c6f3227",
+    "cases/case_03/input.json": "291ac2534bb0719f6ec7d7dc69d9bcef6fcea5368da24326c109f10e43280117",
+    "cases/case_03/output.json": "e6a138de79be3eb1d51043cb089252b4348204838c0a6c2c65ba6960b5c8a2ab",
+    "cases/case_04/input.json": "618da30118eed9bea25843265c625a392cba63b7afe91bee75668f87a07eec10",
+    "cases/case_04/output.json": "a55adf6603edc2817ca9c95840379ab440c42513dd57d4ba6d4933b4139ea6cc",
+    "cases/case_05/input.json": "2f36745a395fac4095da69782c8d8435d867575dfd1c3e6026a5dcf24db8a49b",
+    "cases/case_05/output.json": "33fbe261f9e53e56182fef017d64cf9a9096fb9b0fef98ca5373b55e6178aee7",
+    "provenance.json": "249d5f1c5e29a28b67d5212e55633499e72b9b26dc77deeb92568eae1110a25c",
+    "tolerances.json": "1b651be822c57e4ce760848ede131ed5492c296785b696eefc84aa5aa08a1247"
+  },
+  "lifecycle": "legacy_experiment_replication",
+  "preserved_byte_identical": true,
+  "public_files": {
+    "cases/case_01/input.json": "9e61416a925aaf72b27b0ce751dfab82ee41893882c19a0ba43dd81023b21603",
+    "cases/case_01/output.json": "76387e7c831a8181cedccac4e058833b2c398b918ed98a1796df066fabc09c3b",
+    "interface.schema.json": "bf2eae368642262e49b6c1a670cf60b9d2db955c123546e75d7971ca4ed0f4b3",
+    "paper.pdf": "4503b909fb05528f6bde5f58dd1a7705152914fcfa0853f8dd21de12483345ab",
+    "task.md": "180c17da5121091431932293c4bfd8671f3740266557c08dc64f9b8987054685"
+  },
+  "reason": "Replaced by 0011_core under an explicit temporary G7 waiver; the failed G7 evidence remains retained.",
+  "replacement": "scibench_replication_0011_core",
+  "retired_from_active_manifest": "2026-09-04",
+  "schema_version": 1,
+  "task_id": "scibench_replication_0011"
+}

@@ -1,0 +1,9 @@
+[
+  {
+    "attempt": 1,
+    "message": "endpoint returned empty message.content (finish_reason='length', fields=['content', 'reasoning', 'reasoning_details', 'refusal', 'role'])",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:01:01.057819+00:00",
+    "type": "ResponseValidationError"
+  }
+]

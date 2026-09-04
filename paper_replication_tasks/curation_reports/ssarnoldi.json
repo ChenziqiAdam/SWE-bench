@@ -1,0 +1,12 @@
+{
+  "hidden_cases": 5,
+  "independent_audit_max_abs": 8.665416667485298e+16,
+  "independent_audit_max_relative": 5.130632227826944,
+  "independent_audit_status": "passed",
+  "normalized_bundle_sha256": "6d4eae501f16751000dda0824b2688a1c7ffc777e03bc55941400e71ef5d2523",
+  "official_commit": "6e145837e4696bd9e26b3d6160b37f97e4188e10",
+  "public_cases": 3,
+  "status": "draft",
+  "task_id": "scibench_replication_0022",
+  "two_clean_checkout_hashes_match": true
+}

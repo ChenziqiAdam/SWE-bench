@@ -1,0 +1,197 @@
+{
+  "aggregation": "none; no merge or vote was performed",
+  "coverage": {
+    "glm52_complete": 9,
+    "glm52_failed": 0,
+    "jointly_complete": 3,
+    "v2_complete": 3,
+    "v2_failed": 6
+  },
+  "disagreement_count": 2,
+  "generated_at": "2026-08-25T06:43:11.280181+00:00",
+  "glm52_model": "z-ai/glm-5.2:free",
+  "papers": [
+    {
+      "comparable": false,
+      "disagreement": null,
+      "glm52_status": "COMPLETE",
+      "note": "v2 was not complete; this is not a model disagreement",
+      "paper_id": "0011",
+      "v2_status": "FAILED"
+    },
+    {
+      "comparable": false,
+      "disagreement": null,
+      "glm52_status": "RESUMED",
+      "note": "v2 was not complete; this is not a model disagreement",
+      "paper_id": "0014",
+      "v2_status": "FAILED"
+    },
+    {
+      "comparable": false,
+      "disagreement": null,
+      "glm52_status": "COMPLETE",
+      "note": "v2 was not complete; this is not a model disagreement",
+      "paper_id": "0015",
+      "v2_status": "FAILED"
+    },
+    {
+      "comparable": false,
+      "disagreement": null,
+      "glm52_status": "COMPLETE",
+      "note": "v2 was not complete; this is not a model disagreement",
+      "paper_id": "0017",
+      "v2_status": "FAILED"
+    },
+    {
+      "comparable": true,
+      "core_algorithm": {
+        "glm52": "Storage importance subsampling framework",
+        "match": true,
+        "v2": "Storage importance subsampling framework"
+      },
+      "decision": {
+        "glm52": "ACCEPT_FOR_DESIGN",
+        "match": true,
+        "v2": "ACCEPT_FOR_DESIGN"
+      },
+      "disagreement": false,
+      "gates": {
+        "G1": {
+          "glm52": "PASS",
+          "match": true,
+          "v2": "PASS"
+        },
+        "G2": {
+          "glm52": "PASS",
+          "match": true,
+          "v2": "PASS"
+        },
+        "G3": {
+          "glm52": "PASS",
+          "match": true,
+          "v2": "PASS"
+        },
+        "G4": {
+          "glm52": "PASS",
+          "match": true,
+          "v2": "PASS"
+        },
+        "G5": {
+          "glm52": "PASS",
+          "match": true,
+          "v2": "PASS"
+        }
+      },
+      "glm52_status": "COMPLETE",
+      "paper_id": "0018",
+      "v2_status": "COMPLETE"
+    },
+    {
+      "comparable": false,
+      "disagreement": null,
+      "glm52_status": "RESUMED",
+      "note": "v2 was not complete; this is not a model disagreement",
+      "paper_id": "0019",
+      "v2_status": "FAILED"
+    },
+    {
+      "comparable": true,
+      "core_algorithm": {
+        "glm52": "SUR-SLM estimation via maximum likelihood",
+        "match": false,
+        "v2": "SUR-SLM maximum likelihood estimation"
+      },
+      "decision": {
+        "glm52": "ACCEPT_FOR_DESIGN",
+        "match": true,
+        "v2": "ACCEPT_FOR_DESIGN"
+      },
+      "disagreement": true,
+      "gates": {
+        "G1": {
+          "glm52": "PASS",
+          "match": true,
+          "v2": "PASS"
+        },
+        "G2": {
+          "glm52": "PASS",
+          "match": true,
+          "v2": "PASS"
+        },
+        "G3": {
+          "glm52": "PASS",
+          "match": true,
+          "v2": "PASS"
+        },
+        "G4": {
+          "glm52": "PASS",
+          "match": true,
+          "v2": "PASS"
+        },
+        "G5": {
+          "glm52": "PASS",
+          "match": true,
+          "v2": "PASS"
+        }
+      },
+      "glm52_status": "COMPLETE",
+      "paper_id": "0020",
+      "v2_status": "COMPLETE"
+    },
+    {
+      "comparable": true,
+      "core_algorithm": {
+        "glm52": "rEIM (Algorithm 2.1)",
+        "match": false,
+        "v2": "rEIM greedy rational interpolation (Algorithm 2.1)"
+      },
+      "decision": {
+        "glm52": "ACCEPT_FOR_DESIGN",
+        "match": true,
+        "v2": "ACCEPT_FOR_DESIGN"
+      },
+      "disagreement": true,
+      "gates": {
+        "G1": {
+          "glm52": "PASS",
+          "match": true,
+          "v2": "PASS"
+        },
+        "G2": {
+          "glm52": "PASS",
+          "match": true,
+          "v2": "PASS"
+        },
+        "G3": {
+          "glm52": "PASS",
+          "match": true,
+          "v2": "PASS"
+        },
+        "G4": {
+          "glm52": "PASS",
+          "match": true,
+          "v2": "PASS"
+        },
+        "G5": {
+          "glm52": "PASS",
+          "match": true,
+          "v2": "PASS"
+        }
+      },
+      "glm52_status": "RESUMED",
+      "paper_id": "0021",
+      "v2_status": "COMPLETE"
+    },
+    {
+      "comparable": false,
+      "disagreement": null,
+      "glm52_status": "COMPLETE",
+      "note": "v2 was not complete; this is not a model disagreement",
+      "paper_id": "0022",
+      "v2_status": "FAILED"
+    }
+  ],
+  "schema_version": "core-algorithm-review-v2",
+  "v2_model": "stealth/ox-alpha"
+}

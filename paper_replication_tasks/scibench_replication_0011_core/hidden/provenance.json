@@ -1,0 +1,334 @@
+{
+  "analysis_repository_commit": "9141e4edcddc386cdf10a9201d70aba1abaeb66c",
+  "case_design": [
+    {
+      "case_id": "case_01",
+      "hazards": [
+        "ill_conditioned_covariance",
+        "minimum_eigenvalue_reconditioning"
+      ],
+      "invariant": "finite ordered posterior summaries after condition-number control"
+    },
+    {
+      "case_id": "case_02",
+      "hazards": [
+        "nonnegative_diffusion_prior",
+        "low_diffusion_boundary"
+      ],
+      "invariant": "posterior support and all reported quantiles remain nonnegative"
+    },
+    {
+      "case_id": "case_03",
+      "hazards": [
+        "nonzero_intercept"
+      ],
+      "invariant": "diffusion is obtained from the fitted slope, not mean/t"
+    },
+    {
+      "case_id": "case_04",
+      "hazards": [
+        "early_nondiffusive_regime",
+        "fit_window"
+      ],
+      "invariant": "only lags at or above fit_start enter the regression"
+    },
+    {
+      "case_id": "case_05",
+      "hazards": [
+        "irregular_lag_grid",
+        "one_dimension"
+      ],
+      "invariant": "Einstein scaling uses the supplied dimension and numeric lag grid"
+    },
+    {
+      "case_id": "case_06",
+      "hazards": [
+        "few_independent_samples",
+        "heteroscedastic_noise"
+      ],
+      "invariant": "sample variance is rescaled by the supplied effective counts"
+    },
+    {
+      "case_id": "case_07",
+      "hazards": [
+        "high_diffusion_scale",
+        "scale_generalization"
+      ],
+      "invariant": "posterior summaries scale with squared-distance/time units"
+    },
+    {
+      "case_id": "case_08",
+      "hazards": [
+        "low_numeric_scale",
+        "scale_generalization"
+      ],
+      "invariant": "finite posterior summaries without scale-dependent constants"
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "case_01",
+      "independent_output_sha256": "ec05863a42acfb707d37270cdb4d5f9756af57f67654919024e28cc92b81f5eb",
+      "input_sha256": "dbe20553a32ee680e768450cb6a94004c0694e417d960784ca4d39c98647bf5d",
+      "output_sha256": "32128201ee7ee3b46e66fd85df4f89d2feb006396d5769eb61ed404e8861bb56",
+      "relative_errors": {
+        "mean": 0.0024438180877821548,
+        "q2.5": 0.003025784964086909,
+        "q50": 0.0024305723630619618,
+        "q97.5": 2.349719738742961e-05,
+        "variance": 0.040528991339853326
+      },
+      "split": "public"
+    },
+    {
+      "case_id": "case_02",
+      "independent_output_sha256": "4784ae103a40df1a9d6e7a41fb4b1aa978e86f19a0d57c7d1c7ba0696d3797c4",
+      "input_sha256": "b0db160799ca79db555749db98b528f61efafe2a515c9d7f68110ed5e02d2aa5",
+      "output_sha256": "5248ea504ea660a3806f7627c9d5876e0f26f31e7e11b7b16cd21bee8cb9a12c",
+      "relative_errors": {
+        "mean": 0.019919727577014403,
+        "q2.5": 0.01553234873480155,
+        "q50": 0.03368005614083841,
+        "q97.5": 0.017950308981383164,
+        "variance": 0.008104480227390003
+      },
+      "split": "public"
+    },
+    {
+      "case_id": "case_03",
+      "independent_output_sha256": "106cd19432323b27b6a4d6408e7be8468abbfca261fe070c1d540ed6a19d89ac",
+      "input_sha256": "4c2b14d7df706d406f47ef571643fe5272d7d0e86da00a30e00a40c4f5f9e4f5",
+      "output_sha256": "00ecc0a900a181552618568581e4582b4e4f9b46ad2f5a57accd1c09e0e1ceea",
+      "relative_errors": {
+        "mean": 0.0006691557070098508,
+        "q2.5": 0.005178652852387248,
+        "q50": 0.0019924925947746785,
+        "q97.5": 0.01097970662766567,
+        "variance": 0.0559844200969794
+      },
+      "split": "public"
+    },
+    {
+      "case_id": "case_01",
+      "independent_output_sha256": "e2240d024a55c4b6387fcdda8ea1182a9382c37b5de4f9443ece9e7ef2ed29a8",
+      "input_sha256": "468f1ecb50609386674830a89cbdb9a208e08111da880a42c38076d39c8e15e8",
+      "output_sha256": "8163256b1c4e9ec5dac4fc1ebea9d8762d4c337cda12145ba30f4850a00f6ade",
+      "relative_errors": {
+        "mean": 0.00449646937045475,
+        "q2.5": 0.011037081839501367,
+        "q50": 0.004155648880350376,
+        "q97.5": 0.0079667505664505,
+        "variance": 0.019472024533044707
+      },
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_02",
+      "independent_output_sha256": "5ee31918edff6592b232f0df8c3d5da69faa1616ccc25575aa08dac29091417b",
+      "input_sha256": "78e499d88ed8f436af7e75f6d2369327f7badb018dabc813da4bcb4d3ef36ff7",
+      "output_sha256": "0198312618f538c324b7ef26acc2a82582a690c481d740782a92c3da699f3373",
+      "relative_errors": {
+        "mean": 0.00902510301827414,
+        "q2.5": 0.062392094126283035,
+        "q50": 0.014222946290610003,
+        "q97.5": 0.009450817908178396,
+        "variance": 0.0024396224306280643
+      },
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_03",
+      "independent_output_sha256": "c102071863336361dd6600b0a13458a89dec76209ba431a8ce41affb2d708d68",
+      "input_sha256": "dbd6168c22c8bd21aed730b440d3eb3d46697270920e98c8563a9e1119abb36c",
+      "output_sha256": "67734dcdb531d73a0f6937afb8bee7fb56867dd22bfa0a24632566318a85d140",
+      "relative_errors": {
+        "mean": 7.754735556727884e-07,
+        "q2.5": 2.7280709977726206e-06,
+        "q50": 1.3179184137951917e-06,
+        "q97.5": 2.546666847960642e-07,
+        "variance": 0.03712429133373303
+      },
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_04",
+      "independent_output_sha256": "328bc13da14a599bdb317ef22b733d57dfc6bd550957381e9eee22c48e64db2e",
+      "input_sha256": "d382bb43c4a376c8163ea0bd8ffd0d65a69de233982f1c5874ef8feff57f20f2",
+      "output_sha256": "f7ad65ca8facff7e4ef6fd42981426b88e94e2bd9535235d0ff22829b30309fc",
+      "relative_errors": {
+        "mean": 0.0010718157774361557,
+        "q2.5": 0.0017241058031831791,
+        "q50": 0.0019687943558395903,
+        "q97.5": 0.0006148441631336443,
+        "variance": 0.029240172064310718
+      },
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_05",
+      "independent_output_sha256": "7a40df851fb9a8675cdfe9d96473c6f2b335222a2561a0ad4409284f4ed1cc5c",
+      "input_sha256": "3cfa2f8ce79fe53626ba368edba6e6b18a630f4e5fc9d037e0aa66c1b94eab53",
+      "output_sha256": "e43159517ac6be5a1f9e3fd3c82f9cee3c2b2d8901655ac6f1505608f8e248ad",
+      "relative_errors": {
+        "mean": 0.0013181458139637041,
+        "q2.5": 6.654883657464231e-05,
+        "q50": 0.0001683610783998619,
+        "q97.5": 0.002689355390851927,
+        "variance": 0.019790327175544294
+      },
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_06",
+      "independent_output_sha256": "619497e368372cd1b8d53538ac6e81c472f283661ff09999cdf9350a7e0632b7",
+      "input_sha256": "87d536183937e1d14f7d39a45a4fab88b631522348bde18b5cad1c8603e105e3",
+      "output_sha256": "38903502d1ea96e04fae6fe3e46f5e11002ff360790b18f7fe666b0348831e6e",
+      "relative_errors": {
+        "mean": 0.00590101017630117,
+        "q2.5": 0.0011398915976685694,
+        "q50": 0.005676152478622512,
+        "q97.5": 9.940418944429737e-05,
+        "variance": 0.013438569630671643
+      },
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_07",
+      "independent_output_sha256": "3c03490e8a556d08fa02d4d446ebb5d8e9bb64eaf81c6e2fae60bc7970995453",
+      "input_sha256": "409047a0db5736526eaf276199c2534ab3f2195ce5c947acbd5c7900735366d0",
+      "output_sha256": "f065085efb1987fa51d84736a1fd523db81ebfc247c10a28ed17e42e7dadf759",
+      "relative_errors": {
+        "mean": 0.0004460340439383047,
+        "q2.5": 0.000258467832110923,
+        "q50": 0.0007114545956482123,
+        "q97.5": 0.0006926970936852524,
+        "variance": 0.035028102571474824
+      },
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_08",
+      "independent_output_sha256": "41c3be06546692909b6fe81063bc65f33dfcced45b2402fd547a3d46b98cbce5",
+      "input_sha256": "371abd602fbf214fe17d748869895a923d9eedd0f74b1482d37670b174adf0a7",
+      "output_sha256": "f1755689146ca2f7a3879af69a5f5ac73e689e51302d94cdede7a3c3ddc17ab8",
+      "relative_errors": {
+        "mean": 0.0009607799324265703,
+        "q2.5": 0.0025174469113089268,
+        "q50": 0.0009997863628080739,
+        "q97.5": 0.0009034140766485022,
+        "variance": 3.895275367271191e-06
+      },
+      "split": "hidden"
+    }
+  ],
+  "commit": "54f3bc4f7167d18d2f4af1008880e5bb29d99797",
+  "environment": {
+    "numpy": "1.26.4",
+    "platform": "macOS-26.4.1-arm64-arm-64bit",
+    "python": "3.10.21"
+  },
+  "gold_source": "pinned_official_checkout",
+  "independent_audit": {
+    "derived_tolerances": {
+      "comparison": "fieldwise",
+      "field_rules": {
+        "mean": {
+          "atol": 1.2379526307401312e-09,
+          "rtol": 0.14128577244209775
+        },
+        "quantiles": {
+          "atol": 1.8214551404165366e-09,
+          "rtol": 0.22271139569310916
+        },
+        "variance": {
+          "atol": 2.8103545682349086e-13,
+          "rtol": 0.3908891745646146
+        }
+      },
+      "frozen_source": "curation_reports/official_runs/0011_core_feasibility/frozen_tolerance.json",
+      "quantile_rule": "most conservative of the three pre-hidden frozen quantile bounds"
+    },
+    "frozen_relative_bounds": {
+      "absolute_scale_floors": [
+        1e-08,
+        1e-12,
+        1e-08,
+        1e-08,
+        1e-08
+      ],
+      "field_order": [
+        "mean",
+        "variance",
+        "q2.5",
+        "q50",
+        "q97.5"
+      ],
+      "frozen_from": "five official seeds on three provisional public cases before hidden construction",
+      "relative_bounds": [
+        0.12379526307401312,
+        0.28103545682349085,
+        0.18214551404165366,
+        0.11266699782916283,
+        0.1745859459569251
+      ],
+      "rule": "max(mean absolute relative error + 4 sample SD, 1.10 * observed maximum)"
+    },
+    "implementation": "independent Eq. 6 covariance, symmetric eigenvalue floor, and exact truncated-Gaussian marginal",
+    "implementation_sha256": "1e56338fdba2efbf7e034d28dccdb17e5fdead3bab61b8e83ee95a612c5f56cf",
+    "maximum_relative_errors": {
+      "mean": 0.019919727577014403,
+      "q2.5": 0.062392094126283035,
+      "q50": 0.03368005614083841,
+      "q97.5": 0.017950308981383164,
+      "variance": 0.0559844200969794
+    },
+    "status": "passed"
+  },
+  "kinisi_diffusion_sha256": "606def108e43422b14953fd1ec4d75a1ea47110058f111ff0f1f84e3413944b7",
+  "kinisi_version": "1.1.0",
+  "legacy_predecessor": "scibench_replication_0011",
+  "lifecycle": "validated",
+  "environment_lock_sha256": "2455ba52b16fab9a8a1a5f69557e835cabd732f47be27ddc1df0b993aad09f1e",
+  "dependency_artifact_sha256": null,
+  "validation_waivers": [
+    {
+      "gate": "G7_blind_implementation",
+      "granted_on": "2026-09-04",
+      "reason": "Explicit curator decision to place 0011_core in ready state while retaining the failed blind implementation as negative evidence."
+    }
+  ],
+  "official_reproduction": {
+    "adapter_sha256": "21f40f3528ed7d74fd29d123b6befac672b3a243f6a800ac6fffa07ca0e2e4ef",
+    "clean_checkout_bundle_sha256": [
+      "122dbf1a2cec4d986f1adba9823c1cf418dafd8c7d184956bb23e29163976f4c",
+      "122dbf1a2cec4d986f1adba9823c1cf418dafd8c7d184956bb23e29163976f4c"
+    ],
+    "dependency_artifact_sha256": null,
+    "environment_lock_sha256": "2455ba52b16fab9a8a1a5f69557e835cabd732f47be27ddc1df0b993aad09f1e",
+    "raw_and_normalized_outputs": "curation_reports/official_runs/0011_core",
+    "raw_outputs": "curation_reports/official_runs/0011_core"
+  },
+  "paper_sha256": "4503b909fb05528f6bde5f58dd1a7705152914fcfa0853f8dd21de12483345ab",
+  "repository": "https://github.com/bjmorgan/kinisi",
+  "schema_version": 4,
+  "task_id": "scibench_replication_0011_core",
+  "tolerances": {
+    "comparison": "fieldwise",
+    "field_rules": {
+      "mean": {
+        "atol": 1.2379526307401312e-09,
+        "rtol": 0.14128577244209775
+      },
+      "quantiles": {
+        "atol": 1.8214551404165366e-09,
+        "rtol": 0.22271139569310916
+      },
+      "variance": {
+        "atol": 2.8103545682349086e-13,
+        "rtol": 0.3908891745646146
+      }
+    },
+    "frozen_source": "curation_reports/official_runs/0011_core_feasibility/frozen_tolerance.json",
+    "quantile_rule": "most conservative of the three pre-hidden frozen quantile bounds"
+  }
+}

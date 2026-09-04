@@ -1,0 +1,23 @@
+[
+  {
+    "attempt": 1,
+    "message": "invalid JSON: Expecting value: line 1 column 1 (char 0)",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T18:06:32.614416+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 2,
+    "message": "invalid JSON: Expecting value: line 1 column 1 (char 0)",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T18:09:59.511430+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 3,
+    "message": "invalid JSON: Expecting value: line 1 column 1 (char 0)",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T18:13:25.059633+00:00",
+    "type": "ResponseValidationError"
+  }
+]

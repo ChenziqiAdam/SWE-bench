@@ -1,0 +1,169 @@
+{
+  "blind_review": false,
+  "blind_review_disclosure": "This was a local evidence-based review, but not a strict blind review: Codex had seen parts of earlier review summaries in the conversation.",
+  "call_mode": "local_manual_review",
+  "complete_count": 9,
+  "failed_count": 0,
+  "generated_at": "2026-08-24T17:11:35.819392+00:00",
+  "model": "codex-local-review",
+  "papers": [
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0011",
+      "selected_core_algorithm": "Single-trajectory approximate Bayesian MSD regression",
+      "status": "COMPLETE"
+    },
+    {
+      "decision": "REJECT_PAPER",
+      "evidence_gaps": [
+        "No novel, uniquely central algorithmic input-output procedure is stated."
+      ],
+      "gates": {
+        "G1": "REJECT",
+        "G2": "REJECT",
+        "G3": "REJECT",
+        "G4": "REJECT",
+        "G5": "REJECT",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0014",
+      "selected_core_algorithm": null,
+      "status": "COMPLETE"
+    },
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0015",
+      "selected_core_algorithm": "Gaussian-sketch fixed-sparsity matrix approximation",
+      "status": "COMPLETE"
+    },
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0017",
+      "selected_core_algorithm": "Balanced floating catchment area accessibility calculation",
+      "status": "COMPLETE"
+    },
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0018",
+      "selected_core_algorithm": "Storage importance subsampling framework",
+      "status": "COMPLETE"
+    },
+    {
+      "decision": "REJECT_PAPER",
+      "evidence_gaps": [
+        "No unique algorithm is introduced for the theorem-driven scientific contribution."
+      ],
+      "gates": {
+        "G1": "REJECT",
+        "G2": "REJECT",
+        "G3": "REJECT",
+        "G4": "REJECT",
+        "G5": "REJECT",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0019",
+      "selected_core_algorithm": null,
+      "status": "COMPLETE"
+    },
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0020",
+      "selected_core_algorithm": "Spatial-lag seemingly unrelated regression analysis",
+      "status": "COMPLETE"
+    },
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0021",
+      "selected_core_algorithm": "Rational approximation via empirical interpolation (rEIM)",
+      "status": "COMPLETE"
+    },
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0022",
+      "selected_core_algorithm": "Sketch-and-select Arnoldi process",
+      "status": "COMPLETE"
+    }
+  ],
+  "schema_version": "core-algorithm-review-v2"
+}

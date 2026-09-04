@@ -1,0 +1,338 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E5"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Curvature formulas are standard textbook material; the contribution is proving bounds, not computation."
+      },
+      "description": "Evaluate formulas (6), (8), (26) to compute sectional curvature from tangent vector blocks.",
+      "evidence": [
+        "E6"
+      ],
+      "name": "Sectional curvature computation",
+      "role": "supporting"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E7"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "The refined matrix inequalities are the key mathematical tool enabling all curvature bound proofs."
+      },
+      "description": "SVD-based optimization of trace terms to establish refined Wu-Chen inequality and curvature bounds.",
+      "evidence": [
+        "E7"
+      ],
+      "name": "Matrix trace inequality optimization",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E10"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Experiments are illustrative; theoretical contributions stand without them."
+      },
+      "description": "Construct parametric tangent vectors with increasing rank, compute sectional curvatures, plot results.",
+      "evidence": [
+        "E11"
+      ],
+      "name": "Numerical experiment procedure",
+      "role": "evaluation"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E12"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "This is a supporting numerical illustration, not a core contribution."
+      },
+      "description": "Generate random skew-symmetric matrices, project to horizontal spaces, compute averaged curvature.",
+      "evidence": [
+        "E12"
+      ],
+      "name": "Random curvature sampling experiment",
+      "role": "evaluation"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E3"
+      ],
+      "from": "Research Goal",
+      "relation": "theoretical proof of curvature bounds",
+      "to": "C1"
+    },
+    {
+      "evidence": [
+        "E4"
+      ],
+      "from": "Research Goal",
+      "relation": "characterization of curvature maximizers",
+      "to": "C2"
+    },
+    {
+      "evidence": [
+        "E1"
+      ],
+      "from": "Research Goal",
+      "relation": "refined matrix inequalities enabling proofs",
+      "to": "C3"
+    },
+    {
+      "evidence": [
+        "E8"
+      ],
+      "from": "C1",
+      "relation": "canonical metric bound proof",
+      "to": "Theorem 8"
+    },
+    {
+      "evidence": [
+        "E9"
+      ],
+      "from": "C1",
+      "relation": "Euclidean metric bound proof",
+      "to": "Theorem 10"
+    },
+    {
+      "evidence": [
+        "E7"
+      ],
+      "from": "C3",
+      "relation": "Wu-Chen inequality refinement",
+      "to": "Theorem 7"
+    },
+    {
+      "evidence": [
+        "E10"
+      ],
+      "from": "C2",
+      "relation": "illustration of low-rank curvature maxima",
+      "to": "Numerical Experiments"
+    },
+    {
+      "evidence": [
+        "E10"
+      ],
+      "from": "Numerical Experiments",
+      "relation": "curvature vs rank and dimension plots",
+      "to": "Figures 1-4"
+    }
+  ],
+  "decision": "REJECT_PAPER",
+  "evidence_catalog": [
+    {
+      "excerpt": "We provide refined inequalities for such terms and pay special attention to the maximizers of the curvature bounds.",
+      "id": "E1",
+      "page": 1,
+      "section": "Abstract"
+    },
+    {
+      "excerpt": "In this work, we investigate the sectional curvature on the Stiefel and Grassmann manifolds.",
+      "id": "E2",
+      "page": 1,
+      "section": "1. Introduction"
+    },
+    {
+      "excerpt": "In this way, we prove the conjectured global curvature bounds of",
+      "id": "E3",
+      "page": 2,
+      "section": "1. Introduction"
+    },
+    {
+      "excerpt": "we observe that 'high curvature means low-rank'.",
+      "id": "E4",
+      "page": 2,
+      "section": "1. Introduction"
+    },
+    {
+      "excerpt": "a straightforward evaluation of (3) yields",
+      "id": "E5",
+      "page": 6,
+      "section": "2.2. Canonical curvature formulae on Grassmann and Stiefel"
+    },
+    {
+      "excerpt": "This is in line with the result of [22, Prop 4.2, eq. (34)].",
+      "id": "E6",
+      "page": 6,
+      "section": "2.2. Canonical curvature formulae on Grassmann and Stiefel"
+    },
+    {
+      "excerpt": "The next theorem includes (and refines) the inequality of Wu and Chen.",
+      "id": "E7",
+      "page": 10,
+      "section": "3. Matrix norm inequalities and curvature estimates"
+    },
+    {
+      "excerpt": "The sectional curvature under the canonical metric on the Stiefel manifold St(n, p), n ≥ p, is globally bounded by",
+      "id": "E8",
+      "page": 12,
+      "section": "3.2. Bounds on the canonical sectional curvature on Stiefel"
+    },
+    {
+      "excerpt": "The sectional curvature under the Euclidean metric on the Stiefel manifold St(n, p), n ≥ p, is globally bounded by",
+      "id": "E9",
+      "page": 16,
+      "section": "3.3. Bounds on the Euclidean sectional curvature on Stiefel"
+    },
+    {
+      "excerpt": "In this section, we illustrate the behavior of the sectional curvature on SO(n), Gr(n, p) and St(n, p) at special parametric sections",
+      "id": "E10",
+      "page": 20,
+      "section": "4. Numerical Experiments"
+    },
+    {
+      "excerpt": "In the first experiment, we start with the rank-one matrices",
+      "id": "E11",
+      "page": 20,
+      "section": "4.1. Experiment 1"
+    },
+    {
+      "excerpt": "we create random skew-symmetric matrices",
+      "id": "E12",
+      "page": 21,
+      "section": "4.2. Experiment 2: Curvature associated with pseudo-random sections"
+    }
+  ],
+  "evidence_gaps": [
+    "No executable algorithm with clear I/O contract exists; the paper is a theoretical mathematics paper proving inequalities and curvature bounds.",
+    "The numerical experiments in Section 4 are illustrative evaluations, not core algorithms."
+  ],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E3"
+      ],
+      "reason": "The core contribution is a theoretical proof of inequalities, not an executable algorithm with clear input-output contract.",
+      "status": "REJECT"
+    },
+    "G2": {
+      "evidence": [
+        "E7"
+      ],
+      "reason": "The matrix trace inequality optimization is the unique central mathematical tool enabling all curvature bound proofs.",
+      "status": "PASS"
+    },
+    "G3": {
+      "evidence": [
+        "E7"
+      ],
+      "reason": "The SVD-based trace optimization is paper-specific scientific reasoning, not a standard API or baseline.",
+      "status": "PASS"
+    },
+    "G4": {
+      "evidence": [
+        "E7"
+      ],
+      "reason": "The core contribution is a proof technique, not an executable algorithm with deterministic input to output.",
+      "status": "REJECT"
+    },
+    "G5": {
+      "evidence": [
+        "E8"
+      ],
+      "reason": "Cannot construct hidden inputs to test generalization of a proof technique; the output is a bound.",
+      "status": "REJECT"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E3"
+      ],
+      "id": "C1",
+      "summary": "Prove global curvature bounds for Stiefel manifold under canonical and Euclidean metrics."
+    },
+    {
+      "evidence": [
+        "E4"
+      ],
+      "id": "C2",
+      "summary": "Show high curvature means low-rank: extrema at rank-two or rank-one tangent matrices."
+    },
+    {
+      "evidence": [
+        "E1"
+      ],
+      "id": "C3",
+      "summary": "Provide refined matrix trace inequalities for skew-symmetric commutator brackets."
+    },
+    {
+      "evidence": [
+        "E10"
+      ],
+      "id": "C4",
+      "summary": "Numerical experiments illustrating curvature behavior with increasing rank and dimension."
+    }
+  ],
+  "paper_id": "0019",
+  "research_goal": {
+    "evidence": [
+      "E2"
+    ],
+    "summary": "Prove sharp global bounds on sectional curvature of Stiefel and Grassmann manifolds under canonical and Euclidean metrics."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": {
+    "algorithm": "Matrix trace inequality optimization",
+    "assumptions": [
+      "B1, B2 are real matrices with Frobenius norm constraints"
+    ],
+    "core_operations": [
+      "SVD-based coordinate transformation",
+      "Optimization of trace terms over normalized matrices",
+      "Combining bounds to derive curvature inequalities"
+    ],
+    "dependent_contributions": [
+      "C1: curvature bounds on Stiefel",
+      "C2: low-rank maximizer characterization"
+    ],
+    "dependent_experiments_results": [
+      "Theorem 8: canonical Stiefel bounds",
+      "Theorem 10: Euclidean Stiefel bounds"
+    ],
+    "evidence": [
+      "E7"
+    ],
+    "inputs": [
+      "Matrices B1, B2 in R^(m x p) with SVDs"
+    ],
+    "outputs": [
+      "Upper bounds on trace expressions"
+    ],
+    "parameters": [
+      "Matrix dimensions m, p",
+      "Singular values sigma1, sigma2"
+    ],
+    "scientific_invariants": [
+      "Wu-Chen inequality for skew-symmetric commutator brackets"
+    ],
+    "scientific_purpose": "Establish refined bounds on trace terms involving skew-symmetric matrix commutators to prove curvature bounds.",
+    "specificity_reason": "This is a mathematical proof technique involving SVD optimization, not a standard computational procedure."
+  },
+  "selected_core_algorithm": "Matrix trace inequality optimization",
+  "uniqueness_reason": "Theorem 7 is the central mathematical tool; without it the curvature bound proofs collapse. However, it is a proof technique rather than an executable algorithm with clear I/O."
+}

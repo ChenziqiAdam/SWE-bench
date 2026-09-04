@@ -1,0 +1,289 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E3"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "Without SUR-SLM estimation no contagion modeling or coefficient estimates exist; main contribution collapses."
+      },
+      "description": "Estimate stacked spatial-lag SUR system with time-varying rho and constrained coefficients via ML.",
+      "evidence": [
+        "E1"
+      ],
+      "name": "SUR-SLM maximum likelihood estimation",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E8"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Interpretation layer; core model and its scientific claims remain estimable without it."
+      },
+      "description": "Post-estimation computation of partial-derivative matrices into direct, indirect, total effects per date.",
+      "evidence": [
+        "E4"
+      ],
+      "name": "Direct/indirect/total effects decomposition",
+      "role": "supporting"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E5"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Input preparation step; standard averaging with fixed published weights, not a novel algorithm."
+      },
+      "description": "Construct lag8, lag11, lag11w moving averages of temperature, humidity, sunshine using incubation weights.",
+      "evidence": [
+        "E5"
+      ],
+      "name": "Log-normal weighted lagged environmental averages",
+      "role": "preprocessing"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E6"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Model selection/evaluation procedure, not part of the core method definition itself."
+      },
+      "description": "Compare pooled-R2 and equation-level fit of three lag variants to select best model.",
+      "evidence": [
+        "E6"
+      ],
+      "name": "Model comparison across lag specifications",
+      "role": "evaluation"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E7"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Descriptive exploration only; conclusions rest on SUR estimation."
+      },
+      "description": "Daily log-transformed pairwise correlations of variables with incidence for motivation.",
+      "evidence": [
+        "E7"
+      ],
+      "name": "Exploratory correlation analysis",
+      "role": "supporting"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E1"
+      ],
+      "from": "Research goal: environmental correlates of COVID-19",
+      "relation": "methodological contribution enabling inference",
+      "to": "C1 spatial SUR-SLM model"
+    },
+    {
+      "evidence": [
+        "E8"
+      ],
+      "from": "C1 spatial SUR-SLM model",
+      "relation": "produces estimated effects and significance",
+      "to": "C2 environmental effects findings"
+    },
+    {
+      "evidence": [
+        "E5"
+      ],
+      "from": "Lagged environmental variables construction",
+      "relation": "provides temporally lagged inputs",
+      "to": "C1 spatial SUR-SLM model"
+    }
+  ],
+  "decision": "ACCEPT_FOR_DESIGN",
+  "evidence_catalog": [
+    {
+      "excerpt": "The SUR-SLM model can be estimated using maximum likelihood",
+      "id": "E1",
+      "page": 9,
+      "section": "Methods: the Spatial SUR Model"
+    },
+    {
+      "excerpt": "A key feature of the SUR model is the temporal dependence structure among the vectors of residuals",
+      "id": "E2",
+      "page": 8,
+      "section": "Methods: the Spatial SUR Model"
+    },
+    {
+      "excerpt": "the spatially lagged dependent variable represents a process of contagion",
+      "id": "E3",
+      "page": 9,
+      "section": "Methods: the Spatial SUR Model"
+    },
+    {
+      "excerpt": "the direct effect is calculated as the mean of the diagonal elements",
+      "id": "E4",
+      "page": 10,
+      "section": "Results"
+    },
+    {
+      "excerpt": "The weights for this variable are calculated using the parameters of the log-normal distribution",
+      "id": "E5",
+      "page": 7,
+      "section": "Context and Data"
+    },
+    {
+      "excerpt": "we compare the goodness of fit of the three SUR models",
+      "id": "E6",
+      "page": 16,
+      "section": "Results"
+    },
+    {
+      "excerpt": "we estimate three spatial SUR models to test the diﬀerences between the various temporal lags",
+      "id": "E7",
+      "page": 13,
+      "section": "Results"
+    },
+    {
+      "excerpt": "the appropriate way to estimate the eﬀects is to calculate both the own eﬀect",
+      "id": "E8",
+      "page": 22,
+      "section": "Discussion"
+    }
+  ],
+  "evidence_gaps": [
+    "Paper does not provide closed-form likelihood derivation details, relying on Lopez et al. 2014 and spsur package references."
+  ],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E1"
+      ],
+      "reason": "SUR-SLM estimation directly implements the main contribution; deleting it removes all reported results.",
+      "status": "PASS"
+    },
+    "G2": {
+      "evidence": [
+        "E4"
+      ],
+      "reason": "Exactly one core candidate; other candidates are preprocessing, evaluation, or post-estimation interpretation.",
+      "status": "PASS"
+    },
+    "G3": {
+      "evidence": [
+        "E2"
+      ],
+      "reason": "ML estimation of spatially lagged SUR with constrained coefficients requires non-standard scientific implementation beyond standard solvers.",
+      "status": "PASS"
+    },
+    "G4": {
+      "evidence": [
+        "E1"
+      ],
+      "reason": "Clear contract: panel data plus W map to coefficients, rho_t, Sigma, and fit statistics.",
+      "status": "PASS"
+    },
+    "G5": {
+      "evidence": [
+        "E3"
+      ],
+      "reason": "Hidden inputs can vary provinces, dates, covariates, and weight matrices to test generalization of the estimator.",
+      "status": "PASS"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E3"
+      ],
+      "id": "C1",
+      "summary": "Spatial SUR-SLM model of COVID-19 incidence as interregional contagion process with environmental covariates."
+    },
+    {
+      "evidence": [
+        "E4"
+      ],
+      "id": "C2",
+      "summary": "Evidence that higher temperature and humidity reduce incidence; sunshine increases it, under lockdown conditions."
+    }
+  ],
+  "paper_id": "0020",
+  "research_goal": {
+    "evidence": [
+      "E3"
+    ],
+    "summary": "Assess whether temperature, humidity, and sunshine correlate with COVID-19 incidence in Spanish provinces using a spatio-temporal contagion model."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": {
+    "algorithm": "SUR-SLM maximum likelihood estimation",
+    "assumptions": [
+      "Multivariate normal errors with contemporaneous covariance Sigma",
+      "Exogeneity of regressors given spatial lag",
+      "Fixed adjacency-based neighborhood structure"
+    ],
+    "core_operations": [
+      "Stack T cross-sectional equations into compact Y = X beta + epsilon",
+      "Impose A = I_TN - Gamma kron W spatial lag structure",
+      "Maximize likelihood over beta, Sigma, rho_t",
+      "Wald test of equal rho across periods"
+    ],
+    "dependent_contributions": [
+      "C1 spatial SUR-SLM contagion modeling",
+      "C2 environmental seasonality evidence"
+    ],
+    "dependent_experiments_results": [
+      "Table 2 coefficient summary",
+      "Figure 5 goodness-of-fit comparison",
+      "Figures 6-8 temporal coefficient evolution",
+      "Table 3 direct, indirect, total effects"
+    ],
+    "evidence": [
+      "E1"
+    ],
+    "inputs": [
+      "Per-date incidence vector y_t (N provinces)",
+      "Block-diagonal design matrices X_t of log-transformed covariates",
+      "Queen-contiguity spatial weights matrix W",
+      "Convergence tolerance"
+    ],
+    "outputs": [
+      "Time-varying beta_t coefficients with standard errors",
+      "Per-date spatial autocorrelation rho_t",
+      "Sigma covariance of cross-equation residuals",
+      "Pooled and equation-level R-squared"
+    ],
+    "parameters": [
+      "Number of equations T equals 30 days",
+      "Constrained versus free coefficient sets",
+      "rho_t per period",
+      "Sigma elements sigma_tt'"
+    ],
+    "scientific_invariants": [
+      "Estimated rho captures contagion intensity and sign per date",
+      "If rho_k = 0 indirect effects vanish and direct effects equal beta_kt",
+      "Error covariance has Kronecker form Sigma kron I_N"
+    ],
+    "scientific_purpose": "Estimate time-stacked spatial-lag SUR equations capturing interprovincial contagion plus environmental and control effects on daily COVID-19 incidence.",
+    "specificity_reason": "Requires paper-specific likelihood formulation combining SUR stacking, spatial lag operator, and time-varying rho; not an off-the-shelf API call."
+  },
+  "selected_core_algorithm": "SUR-SLM maximum likelihood estimation",
+  "uniqueness_reason": "Only candidate whose removal invalidates the paper's central claim of modeling COVID-19 incidence as an interregional contagion process; all others are preprocessing, evaluation, or interpretation layers."
+}

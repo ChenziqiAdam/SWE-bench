@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "task_id": "scibench_replication_0011_core",
+  "hazards": [
+    {
+      "id": "H1",
+      "source_roles": ["target", "minimum_eigenvalue_reconditioning"],
+      "evidence": "Target paper Section III states that noisy estimated MSD variances can make the Eq. 6 covariance singular or ill-conditioned and applies minimum-eigenvalue reconditioning.",
+      "failure_mode": "Direct inversion or omitted reconditioning is unstable or changes the posterior.",
+      "hidden_cases": ["case_01"],
+      "shortcuts": ["skip_reconditioning", "diagonal_covariance", "wrong_eq6"]
+    },
+    {
+      "id": "H2",
+      "source_roles": ["target", "bayesian_posterior_sampling"],
+      "evidence": "Target paper Sections II and VII use a posterior over the linear model with the improper prior D >= 0.",
+      "failure_mode": "An untruncated Gaussian or point estimator reports negative lower-tail diffusion at the boundary.",
+      "hidden_cases": ["case_02"],
+      "shortcuts": ["ignore_nonnegative_prior", "ols", "wls"]
+    },
+    {
+      "id": "H3",
+      "source_roles": ["target", "generalised_least_squares"],
+      "evidence": "The target model is m = 2 d D t + c and fits both gradient and intercept under correlated heteroscedastic errors.",
+      "failure_mode": "Forcing zero intercept or estimating D from MSD/time biases the slope.",
+      "hidden_cases": ["case_03"],
+      "shortcuts": ["ols", "wrong_fit_window"]
+    },
+    {
+      "id": "H4",
+      "source_roles": ["target"],
+      "evidence": "The paper excludes early ballistic and sub-diffusive MSD before fitting the long-time diffusive regime.",
+      "failure_mode": "Using all lag points contaminates the fitted diffusion slope.",
+      "hidden_cases": ["case_04"],
+      "shortcuts": ["wrong_fit_window"]
+    },
+    {
+      "id": "H5",
+      "source_roles": ["target", "generalised_least_squares"],
+      "evidence": "Eq. 6 represents serial covariance while Eq. 7 rescales each observed squared-displacement variance using the effective independent count.",
+      "failure_mode": "OLS, diagonal-only weights, reversed Eq. 6 indices, or raw row lengths yield a different posterior.",
+      "hidden_cases": ["case_01", "case_05", "case_06"],
+      "shortcuts": ["ols", "wls", "diagonal_covariance", "wrong_eq6", "wrong_neff"]
+    },
+    {
+      "id": "H6",
+      "source_roles": ["target"],
+      "evidence": "The Einstein relation changes slope-to-diffusion scaling with dimension and the method is unit-scale equivariant.",
+      "failure_mode": "Hard-coded 3D scaling or fixed numeric regularizers fail on irregular grids and extreme units.",
+      "hidden_cases": ["case_05", "case_07", "case_08"],
+      "shortcuts": ["ols", "wls", "diagonal_covariance"]
+    }
+  ],
+  "case_coverage": {
+    "case_01": ["H1", "H5"],
+    "case_02": ["H2"],
+    "case_03": ["H3"],
+    "case_04": ["H4"],
+    "case_05": ["H5", "H6"],
+    "case_06": ["H5"],
+    "case_07": ["H6"],
+    "case_08": ["H6"]
+  }
+}

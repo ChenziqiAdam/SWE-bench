@@ -1,0 +1,8 @@
+{
+  "schema_version": 4,
+  "task_id": "scibench_replication_0011_core",
+  "entrypoint": [
+    "/opt/anaconda3/bin/python",
+    "solution.py"
+  ]
+}

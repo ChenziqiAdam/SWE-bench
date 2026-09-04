@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "id": "target",
+      "title": "Reducing climate risk in energy system planning: A posteriori time series aggregation for models with storage",
+      "version": "arXiv:2210.08351",
+      "url": "https://arxiv.org/abs/2210.08351",
+      "file": "hilbers_2023_aposteriori_arxiv_2210.08351.pdf",
+      "sha256": "f7de9fe507fe2bb0bff801bbc9975deb13c0a4b0853fd588935bd04f3af39dfa"
+    },
+    {
+      "id": "importance",
+      "title": "Importance subsampling for power system planning under multi-year demand and weather uncertainty",
+      "version": "arXiv:2008.10300",
+      "url": "https://arxiv.org/abs/2008.10300",
+      "file": "hilbers_2020_importance_arxiv_2008.10300.pdf",
+      "sha256": "9ebc2ce341cfe497ed71d9746ac918ae5ea752b5e171347ad4c46aa73f94160b"
+    },
+    {
+      "id": "chronology",
+      "title": "Time series aggregation for energy system design: Modeling seasonal storage",
+      "version": "arXiv:1710.07593",
+      "url": "https://arxiv.org/abs/1710.07593",
+      "file": "kotzur_2018_storage_arxiv_1710.07593.pdf",
+      "sha256": "4abf3b140380da3dcd26a4b38315a303ff932adc9517f6315f70b91660903eef"
+    },
+    {
+      "id": "apriori_baseline",
+      "title": "Impact of different time series aggregation methods on optimal energy system design",
+      "version": "arXiv:1708.00420",
+      "url": "https://arxiv.org/abs/1708.00420",
+      "file": "kotzur_2017_apriori_arxiv_1708.00420.pdf",
+      "sha256": "2faf694bb6e01bf42e1a3f54114c3441de6cafc8a88cbbe26dc6ac1fe0209ac4"
+    }
+  ],
+  "hazards": [
+    {"id": "H1", "risk": "returning a priori clustering without preliminary planning and full-series operation", "source": "target"},
+    {"id": "H2", "risk": "ranking input extremes instead of operation-derived importance", "source": "importance"},
+    {"id": "H3", "risk": "discarding the sequence of representative periods and corrupting seasonal storage", "source": "chronology"},
+    {"id": "H4", "risk": "using centroids/means where the contract requires real representative periods", "source": "apriori_baseline"},
+    {"id": "H5", "risk": "omitting storage operation variables from the storage-aware configuration", "source": "target"},
+    {"id": "H6", "risk": "normalizing a constant column by zero variance", "source": "target"},
+    {"id": "H7", "risk": "allocating more extreme clusters than observed extreme days", "source": "target"},
+    {"id": "H8", "risk": "skipping final capacity re-optimization after a posteriori aggregation", "source": "target"}
+  ]
+}

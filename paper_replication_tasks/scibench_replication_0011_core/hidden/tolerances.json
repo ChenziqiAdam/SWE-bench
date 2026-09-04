@@ -1,0 +1,19 @@
+{
+  "comparison": "fieldwise",
+  "field_rules": {
+    "mean": {
+      "atol": 1.2379526307401312e-09,
+      "rtol": 0.14128577244209775
+    },
+    "quantiles": {
+      "atol": 1.8214551404165366e-09,
+      "rtol": 0.22271139569310916
+    },
+    "variance": {
+      "atol": 2.8103545682349086e-13,
+      "rtol": 0.3908891745646146
+    }
+  },
+  "frozen_source": "curation_reports/official_runs/0011_core_feasibility/frozen_tolerance.json",
+  "quantile_rule": "most conservative of the three pre-hidden frozen quantile bounds"
+}

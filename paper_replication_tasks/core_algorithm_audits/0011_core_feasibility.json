@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "task_id": "scibench_replication_0011_core",
+  "decision": "READY_WITH_G7_WAIVER",
+  "phase": "formal_validation",
+  "gates": {
+    "official_pin_and_call_chain": "PASS",
+    "two_clean_checkouts_exact": "PASS",
+    "independent_scientific_posterior": "PASS",
+    "tolerance_frozen_before_hidden_construction": "PASS",
+    "G6_blind_identification": "PASS",
+    "G7_blind_implementation": "FAIL",
+    "G8_oracle_validity": "PASS"
+  },
+  "G6_result": "2/3 attempted independent contexts passed; the third was externally blocked after finite 429 retries.",
+  "construction_started": true,
+  "G7_result": "The fresh fallback-model submission executed all 11 cases but scored 0.0; preserve the generated submission and do not retry after hidden evaluation.",
+  "registry_changed": true,
+  "promotion_performed": true,
+  "validation_waiver": {
+    "gate": "G7_blind_implementation",
+    "granted_on": "2026-09-04",
+    "reason": "Explicit curator decision; the failed G7 evidence remains unchanged."
+  },
+  "evidence": {
+    "numerical_report": "curation_reports/0011_core_feasibility.json",
+    "official_runs": "curation_reports/official_runs/0011_core_feasibility",
+    "blind_runner": "curation_tools/run_0011_core_blind_identification.py",
+    "blind_audit": "core_algorithm_audits/0011_core_blind.json",
+    "G7_audit": "curation_reports/0011_core_g7.json",
+    "G7_submission": "core_algorithm_audits/0011_core_g7_submission/solution.py",
+    "oracle_audit": "curation_reports/0011_core_oracle.json"
+  }
+}

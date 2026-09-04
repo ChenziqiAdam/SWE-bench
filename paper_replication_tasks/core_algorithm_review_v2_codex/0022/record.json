@@ -1,0 +1,301 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E1",
+          "E3",
+          "E4",
+          "E5"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "Removing adaptive sketch-based selection eliminates the proposed process and conditioning contribution."
+      },
+      "description": "At each Arnoldi step use sketched sparse least squares to select k prior basis vectors, project, and sketch-normalize the next vector.",
+      "evidence": [
+        "E1",
+        "E3",
+        "E4",
+        "E5"
+      ],
+      "name": "Sketch-and-select Arnoldi process",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E1"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "It defines the reference process but not the proposed low-cost method."
+      },
+      "description": "Orthogonalize against every preceding vector.",
+      "evidence": [
+        "E1"
+      ],
+      "name": "Standard full Arnoldi",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E2",
+          "E7"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "It is the primary runtime-matched comparator."
+      },
+      "description": "Project only against the k most recent vectors.",
+      "evidence": [
+        "E2",
+        "E7"
+      ],
+      "name": "Truncated Arnoldi",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E4",
+          "E5"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "They are interchangeable solvers inside the common sketch-and-select process."
+      },
+      "description": "pinv, OMP, subspace pursuit, and greedy strategies approximately choose projection support.",
+      "evidence": [
+        "E4",
+        "E5"
+      ],
+      "name": "Sparse subset-selection heuristics",
+      "role": "supporting"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E6"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "It tests a downstream use and is not the basis-generation contribution."
+      },
+      "description": "Use the generated basis in a sketched linear-system solver.",
+      "evidence": [
+        "E6"
+      ],
+      "name": "sGMRES",
+      "role": "evaluation"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E2",
+        "E3"
+      ],
+      "from": "goal",
+      "relation": "is addressed by",
+      "to": "C1"
+    },
+    {
+      "evidence": [
+        "E6",
+        "E7"
+      ],
+      "from": "C1",
+      "relation": "is evaluated through",
+      "to": "C2"
+    }
+  ],
+  "decision": "ACCEPT_FOR_DESIGN",
+  "evidence_catalog": [
+    {
+      "excerpt": "A sketch-and-select Arnoldi process to generate a well-conditioned basis of a Krylov space at low cost is proposed.",
+      "id": "E1",
+      "page": 1,
+      "section": "Abstract"
+    },
+    {
+      "excerpt": "The goal of this paper is to provide a procedure to construct a Krylov basis Vm with the same O(N mk) runtime as truncated Arnoldi",
+      "id": "E2",
+      "page": 4,
+      "section": "1 Introduction"
+    },
+    {
+      "excerpt": "instead of projecting each new Krylov basis vector against the k previous basis vectors, we use the sketched version of the Krylov basis to identify k candidates for the projection.",
+      "id": "E3",
+      "page": 4,
+      "section": "2 The sketch-and-select Arnoldi process"
+    },
+    {
+      "excerpt": "we propose to select the index set I of the nonzero coefficients hi,j by approximately solving the following sparse least squares problem",
+      "id": "E4",
+      "page": 5,
+      "section": "2 The sketch-and-select Arnoldi process"
+    },
+    {
+      "excerpt": "all sketch-and-select variants only perform operations on small sketched matrices and vectors to determine the projection coefficients.",
+      "id": "E5",
+      "page": 6,
+      "section": "2 The sketch-and-select Arnoldi process"
+    },
+    {
+      "excerpt": "ssa-pinv, ssa-OMP, ssa-SP and ssa-greedy obtain on average two more digits of accuracy compared to truncated Arnoldi.",
+      "id": "E6",
+      "page": 12,
+      "section": "3.4 Application to sketched GMRES"
+    },
+    {
+      "excerpt": "We have introduced a sketch-and-select Arnoldi process and demonstrated its potential to generate Krylov bases that are significantly better conditioned than those computed with the truncated Arnoldi process",
+      "id": "E7",
+      "page": 23,
+      "section": "6 Conclusions and future work"
+    }
+  ],
+  "evidence_gaps": [],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E1",
+        "E7"
+      ],
+      "reason": "The process directly carries the paper's conditioning-versus-cost contribution.",
+      "status": "PASS"
+    },
+    "G2": {
+      "evidence": [
+        "E3",
+        "E4",
+        "E5"
+      ],
+      "reason": "Inner selection variants instantiate one process; other Arnoldi methods and sGMRES are not co-core.",
+      "status": "PASS"
+    },
+    "G3": {
+      "evidence": [
+        "E3",
+        "E4"
+      ],
+      "reason": "The method requires a paper-specific coupling of Krylov recurrence, randomized sketching, and sparse selection.",
+      "status": "PASS"
+    },
+    "G4": {
+      "evidence": [
+        "E2",
+        "E3",
+        "E4"
+      ],
+      "reason": "A, b, m, k, and S determine basis and coefficient outputs.",
+      "status": "PASS"
+    },
+    "G5": {
+      "evidence": [
+        "E6",
+        "E7"
+      ],
+      "reason": "The same process can be tested across matrices, starts, sketch dimensions, k, and selection strategies.",
+      "status": "PASS"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E1",
+        "E3",
+        "E4",
+        "E5"
+      ],
+      "id": "C1",
+      "summary": "A sketch-and-select Arnoldi process casting limited projection as sketched sparse subset selection."
+    },
+    {
+      "evidence": [
+        "E2",
+        "E6",
+        "E7"
+      ],
+      "id": "C2",
+      "summary": "Better-conditioned bases and improved attainable sGMRES accuracy at linear-in-basis-dimension projection cost."
+    }
+  ],
+  "paper_id": "0022",
+  "research_goal": {
+    "evidence": [
+      "E1",
+      "E2"
+    ],
+    "summary": "Construct a low-cost Krylov basis that stays better conditioned than truncated Arnoldi for sketch-based solvers."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": {
+    "algorithm": "Sketch-and-select Arnoldi process",
+    "assumptions": [
+      "S embeds the relevant Krylov space",
+      "k is smaller than the growing basis dimension",
+      "no breakdown in normalization"
+    ],
+    "core_operations": [
+      "apply A",
+      "sketch candidate vector",
+      "solve approximate sparse subset selection",
+      "project selected basis vectors",
+      "normalize in sketch norm"
+    ],
+    "dependent_contributions": [
+      "C1",
+      "C2"
+    ],
+    "dependent_experiments_results": [
+      "SuiteSparse conditioning profiles",
+      "sGMRES accuracy tests"
+    ],
+    "evidence": [
+      "E1",
+      "E2",
+      "E3",
+      "E4",
+      "E5"
+    ],
+    "inputs": [
+      "matrix or linear operator A",
+      "starting vector b",
+      "basis dimension m",
+      "selection width k",
+      "sketch operator S"
+    ],
+    "outputs": [
+      "Krylov basis V",
+      "sketched basis SV",
+      "projection coefficients H"
+    ],
+    "parameters": [
+      "m",
+      "k",
+      "sketch dimension",
+      "selection heuristic"
+    ],
+    "scientific_invariants": [
+      "basis spans the intended Krylov sequence absent breakdown",
+      "each sketched new vector is normalized",
+      "at most k prior vectors are projected per step"
+    ],
+    "scientific_purpose": "Generate a Krylov basis with bounded projection cost and delayed conditioning growth.",
+    "specificity_reason": "It integrates randomized embeddings, sparse model selection, and Krylov recurrence while retaining linear projection cost."
+  },
+  "selected_core_algorithm": "Sketch-and-select Arnoldi process",
+  "uniqueness_reason": "The sketch-and-select process is the single umbrella algorithm; selection heuristics are replaceable inner solvers, Arnoldi variants are baselines, and sGMRES is an application."
+}

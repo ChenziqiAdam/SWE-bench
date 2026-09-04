@@ -1,0 +1,240 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E1",
+          "E2",
+          "E3"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "Removing the combined covariance model and posterior regression eliminates the paper's estimator and both claimed outputs."
+      },
+      "description": "Fit the MSD population with a free-diffusion covariance model and sample the posterior linear-model distribution.",
+      "evidence": [
+        "E1",
+        "E2",
+        "E3"
+      ],
+      "name": "Single-trajectory approximate Bayesian MSD regression",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E2"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "The selected estimator needs this covariance component, but the component alone does not produce the paper's scientific output."
+      },
+      "description": "Construct and recondition the covariance used by the Bayesian estimator.",
+      "evidence": [
+        "E2"
+      ],
+      "name": "Analytical free-diffusion covariance construction",
+      "role": "supporting"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E5"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "The proposed estimator remains defined without these comparison methods."
+      },
+      "description": "Conventional and theoretical-optimum regression comparators.",
+      "evidence": [
+        "E5"
+      ],
+      "name": "OLS, WLS, and converged-covariance GLS",
+      "role": "baseline"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E1"
+      ],
+      "from": "goal",
+      "relation": "is solved by",
+      "to": "C1"
+    },
+    {
+      "evidence": [
+        "E4",
+        "E5"
+      ],
+      "from": "C1",
+      "relation": "produces and is validated by",
+      "to": "C2"
+    }
+  ],
+  "decision": "ACCEPT_FOR_DESIGN",
+  "evidence_catalog": [
+    {
+      "excerpt": "Here, we describe an approximate Bayesian regression method for estimatingD ∗ with near-maximal statistical efficiency while accurately estimating the corresponding statistical uncertainty using data from a single simulation.",
+      "id": "E1",
+      "page": 2,
+      "section": "I. Introduction"
+    },
+    {
+      "excerpt": "We model the statistical population of simulation MSDs as a multivariate normal distribution, using an analytical covariance matrix derived for an equivalent system of freely diffusing particles, with this covariance matrix parameterised from the observed simulation data.",
+      "id": "E2",
+      "page": 2,
+      "section": "I. Introduction"
+    },
+    {
+      "excerpt": "We use Markov-Chain Monte Carlo to sample the posterior distribution of linear models compatible with the observed MSD data.",
+      "id": "E3",
+      "page": 7,
+      "section": "VI. Summary and Discussion"
+    },
+    {
+      "excerpt": "We have benchmarked our approach using simulation data for an ideal 3D lattice random walk and for the lithium-ion solid electrolyte Li 7La3Zr2O12 (LLZO).",
+      "id": "E4",
+      "page": 7,
+      "section": "VI. Summary and Discussion"
+    },
+    {
+      "excerpt": "The approximate Bayesian regression scheme therefore provides more accurate single-point estimates of the self-diffusion coefficient than the commonly used OLS or WLS methods, when applied to the same input simulation data.",
+      "id": "E5",
+      "page": 7,
+      "section": "VI. Summary and Discussion"
+    }
+  ],
+  "evidence_gaps": [],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E1",
+        "E5"
+      ],
+      "reason": "Deleting the estimator removes the main efficiency and uncertainty contribution.",
+      "status": "PASS"
+    },
+    "G2": {
+      "evidence": [
+        "E1",
+        "E2",
+        "E3"
+      ],
+      "reason": "The covariance construction and MCMC are coupled stages of one estimator; the other regressions are baselines.",
+      "status": "PASS"
+    },
+    "G3": {
+      "evidence": [
+        "E2",
+        "E3"
+      ],
+      "reason": "The method requires a diffusion-specific covariance model and correlated-MSD inference.",
+      "status": "PASS"
+    },
+    "G4": {
+      "evidence": [
+        "E1",
+        "E3"
+      ],
+      "reason": "Trajectory-derived MSD inputs map to a diffusion posterior and uncertainty.",
+      "status": "PASS"
+    },
+    "G5": {
+      "evidence": [
+        "E4",
+        "E5"
+      ],
+      "reason": "The same estimator is tested on a stochastic lattice model and a chemically realistic solid electrolyte.",
+      "status": "PASS"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E1",
+        "E2",
+        "E3"
+      ],
+      "id": "C1",
+      "summary": "A Bayesian MSD regression scheme with an analytically modelled and data-parameterized covariance matrix."
+    },
+    {
+      "evidence": [
+        "E4",
+        "E5"
+      ],
+      "id": "C2",
+      "summary": "Near-optimal statistical efficiency and useful uncertainty estimates from a single trajectory."
+    }
+  ],
+  "paper_id": "0011",
+  "research_goal": {
+    "evidence": [
+      "E1"
+    ],
+    "summary": "Estimate self-diffusion coefficients and their uncertainty efficiently from one molecular-dynamics trajectory."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": {
+    "algorithm": "Single-trajectory approximate Bayesian MSD regression",
+    "assumptions": [
+      "long-time free-diffusion covariance is an adequate approximation",
+      "linear MSD regime"
+    ],
+    "core_operations": [
+      "parameterize analytical covariance",
+      "recondition covariance",
+      "sample linear-model posterior"
+    ],
+    "dependent_contributions": [
+      "C1",
+      "C2"
+    ],
+    "dependent_experiments_results": [
+      "lattice-random-walk benchmark",
+      "LLZO benchmark"
+    ],
+    "evidence": [
+      "E1",
+      "E2",
+      "E3",
+      "E4"
+    ],
+    "inputs": [
+      "lag times",
+      "observed MSD values",
+      "squared-displacement variance information"
+    ],
+    "outputs": [
+      "posterior diffusion-coefficient estimate",
+      "estimated uncertainty"
+    ],
+    "parameters": [
+      "diffusion coefficient",
+      "intercept",
+      "covariance scale"
+    ],
+    "scientific_invariants": [
+      "covariance remains positive definite",
+      "MSD mean is linear in time",
+      "posterior uncertainty reflects correlated heteroscedastic noise"
+    ],
+    "scientific_purpose": "Infer a self-diffusion coefficient and its statistical uncertainty from noisy, correlated MSD observations.",
+    "specificity_reason": "It couples diffusion physics, correlated MSD statistics, covariance reconditioning, and Bayesian inference rather than calling a generic regression API."
+  },
+  "selected_core_algorithm": "Single-trajectory approximate Bayesian MSD regression",
+  "uniqueness_reason": "Only the integrated single-trajectory Bayesian estimator carries both the efficient point estimate and uncertainty contribution; covariance construction is a component and OLS/WLS/GLS are comparators."
+}

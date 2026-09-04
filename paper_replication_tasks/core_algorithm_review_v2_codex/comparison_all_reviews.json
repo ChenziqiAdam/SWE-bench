@@ -1,0 +1,239 @@
+{
+  "aggregation": "none; FAILED is not a disagreement and no majority vote was performed",
+  "coverage": {
+    "codex": {
+      "complete": 9,
+      "failed": 0
+    },
+    "glm52": {
+      "complete": 3,
+      "failed": 6
+    },
+    "v2": {
+      "complete": 3,
+      "failed": 6
+    }
+  },
+  "generated_at": "2026-08-24T17:11:35.820806+00:00",
+  "models": {
+    "codex": "codex-local-review",
+    "glm52": "z-ai/glm-5.2:free",
+    "v2": "stealth/ox-alpha"
+  },
+  "pairwise_disagreement_count": 5,
+  "papers": [
+    {
+      "comparisons": {},
+      "completed_reviews": [
+        "codex"
+      ],
+      "note": "FAILED or MISSING runs are excluded from disagreement calculations.",
+      "paper_id": "0011",
+      "statuses": {
+        "codex": "COMPLETE",
+        "glm52": "FAILED",
+        "v2": "FAILED"
+      }
+    },
+    {
+      "comparisons": {
+        "glm52_vs_codex": {
+          "core_match": true,
+          "decision_match": true,
+          "disagreement": false,
+          "gate_matches": {
+            "G1": true,
+            "G2": true,
+            "G3": true,
+            "G4": true,
+            "G5": true
+          }
+        }
+      },
+      "completed_reviews": [
+        "glm52",
+        "codex"
+      ],
+      "note": "FAILED or MISSING runs are excluded from disagreement calculations.",
+      "paper_id": "0014",
+      "statuses": {
+        "codex": "COMPLETE",
+        "glm52": "RESUMED",
+        "v2": "FAILED"
+      }
+    },
+    {
+      "comparisons": {},
+      "completed_reviews": [
+        "codex"
+      ],
+      "note": "FAILED or MISSING runs are excluded from disagreement calculations.",
+      "paper_id": "0015",
+      "statuses": {
+        "codex": "COMPLETE",
+        "glm52": "FAILED",
+        "v2": "FAILED"
+      }
+    },
+    {
+      "comparisons": {},
+      "completed_reviews": [
+        "codex"
+      ],
+      "note": "FAILED or MISSING runs are excluded from disagreement calculations.",
+      "paper_id": "0017",
+      "statuses": {
+        "codex": "COMPLETE",
+        "glm52": "FAILED",
+        "v2": "FAILED"
+      }
+    },
+    {
+      "comparisons": {
+        "v2_vs_codex": {
+          "core_match": true,
+          "decision_match": true,
+          "disagreement": false,
+          "gate_matches": {
+            "G1": true,
+            "G2": true,
+            "G3": true,
+            "G4": true,
+            "G5": true
+          }
+        }
+      },
+      "completed_reviews": [
+        "v2",
+        "codex"
+      ],
+      "note": "FAILED or MISSING runs are excluded from disagreement calculations.",
+      "paper_id": "0018",
+      "statuses": {
+        "codex": "COMPLETE",
+        "glm52": "FAILED",
+        "v2": "COMPLETE"
+      }
+    },
+    {
+      "comparisons": {
+        "glm52_vs_codex": {
+          "core_match": false,
+          "decision_match": true,
+          "disagreement": true,
+          "gate_matches": {
+            "G1": true,
+            "G2": false,
+            "G3": false,
+            "G4": true,
+            "G5": true
+          }
+        }
+      },
+      "completed_reviews": [
+        "glm52",
+        "codex"
+      ],
+      "note": "FAILED or MISSING runs are excluded from disagreement calculations.",
+      "paper_id": "0019",
+      "statuses": {
+        "codex": "COMPLETE",
+        "glm52": "RESUMED",
+        "v2": "FAILED"
+      }
+    },
+    {
+      "comparisons": {
+        "v2_vs_codex": {
+          "core_match": false,
+          "decision_match": true,
+          "disagreement": true,
+          "gate_matches": {
+            "G1": true,
+            "G2": true,
+            "G3": true,
+            "G4": true,
+            "G5": true
+          }
+        }
+      },
+      "completed_reviews": [
+        "v2",
+        "codex"
+      ],
+      "note": "FAILED or MISSING runs are excluded from disagreement calculations.",
+      "paper_id": "0020",
+      "statuses": {
+        "codex": "COMPLETE",
+        "glm52": "FAILED",
+        "v2": "COMPLETE"
+      }
+    },
+    {
+      "comparisons": {
+        "glm52_vs_codex": {
+          "core_match": false,
+          "decision_match": true,
+          "disagreement": true,
+          "gate_matches": {
+            "G1": true,
+            "G2": true,
+            "G3": true,
+            "G4": true,
+            "G5": true
+          }
+        },
+        "v2_vs_codex": {
+          "core_match": false,
+          "decision_match": true,
+          "disagreement": true,
+          "gate_matches": {
+            "G1": true,
+            "G2": true,
+            "G3": true,
+            "G4": true,
+            "G5": true
+          }
+        },
+        "v2_vs_glm52": {
+          "core_match": false,
+          "decision_match": true,
+          "disagreement": true,
+          "gate_matches": {
+            "G1": true,
+            "G2": true,
+            "G3": true,
+            "G4": true,
+            "G5": true
+          }
+        }
+      },
+      "completed_reviews": [
+        "v2",
+        "glm52",
+        "codex"
+      ],
+      "note": "FAILED or MISSING runs are excluded from disagreement calculations.",
+      "paper_id": "0021",
+      "statuses": {
+        "codex": "COMPLETE",
+        "glm52": "RESUMED",
+        "v2": "COMPLETE"
+      }
+    },
+    {
+      "comparisons": {},
+      "completed_reviews": [
+        "codex"
+      ],
+      "note": "FAILED or MISSING runs are excluded from disagreement calculations.",
+      "paper_id": "0022",
+      "statuses": {
+        "codex": "COMPLETE",
+        "glm52": "FAILED",
+        "v2": "FAILED"
+      }
+    }
+  ],
+  "schema_version": "core-algorithm-review-v2"
+}

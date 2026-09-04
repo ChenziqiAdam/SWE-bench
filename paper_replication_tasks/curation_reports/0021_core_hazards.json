@@ -1,0 +1,29 @@
+{
+  "contribution_graph": {
+    "research_goal": "Efficient partial-fraction approximation for many target functions",
+    "core": "rEIM greedy shared-basis construction and rational interpolation (Algorithm 2.1)",
+    "supporting_theory": "Variation norms and entropy-number convergence analysis",
+    "excluded_baselines": ["ROGA", "AAA"],
+    "excluded_applications": ["fractional FEM", "adaptive BDF2", "preconditioning", "matrix exponentials", "figure replication"]
+  },
+  "hazards": [
+    {"id": "HZ1", "phenomenon": "Cauchy interpolation matrices become highly conditioned at higher order", "source": "Li and Li, arXiv:2406.19339v3, Section 2 after (2.3)", "cases": ["hidden:case_01", "hidden:case_08"], "faults": ["early_stop", "least_squares"]},
+    {"id": "HZ2", "phenomenon": "Endpoint-dense and nonuniform candidate sets control greedy maxima", "source": "Li and Li, arXiv:2406.19339v3, Section 5.1", "cases": ["hidden:case_02", "hidden:case_04"], "faults": ["hardcoded_grid", "fixed_parameters"]},
+    {"id": "HZ3", "phenomenon": "The paper-normalized dictionary differs from the repository experiment convention", "source": "Li and Li, equation (2.1) and Section 5.1", "cases": ["hidden:case_03"], "faults": ["unnormalized"]},
+    {"id": "HZ4", "phenomenon": "Algorithm 2.1 leaves first-step ties unspecified", "source": "Li and Li, Algorithm 2.1", "cases": ["hidden:case_05"], "faults": ["ignore_initial"]},
+    {"id": "HZ5", "phenomenon": "The selected basis is shared across many targets outside the dictionary", "source": "Li and Li, Section 2 after (2.3)", "cases": ["hidden:case_06", "hidden:case_07"], "faults": ["target_basis", "per_target"]},
+    {"id": "HZ6", "phenomenon": "Classical EIM uses interpolation residual maxima; AAA instead uses barycentric support points and least squares", "source": "Barrault et al. (2004), Section 2; Nakatsukasa et al. (2018), Sections 1-2", "cases": ["hidden:case_07", "hidden:case_08"], "faults": ["least_squares", "transpose"]}
+  ],
+  "scientific_contract": {
+    "algorithm": "rEIM Algorithm 2.1",
+    "inputs": "Finite sampled dictionary, multiple sampled targets, query dictionary, order, and a legal first-column tie breaker",
+    "outputs": "Greedy row/column indices, interpolation matrix, all target coefficients, and query predictions",
+    "invariants": ["one shared basis for all targets", "exact interpolation at selected rows", "predictions use selected query columns", "first-occurrence argmax after the explicit first step"],
+    "assumptions": ["finite rectangular arrays", "nondegenerate pivots through requested order"]
+  },
+  "sources": [
+    {"title": "A New Rational Approximation Algorithm via the Empirical Interpolation Method", "doi": "10.1137/24M1674832", "version": "arXiv:2406.19339v3", "sha256": "b7f61555afe1e784318af286c6120a0f8b86cd39f06f9b9d3b69a9988e4ea453"},
+    {"title": "An empirical interpolation method", "doi": "10.1016/j.crma.2004.08.006", "version": "published 2004 PDF", "sha256": "8960c0bdb1dda8f9950fcb1212fd7469a05e2423ecbf2ab33d97b7ba7a999424", "artifact": "curation_reports/sources/0021_core/barrault_eim_2004.pdf"},
+    {"title": "The AAA Algorithm for Rational Approximation", "doi": "10.1137/16M1106122", "version": "SIAM J. Sci. Comput. 40(3), 2018", "sha256": "2e7964b55eb9ff98fdeec36df1e49fd0cc1ef4a2f7edd75cbd1374cd2191ea6e", "artifact": "curation_reports/sources/0021_core/aaa_2018.pdf"}
+  ]
+}

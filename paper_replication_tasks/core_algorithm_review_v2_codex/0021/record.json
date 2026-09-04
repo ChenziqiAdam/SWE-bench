@@ -1,0 +1,284 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E1",
+          "E2",
+          "E3",
+          "E4",
+          "E5"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "Removing rEIM eliminates the new approximation procedure, invariant-pole output, and applications."
+      },
+      "description": "Greedily select rational dictionary poles and interpolation points, then interpolate every target through a shared small system.",
+      "evidence": [
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E5"
+      ],
+      "name": "Rational approximation via empirical interpolation (rEIM)",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E6"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "rEIM remains fully defined without this comparator."
+      },
+      "description": "Alternative dictionary-based rational approximation presented for comparison.",
+      "evidence": [
+        "E6"
+      ],
+      "name": "Rational orthogonal greedy algorithm",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E3"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "It motivates the partial-fraction advantage but is not the proposed method."
+      },
+      "description": "Prior barycentric rational approximation approach.",
+      "evidence": [
+        "E3"
+      ],
+      "name": "AAA-type rational approximation",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E7"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "These are downstream applications of the general approximation algorithm."
+      },
+      "description": "Use the selected poles and residues to combine shifted local solves.",
+      "evidence": [
+        "E7"
+      ],
+      "name": "rEIM-based fractional PDE solvers",
+      "role": "supporting"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E1",
+        "E3"
+      ],
+      "from": "goal",
+      "relation": "is solved by",
+      "to": "C1"
+    },
+    {
+      "evidence": [
+        "E6",
+        "E7"
+      ],
+      "from": "C1",
+      "relation": "is supported and applied by",
+      "to": "C2"
+    }
+  ],
+  "decision": "ACCEPT_FOR_DESIGN",
+  "evidence_catalog": [
+    {
+      "excerpt": "We present a new rational approximation algorithm based on the empirical interpolation method for interpolating a family of parametrized functions to rational polynomials with invariant poles",
+      "id": "E1",
+      "page": 1,
+      "section": "Abstract"
+    },
+    {
+      "excerpt": "Our rEIM adaptively selects basis functions from the set",
+      "id": "E2",
+      "page": 2,
+      "section": "1 Introduction"
+    },
+    {
+      "excerpt": "the rEIM directly outputs approximants of the form (1.1)",
+      "id": "E3",
+      "page": 2,
+      "section": "1 Introduction"
+    },
+    {
+      "excerpt": "Output: the rational interpolant Π nf for a family of target functions f which are not necessarily in D(B).",
+      "id": "E4",
+      "page": 3,
+      "section": "2 Rational Approximation via the Empirical Interpolation Method"
+    },
+    {
+      "excerpt": "For any input target function f , the rEIM interpolant Π nf has a fixed set of poles",
+      "id": "E5",
+      "page": 4,
+      "section": "2 Rational Approximation via the Empirical Interpolation Method"
+    },
+    {
+      "excerpt": "Combining Theorem 2.3 with the order of convergence",
+      "id": "E6",
+      "page": 6,
+      "section": "2.1 Convergence Estimate of the rEIM"
+    },
+    {
+      "excerpt": "we have developed the rEIM, a new rational approximation algorithm for producing partial fraction approximation of a target function set.",
+      "id": "E7",
+      "page": 21,
+      "section": "6 Concluding Remarks"
+    }
+  ],
+  "evidence_gaps": [],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E1",
+        "E7"
+      ],
+      "reason": "rEIM directly carries the new-method contribution.",
+      "status": "PASS"
+    },
+    "G2": {
+      "evidence": [
+        "E1",
+        "E7"
+      ],
+      "reason": "The paper distinguishes rEIM from comparison methods and downstream applications.",
+      "status": "PASS"
+    },
+    "G3": {
+      "evidence": [
+        "E2",
+        "E3",
+        "E5"
+      ],
+      "reason": "It requires paper-specific rational-dictionary and invariant-pole reasoning.",
+      "status": "PASS"
+    },
+    "G4": {
+      "evidence": [
+        "E3",
+        "E4",
+        "E5"
+      ],
+      "reason": "Its algorithm states finite inputs and rational interpolant outputs.",
+      "status": "PASS"
+    },
+    "G5": {
+      "evidence": [
+        "E5",
+        "E7"
+      ],
+      "reason": "Shared poles support new target families, orders, intervals, and application operators.",
+      "status": "PASS"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E1",
+        "E2",
+        "E4",
+        "E5"
+      ],
+      "id": "C1",
+      "summary": "The adaptive rEIM algorithm selecting rational dictionary functions and interpolation points once for many targets."
+    },
+    {
+      "evidence": [
+        "E6",
+        "E7"
+      ],
+      "id": "C2",
+      "summary": "A convergence estimate and applications to fractional PDEs, preconditioning, and matrix functions."
+    }
+  ],
+  "paper_id": "0021",
+  "research_goal": {
+    "evidence": [
+      "E1",
+      "E3"
+    ],
+    "summary": "Efficiently approximate families of parameterized functions in partial-fraction form with shared invariant poles."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": {
+    "algorithm": "Rational approximation via empirical interpolation (rEIM)",
+    "assumptions": [
+      "positive interval endpoint",
+      "dictionary and sampling sets cover useful candidates",
+      "interpolation matrices remain nonsingular"
+    ],
+    "core_operations": [
+      "greedy dictionary residual maximization",
+      "greedy interpolation-point selection",
+      "form Cauchy interpolation matrix",
+      "solve coefficients for each target"
+    ],
+    "dependent_contributions": [
+      "C1",
+      "C2"
+    ],
+    "dependent_experiments_results": [
+      "power-function approximation",
+      "fractional PDE solutions",
+      "adaptive time stepping",
+      "matrix-function approximations"
+    ],
+    "evidence": [
+      "E1",
+      "E2",
+      "E3",
+      "E4",
+      "E5"
+    ],
+    "inputs": [
+      "positive approximation interval",
+      "finite pole dictionary",
+      "candidate interpolation grid",
+      "target functions",
+      "approximation order"
+    ],
+    "outputs": [
+      "selected poles",
+      "interpolation points",
+      "per-target residues",
+      "rational interpolants"
+    ],
+    "parameters": [
+      "order n",
+      "dictionary B",
+      "sample set Sigma"
+    ],
+    "scientific_invariants": [
+      "all targets share poles",
+      "each approximant interpolates its target at selected points",
+      "output is in partial-fraction form"
+    ],
+    "scientific_purpose": "Produce efficient shared-pole rational approximants for a family of target functions.",
+    "specificity_reason": "The coupled rational dictionary, adaptive shared poles, and interpolation points are specific to the proposed method."
+  },
+  "selected_core_algorithm": "Rational approximation via empirical interpolation (rEIM)",
+  "uniqueness_reason": "rEIM is explicitly introduced as the new general algorithm; ROGA and AAA are alternatives, while PDE and matrix-function solvers consume rEIM output."
+}

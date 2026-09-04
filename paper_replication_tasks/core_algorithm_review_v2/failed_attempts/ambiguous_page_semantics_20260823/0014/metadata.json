@@ -1,0 +1,21 @@
+{
+  "character_count": 40538,
+  "model": "stealth/ox-alpha",
+  "nonempty_page_ratio": 1.0,
+  "page_count": 21,
+  "paper_id": "0014",
+  "prompt_sha256": "4f06a8ce3ba469353d78cfee2002ebb1c488ce7bc31760236c1976d857ce63a8",
+  "redaction_markers": [],
+  "request_config": {
+    "max_output_tokens": 8000,
+    "reasoning": {
+      "effort": "minimal",
+      "exclude": true
+    },
+    "temperature": 0
+  },
+  "rubric_sha256": "80416258156139723a755924885396f7a54ce77809154816bace9db96702cfca",
+  "schema_version": "core-algorithm-review-v2",
+  "source_path": "/Users/adamchen/Desktop/VSCode/SWE-bench/paper_replication_tasks/scibench_replication_0014/public/paper.pdf",
+  "source_sha256": "18789c49fe7354fbd23d4be9106da2c0321d92a06be34b6204b2d5fe03b74011"
+}

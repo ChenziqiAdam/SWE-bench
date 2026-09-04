@@ -1,0 +1,734 @@
+{
+  "case_shortcut_pass_matrix": {
+    "case_01": {
+      "conventional_2sfca": false,
+      "distance_decay": true,
+      "global_normalization": false,
+      "hub_only": false,
+      "ignore_hub_filter": true,
+      "ignore_threshold": false,
+      "origin_only": false,
+      "public_memorizer": false,
+      "retain_zero_denominators": false,
+      "strict_threshold": true,
+      "swapped_denominators": false,
+      "uniform_population": false,
+      "uniform_rack_capacity": false
+    },
+    "case_02": {
+      "conventional_2sfca": false,
+      "distance_decay": false,
+      "global_normalization": false,
+      "hub_only": false,
+      "ignore_hub_filter": false,
+      "ignore_threshold": false,
+      "origin_only": false,
+      "public_memorizer": false,
+      "retain_zero_denominators": false,
+      "strict_threshold": false,
+      "swapped_denominators": false,
+      "uniform_population": false,
+      "uniform_rack_capacity": false
+    },
+    "case_03": {
+      "conventional_2sfca": false,
+      "distance_decay": false,
+      "global_normalization": false,
+      "hub_only": false,
+      "ignore_hub_filter": true,
+      "ignore_threshold": false,
+      "origin_only": false,
+      "public_memorizer": false,
+      "retain_zero_denominators": false,
+      "strict_threshold": false,
+      "swapped_denominators": false,
+      "uniform_population": false,
+      "uniform_rack_capacity": false
+    },
+    "case_04": {
+      "conventional_2sfca": false,
+      "distance_decay": false,
+      "global_normalization": false,
+      "hub_only": false,
+      "ignore_hub_filter": false,
+      "ignore_threshold": false,
+      "origin_only": false,
+      "public_memorizer": false,
+      "retain_zero_denominators": false,
+      "strict_threshold": false,
+      "swapped_denominators": false,
+      "uniform_population": false,
+      "uniform_rack_capacity": false
+    },
+    "case_05": {
+      "conventional_2sfca": false,
+      "distance_decay": false,
+      "global_normalization": false,
+      "hub_only": false,
+      "ignore_hub_filter": true,
+      "ignore_threshold": true,
+      "origin_only": false,
+      "public_memorizer": false,
+      "retain_zero_denominators": true,
+      "strict_threshold": false,
+      "swapped_denominators": false,
+      "uniform_population": false,
+      "uniform_rack_capacity": false
+    }
+  },
+  "gate_evidence": {
+    "G1": "The target paper's accessibility/equity claims depend on BFCA.",
+    "G2": "Threshold/filter inputs and four-field output uniquely select BFCA, not conventional or extended FCA methods.",
+    "G3": "Dual balancing and conservation are paper-specific scientific behavior.",
+    "G4": "The archived matrix and two scalar inputs close the deterministic contract.",
+    "G5": "Complete literature hazard \u00d7 hidden case \u00d7 shortcut matrix in this report.",
+    "G6": "core_algorithm_audits/0017_core_blind.json: 3/3.",
+    "G7": "curation_reports/0017_core_g7.json: independently generated submission scored 1.0.",
+    "G8": "curation_reports/0017_core_oracle.json: two official checkouts plus independent implementation."
+  },
+  "gates": {
+    "G1_core_centrality": true,
+    "G2_unique_core": true,
+    "G3_scientific_specificity": true,
+    "G4_executable_closure": true,
+    "G5_hazard_hidden_shortcut_matrix_complete": true,
+    "G6_blind_identification": true,
+    "G7_blind_implementation": true,
+    "G8_oracle_validity": true,
+    "all_scientific_shortcuts_fail_suite": true,
+    "csv_hash_and_size": true,
+    "independent_all_cases": true,
+    "input_contract_bfca_only": true,
+    "invalid_inputs_rejected": true,
+    "invalid_outputs_rejected": true,
+    "legacy_0017_hashes_unchanged": true,
+    "public_cases_exact": true,
+    "public_instruction_leakage_scan": true,
+    "public_memorizer_hidden_zero": true,
+    "scientific_invariants": true,
+    "task_md_solution_only": true
+  },
+  "hazard_hidden_shortcut_matrix": {
+    "HZ1": {
+      "cells": {
+        "case_01": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": false,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": false,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": false,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_02": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": true,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_03": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": false,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_04": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": true,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_05": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": false,
+            "ignore_threshold": false,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": false,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        }
+      },
+      "covered": true,
+      "faults": [
+        "retain_zero_denominators",
+        "global_normalization",
+        "conventional_2sfca"
+      ],
+      "hidden_cases": [
+        "case_01"
+      ]
+    },
+    "HZ2": {
+      "cells": {
+        "case_01": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": false,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": false,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": false,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_02": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": true,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_03": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": false,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_04": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": true,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_05": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": false,
+            "ignore_threshold": false,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": false,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        }
+      },
+      "covered": true,
+      "faults": [
+        "strict_threshold",
+        "ignore_hub_filter",
+        "distance_decay"
+      ],
+      "hidden_cases": [
+        "case_02"
+      ]
+    },
+    "HZ3": {
+      "cells": {
+        "case_01": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": false,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": false,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": false,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_02": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": true,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_03": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": false,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_04": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": true,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_05": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": false,
+            "ignore_threshold": false,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": false,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        }
+      },
+      "covered": true,
+      "faults": [
+        "origin_only",
+        "hub_only",
+        "conventional_2sfca"
+      ],
+      "hidden_cases": [
+        "case_03"
+      ]
+    },
+    "HZ4": {
+      "cells": {
+        "case_01": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": false,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": false,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": false,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_02": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": true,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_03": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": false,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_04": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": true,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_05": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": false,
+            "ignore_threshold": false,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": false,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        }
+      },
+      "covered": true,
+      "faults": [
+        "ignore_hub_filter",
+        "public_memorizer",
+        "uniform_rack_capacity"
+      ],
+      "hidden_cases": [
+        "case_04"
+      ]
+    },
+    "HZ5": {
+      "cells": {
+        "case_01": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": false,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": false,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": false,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_02": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": true,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_03": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": false,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_04": {
+          "hazard_case": false,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": true,
+            "ignore_threshold": true,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": true,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        },
+        "case_05": {
+          "hazard_case": true,
+          "shortcut_failed": {
+            "conventional_2sfca": true,
+            "distance_decay": true,
+            "global_normalization": true,
+            "hub_only": true,
+            "ignore_hub_filter": false,
+            "ignore_threshold": false,
+            "origin_only": true,
+            "public_memorizer": true,
+            "retain_zero_denominators": false,
+            "strict_threshold": true,
+            "swapped_denominators": true,
+            "uniform_population": true,
+            "uniform_rack_capacity": true
+          }
+        }
+      },
+      "covered": true,
+      "faults": [
+        "conventional_2sfca",
+        "origin_only",
+        "hub_only",
+        "swapped_denominators",
+        "uniform_population",
+        "uniform_rack_capacity"
+      ],
+      "hidden_cases": [
+        "case_05"
+      ]
+    }
+  },
+  "maximum_shortcut_hidden_score": 0.6,
+  "public_memorizer_score": 0.4,
+  "reference_score": 1.0,
+  "schema_version": 1,
+  "scientific_metrics": {
+    "case_01": {
+      "filtered_hubs": 14,
+      "filtered_rows": 21426,
+      "hub_weight_max_error": 0.0,
+      "max_hub_degree": 4,
+      "max_origin_degree": 2,
+      "origin_weight_max_error": 0.0,
+      "overlap_rate": 0.0053475935828877,
+      "population_conservation_error": 0.0,
+      "reachable_hubs": 103,
+      "reachable_origins": 187,
+      "reachable_rows": 188,
+      "service_conservation_error": 2.842170943040401e-14,
+      "unreachable_hubs": 16,
+      "unreachable_origins": 10546
+    },
+    "case_02": {
+      "filtered_hubs": 2,
+      "filtered_rows": 2615,
+      "hub_weight_max_error": 1.1102230246251565e-16,
+      "max_hub_degree": 64,
+      "max_origin_degree": 5,
+      "origin_weight_max_error": 0.0,
+      "overlap_rate": 0.2448298865910607,
+      "population_conservation_error": 0.0,
+      "reachable_hubs": 129,
+      "reachable_origins": 4497,
+      "reachable_rows": 5889,
+      "service_conservation_error": 7.105427357601002e-15,
+      "unreachable_hubs": 2,
+      "unreachable_origins": 6245
+    },
+    "case_03": {
+      "filtered_hubs": 14,
+      "filtered_rows": 21426,
+      "hub_weight_max_error": 1.1102230246251565e-16,
+      "max_hub_degree": 211,
+      "max_origin_degree": 13,
+      "origin_weight_max_error": 0.0,
+      "overlap_rate": 0.6836795252225519,
+      "population_conservation_error": 0.0,
+      "reachable_hubs": 119,
+      "reachable_origins": 6740,
+      "reachable_rows": 18586,
+      "service_conservation_error": 1.7763568394002505e-15,
+      "unreachable_hubs": 0,
+      "unreachable_origins": 3993
+    },
+    "case_04": {
+      "filtered_hubs": 2,
+      "filtered_rows": 2615,
+      "hub_weight_max_error": 1.1102230246251565e-16,
+      "max_hub_degree": 856,
+      "max_origin_degree": 31,
+      "origin_weight_max_error": 0.0,
+      "overlap_rate": 0.8631303208906352,
+      "population_conservation_error": 2.9103830456733704e-11,
+      "reachable_hubs": 131,
+      "reachable_origins": 9162,
+      "reachable_rows": 80969,
+      "service_conservation_error": 0.0,
+      "unreachable_hubs": 0,
+      "unreachable_origins": 1580
+    },
+    "case_05": {
+      "filtered_hubs": 14,
+      "filtered_rows": 21426,
+      "hub_weight_max_error": 1.1102230246251565e-16,
+      "max_hub_degree": 2244,
+      "max_origin_degree": 56,
+      "origin_weight_max_error": 1.1102230246251565e-16,
+      "overlap_rate": 0.895555762601323,
+      "population_conservation_error": 2.9103830456733704e-11,
+      "reachable_hubs": 119,
+      "reachable_origins": 10733,
+      "reachable_rows": 190179,
+      "service_conservation_error": 0.0,
+      "unreachable_hubs": 0,
+      "unreachable_origins": 0
+    }
+  },
+  "shortcut_hidden_scores": {
+    "conventional_2sfca": 0.0,
+    "distance_decay": 0.2,
+    "global_normalization": 0.0,
+    "hub_only": 0.0,
+    "ignore_hub_filter": 0.6,
+    "ignore_threshold": 0.2,
+    "origin_only": 0.0,
+    "public_memorizer": 0.0,
+    "retain_zero_denominators": 0.2,
+    "strict_threshold": 0.2,
+    "swapped_denominators": 0.0,
+    "uniform_population": 0.0,
+    "uniform_rack_capacity": 0.0
+  },
+  "status": "ACCEPT",
+  "task_id": "scibench_replication_0017_core"
+}

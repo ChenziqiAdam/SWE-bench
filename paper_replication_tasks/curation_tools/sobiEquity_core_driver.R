@@ -1,0 +1,26 @@
+#!/usr/bin/env Rscript
+# Curator-only BFCA driver. The pinned package implementation is called verbatim.
+suppressPackageStartupMessages({
+  library(sobiEquity)
+  library(dplyr)
+  library(sf)
+  library(jsonlite)
+})
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) != 1) stop("usage: sobiEquity_core_driver.R <input.json>")
+case <- fromJSON(args[[1]], simplifyVector = TRUE)
+if (!setequal(names(case), c("threshold", "hub_filter")) || length(names(case)) != 2) stop("invalid fields")
+if (!is.numeric(case$threshold) || length(case$threshold) != 1 || !is.finite(case$threshold) || case$threshold <= 0 || case$threshold > 30) stop("invalid threshold")
+if (!case$hub_filter %in% c("conventional_active", "all_active")) stop("invalid hub_filter")
+data("ttm_walk", package = "sobiEquity")
+data("sobi_hubs", package = "sobiEquity")
+data("population_50x50", package = "sobiEquity")
+ttm <- left_join(ttm_walk, population_50x50 %>% st_drop_geometry(), by = "UID")
+ttm <- ttm %>% left_join(sobi_hubs %>% st_drop_geometry() %>% dplyr::select(OBJECTID, RACKS_AMOU), by = "OBJECTID")
+names(ttm) <- c("UID", "hub", "travel_time", "hub_type", "hub_status", "population", "racks")
+ttm <- if (case$hub_filter == "conventional_active") {
+  ttm %>% dplyr::filter(hub_type == "Conventional" & hub_status == "Active")
+} else ttm %>% dplyr::filter(hub_status == "Active")
+result <- b2sfca(ttm = ttm, threshold = case$threshold)
+output <- list(los = result$los %>% arrange(hub) %>% as.data.frame(), accessibility = result$accessibility %>% arrange(UID) %>% as.data.frame())
+cat(toJSON(output, dataframe = "columns", digits = 17, na = "null", auto_unbox = TRUE))

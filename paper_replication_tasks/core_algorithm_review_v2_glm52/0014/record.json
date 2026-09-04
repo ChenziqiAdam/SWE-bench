@@ -1,0 +1,219 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E6"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "The SMW formula is a standard tool; the paper's contribution is analyzing its stability, not proposing it."
+      },
+      "description": "Standard Woodbury identity applied with approximate inverses eA−1 and Z−1 to compute eB−1.",
+      "evidence": [
+        "E6"
+      ],
+      "name": "SMW formula with approximate inverses (eqn 1)",
+      "role": "supporting"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E3"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "Removing the forward error bound eliminates half the paper's main contribution."
+      },
+      "description": "Theoretical upper bound on forward error of approximate SMW inverse as function of approximation errors.",
+      "evidence": [
+        "E3"
+      ],
+      "name": "Forward error bound (Theorem 2)",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E4"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "Removing the backward error bound eliminates half the paper's main contribution."
+      },
+      "description": "Theoretical upper bound on backward error of approximate SMW inverse as function of approximation errors.",
+      "evidence": [
+        "E4"
+      ],
+      "name": "Backward error bound (Theorem 6)",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E5"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Experiments verify the bounds; they are not the core scientific contribution themselves."
+      },
+      "description": "Generate random matrices, apply SMW with approximate inverses, compute errors, compare to bounds.",
+      "evidence": [
+        "E5"
+      ],
+      "name": "Numerical experiment procedure (Section 4)",
+      "role": "evaluation"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E1"
+      ],
+      "from": "Research Goal",
+      "relation": "goal motivates forward error bound",
+      "to": "C1"
+    },
+    {
+      "evidence": [
+        "E1"
+      ],
+      "from": "Research Goal",
+      "relation": "goal motivates backward error bound",
+      "to": "C2"
+    },
+    {
+      "evidence": [
+        "E5"
+      ],
+      "from": "C1",
+      "relation": "verified by experiments in Section 4",
+      "to": "Numerical Experiments"
+    },
+    {
+      "evidence": [
+        "E5"
+      ],
+      "from": "C2",
+      "relation": "verified by experiments in Section 4",
+      "to": "Numerical Experiments"
+    }
+  ],
+  "decision": "REJECT_PAPER",
+  "evidence_catalog": [
+    {
+      "excerpt": "We study the numerical stability of the Sherman–Morrison–Woodbury (SMW) identity.",
+      "id": "E1",
+      "page": 1,
+      "section": "Abstract"
+    },
+    {
+      "excerpt": "Our work provides forward and backward error bounds for the update formula of eqn. (1).",
+      "id": "E2",
+      "page": 1,
+      "section": "1 Introduction"
+    },
+    {
+      "excerpt": "Forward Error (Theorem 2): Is eB−1 close to B−1?",
+      "id": "E3",
+      "page": 1,
+      "section": "1 Introduction"
+    },
+    {
+      "excerpt": "Backward Error (Theorem 6): Is eB close to B?",
+      "id": "E4",
+      "page": 1,
+      "section": "1 Introduction"
+    },
+    {
+      "excerpt": "The goal of our numerical experiments is to verify the tightness of our forward and backward error bounds",
+      "id": "E5",
+      "page": 10,
+      "section": "4 Numerical Experiments"
+    },
+    {
+      "excerpt": "B−1 = A−1 − A−1U(I + VT A−1U)−1VT A−1.",
+      "id": "E6",
+      "page": 1,
+      "section": "1 Introduction"
+    }
+  ],
+  "evidence_gaps": [
+    "No executable algorithm identified as the core contribution; paper is a theoretical analysis paper with numerical verification."
+  ],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E2"
+      ],
+      "reason": "Core contributions are theoretical bounds (Theorems 2 and 6), not algorithms. No single algorithm directly carries the contribution.",
+      "status": "REJECT"
+    },
+    "G2": {
+      "evidence": [
+        "E3"
+      ],
+      "reason": "Two equally important core contributions (forward and backward error bounds) exist; no unique core algorithm can be selected.",
+      "status": "REJECT"
+    },
+    "G3": {
+      "evidence": [
+        "E6"
+      ],
+      "reason": "The SMW formula is a standard off-the-shelf procedure; the error bounds are theorems, not algorithms requiring scientific reasoning to implement.",
+      "status": "REJECT"
+    },
+    "G4": {
+      "evidence": [
+        "E2"
+      ],
+      "reason": "The core contributions are mathematical bounds, not procedures with a clear input-output executable contract.",
+      "status": "REJECT"
+    },
+    "G5": {
+      "evidence": [
+        "E5"
+      ],
+      "reason": "No executable algorithm with generalizable inputs identified; the paper presents theorems verified by experiments.",
+      "status": "REJECT"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E3"
+      ],
+      "id": "C1",
+      "summary": "Forward error bound for SMW formula with approximate inverses (Theorem 2)."
+    },
+    {
+      "evidence": [
+        "E4"
+      ],
+      "id": "C2",
+      "summary": "Backward error bound for SMW formula with approximate inverses (Theorem 6)."
+    }
+  ],
+  "paper_id": "0014",
+  "research_goal": {
+    "evidence": [
+      "E1"
+    ],
+    "summary": "Study numerical stability of the SMW formula when only approximate inverses are available."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": null,
+  "selected_core_algorithm": null,
+  "uniqueness_reason": "Two candidates (forward and backward error bounds) satisfy core contribution criteria with equal status; no single unique core algorithm exists."
+}

@@ -1,0 +1,16 @@
+[
+  {
+    "attempt": 1,
+    "message": "endpoint returned empty message.content (finish_reason='length', fields=['content', 'reasoning', 'reasoning_details', 'refusal', 'role'])",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T18:50:43.116047+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 2,
+    "message": "endpoint returned empty message.content (finish_reason='length', fields=['content', 'reasoning', 'reasoning_details', 'refusal', 'role'])",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T18:53:51.736535+00:00",
+    "type": "ResponseValidationError"
+  }
+]

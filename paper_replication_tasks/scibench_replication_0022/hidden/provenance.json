@@ -1,0 +1,151 @@
+{
+  "cases": [
+    {
+      "adapter_sha256": "4acb36e6b6be399cb9ea6b9ac53e2b901fdf6c46a0fce6ed9983ecac17725349",
+      "case_id": "case_01",
+      "checkout_commit": "6e145837e4696bd9e26b3d6160b37f97e4188e10",
+      "command": "python curation_tools/ssarnoldi_adapter.py --task 0022 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": null,
+      "input_sha256": "058437f416ebc0620d335815be8966a29e7eda8082b2db531d7a9f6f5d4b41eb",
+      "normalized_output_sha256": "1bad75b18944a6cc3d4bf63ff501d80bab1af0fdb5a80287b87e35227f639b34",
+      "output_sha256": "1bad75b18944a6cc3d4bf63ff501d80bab1af0fdb5a80287b87e35227f639b34",
+      "raw_official_sha256": "1bad75b18944a6cc3d4bf63ff501d80bab1af0fdb5a80287b87e35227f639b34",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "4acb36e6b6be399cb9ea6b9ac53e2b901fdf6c46a0fce6ed9983ecac17725349",
+      "case_id": "case_02",
+      "checkout_commit": "6e145837e4696bd9e26b3d6160b37f97e4188e10",
+      "command": "python curation_tools/ssarnoldi_adapter.py --task 0022 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": null,
+      "input_sha256": "5c1856797c855c412bd8e51c5826f15a52b6bbacf34422b6d3484d3eb845614a",
+      "normalized_output_sha256": "b281d7b8fcc497e784867be11bcb4af1661b1db233b7084cc03cfec67144a3df",
+      "output_sha256": "b281d7b8fcc497e784867be11bcb4af1661b1db233b7084cc03cfec67144a3df",
+      "raw_official_sha256": "b281d7b8fcc497e784867be11bcb4af1661b1db233b7084cc03cfec67144a3df",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "4acb36e6b6be399cb9ea6b9ac53e2b901fdf6c46a0fce6ed9983ecac17725349",
+      "case_id": "case_03",
+      "checkout_commit": "6e145837e4696bd9e26b3d6160b37f97e4188e10",
+      "command": "python curation_tools/ssarnoldi_adapter.py --task 0022 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": null,
+      "input_sha256": "eef868552d4c8dcfe26881818ba8c2617a6c628ad91003433b1c43b15c287cd2",
+      "normalized_output_sha256": "720435f1532287fe3f0861d2058e23bc1b3c2da62e024e60e658b0fcb8ccf888",
+      "output_sha256": "720435f1532287fe3f0861d2058e23bc1b3c2da62e024e60e658b0fcb8ccf888",
+      "raw_official_sha256": "720435f1532287fe3f0861d2058e23bc1b3c2da62e024e60e658b0fcb8ccf888",
+      "split": "public"
+    },
+    {
+      "adapter_sha256": "4acb36e6b6be399cb9ea6b9ac53e2b901fdf6c46a0fce6ed9983ecac17725349",
+      "case_id": "case_01",
+      "checkout_commit": "6e145837e4696bd9e26b3d6160b37f97e4188e10",
+      "command": "python curation_tools/ssarnoldi_adapter.py --task 0022 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": null,
+      "input_sha256": "efbad976a43d3ce056bdb960584308fb7a9e17e6980d7a518a342fbad2278084",
+      "normalized_output_sha256": "6b68a4f79836cdcccf70ce859a1f20d1a5c60eccecab28b2804817d2cbceddb8",
+      "output_sha256": "6b68a4f79836cdcccf70ce859a1f20d1a5c60eccecab28b2804817d2cbceddb8",
+      "raw_official_sha256": "6b68a4f79836cdcccf70ce859a1f20d1a5c60eccecab28b2804817d2cbceddb8",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "4acb36e6b6be399cb9ea6b9ac53e2b901fdf6c46a0fce6ed9983ecac17725349",
+      "case_id": "case_02",
+      "checkout_commit": "6e145837e4696bd9e26b3d6160b37f97e4188e10",
+      "command": "python curation_tools/ssarnoldi_adapter.py --task 0022 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": null,
+      "input_sha256": "995503a318929d440d512c3a015b440f3e56ce551e262ebee020ef8058f94dcb",
+      "normalized_output_sha256": "f8ceb4710ad3812e8974f8ced3cb6d465c13b2bd551b5edcf7485de79439ad36",
+      "output_sha256": "f8ceb4710ad3812e8974f8ced3cb6d465c13b2bd551b5edcf7485de79439ad36",
+      "raw_official_sha256": "f8ceb4710ad3812e8974f8ced3cb6d465c13b2bd551b5edcf7485de79439ad36",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "4acb36e6b6be399cb9ea6b9ac53e2b901fdf6c46a0fce6ed9983ecac17725349",
+      "case_id": "case_03",
+      "checkout_commit": "6e145837e4696bd9e26b3d6160b37f97e4188e10",
+      "command": "python curation_tools/ssarnoldi_adapter.py --task 0022 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": null,
+      "input_sha256": "f887f919bdf381053efcc8985170e810a4052f93427309ef83d354c597dbdfde",
+      "normalized_output_sha256": "663af0b0c2b811acb361ca0ad3921df4ae0213e427e21ed1c5e53989e67dff08",
+      "output_sha256": "663af0b0c2b811acb361ca0ad3921df4ae0213e427e21ed1c5e53989e67dff08",
+      "raw_official_sha256": "663af0b0c2b811acb361ca0ad3921df4ae0213e427e21ed1c5e53989e67dff08",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "4acb36e6b6be399cb9ea6b9ac53e2b901fdf6c46a0fce6ed9983ecac17725349",
+      "case_id": "case_04",
+      "checkout_commit": "6e145837e4696bd9e26b3d6160b37f97e4188e10",
+      "command": "python curation_tools/ssarnoldi_adapter.py --task 0022 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": null,
+      "input_sha256": "69ffb1d0242ae829f637e1df469f4741642939746fa5dd2f3475d909fa4b95cd",
+      "normalized_output_sha256": "76320a10be1978707b833beb9abf0d35fb0711eccd78295bec06b1cdafa13469",
+      "output_sha256": "76320a10be1978707b833beb9abf0d35fb0711eccd78295bec06b1cdafa13469",
+      "raw_official_sha256": "76320a10be1978707b833beb9abf0d35fb0711eccd78295bec06b1cdafa13469",
+      "split": "hidden"
+    },
+    {
+      "adapter_sha256": "4acb36e6b6be399cb9ea6b9ac53e2b901fdf6c46a0fce6ed9983ecac17725349",
+      "case_id": "case_05",
+      "checkout_commit": "6e145837e4696bd9e26b3d6160b37f97e4188e10",
+      "command": "python curation_tools/ssarnoldi_adapter.py --task 0022 --checkout <clean-checkout> --input <input.json> --output <output.json>",
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": null,
+      "input_sha256": "fb2449f14300cb18454c91db97aa3582f290ddca93d24d393d41008d3d2e3645",
+      "normalized_output_sha256": "74f351c1e69dd294dd43094aa2e494edd5e8429c18935ef8a10cbac6e8c857b8",
+      "output_sha256": "74f351c1e69dd294dd43094aa2e494edd5e8429c18935ef8a10cbac6e8c857b8",
+      "raw_official_sha256": "74f351c1e69dd294dd43094aa2e494edd5e8429c18935ef8a10cbac6e8c857b8",
+      "split": "hidden"
+    }
+  ],
+  "commit": "6e145837e4696bd9e26b3d6160b37f97e4188e10",
+  "environment": {
+    "build_platform": "macOS-26.4.1-arm64-arm-64bit",
+    "octave": "9.4.0",
+    "python": "3.12"
+  },
+  "gold_source": "pinned_official_checkout",
+  "independent_audit": {
+    "derived_tolerances": {
+      "atol": 8.665416667485298e+17,
+      "comparison": "mixed",
+      "rtol": 51.30632227826944
+    },
+    "implementation": "curation_tools/ssarnoldi_scientific.py; independent NumPy/SciPy reimplementation of the 9 Krylov-basis-construction variants, NOT YET WIRED into this build script (requires extracting realized v0/D/perm from the Octave run -- see ssarnoldi_scientific.py's module docstring). status is a placeholder until that wiring lands.",
+    "maximum_absolute_discrepancy": null,
+    "maximum_relative_discrepancy": null,
+    "status": "not_run"
+  },
+  "lifecycle": "draft",
+  "official_reproduction": {
+    "adapter_sha256": "4acb36e6b6be399cb9ea6b9ac53e2b901fdf6c46a0fce6ed9983ecac17725349",
+    "clean_checkout_bundle_sha256": [
+      "6d4eae501f16751000dda0824b2688a1c7ffc777e03bc55941400e71ef5d2523",
+      "6d4eae501f16751000dda0824b2688a1c7ffc777e03bc55941400e71ef5d2523"
+    ],
+    "command": "python curation_tools/build_ssarnoldi_task.py --checkout-1 <clean-1> --checkout-2 <clean-2> --paper <paper.pdf> --paper-version <version>",
+    "driver_sha256": "73d9e301e8a12ff2053fb225289877696ed22b9cabfad554162a2b11c91432a8",
+    "raw_and_normalized_outputs": "curation_reports/official_runs/0022"
+  },
+  "official_source_sha256": {
+    "paper_ssa_final_test1a.m": "8d16f9492dac4ed4273e52f1ab25dce151378cf455bc3f89ef9f2f1ae5087c2a",
+    "paper_ssa_final_test1b.m": "49794437b40a617536dd182385010924eadba09ec23a694bc44102cc68305897",
+    "ssarnoldi_matrices/cryg10000.mat": "4b839d24a5b3fb0818e1e210d1f8434ee64f3e9a1c323c38874859db58a222f7",
+    "ssarnoldi_matrices/torso1.mat": "bc3acb89a2c081b789f751b1d02fa213a18470c95ff15c0aee4a68a55e282f56",
+    "ssarnoldi_matrices/torso3.mat": "8f4088bf23831ab0334a33139722688c4590b638d43ddb7e4d2c3518dba11e2f",
+    "ssarnoldi_octave_compat/maxk.m": "32daa9fe6e50cdb53424b30ecd31e812465127eff0f50d8b1d01fc76aa864469",
+    "ssarnoldi_octave_compat/srht.m": "2a7b83d670b0afeffdff727782f3f1c002d0a3214342fb645d7f758ce05b6bd6"
+  },
+  "paper_sha256": "4a279b5a3d2f751d876325123e1a4393cc71aa8cc14beb436415c859cb33412f",
+  "paper_version": "arXiv:2306.03592v3, redacted Fig. 1",
+  "repository": "https://github.com/simunec/sketch-select-arnoldi",
+  "schema_version": 4,
+  "task_id": "scibench_replication_0022"
+}

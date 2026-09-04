@@ -1,0 +1,614 @@
+[
+  {
+    "attempt": 11,
+    "finish_reason": "stop",
+    "message_fields": [
+      "content",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787543020-CbI2pY7yaVqLs8tQvYaG",
+    "stage": "full-review",
+    "text": "{\"schema_version\":\"core-algorithm-review-v2\",\"paper_id\":\"0021\",\"evidence_catalog\":[{\"id\":\"E1\",\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"We present a new rational approximation algorithm based on the empirical interpolation method for interpolating a family of parametrized functions to rational polynomials with invariant poles\"},{\"id\":\"E2\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"we present a Rational Approximation Algorithm via the Empirical Interpolation Method (rEIM), which produces rational approximants in the form (1.1).\"},{\"id\":\"E3\",\"page\":3,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"Algorithm 2.1 Rational Approximation via the EIM (rEIM)\"},{\"id\":\"E4\",\"page\":3,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"select gm = g(•, bm) ∈ D (B) such that ∥gm − Π m−1gm∥L∞(I) = max g∈D(B) ∥g − Π m−1g∥L∞(I)\"},{\"id\":\"E5\",\"page\":4,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"Π nf = (g(•, b1), . . . , g(•, bm))G−1 m (f (x1), . . . , f(xm))⊤\"},{\"id\":\"E6\",\"page\":4,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"the rEIM is able to efficiently interpolate them by applying a small-scale matrix G−1 n to ( f (x1), . . . , f(xn))⊤\"},{\"id\":\"E7\",\"page\":4,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"For any input target function f , the rEIM interpolant Π nf has a fixed set of poles −b1, . . . ,−bn.\"},{\"id\":\"E8\",\"page\":6,\"section\":\"2.2. Rational Orthogonal Greedy Algorithm\",\"excerpt\":\"Another dictionary-based rational approximation method is the Rational Orthogonal Greedy Algorithm (ROGA) based on a rational dictionary developed in [37]\"},{\"id\":\"E9\",\"page\":7,\"section\":\"3. Applications of the rEIM\",\"excerpt\":\"3. Applications of the rEIM.\"},{\"id\":\"E10\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"we also derive a sub-exponential convergence rate of the rEIM\"},{\"id\":\"E11\",\"page\":17,\"section\":\"5.1. Approximation of Power Functions\",\"excerpt\":\"we start with a numerical comparison of the rEIM, the OGA, and the popular AAA rational approximation algorithm for the target function x−s\"},{\"id\":\"E12\",\"page\":3,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"Input: an integer n > 0, a dictionary D(B) and a set Σ of possible interpolation points; set Π 0 = 0.\"},{\"id\":\"E13\",\"page\":3,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"Output: the rational interpolant Π nf for a family of target functions f which are not necessarily in D(B).\"},{\"id\":\"E14\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"the rEIM directly outputs approximants of the form (1.1), thereby avoiding the error arising from computing the poles\"},{\"id\":\"E15\",\"page\":9,\"section\":\"3.3. Adaptive Step-Size Control\",\"excerpt\":\"the rEIM is suitable for generating rational approximants for a large number of τm\"}],\"research_goal\":{\"summary\":\"Develop efficient rational approximation algorithm for families of parametrized functions with invariant poles for fractional PDEs, preconditioning, and matrix functions\",\"evidence\":[\"E1\"]},\"main_contributions\":[{\"id\":\"C1\",\"summary\":\"New rEIM algorithm for rational approximation of function families with invariant poles\",\"evidence\":[\"E2\"]},{\"id\":\"C2\",\"summary\":\"Sub-exponential convergence rate analysis using entropy numbers\",\"evidence\":[\"E10\"]},{\"id\":\"C3\",\"summary\":\"Applications to fractional PDEs, preconditioning, and matrix exponentials\",\"evidence\":[\"E9\"]}],\"contribution_graph\":[{\"from\":\"Research Goal\",\"to\":\"C1\",\"relation\":\"rEIM algorithm is the main method achieving the goal\",\"evidence\":[\"E2\"]},{\"from\":\"C1\",\"to\":\"Algorithm 2.1\",\"relation\":\"rEIM is formally defined as Algorithm 2.1\",\"evidence\":[\"E3\"]},{\"from\":\"Algorithm 2.1\",\"to\":\"C2\",\"relation\":\"Convergence analysis applies to Algorithm 2.1\",\"evidence\":[\"E10\"]},{\"from\":\"Algorithm 2.1\",\"to\":\"C3\",\"relation\":\"Applications use rEIM interpolants\",\"evidence\":[\"E9\"]},{\"from\":\"C3\",\"to\":\"Section 5 experiments\",\"relation\":\"Numerical experiments validate rEIM applications\",\"evidence\":[\"E11\"]}],\"candidate_algorithms\":[{\"name\":\"rEIM (Algorithm 2.1)\",\"role\":\"core\",\"description\":\"Greedy rational interpolation algorithm selecting basis functions from rational dictionary D(B) and interpolation points to produce partial fraction approximants\",\"evidence\":[\"E3\"],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"Removing rEIM eliminates the paper's main contribution; all applications and convergence analysis depend on it\",\"evidence\":[\"E1\"]}},{\"name\":\"ROGA (Algorithm 2.2)\",\"role\":\"baseline\",\"description\":\"Rational Orthogonal Greedy Algorithm from prior work [37], mentioned for comparison; not the paper's contribution\",\"evidence\":[\"E8\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"ROGA is cited from prior work and only compared; paper's contribution stands without it\",\"evidence\":[\"E8\"]}},{\"name\":\"AAA rational approximation\",\"role\":\"baseline\",\"description\":\"Classical AAA algorithm used as comparison baseline in numerical experiments\",\"evidence\":[\"E11\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"AAA is a standard baseline for comparison; removing it does not affect the paper's core contribution\",\"evidence\":[\"E11\"]}},{\"name\":\"Convergence analysis via entropy numbers\",\"role\":\"supporting\",\"description\":\"Theoretical analysis deriving sub-exponential convergence rate of rEIM using metric entropy numbers\",\"evidence\":[\"E10\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"This is theoretical analysis supporting rEIM, not an independently executable algorithm\",\"evidence\":[\"E10\"]}},{\"name\":\"Fractional PDE solver application\",\"role\":\"evaluation\",\"description\":\"Application of rEIM to solve fractional elliptic and parabolic PDEs via rational approximation of power functions\",\"evidence\":[\"E9\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"This is a downstream application of rEIM, not the core algorithm itself\",\"evidence\":[\"E9\"]}},{\"name\":\"Adaptive step-size control\",\"role\":\"evaluation\",\"description\":\"Application of rEIM to adaptive time-stepping for fractional heat equations\",\"evidence\":[\"E15\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"This is a downstream application using rEIM interpolants, not the core method\",\"evidence\":[\"E15\"]}}],\"selected_core_algorithm\":\"rEIM (Algorithm 2.1)\",\"uniqueness_reason\":\"Only rEIM is the paper's novel contribution; ROGA is from prior work, AAA is a baseline, and all applications are downstream uses of rEIM\",\"scientific_contract\":{\"algorithm\":\"rEIM (Algorithm 2.1)\",\"scientific_purpose\":\"Interpolate a family of target functions by rational polynomials with invariant poles using greedy selection from a rational dictionary\",\"evidence\":[\"E2\"],\"inputs\":[\"Integer n (number of basis functions)\",\"Dictionary D(B) of rational basis functions g(x,b)=(eta+b)/(x+b)\",\"Set Sigma of candidate interpolation points\",\"Family of target functions f_j\"],\"outputs\":[\"Rational interpolant Pi_n f = sum c_i/(x+b_i) with invariant poles {-b_i}\",\"Interpolation points {x_1,...,x_n}\",\"Coefficients {c_i} for each target function\"],\"core_operations\":[\"Greedy selection of basis function g_m maximizing residual\",\"Greedy selection of interpolation point x_m maximizing residual\",\"Construction of interpolation operator via Cauchy matrix inversion\",\"Output partial fraction form directly without barycentric conversion\"],\"assumptions\":[\"Target functions belong to L1(D) variation norm space\",\"Dictionary D(B) is finite subset of rational functions\",\"Interval I has positive left endpoint eta > 0\"],\"parameters\":[\"n: number of rational basis terms\",\"B: finite set of pole parameters\",\"Sigma: candidate interpolation points\",\"eta: left endpoint of interval I\"],\"scientific_invariants\":[\"Poles {-b_i} are invariant across all target functions in the family\",\"Interpolation points {x_i} are shared across all target functions\",\"Output is always in partial fraction form sum c_i/(x+b_i)\"],\"dependent_contributions\":[\"C1: rEIM algorithm itself\",\"C2: Convergence analysis applies to rEIM\",\"C3: All applications use rEIM interpolants\"],\"dependent_experiments_results\":[\"Section 5.1: approximation of power functions x^{-s}\",\"Section 5.2-5.3: fractional Laplacian on uniform and graded grids\",\"Section 5.4: adaptive step-size control for fractional heat equations\",\"Section 5.5: approximation of other functions for preconditioning and matrix exponentials\"],\"specificity_reason\":\"rEIM uses a novel rational dictionary with greedy EIM-style selection producing partial fractions directly, unlike AAA which outputs barycentric form requiring lossy conversion\",\"evidence\":[\"E14\"]},\"gates\":{\"G1\":{\"status\":\"PASS\",\"reason\":\"rEIM directly implements the paper's main scientific contribution; all applications and theory depend on it\",\"evidence\":[\"E1\"]},\"G2\":{\"status\":\"PASS\",\"reason\":\"Only one candidate (rEIM) is the core algorithm; ROGA is prior work, AAA is baseline, applications are downstream\",\"evidence\":[\"E8\"]},\"G3\":{\"status\":\"PASS\",\"reason\":\"rEIM involves novel scientific reasoning: rational dictionary, greedy pole/point selection, direct partial fraction output, invariant poles across function families\",\"evidence\":[\"E14\"]},\"G4\":{\"status\":\"PASS\",\"reason\":\"Clear input-output contract: n, D(B), Sigma, target functions f -> rational interpolant Pi_n f in partial fraction form\",\"evidence\":[\"E12\"]},\"G5\":{\"status\":\"PASS\",\"reason\":\"Can test with different target functions (x^{-s}, (x^s+k)^{-1}, exp(-tau*x), etc.), different n values, different intervals, different dictionaries\",\"evidence\":[\"E11\"]},\"G6\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G7\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G8\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]}},\"evidence_gaps\":[\"No explicit pseudocode for the application solvers beyond the core rEIM; implementation details for D(B) and Sigma sampling are in the referenced repository\"],\"decision\":\"ACCEPT_FOR_DESIGN\"}",
+    "timestamp": "2026-08-24T03:43:48.866786+00:00",
+    "usage": {
+      "completion_tokens": 2820,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 406
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 26614,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 29434
+    }
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T03:48:11.698795+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:09:15.091161+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:10:27.107216+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:11:28.738667+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:12:29.492520+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:13:28.373351+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:14:27.265286+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:15:26.285527+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:16:34.165635+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:18:04.055150+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:19:04.546420+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:20:30.643266+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:21:30.052211+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:22:29.799105+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:23:28.718033+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:24:49.108772+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:25:48.354280+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:26:47.774480+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:27:52.874913+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:28:46.418618+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:29:39.874688+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:31:12.730938+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:32:05.926737+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:32:59.031534+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": "stop",
+    "message_fields": [
+      "content",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787585632-FZJkeF5ACpxdTnpTJzMC",
+    "stage": "full-review-resume-correction",
+    "text": "{\"schema_version\":\"core-algorithm-review-v2\",\"paper_id\":\"0021\",\"evidence_catalog\":[{\"id\":\"E1\",\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"We present a new rational approximation algorithm based on the empirical interpolation method for interpolating a family of parametrized functions to rational polynomials with invariant poles\"},{\"id\":\"E2\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"we present a Rational Approximation Algorithm via the Empirical Interpolation Method (rEIM), which produces rational approximants in the form (1.1).\"},{\"id\":\"E3\",\"page\":3,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"Algorithm 2.1 Rational Approximation via the EIM (rEIM)\"},{\"id\":\"E4\",\"page\":3,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"select gm = g(•, bm) ∈ D (B) such that\"},{\"id\":\"E5\",\"page\":4,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"(2.2) Π mf = (g(•, b1), . . . , g(•, bm))G−1 m (f (x1), . . . , f(xm))⊤;\"},{\"id\":\"E6\",\"page\":4,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"the rEIM is able to eﬃciently interpolate them by applying a small-scale matrix G−1 n to ( f (x1), . . . , f(xn))⊤\"},{\"id\":\"E7\",\"page\":4,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"For any input target function f , the rEIM interpolant Π nf has a ﬁxed set of poles −b1, . . . ,−bn.\"},{\"id\":\"E8\",\"page\":6,\"section\":\"2.2. Rational Orthogonal Greedy Algorithm\",\"excerpt\":\"Another dictionary-based rational approximation method is the Rational Orthogonal Greedy Algorithm (ROGA) based on a rational dictionary developed in [37]\"},{\"id\":\"E9\",\"page\":7,\"section\":\"3. Applications of the rEIM\",\"excerpt\":\"3. Applications of the rEIM.\"},{\"id\":\"E10\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"we also derive a sub-exponential convergence rate of the rEIM\"},{\"id\":\"E11\",\"page\":17,\"section\":\"5.1. Approximation of Power Functions\",\"excerpt\":\"we start with a numerical comparison of the rEIM, the OGA, and the popular AAA rational approximation algorithm for the target function x−s\"},{\"id\":\"E12\",\"page\":3,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"Input: an integer n > 0, a dictionary D(B) and a set Σ of possible interpolation points; set Π 0 = 0.\"},{\"id\":\"E13\",\"page\":3,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"Output: the rational interpolant Π nf for a family of target functions f which are not necessarily in D(B).\"},{\"id\":\"E14\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"the rEIM directly outputs approximants of the form (1.1), thereby avoiding the error arising from computing the poles\"},{\"id\":\"E15\",\"page\":9,\"section\":\"3.3. Adaptive Step-Size Control\",\"excerpt\":\"the rEIM is suitable for generating rational approximants for a large number of τm\"}],\"research_goal\":{\"summary\":\"Develop efficient rational approximation algorithm for families of parametrized functions with invariant poles for fractional PDEs, preconditioning, and matrix functions\",\"evidence\":[\"E1\"]},\"main_contributions\":[{\"id\":\"C1\",\"summary\":\"New rEIM algorithm for rational approximation of function families with invariant poles\",\"evidence\":[\"E2\"]},{\"id\":\"C2\",\"summary\":\"Sub-exponential convergence rate analysis using entropy numbers\",\"evidence\":[\"E10\"]},{\"id\":\"C3\",\"summary\":\"Applications to fractional PDEs, preconditioning, and matrix exponentials\",\"evidence\":[\"E9\"]}],\"contribution_graph\":[{\"from\":\"Research Goal\",\"to\":\"C1\",\"relation\":\"rEIM algorithm is the main method achieving the goal\",\"evidence\":[\"E2\"]},{\"from\":\"C1\",\"to\":\"Algorithm 2.1\",\"relation\":\"rEIM is formally defined as Algorithm 2.1\",\"evidence\":[\"E3\"]},{\"from\":\"Algorithm 2.1\",\"to\":\"C2\",\"relation\":\"Convergence analysis applies to Algorithm 2.1\",\"evidence\":[\"E10\"]},{\"from\":\"Algorithm 2.1\",\"to\":\"C3\",\"relation\":\"Applications use rEIM interpolants\",\"evidence\":[\"E9\"]},{\"from\":\"C3\",\"to\":\"Section 5 experiments\",\"relation\":\"Numerical experiments validate rEIM applications\",\"evidence\":[\"E11\"]}],\"candidate_algorithms\":[{\"name\":\"rEIM (Algorithm 2.1)\",\"role\":\"core\",\"description\":\"Greedy rational interpolation algorithm selecting basis functions from rational dictionary D(B) and interpolation points to produce partial fraction approximants\",\"evidence\":[\"E3\"],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"Removing rEIM eliminates the paper's main contribution; all applications and convergence analysis depend on it\",\"evidence\":[\"E1\"]}},{\"name\":\"ROGA (Algorithm 2.2)\",\"role\":\"baseline\",\"description\":\"Rational Orthogonal Greedy Algorithm from prior work [37], mentioned for comparison; not the paper's contribution\",\"evidence\":[\"E8\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"ROGA is cited from prior work and only compared; paper's contribution stands without it\",\"evidence\":[\"E8\"]}},{\"name\":\"AAA rational approximation\",\"role\":\"baseline\",\"description\":\"Classical AAA algorithm used as comparison baseline in numerical experiments\",\"evidence\":[\"E11\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"AAA is a standard baseline for comparison; removing it does not affect the paper's core contribution\",\"evidence\":[\"E11\"]}},{\"name\":\"Convergence analysis via entropy numbers\",\"role\":\"supporting\",\"description\":\"Theoretical analysis deriving sub-exponential convergence rate of rEIM using metric entropy numbers\",\"evidence\":[\"E10\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"This is theoretical analysis supporting rEIM, not an independently executable algorithm\",\"evidence\":[\"E10\"]}},{\"name\":\"Fractional PDE solver application\",\"role\":\"evaluation\",\"description\":\"Application of rEIM to solve fractional elliptic and parabolic PDEs via rational approximation of power functions\",\"evidence\":[\"E9\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"This is a downstream application of rEIM, not the core algorithm itself\",\"evidence\":[\"E9\"]}},{\"name\":\"Adaptive step-size control\",\"role\":\"evaluation\",\"description\":\"Application of rEIM to adaptive time-stepping for fractional heat equations\",\"evidence\":[\"E15\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"This is a downstream application using rEIM interpolants, not the core method\",\"evidence\":[\"E15\"]}}],\"selected_core_algorithm\":\"rEIM (Algorithm 2.1)\",\"uniqueness_reason\":\"Only rEIM is the paper's novel contribution; ROGA is from prior work, AAA is a baseline, and all applications are downstream uses of rEIM\",\"scientific_contract\":{\"algorithm\":\"rEIM (Algorithm 2.1)\",\"scientific_purpose\":\"Interpolate a family of target functions by rational polynomials with invariant poles using greedy selection from a rational dictionary\",\"evidence\":[\"E2\"],\"inputs\":[\"Integer n (number of basis functions)\",\"Dictionary D(B) of rational basis functions g(x,b)=(eta+b)/(x+b)\",\"Set Sigma of candidate interpolation points\",\"Family of target functions f_j\"],\"outputs\":[\"Rational interpolant Pi_n f = sum c_i/(x+b_i) with invariant poles {-b_i}\",\"Interpolation points {x_1,...,x_n}\",\"Coefficients {c_i} for each target function\"],\"core_operations\":[\"Greedy selection of basis function g_m maximizing residual\",\"Greedy selection of interpolation point x_m maximizing residual\",\"Construction of interpolation operator via Cauchy matrix inversion\",\"Output partial fraction form directly without barycentric conversion\"],\"assumptions\":[\"Target functions belong to L1(D) variation norm space\",\"Dictionary D(B) is finite subset of rational functions\",\"Interval I has positive left endpoint eta > 0\"],\"parameters\":[\"n: number of rational basis terms\",\"B: finite set of pole parameters\",\"Sigma: candidate interpolation points\",\"eta: left endpoint of interval I\"],\"scientific_invariants\":[\"Poles {-b_i} are invariant across all target functions in the family\",\"Interpolation points {x_i} are shared across all target functions\",\"Output is always in partial fraction form sum c_i/(x+b_i)\"],\"dependent_contributions\":[\"C1: rEIM algorithm itself\",\"C2: Convergence analysis applies to rEIM\",\"C3: All applications use rEIM interpolants\"],\"dependent_experiments_results\":[\"Section 5.1: approximation of power functions x^{-s}\",\"Section 5.2-5.3: fractional Laplacian on uniform and graded grids\",\"Section 5.4: adaptive step-size control for fractional heat equations\",\"Section 5.5: approximation of other functions for preconditioning and matrix exponentials\"],\"specificity_reason\":\"rEIM uses a novel rational dictionary with greedy EIM-style selection producing partial fractions directly, unlike AAA which outputs barycentric form requiring lossy conversion\",\"evidence\":[\"E14\"]},\"gates\":{\"G1\":{\"status\":\"PASS\",\"reason\":\"rEIM directly implements the paper's main scientific contribution; all applications and theory depend on it\",\"evidence\":[\"E1\"]},\"G2\":{\"status\":\"PASS\",\"reason\":\"Only one candidate (rEIM) is the core algorithm; ROGA is prior work, AAA is baseline, applications are downstream\",\"evidence\":[\"E8\"]},\"G3\":{\"status\":\"PASS\",\"reason\":\"rEIM involves novel scientific reasoning: rational dictionary, greedy pole/point selection, direct partial fraction output, invariant poles across function families\",\"evidence\":[\"E14\"]},\"G4\":{\"status\":\"PASS\",\"reason\":\"Clear input-output contract: n, D(B), Sigma, target functions f -> rational interpolant Pi_n f in partial fraction form\",\"evidence\":[\"E12\"]},\"G5\":{\"status\":\"PASS\",\"reason\":\"Can test with different target functions (x^{-s}, (x^s+k)^{-1}, exp(-tau*x), etc.), different n values, different intervals, different dictionaries\",\"evidence\":[\"E11\"]},\"G6\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G7\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G8\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]}},\"evidence_gaps\":[\"No explicit pseudocode for the application solvers beyond the core rEIM; implementation details for D(B) and Sigma sampling are in the referenced repository\"],\"decision\":\"ACCEPT_FOR_DESIGN\"}",
+    "timestamp": "2026-08-24T15:34:13.468538+00:00",
+    "usage": {
+      "completion_tokens": 2702,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 312
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 29114,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 31816
+    }
+  },
+  {
+    "attempt": 2,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:34:14.878305+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:35:08.723836+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:36:44.655960+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:37:37.570634+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:38:31.042561+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:39:24.325147+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:40:17.257269+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:41:13.197613+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:42:04.368685+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:42:59.865430+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:43:53.486711+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:44:47.087430+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:45:39.635454+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:46:33.143977+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:47:34.550563+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:48:27.574848+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:49:21.184068+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": null,
+    "http_status": 429,
+    "message_fields": [],
+    "response_id": null,
+    "response_kind": "http_error",
+    "stage": "full-review-resume-correction",
+    "text": "{\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"z-ai/glm-5.2:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\",\"provider_name\":\"Decart\",\"is_byok\":false,\"provider_error_code\":\"upstream_429\",\"limit_source\":\"upstream_provider_shared_pool\",\"remedy_hint\":\"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\",\"retry_after_seconds\":5,\"retry_after_seconds_raw\":5,\"headers\":{\"Retry-After\":\"5\"}}},\"user_id\":\"user_3IHgxZSN0G2ngkNnkRdevDIhpCM\"}",
+    "timestamp": "2026-08-24T15:51:07.706992+00:00",
+    "usage": {}
+  },
+  {
+    "attempt": 1,
+    "finish_reason": "stop",
+    "message_fields": [
+      "content",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787587009-fZQaZxLx0K8938AQ4g0A",
+    "stage": "full-review-resume-correction",
+    "text": "{\"schema_version\":\"core-algorithm-review-v2\",\"paper_id\":\"0021\",\"evidence_catalog\":[{\"id\":\"E1\",\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"We present a new rational approximation algorithm based on the empirical interpolation method for interpolating a family of parametrized functions to rational polynomials with invariant poles\"},{\"id\":\"E2\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"we present a Rational Approximation Algorithm via the Empirical Interpolation Method (rEIM), which produces rational approximants in the form (1.1).\"},{\"id\":\"E3\",\"page\":3,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"Algorithm 2.1 Rational Approximation via the EIM (rEIM)\"},{\"id\":\"E4\",\"page\":3,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"select gm = g(•, bm) ∈ D (B) such that\"},{\"id\":\"E5\",\"page\":4,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"of the proposed rEIM as well as classical EIMs\"},{\"id\":\"E6\",\"page\":4,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"the rEIM is able to eﬃciently interpolate them by applying a small-scale matrix G−1 n to ( f (x1), . . . , f(xn))⊤\"},{\"id\":\"E7\",\"page\":4,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"For any input target function f , the rEIM interpolant Π nf has a ﬁxed set of poles −b1, . . . ,−bn.\"},{\"id\":\"E8\",\"page\":6,\"section\":\"2.2. Rational Orthogonal Greedy Algorithm\",\"excerpt\":\"Another dictionary-based rational approximation method is the Rational Orthogonal Greedy Algorithm (ROGA) based on a rational dictionary developed in [37]\"},{\"id\":\"E9\",\"page\":7,\"section\":\"3. Applications of the rEIM\",\"excerpt\":\"3. Applications of the rEIM.\"},{\"id\":\"E10\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"we also derive a sub-exponential convergence rate of the rEIM\"},{\"id\":\"E11\",\"page\":17,\"section\":\"5.1. Approximation of Power Functions\",\"excerpt\":\"we start with a numerical comparison of the rEIM, the OGA, and the popular AAA rational approximation algorithm for the target function x−s\"},{\"id\":\"E12\",\"page\":3,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"Input: an integer n > 0, a dictionary D(B) and a set Σ of possible interpolation points; set Π 0 = 0.\"},{\"id\":\"E13\",\"page\":3,\"section\":\"2. Rational Approximation via the EIM\",\"excerpt\":\"Output: the rational interpolant Π nf for a family of target functions f which are not necessarily in D(B).\"},{\"id\":\"E14\",\"page\":2,\"section\":\"1. Introduction\",\"excerpt\":\"the rEIM directly outputs approximants of the form (1.1), thereby avoiding the error arising from computing the poles\"},{\"id\":\"E15\",\"page\":9,\"section\":\"3.3. Adaptive Step-Size Control\",\"excerpt\":\"the rEIM is suitable for generating rational approximants for a large number of τm\"}],\"research_goal\":{\"summary\":\"Develop efficient rational approximation algorithm for families of parametrized functions with invariant poles for fractional PDEs, preconditioning, and matrix functions\",\"evidence\":[\"E1\"]},\"main_contributions\":[{\"id\":\"C1\",\"summary\":\"New rEIM algorithm for rational approximation of function families with invariant poles\",\"evidence\":[\"E2\"]},{\"id\":\"C2\",\"summary\":\"Sub-exponential convergence rate analysis using entropy numbers\",\"evidence\":[\"E10\"]},{\"id\":\"C3\",\"summary\":\"Applications to fractional PDEs, preconditioning, and matrix exponentials\",\"evidence\":[\"E9\"]}],\"contribution_graph\":[{\"from\":\"Research Goal\",\"to\":\"C1\",\"relation\":\"rEIM algorithm is the main method achieving the goal\",\"evidence\":[\"E2\"]},{\"from\":\"C1\",\"to\":\"Algorithm 2.1\",\"relation\":\"rEIM is formally defined as Algorithm 2.1\",\"evidence\":[\"E3\"]},{\"from\":\"Algorithm 2.1\",\"to\":\"C2\",\"relation\":\"Convergence analysis applies to Algorithm 2.1\",\"evidence\":[\"E10\"]},{\"from\":\"Algorithm 2.1\",\"to\":\"C3\",\"relation\":\"Applications use rEIM interpolants\",\"evidence\":[\"E9\"]},{\"from\":\"C3\",\"to\":\"Section 5 experiments\",\"relation\":\"Numerical experiments validate rEIM applications\",\"evidence\":[\"E11\"]}],\"candidate_algorithms\":[{\"name\":\"rEIM (Algorithm 2.1)\",\"role\":\"core\",\"description\":\"Greedy rational interpolation algorithm selecting basis functions from rational dictionary D(B) and interpolation points to produce partial fraction approximants\",\"evidence\":[\"E3\"],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"Removing rEIM eliminates the paper's main contribution; all applications and convergence analysis depend on it\",\"evidence\":[\"E1\"]}},{\"name\":\"ROGA (Algorithm 2.2)\",\"role\":\"baseline\",\"description\":\"Rational Orthogonal Greedy Algorithm from prior work [37], mentioned for comparison; not the paper's contribution\",\"evidence\":[\"E8\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"ROGA is cited from prior work and only compared; paper's contribution stands without it\",\"evidence\":[\"E8\"]}},{\"name\":\"AAA rational approximation\",\"role\":\"baseline\",\"description\":\"Classical AAA algorithm used as comparison baseline in numerical experiments\",\"evidence\":[\"E11\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"AAA is a standard baseline for comparison; removing it does not affect the paper's core contribution\",\"evidence\":[\"E11\"]}},{\"name\":\"Convergence analysis via entropy numbers\",\"role\":\"supporting\",\"description\":\"Theoretical analysis deriving sub-exponential convergence rate of rEIM using metric entropy numbers\",\"evidence\":[\"E10\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"This is theoretical analysis supporting rEIM, not an independently executable algorithm\",\"evidence\":[\"E10\"]}},{\"name\":\"Fractional PDE solver application\",\"role\":\"evaluation\",\"description\":\"Application of rEIM to solve fractional elliptic and parabolic PDEs via rational approximation of power functions\",\"evidence\":[\"E9\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"This is a downstream application of rEIM, not the core algorithm itself\",\"evidence\":[\"E9\"]}},{\"name\":\"Adaptive step-size control\",\"role\":\"evaluation\",\"description\":\"Application of rEIM to adaptive time-stepping for fractional heat equations\",\"evidence\":[\"E15\"],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"This is a downstream application using rEIM interpolants, not the core method\",\"evidence\":[\"E15\"]}}],\"selected_core_algorithm\":\"rEIM (Algorithm 2.1)\",\"uniqueness_reason\":\"Only rEIM is the paper's novel contribution; ROGA is from prior work, AAA is a baseline, and all applications are downstream uses of rEIM\",\"scientific_contract\":{\"algorithm\":\"rEIM (Algorithm 2.1)\",\"scientific_purpose\":\"Interpolate a family of target functions by rational polynomials with invariant poles using greedy selection from a rational dictionary\",\"evidence\":[\"E2\"],\"inputs\":[\"Integer n (number of basis functions)\",\"Dictionary D(B) of rational basis functions g(x,b)=(eta+b)/(x+b)\",\"Set Sigma of candidate interpolation points\",\"Family of target functions f_j\"],\"outputs\":[\"Rational interpolant Pi_n f = sum c_i/(x+b_i) with invariant poles {-b_i}\",\"Interpolation points {x_1,...,x_n}\",\"Coefficients {c_i} for each target function\"],\"core_operations\":[\"Greedy selection of basis function g_m maximizing residual\",\"Greedy selection of interpolation point x_m maximizing residual\",\"Construction of interpolation operator via Cauchy matrix inversion\",\"Output partial fraction form directly without barycentric conversion\"],\"assumptions\":[\"Target functions belong to L1(D) variation norm space\",\"Dictionary D(B) is finite subset of rational functions\",\"Interval I has positive left endpoint eta > 0\"],\"parameters\":[\"n: number of rational basis terms\",\"B: finite set of pole parameters\",\"Sigma: candidate interpolation points\",\"eta: left endpoint of interval I\"],\"scientific_invariants\":[\"Poles {-b_i} are invariant across all target functions in the family\",\"Interpolation points {x_i} are shared across all target functions\",\"Output is always in partial fraction form sum c_i/(x+b_i)\"],\"dependent_contributions\":[\"C1: rEIM algorithm itself\",\"C2: Convergence analysis applies to rEIM\",\"C3: All applications use rEIM interpolants\"],\"dependent_experiments_results\":[\"Section 5.1: approximation of power functions x^{-s}\",\"Section 5.2-5.3: fractional Laplacian on uniform and graded grids\",\"Section 5.4: adaptive step-size control for fractional heat equations\",\"Section 5.5: approximation of other functions for preconditioning and matrix exponentials\"],\"specificity_reason\":\"rEIM uses a novel rational dictionary with greedy EIM-style selection producing partial fractions directly, unlike AAA which outputs barycentric form requiring lossy conversion\",\"evidence\":[\"E14\"]},\"gates\":{\"G1\":{\"status\":\"PASS\",\"reason\":\"rEIM directly implements the paper's main scientific contribution; all applications and theory depend on it\",\"evidence\":[\"E1\"]},\"G2\":{\"status\":\"PASS\",\"reason\":\"Only one candidate (rEIM) is the core algorithm; ROGA is prior work, AAA is baseline, applications are downstream\",\"evidence\":[\"E8\"]},\"G3\":{\"status\":\"PASS\",\"reason\":\"rEIM involves novel scientific reasoning: rational dictionary, greedy pole/point selection, direct partial fraction output, invariant poles across function families\",\"evidence\":[\"E14\"]},\"G4\":{\"status\":\"PASS\",\"reason\":\"Clear input-output contract: n, D(B), Sigma, target functions f -> rational interpolant Pi_n f in partial fraction form\",\"evidence\":[\"E12\"]},\"G5\":{\"status\":\"PASS\",\"reason\":\"Can test with different target functions (x^{-s}, (x^s+k)^{-1}, exp(-tau*x), etc.), different n values, different intervals, different dictionaries\",\"evidence\":[\"E11\"]},\"G6\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G7\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]},\"G8\":{\"status\":\"NOT_EVALUATED\",\"reason\":\"deferred to later benchmark-design stage\",\"evidence\":[]}},\"evidence_gaps\":[\"No explicit pseudocode for the application solvers beyond the core rEIM; implementation details for D(B) and Sigma sampling are in the referenced repository\"],\"decision\":\"ACCEPT_FOR_DESIGN\"}",
+    "timestamp": "2026-08-24T15:56:56.865771+00:00",
+    "usage": {
+      "completion_tokens": 4935,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 2578
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 29090,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 0,
+        "video_tokens": 0
+      },
+      "total_tokens": 34025
+    }
+  }
+]

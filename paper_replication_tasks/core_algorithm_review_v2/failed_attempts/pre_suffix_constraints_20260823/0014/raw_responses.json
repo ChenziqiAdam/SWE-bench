@@ -1,0 +1,154 @@
+[
+  {
+    "attempt": 1,
+    "finish_reason": "length",
+    "message_fields": [
+      "content",
+      "reasoning",
+      "reasoning_details",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787510124-Wt3239mckSbwYNwXcXoR",
+    "stage": "full-review",
+    "text": null,
+    "timestamp": "2026-08-23T18:38:52.269839+00:00",
+    "usage": {
+      "completion_tokens": 8000,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 18223,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 64,
+        "video_tokens": 0
+      },
+      "total_tokens": 26223
+    }
+  },
+  {
+    "attempt": 2,
+    "finish_reason": "length",
+    "message_fields": [
+      "content",
+      "reasoning",
+      "reasoning_details",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787510333-tIRn02NigrMxLqh76daK",
+    "stage": "full-review",
+    "text": null,
+    "timestamp": "2026-08-23T18:41:56.518488+00:00",
+    "usage": {
+      "completion_tokens": 8000,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 18223,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 18176,
+        "video_tokens": 0
+      },
+      "total_tokens": 26223
+    }
+  },
+  {
+    "attempt": 3,
+    "finish_reason": "length",
+    "message_fields": [
+      "content",
+      "reasoning",
+      "reasoning_details",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787510518-Re2Y3n0bzqZPPXxurzox",
+    "stage": "full-review",
+    "text": null,
+    "timestamp": "2026-08-23T18:45:07.407884+00:00",
+    "usage": {
+      "completion_tokens": 8000,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 18223,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 18176,
+        "video_tokens": 0
+      },
+      "total_tokens": 26223
+    }
+  },
+  {
+    "attempt": 4,
+    "finish_reason": "length",
+    "message_fields": [
+      "content",
+      "reasoning",
+      "reasoning_details",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787510711-8vJKDMr8if5PpdT6jUsy",
+    "stage": "full-review",
+    "text": "{\"schema_version\":\"core-algorithm-review-v2\",\"paper_id\":\"0014\",\"research_goal\":{\"summary\":\"Characterize numerical stability of the Sherman-Morrison-Woodbury identity when only approximate inverses of A and the capacitance matrix are computable.\",\"evidence\":[{\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"We study the numerical stability of the Sherman–Morrison–Woodbury (SMW) identity.\"}]},\"main_contributions\":[{\"id\":\"C1\",\"summary\":\"Novel two-norm forward (Theorem 2) and backward (Theorem 6) error bounds for the approximate SMW update.\",\"evidence\":[{\"page\":1,\"section\":\"Introduction\",\"excerpt\":\"Our work provides forward and backward error bounds for the update formula of eqn. (1).\"}]},{\"id\":\"C2\",\"summary\":\"Dichotomy: forward error tracks capacitance-inverse accuracy, backward error tracks A-inverse accuracy, guiding practitioners.\",\"evidence\":[{\"page\":2,\"section\":\"Introduction\",\"excerpt\":\"This dichotomy, validated by our numerical experiments in Section 4, provides practical guidance\"}]},{\"id\":\"C3\",\"summary\":\"Improved two-norm backward bound (eqn. 11) over Ghadiri et al., removing the rho > n+k requirement.\",\"evidence\":[{\"page\":3,\"section\":\"2.3 Improving the bound of [6] for the two-norm case\",\"excerpt\":\"we derive a novel bound for the two-norm backward error, significantly improving the dependency on ρ\"}]}],\"contribution_graph\":[{\"from\":\"Research goal\",\"to\":\"C1\",\"relation\":\"motivates derivation of forward and backward bounds\",\"evidence\":[{\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"For both forward and backward errors, we present upper bounds as a function of the two-norm error\"}]},{\"from\":\"C1\",\"to\":\"Figures 1-4\",\"relation\":\"empirically verified by randomized experiments\",\"evidence\":[{\"page\":10,\"section\":\"4 Numerical Experiments\",\"excerpt\":\"The goal of our numerical experiments is to verify the tightness of our forward and backward error bounds\"}]},{\"from\":\"C1 corollaries\",\"to\":\"C2\",\"relation\":\"simplified bounds reveal the dichotomy\",\"evidence\":[{\"page\":2,\"section\":\"Introduction\",\"excerpt\":\"The two bounds presented above reveal an intriguing dichotomy, which, to the best of our knowledge, is a novel observation.\"}]},{\"from\":\"Prior work [6]\",\"to\":\"C3\",\"relation\":\"improves Frobenius bound in two-norm special case\",\"evidence\":[{\"page\":3,\"section\":\"2.3 Improving the bound of [6] for the two-norm case\",\"excerpt\":\"significantly improving the dependency on ρ and removing the assumption that ρ needs to be strictly larger than n + k\"}]},{\"from\":\"Lemma 2.1\",\"to\":\"C1\",\"relation\":\"proof tool bounding inverses of close matrices\",\"evidence\":[{\"page\":4,\"section\":\"2.4 Two lemmas from prior work\",\"excerpt\":\"We will make frequent use of Lemma 2.1, which allows us to bound the two-norm difference\"}]}],\"candidate_algorithms\":[{\"name\":\"Approximate-SMW forward and backward error bound framework (Theorems 2 and 6)\",\"role\":\"core\",\"description\":\"Given A,U,V and perturbed inverses, compute forward error, backward error, and their two-norm upper bounds (eqns. 16, 22).\",\"evidence\":[{\"page\":1,\"section\":\"Introduction\",\"excerpt\":\"Specifically, we bound: • Forward Error (Theorem 2): Is eB−1 close to B−1?\"}],\"deletion_test\":{\"outcome\":\"FAILS_WITHOUT_ALGORITHM\",\"reason\":\"Both headline theorems vanish; no stability claims, dichotomy, or experiments remain.\",\"evidence\":[{\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"For both forward and backward errors, we present upper bounds as a function of the two-norm error of the approximate inverses.\"}]}},{\"name\":\"Improved prior-form backward bound (eqn. 11)\",\"role\":\"supporting\",\"description\":\"Refines Ghadiri et al. style bound to 512 eps2 rho^14 + eps1 under rho assumptions.\",\"evidence\":[{\"page\":4,\"section\":\"2.3 Improving the bound of [6] for the two-norm case\",\"excerpt\":\"See Appendix A for the proof.\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Secondary refinement of prior work; Theorems 2 and 6 unaffected.\",\"evidence\":[{\"page\":3,\"section\":\"2.3 Improving the bound of [6] for the two-norm case\",\"excerpt\":\"Unlike our setting, [6] assumes that A instead of A−1 is approximated by ˜A:\"}]}},{\"name\":\"Gaussian-perturbation experiment pipeline (Section 4.1)\",\"role\":\"evaluation\",\"description\":\"Generates Gaussian A,U,V, fixed-norm noises E1,E2, repeats 100 times, averages error norms.\",\"evidence\":[{\"page\":10,\"section\":\"4.1 Varying approximation errors\",\"excerpt\":\"each experiment is repeated 100 times and the average two-norm of the overall error is presented\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Empirical validation only; theoretical contribution survives its removal.\",\"evidence\":[{\"page\":10,\"section\":\"4 Numerical Experiments\",\"excerpt\":\"We focus on randomly generated matrices and vary the parameters in Theorems 2 and 6\"}]}},{\"name\":\"Capacitance-controlled matrix construction (Appendix D)\",\"role\":\"preprocessing\",\"description\":\"SVD and diagonal constructions fixing alpha or beta of the capacitance matrix for extreme-value experiments.\",\"evidence\":[{\"page\":11,\"section\":\"4.2 Varying capacitance matrix\",\"excerpt\":\"We manually construct special matrices A, U, V that allow us to control the capacitance matrix.\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Serves only Figures 3-4 data generation; not part of the contribution itself.\",\"evidence\":[{\"page\":11,\"section\":\"4.2 Varying capacitance matrix\",\"excerpt\":\"The details of the constructions are technical, hence are deferred to Appendix D.\"}]}},{\"name\":\"Inverse-perturbation lemma (Lemma 2.1)\",\"role\":\"supporting\",\"description\":\"Bounds ||M^{-1}-N^{-1}||_2 <= 2 rho^2 eps for close invertible matrices; used throughout proofs.\",\"evidence\":[{\"page\":4,\"section\":\"2.4 Two lemmas from prior work\",\"excerpt\":\"Lemma 2.1 is adapted from Lemma II.1 in [6]; we note that [6] proved a Frobenius norm bound\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Adapted proof tool from prior work, not a paper contribution.\",\"evidence\":[{\"page\":19,\"section\":\"B Proof of Lemma 2.1\",\"excerpt\":\"The proof is identical to the proof of Lemma II.1 in [6], using the two-norm instead\"}]}},{\"name\":\"Direct-inversion backward-error baseline (Figure 2)\",\"role\":\"baseline\",\"description\":\"Compares SMW backward error against directly inverting B with equal Gaussian inversion error eps3.\",\"evidence\":[{\"page\":11,\"section\":\"4.1.2 Backward error bound (Figure 2)\",\"excerpt\":\"we compare this with the backward error from direct inversion with the same inversion error\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Comparison baseline inside one figure; not needed for any contribution.\",\"evidence\":[{\"page\":14,\"section\":\"Figure 2 caption\",\"excerpt\":\"The red dotted line represents the direct inversion backward error.\"}]}},{\"name\":\"Alternative kappa(V)-formulations (Corollaries 5 and 9)\",\"role\":\"supporting\",\"description\":\"Rewrite bounds using condition number of V instead of alpha or beta.\",\"evidence\":[{\"page\":6,\"section\":\"3.1.2 The bound\",\"excerpt\":\"We also provide an alternative formulation for Theorem 2.\"}],\"deletion_test\":{\"outcome\":\"SURVIVES_WITHOUT_ALGORITHM\",\"reason\":\"Reparameterizations of the core bounds; nothing depends on them exclusively.\",\"evidence\":[{\"page\":9,\"section\":\"3.2.3 Proof of Theorem 6\",\"excerpt\":\"We now provide an alternative formulation of Theorem 6.\"}]}}],\"selected_core_algorithm\":\"Approximate-SMW forward and backward error bound framework (Theorems 2 and 6)\",\"uniqueness_reason\":\"Exactly one candidate carries the central contribution; the two theorem-halves are inseparable variants of one unified stability result, while all other candidates support, preprocess, or evaluate it.\",\"scientific_contract\":{\"algorithm\":\"Approximate-SMW forward and backward error bound framework (Theorems 2 and 6)\",\"scientific_purpose\":\"Quantify two-norm forward and backward errors of the SMW update when A-inverse and capacitance-inverse are approximate.\",\"inputs\":[\"Invertible A (n×n), full-column-rank update factors U,V (n×k)\",\"Perturbation E1 with ||E1||_2 = eps1 added to A^{-1}\",\"Noise E2 with ||E2||_2 = eps2 added to capacitance inverse\"],\"outputs\":[\"Forward error ||B~^{-1}-B^{-1}||_2 and its bound (eqn. 16)\",\"Backward error ||(B~^{-1})^{-1}-B||_2 and its bound (eqn. 22)\"],\"core_operations\":[\"Form B = A+UV^T and capacitance I+V^T A^{-1}U\",\"Compute approximate update B~^{-1} = A~^{-1}-A~^{-1}U Z^{-1} V^T A~^{-1} (eqn. 1)\",\"Evaluate spectral norms of errors and the bound expressions with lambda, alpha, beta\"],\"assumptions\":[\"U,V full column rank; B invertible\",\"Norm conditions eqns. (15) and (17)-(21) hold for respective bounds\"],\"parameters\":[\"lambda = ||U||_2 ||V||_2\",\"alpha = ||(I+V^T A^{-1}U)^{-1}||_2\",\"beta = ||I+V^T A^{-1}U||_2\",\"eps1, eps2\"],\"scientific_invariants\":[\"Zero perturbations give zero error and zero bound\",\"Bounds remain valid whenever their stated norm assumptions hold\"],\"dependent_contributions\":[\"C1 forward and backward bounds\",\"C2 small-update dichotomy and practical guidance\"],\"dependent_experiments_results\":[\"Figures 1-4 verifying bound tightness across eps, alpha, beta regimes\"],\"specificity_reason\":\"Bound expressions, assumption structure, and proof decomposition are novel to this paper, not standard library routines.\",\"evidence\":[{\"page\":10,\"section\":\"4.1 Varying approximation errors\",\"excerpt\":\"the perturbed inverses are set to eA−1 = A−1 + E1 and Z−1 = (I + VT eA−1U)−1 + E2,\"}]},\"gates\":{\"G1\":{\"status\":\"PASS\",\"reason\":\"Theorems 2 and 6 are the headline results; abstract and experiments center entirely on them.\",\"evidence\":[{\"page\":1,\"section\":\"Abstract\",\"excerpt\":\"For both forward and backward errors, we present upper bounds as a function of the two-norm error of the approximate inverses.\"}]},\"G2\":{\"status\":\"PASS\",\"reason\":\"After unifying the two inseparable theorem-halves, exactly one core candidate exists; others are supporting, preprocessing, evaluation, or baseline.\",\"evidence\":[{\"page\":1,\"section\":\"Introduction\",\"excerpt\":\"Specifically, we bound: • Forward Error (Theorem 2): Is eB−1 close to B−1?\"}]},\"G3\":{\"status\":\"PASS\",\"reason\":\"Requires implementing paper-specific novel bounds and error decomposition, not off-the-shelf solvers.\",\"evidence\":[{\"page\":2,\"section\":\"Introduction\",\"excerpt\":\"The two bounds presented above reveal an intriguing dichotomy, which, to the best of our knowledge, is a novel observation.\"}]},\"G4\":{\"status\":\"PASS\",\"reason\":\"Deterministic contract: matrices plus fixed-norm noises map to errors and bound values via eqns. (1), (16), (22).\",\"evidence\":[{\"page\":10,\"section\":\"4.1 Varying approximation errors\",\"excerpt\":\"the perturbed inverses are set to eA−1 = A−1 + E1 and Z−1 = (I + VT eA−1U)−1 + E2,\"}]},\"G5\":{\"status\":\"PASS\",\"reason\":\"",
+    "timestamp": "2026-08-23T18:48:23.959017+00:00",
+    "usage": {
+      "completion_tokens": 8000,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 18223,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 18176,
+        "video_tokens": 0
+      },
+      "total_tokens": 26223
+    }
+  }
+]

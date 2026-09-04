@@ -1,0 +1,15 @@
+{
+  "case_id": "hidden/case_06",
+  "checkout_commit": "c162068f61bafbe640bbd40ee4a47312498ed153",
+  "environment": "scibench-replication-0016 (Calliope 0.6.7, CBC, PR-380 patch)",
+  "official_adapter_sha256": "ff38cc5daa163fa31dc40a2b653561a66b4903615e1a0235a7877edfb398cecb",
+  "official_output_sha256": "6b210a17a573d2bc77917b21e921752e5147ff57597489d79be27f6793fbae70",
+  "independent_implementation_sha256": "1a2524e496af265bee00e78ed2dc4ef3a1ed5979b8b2841de313f7cade20ca6d",
+  "independent_output_sha256": "878905b331aad07c0a33ac38d869102b6166d2e5893e6d1cf0a5eb2bf0540d56",
+  "exact": {"z": false, "r": false, "w": false},
+  "y_max_abs_error": 38.002864374222696,
+  "y_max_relative_error": 12.304207672365404,
+  "tolerance_cap_exceeded": true,
+  "G8": "FAIL",
+  "decision": "REVISE; stop promotion and redesign the independent storage/dispatch formulation and affected cases"
+}

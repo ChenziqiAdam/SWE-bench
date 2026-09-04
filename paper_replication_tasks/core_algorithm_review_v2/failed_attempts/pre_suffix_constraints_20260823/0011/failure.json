@@ -1,0 +1,5 @@
+{
+  "error": "full-review failed after 4 attempts: $.research_goal.evidence[0].excerpt does not match PDF page 1",
+  "paper_id": "0011",
+  "status": "FAILED"
+}

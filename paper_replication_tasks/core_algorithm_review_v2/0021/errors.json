@@ -1,0 +1,9 @@
+[
+  {
+    "attempt": 1,
+    "message": "$.evidence_catalog[6].excerpt does not match PDF page 12",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:28:56.254721+00:00",
+    "type": "ResponseValidationError"
+  }
+]

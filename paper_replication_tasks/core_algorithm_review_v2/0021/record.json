@@ -1,0 +1,281 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E7"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "All applications, experiments, and the convergence estimate depend on the rEIM approximants."
+      },
+      "description": "Greedy selection of dictionary poles and interpolation points; constructs invariant-pole partial fraction approximants for function families.",
+      "evidence": [
+        "E3"
+      ],
+      "name": "rEIM greedy rational interpolation (Algorithm 2.1)",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E6"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Comparison baseline; paper contributions remain without it."
+      },
+      "description": "L2 orthogonal projection greedy variant from prior work [37], used only as comparison in experiments.",
+      "evidence": [
+        "E5"
+      ],
+      "name": "Rational Orthogonal Greedy Algorithm (ROGA)",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E6"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "External baseline from [46]; not part of the contribution."
+      },
+      "description": "Classical single-function AAA algorithm plus eigenvalue conversion, used as accuracy comparison.",
+      "evidence": [
+        "E6"
+      ],
+      "name": "AAA / AAA* barycentric rational approximation",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E8"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Theory supports C2 but the algorithmic contribution stands independently."
+      },
+      "description": "Theoretical machinery proving sub-exponential convergence; not executable numerical algorithm.",
+      "evidence": [
+        "E1"
+      ],
+      "name": "Entropy number decay analysis (Theorems 4.5-4.6)",
+      "role": "supporting"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E7"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Applications demonstrate but do not define the core algorithm."
+      },
+      "description": "Downstream applications consuming rEIM output; standard discretization schemes around it.",
+      "evidence": [
+        "E7"
+      ],
+      "name": "rEIM-based fractional PDE/preconditioner/exponential integrator schemes",
+      "role": "evaluation"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E2"
+      ],
+      "from": "Research goal: efficient family rational approximation",
+      "relation": "realized_by",
+      "to": "C1: rEIM algorithm"
+    },
+    {
+      "evidence": [
+        "E7"
+      ],
+      "from": "C1: rEIM algorithm",
+      "relation": "enables",
+      "to": "Fractional PDE, preconditioning, matrix exponential applications"
+    },
+    {
+      "evidence": [
+        "E1"
+      ],
+      "from": "Entropy number analysis",
+      "relation": "supports",
+      "to": "C2: convergence estimate"
+    }
+  ],
+  "decision": "ACCEPT_FOR_DESIGN",
+  "evidence_catalog": [
+    {
+      "excerpt": "we present a new rational approximation algorithm based on the empirical interpolation method",
+      "id": "E1",
+      "page": 1,
+      "section": "Abstract"
+    },
+    {
+      "excerpt": "In Algorithm 2.1, we present \"rEIM\", a variant of the EIM using the rational dictionary",
+      "id": "E2",
+      "page": 3,
+      "section": "2. Rational Approximation via the Empirical Interpolation Method."
+    },
+    {
+      "excerpt": "select gm = g(•, bm) ∈ D(B) such that ∥gm − Π m−1gm∥L∞(I) = max",
+      "id": "E3",
+      "page": 3,
+      "section": "Algorithm 2.1"
+    },
+    {
+      "excerpt": "the rEIM could be more eﬃcient than repeatedly calling a classical rational approximation algorithm",
+      "id": "E4",
+      "page": 4,
+      "section": "2. Rational Approximation via the Empirical Interpolation Method."
+    },
+    {
+      "excerpt": "Another dictionary-based rational approximation method is the Rational Orthogonal Greedy Algorithm",
+      "id": "E5",
+      "page": 6,
+      "section": "2.2. Rational Orthogonal Greedy Algorithm."
+    },
+    {
+      "excerpt": "a numerical comparison of the rEIM, the OGA, and the popular AAA rational approximation algorithm",
+      "id": "E6",
+      "page": 17,
+      "section": "5.1. Approximation of Power Functions."
+    },
+    {
+      "excerpt": "In this section, we test the performance of the rEIM for solving fractional PDEs.",
+      "id": "E7",
+      "page": 16,
+      "section": "5. Numerical Experiments."
+    },
+    {
+      "excerpt": "we have developed the rEIM, a new rational approximation algorithm for producing partial fraction approximation",
+      "id": "E8",
+      "page": 21,
+      "section": "6. Concluding Remarks."
+    }
+  ],
+  "evidence_gaps": [
+    "Exact practical choices of B and Σ are repository-tuned, not fully specified in paper."
+  ],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E8"
+      ],
+      "reason": "Deleting rEIM removes the central contribution and all experiments.",
+      "status": "PASS"
+    },
+    "G2": {
+      "evidence": [
+        "E6"
+      ],
+      "reason": "Exactly one core candidate; ROGA and AAA are baselines, analysis is supporting.",
+      "status": "PASS"
+    },
+    "G3": {
+      "evidence": [
+        "E2"
+      ],
+      "reason": "Paper-specific greedy variant with rational dictionary and invariant poles.",
+      "status": "PASS"
+    },
+    "G4": {
+      "evidence": [
+        "E3"
+      ],
+      "reason": "Clear input n, D(B), Σ, f to output poles, points, coefficients contract.",
+      "status": "PASS"
+    },
+    "G5": {
+      "evidence": [
+        "E7"
+      ],
+      "reason": "Hidden inputs can vary targets s, k, τ, intervals I, and n.",
+      "status": "PASS"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E8"
+      ],
+      "id": "C1",
+      "summary": "The rEIM algorithm interpolating function families by rational functions with invariant poles."
+    },
+    {
+      "evidence": [
+        "E1"
+      ],
+      "id": "C2",
+      "summary": "Sub-exponential convergence estimate of rEIM via entropy numbers of the dictionary."
+    }
+  ],
+  "paper_id": "0021",
+  "research_goal": {
+    "evidence": [
+      "E1"
+    ],
+    "summary": "Develop an efficient greedy rational approximation algorithm producing invariant-pole partial fractions for families of parametrized functions."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": {
+    "algorithm": "rEIM greedy rational interpolation (Algorithm 2.1)",
+    "assumptions": [
+      "Targets lie in L1(D) variation-norm closure",
+      "Interval I has positive left endpoint η"
+    ],
+    "core_operations": [
+      "Greedy max-error dictionary selection",
+      "Max-residual point selection",
+      "Cauchy matrix assembly and solve for coefficients"
+    ],
+    "dependent_contributions": [
+      "C1 family rational approximation with invariant poles"
+    ],
+    "dependent_experiments_results": [
+      "Figures 1-2 power function errors",
+      "Tables/Figs 3-7 fractional PDE, step-size, preconditioning, matrix exponential results"
+    ],
+    "evidence": [
+      "E2"
+    ],
+    "inputs": [
+      "Integer n",
+      "Dictionary D(B) with pole parameters b",
+      "Sample set Σ on interval I",
+      "Target function values f(x) at selected points"
+    ],
+    "outputs": [
+      "Poles -b_i",
+      "Interpolation points x_i",
+      "Coefficients c_i giving Π_n f = Σ c_i/(x+b_i)"
+    ],
+    "parameters": [
+      "n (number of terms)",
+      "B finite pole set",
+      "Σ sample set"
+    ],
+    "scientific_invariants": [
+      "Π_n f interpolates f at x_1..x_n",
+      "Poles invariant across target family members"
+    ],
+    "scientific_purpose": "Interpolate a family of target functions by partial fractions with shared adaptive poles.",
+    "specificity_reason": "Novel greedy variant targeting out-of-dictionary function families with direct partial-fraction output; not off-the-shelf."
+  },
+  "selected_core_algorithm": "rEIM greedy rational interpolation (Algorithm 2.1)",
+  "uniqueness_reason": "Only candidate directly implementing the main contribution; all others are baselines, theory, or downstream applications."
+}

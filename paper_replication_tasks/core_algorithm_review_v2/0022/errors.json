@@ -1,0 +1,36 @@
+[
+  {
+    "attempt": 1,
+    "message": "$.evidence_catalog[5].excerpt does not match PDF page 6",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:30:33.365099+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 2,
+    "message": "selected core and core-role count inconsistent",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:31:29.338557+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 3,
+    "message": "$.evidence_catalog[5].excerpt does not match PDF page 4",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:32:19.876457+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 4,
+    "message": "selected core and core-role count inconsistent",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:33:16.738749+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "message": "full-review failed after 4 attempts: selected core and core-role count inconsistent",
+    "stage": "paper",
+    "timestamp": "2026-08-23T19:33:16.740608+00:00",
+    "type": "ReviewError"
+  }
+]

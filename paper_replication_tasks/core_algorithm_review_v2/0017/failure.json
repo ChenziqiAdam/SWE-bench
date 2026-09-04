@@ -1,0 +1,11 @@
+{
+  "call_count": 4,
+  "error": {
+    "message": "full-review failed after 4 attempts: $.evidence_catalog[1].excerpt does not match PDF page 12",
+    "stage": "paper",
+    "timestamp": "2026-08-23T19:21:27.068640+00:00",
+    "type": "ReviewError"
+  },
+  "paper_id": "0017",
+  "status": "FAILED"
+}

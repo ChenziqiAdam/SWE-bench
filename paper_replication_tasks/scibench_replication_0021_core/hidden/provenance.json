@@ -1,0 +1,177 @@
+{
+  "cases": [
+    {
+      "case_id": "case_01",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "input_sha256": "6ad6210dc08a3ee81828f64fbd494c187a9c25b740c0c9aadb0143d1da4ccb2f",
+      "normalized_output_sha256": "55b2011dc75c58c73e70bf30d0b37fd3e1209578b6fb425ef9017517fad05087",
+      "output_sha256": "55b2011dc75c58c73e70bf30d0b37fd3e1209578b6fb425ef9017517fad05087",
+      "raw_official_sha256": "55b2011dc75c58c73e70bf30d0b37fd3e1209578b6fb425ef9017517fad05087",
+      "split": "public"
+    },
+    {
+      "case_id": "case_02",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "input_sha256": "9aa7165ac5657c2c40cd876dd64347fa06e5f1ce5dc13db500afb78314da1f79",
+      "normalized_output_sha256": "df9b9f8b6f33d8668c2b655e66b97732dd6a7ec7dee9a0609ddd1d8a3dd21223",
+      "output_sha256": "df9b9f8b6f33d8668c2b655e66b97732dd6a7ec7dee9a0609ddd1d8a3dd21223",
+      "raw_official_sha256": "df9b9f8b6f33d8668c2b655e66b97732dd6a7ec7dee9a0609ddd1d8a3dd21223",
+      "split": "public"
+    },
+    {
+      "case_id": "case_03",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "input_sha256": "62bffa897e21694577c3cb3688ef2b9eb26b6ce3f79db0ccc2255d79837bf7d7",
+      "normalized_output_sha256": "1346c2c73b7a42b1044190be09e103b676fe7d5396108d7c19a8472d3d52adb2",
+      "output_sha256": "1346c2c73b7a42b1044190be09e103b676fe7d5396108d7c19a8472d3d52adb2",
+      "raw_official_sha256": "1346c2c73b7a42b1044190be09e103b676fe7d5396108d7c19a8472d3d52adb2",
+      "split": "public"
+    },
+    {
+      "case_id": "case_01",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "input_sha256": "d0d4de879647f711e37b5a731bc230def074102c8527624e2b0237694f4f56ea",
+      "normalized_output_sha256": "17c68060f5e000aa9e9e0a841db31fa1bc23b66d8fc16bbfce575cedabb0c306",
+      "output_sha256": "17c68060f5e000aa9e9e0a841db31fa1bc23b66d8fc16bbfce575cedabb0c306",
+      "raw_official_sha256": "17c68060f5e000aa9e9e0a841db31fa1bc23b66d8fc16bbfce575cedabb0c306",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_02",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "input_sha256": "425962a5c9cc1cd712cc35478064abfdb421324ce1170a7522c550b5b9799a93",
+      "normalized_output_sha256": "c7351aff005a1752821d0e397de7cc49a6da0affbc96c22efcb685d51059a0ff",
+      "output_sha256": "c7351aff005a1752821d0e397de7cc49a6da0affbc96c22efcb685d51059a0ff",
+      "raw_official_sha256": "c7351aff005a1752821d0e397de7cc49a6da0affbc96c22efcb685d51059a0ff",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_03",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "input_sha256": "38021f4eaedf963bcff3f4c144e464a60d19d012a61bed270f3c6b9f33f02573",
+      "normalized_output_sha256": "93fe61800ce9d90bb6ae50aef27e5c7f469945d1d2ad31f6639ab7b8473c8d7e",
+      "output_sha256": "93fe61800ce9d90bb6ae50aef27e5c7f469945d1d2ad31f6639ab7b8473c8d7e",
+      "raw_official_sha256": "93fe61800ce9d90bb6ae50aef27e5c7f469945d1d2ad31f6639ab7b8473c8d7e",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_04",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "input_sha256": "24b95c35eae2134189aaf34dafb0d669dca1bca62b1e337302b8e0342767f261",
+      "normalized_output_sha256": "f4414cf147eda29358f004d1f879fb06c9b4f0bc963c544da413c225a4d75e21",
+      "output_sha256": "f4414cf147eda29358f004d1f879fb06c9b4f0bc963c544da413c225a4d75e21",
+      "raw_official_sha256": "f4414cf147eda29358f004d1f879fb06c9b4f0bc963c544da413c225a4d75e21",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_05",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "input_sha256": "4d2b9673f5eef2f7e91be53d909d64b4634d53f1f55ec6765a2936e47381d52d",
+      "normalized_output_sha256": "08b73722ee8560bcf034aa2a8b70a90d51a782e21a8348d27807cdf7e7ee488d",
+      "output_sha256": "08b73722ee8560bcf034aa2a8b70a90d51a782e21a8348d27807cdf7e7ee488d",
+      "raw_official_sha256": "08b73722ee8560bcf034aa2a8b70a90d51a782e21a8348d27807cdf7e7ee488d",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_06",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "input_sha256": "687fd8200b7f76c0665586e725192f73db888e2ca13092c3d2abf13d912b34c8",
+      "normalized_output_sha256": "5aacf098c2bf32689b38f022ecb562b52ebe06864d8fadcd818df9cfacaa5a94",
+      "output_sha256": "5aacf098c2bf32689b38f022ecb562b52ebe06864d8fadcd818df9cfacaa5a94",
+      "raw_official_sha256": "5aacf098c2bf32689b38f022ecb562b52ebe06864d8fadcd818df9cfacaa5a94",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_07",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "input_sha256": "c8084dcf20f4588e895a8ba3195b42c59e80b64b0ae4cf0411638eb2246fb6a4",
+      "normalized_output_sha256": "cc3eb74a3657bafaabac61946b2d772ee7d922920127a01742f0a8dc9fbc1824",
+      "output_sha256": "cc3eb74a3657bafaabac61946b2d772ee7d922920127a01742f0a8dc9fbc1824",
+      "raw_official_sha256": "cc3eb74a3657bafaabac61946b2d772ee7d922920127a01742f0a8dc9fbc1824",
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_08",
+      "checkout_commit": "9760b18408f17d226124a93755294a95f15230f8",
+      "input_sha256": "a842ae277976fa0bdad61a4f695cbfa50d7a75d01dde5ce45bf57541003b210e",
+      "normalized_output_sha256": "4a753642cc6ddb26a55a5c4cc4999a46856595efadd166ba718d3af724b39254",
+      "output_sha256": "4a753642cc6ddb26a55a5c4cc4999a46856595efadd166ba718d3af724b39254",
+      "raw_official_sha256": "4a753642cc6ddb26a55a5c4cc4999a46856595efadd166ba718d3af724b39254",
+      "split": "hidden"
+    }
+  ],
+  "commit": "9760b18408f17d226124a93755294a95f15230f8",
+  "dependency_artifact_sha256": null,
+  "environment": {
+    "numpy": "1.26.4",
+    "python": "3.12.7"
+  },
+  "environment_lock_sha256": "c896d3a837edbf56dbbc79406e3a24ba1ec8ef6c158c7208113fb347c4902043",
+  "gold_source": "pinned_official_checkout",
+  "independent_audit": {
+    "derived_tolerances": {
+      "comparison": "fieldwise",
+      "field_rules": {
+        "coefficients": {
+          "atol": 2e-12,
+          "rtol": 2e-11
+        },
+        "dictionary_indices": {
+          "atol": 0.0,
+          "rtol": 0.0
+        },
+        "interpolation_matrix": {
+          "atol": 2e-12,
+          "rtol": 2e-11
+        },
+        "predictions": {
+          "atol": 2e-12,
+          "rtol": 2e-11
+        },
+        "sample_indices": {
+          "atol": 0.0,
+          "rtol": 0.0
+        }
+      }
+    },
+    "implementation": "curation_tools/reim_core_scientific.py; written from Algorithm 2.1 without official helpers",
+    "maximum_discrepancy_by_field": {
+      "coefficients": [
+        0.0,
+        0.0
+      ],
+      "interpolation_matrix": [
+        0.0,
+        0.0
+      ],
+      "predictions": [
+        0.0,
+        0.0
+      ]
+    },
+    "status": "passed"
+  },
+  "input_injection_patch_sha256": "0c0181b469bee90f0575be889e620678163d4ab0111f023305861fee7aa40c52",
+  "lifecycle": "validated",
+  "normalization_discrepancy": "Paper (2.1) uses (eta+b)/(x+b); repository experiments use 1/(x+b). The numerical dictionary input makes the convention explicit and the core recurrence identical.",
+  "official_adapter_patch_scope": "Only replace hard-coded xset/bset evaluation and fixed bset(1) with dictionary and initial_dictionary_index inputs; greedy loop, solves, infinity norms, and first-occurrence argmax are retained.",
+  "official_reproduction": {
+    "adapter_sha256": "dde153335c23872fd5a9d794e536637beca20dab9f90cce7a92e9d55bf2f390c",
+    "clean_checkout_bundle_sha256": [
+      "a63be6d34deee4f09f6c84c93119ba4b146721072b8cd868c5ff98e5a82d3d7b",
+      "a63be6d34deee4f09f6c84c93119ba4b146721072b8cd868c5ff98e5a82d3d7b"
+    ],
+    "dependency_artifact_sha256": null,
+    "environment_lock_sha256": "c896d3a837edbf56dbbc79406e3a24ba1ec8ef6c158c7208113fb347c4902043",
+    "raw_and_normalized_outputs": "curation_reports/official_runs/0021_core"
+  },
+  "official_source_sha256": {
+    "REIM.m_octave_compat_cached": "e6b3b228b72a203c77d48abcaebcc81520ed929be0be19fb1763e2fb8a1c3aab",
+    "REIM.m_original": "f27dea36e57994569963d35e50b3cdc6fff4fdd872ee68018949cbd0ef97e033"
+  },
+  "paper_sha256": "b7f61555afe1e784318af286c6120a0f8b86cd39f06f9b9d3b69a9988e4ea453",
+  "paper_version": "arXiv:2406.19339v3",
+  "repository": "https://github.com/yuwenli925/REIM",
+  "schema_version": 4,
+  "task_id": "scibench_replication_0021_core"
+}

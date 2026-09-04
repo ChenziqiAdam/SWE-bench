@@ -1,0 +1,36 @@
+[
+  {
+    "attempt": 1,
+    "message": "selected core and core-role count inconsistent",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:24:27.733911+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 2,
+    "message": "$.evidence_catalog[8].excerpt does not match PDF page 20",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:25:18.335026+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 3,
+    "message": "$.evidence_catalog[1].excerpt does not match PDF page 3",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:26:09.646816+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 4,
+    "message": "scientific_contract must be null without selected core",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:27:05.656862+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "message": "full-review failed after 4 attempts: scientific_contract must be null without selected core",
+    "stage": "paper",
+    "timestamp": "2026-08-23T19:27:05.658706+00:00",
+    "type": "ReviewError"
+  }
+]

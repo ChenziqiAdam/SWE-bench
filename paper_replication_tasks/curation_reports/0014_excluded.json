@@ -1,0 +1,13 @@
+{
+  "bundle_file_count": 21,
+  "bundle_file_map_sha256": "e8767960f28ff07d06ca51228354eca2e99386b82f807d3f729c9e7f5fa36921",
+  "decision": "REJECT_PAPER",
+  "excluded_at": "2026-09-04",
+  "former_manifest_entry_sha256": "8307799de7fc5a6c75320e3c25af9ba32acb1071accbdbe47bcf30e246adc043",
+  "gate_basis": ["G1", "G2", "G3"],
+  "historical_artifacts": "preserved",
+  "reason": "The paper's central contribution is stability theory. The executable Sherman-Morrison-Woodbury update predates the paper and is not a unique new core scientific algorithm.",
+  "schema_version": 1,
+  "status": "excluded_no_core_algorithm",
+  "task_id": "scibench_replication_0014"
+}

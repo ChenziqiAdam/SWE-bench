@@ -1,0 +1,36 @@
+[
+  {
+    "attempt": 1,
+    "message": "scientific_contract must be null without selected core",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:12:30.915699+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 2,
+    "message": "scientific_contract must be null without selected core",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:13:07.866402+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 3,
+    "message": "$.evidence_catalog[1].excerpt does not match PDF page 2",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:13:50.038674+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 4,
+    "message": "$.evidence_catalog[4].excerpt does not match PDF page 2",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:14:37.270752+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "message": "full-review failed after 4 attempts: $.evidence_catalog[4].excerpt does not match PDF page 2",
+    "stage": "paper",
+    "timestamp": "2026-08-23T19:14:37.272010+00:00",
+    "type": "ReviewError"
+  }
+]

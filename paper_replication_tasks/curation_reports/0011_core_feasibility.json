@@ -1,0 +1,86 @@
+{
+  "cases": [
+    {
+      "case_id": "case_01",
+      "independent_output_sha256": "ec05863a42acfb707d37270cdb4d5f9756af57f67654919024e28cc92b81f5eb",
+      "input_sha256": "dbe20553a32ee680e768450cb6a94004c0694e417d960784ca4d39c98647bf5d",
+      "maximum_pilot_relative_error": 0.053953803159856865,
+      "output_sha256": "32128201ee7ee3b46e66fd85df4f89d2feb006396d5769eb61ed404e8861bb56"
+    },
+    {
+      "case_id": "case_02",
+      "independent_output_sha256": "4784ae103a40df1a9d6e7a41fb4b1aa978e86f19a0d57c7d1c7ba0696d3797c4",
+      "input_sha256": "b0db160799ca79db555749db98b528f61efafe2a515c9d7f68110ed5e02d2aa5",
+      "maximum_pilot_relative_error": 0.18479030653197126,
+      "output_sha256": "5248ea504ea660a3806f7627c9d5876e0f26f31e7e11b7b16cd21bee8cb9a12c"
+    },
+    {
+      "case_id": "case_03",
+      "independent_output_sha256": "106cd19432323b27b6a4d6408e7be8468abbfca261fe070c1d540ed6a19d89ac",
+      "input_sha256": "4c2b14d7df706d406f47ef571643fe5272d7d0e86da00a30e00a40c4f5f9e4f5",
+      "maximum_pilot_relative_error": 0.06648714499692415,
+      "output_sha256": "00ecc0a900a181552618568581e4582b4e4f9b46ad2f5a57accd1c09e0e1ceea"
+    }
+  ],
+  "environment": {
+    "numpy": "1.26.4",
+    "python": "3.10.21"
+  },
+  "frozen_tolerance": {
+    "absolute_scale_floors": [
+      1e-08,
+      1e-12,
+      1e-08,
+      1e-08,
+      1e-08
+    ],
+    "field_order": [
+      "mean",
+      "variance",
+      "q2.5",
+      "q50",
+      "q97.5"
+    ],
+    "frozen_from": "five official seeds on three provisional public cases before hidden construction",
+    "relative_bounds": [
+      0.12379526307401312,
+      0.28103545682349085,
+      0.18214551404165366,
+      0.11266699782916283,
+      0.1745859459569251
+    ],
+    "rule": "max(mean absolute relative error + 4 sample SD, 1.10 * observed maximum)"
+  },
+  "independent_audit": "Eq. 6 covariance, symmetric minimum-eigenvalue floor, GLS Gaussian parameter law, exact lower-truncated slope marginal",
+  "next_gate": "Phase 2 task construction",
+  "official_adapter_scope": "JSON validation/representation, seed assignment, pinned call, Einstein-unit conversion, posterior summary only",
+  "official_call_chain": "JSON squared samples -> exact vector representation -> pinned MSDBootstrap -> diffusion -> gradient/(2*dimension)",
+  "official_independent_within_frozen_bound": true,
+  "pilot_seed_count_per_case": 5,
+  "pins": {
+    "analysis_commit": "9141e4edcddc386cdf10a9201d70aba1abaeb66c",
+    "kinisi_commit": "54f3bc4f7167d18d2f4af1008880e5bb29d99797",
+    "kinisi_version": "1.1.0"
+  },
+  "public_bundle_sha256": "6b28fe93a1e0a4b919889fe6206e841d413ee6fcfde7c339d773938016eada0a",
+  "schema_version": 1,
+  "source_hashes": {
+    "adapter": "21f40f3528ed7d74fd29d123b6befac672b3a243f6a800ac6fffa07ca0e2e4ef",
+    "analysis_environment_yml": "8d9c31364697298812f929068224f64662d5965b19b204d7420dccb82211b3df",
+    "analysis_kinisi_rw_py": "8de80ea8a8677daee0cff2de791c617bf8166ce7efe1d59a9f785a828e871978",
+    "environment": "2455ba52b16fab9a8a1a5f69557e835cabd732f47be27ddc1df0b993aad09f1e",
+    "independent": "1e56338fdba2efbf7e034d28dccdb17e5fdead3bab61b8e83ee95a612c5f56cf",
+    "kinisi_diffusion_py": "606def108e43422b14953fd1ec4d75a1ea47110058f111ff0f1f84e3413944b7"
+  },
+  "overall_status": "FEASIBILITY_PASS",
+  "G6": {
+    "status": "PASS",
+    "pass_count": 2,
+    "attempted_contexts": 3,
+    "completed_contexts": 2,
+    "reason": "Two independent fallback-model contexts completed and identified the full approximate Bayesian MSD regression. The third context was attempted but exhausted finite upstream HTTP 429 retries."
+  },
+  "status": "FEASIBILITY_PASS",
+  "task_id": "scibench_replication_0011_core",
+  "two_clean_checkouts_exact": true
+}

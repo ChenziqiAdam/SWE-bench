@@ -1,0 +1,226 @@
+{
+  "case_shortcut_pass_matrix": {
+    "hidden:case_01": {
+      "early_stop": false,
+      "fixed_order": false,
+      "fixed_parameters": false,
+      "hardcoded_grid": false,
+      "ignore_initial": true,
+      "least_squares": false,
+      "per_target": false,
+      "public_memorizer": false,
+      "target_basis": false,
+      "transpose": false,
+      "unnormalized": false
+    },
+    "hidden:case_02": {
+      "early_stop": false,
+      "fixed_order": false,
+      "fixed_parameters": false,
+      "hardcoded_grid": false,
+      "ignore_initial": false,
+      "least_squares": false,
+      "per_target": false,
+      "public_memorizer": false,
+      "target_basis": false,
+      "transpose": false,
+      "unnormalized": false
+    },
+    "hidden:case_03": {
+      "early_stop": false,
+      "fixed_order": false,
+      "fixed_parameters": false,
+      "hardcoded_grid": false,
+      "ignore_initial": false,
+      "least_squares": false,
+      "per_target": false,
+      "public_memorizer": false,
+      "target_basis": false,
+      "transpose": false,
+      "unnormalized": false
+    },
+    "hidden:case_04": {
+      "early_stop": false,
+      "fixed_order": false,
+      "fixed_parameters": false,
+      "hardcoded_grid": false,
+      "ignore_initial": false,
+      "least_squares": false,
+      "per_target": false,
+      "public_memorizer": false,
+      "target_basis": false,
+      "transpose": false,
+      "unnormalized": false
+    },
+    "hidden:case_05": {
+      "early_stop": false,
+      "fixed_order": false,
+      "fixed_parameters": false,
+      "hardcoded_grid": false,
+      "ignore_initial": false,
+      "least_squares": false,
+      "per_target": false,
+      "public_memorizer": false,
+      "target_basis": false,
+      "transpose": false,
+      "unnormalized": false
+    },
+    "hidden:case_06": {
+      "early_stop": false,
+      "fixed_order": false,
+      "fixed_parameters": false,
+      "hardcoded_grid": false,
+      "ignore_initial": false,
+      "least_squares": false,
+      "per_target": false,
+      "public_memorizer": false,
+      "target_basis": false,
+      "transpose": false,
+      "unnormalized": false
+    },
+    "hidden:case_07": {
+      "early_stop": false,
+      "fixed_order": false,
+      "fixed_parameters": false,
+      "hardcoded_grid": false,
+      "ignore_initial": false,
+      "least_squares": false,
+      "per_target": false,
+      "public_memorizer": false,
+      "target_basis": false,
+      "transpose": false,
+      "unnormalized": false
+    },
+    "hidden:case_08": {
+      "early_stop": false,
+      "fixed_order": false,
+      "fixed_parameters": false,
+      "hardcoded_grid": false,
+      "ignore_initial": false,
+      "least_squares": false,
+      "per_target": false,
+      "public_memorizer": false,
+      "target_basis": false,
+      "transpose": false,
+      "unnormalized": false
+    },
+    "public:case_01": {
+      "early_stop": false,
+      "fixed_order": true,
+      "fixed_parameters": true,
+      "hardcoded_grid": true,
+      "ignore_initial": true,
+      "least_squares": true,
+      "per_target": false,
+      "public_memorizer": true,
+      "target_basis": false,
+      "transpose": false,
+      "unnormalized": false
+    },
+    "public:case_02": {
+      "early_stop": false,
+      "fixed_order": false,
+      "fixed_parameters": false,
+      "hardcoded_grid": false,
+      "ignore_initial": false,
+      "least_squares": false,
+      "per_target": false,
+      "public_memorizer": true,
+      "target_basis": false,
+      "transpose": false,
+      "unnormalized": false
+    },
+    "public:case_03": {
+      "early_stop": false,
+      "fixed_order": false,
+      "fixed_parameters": false,
+      "hardcoded_grid": false,
+      "ignore_initial": false,
+      "least_squares": false,
+      "per_target": false,
+      "public_memorizer": true,
+      "target_basis": false,
+      "transpose": false,
+      "unnormalized": false
+    }
+  },
+  "gate_evidence": {
+    "G1": "Paper abstract, Algorithm 2.1, and conclusion make rEIM the main contribution.",
+    "G2": "ROGA and AAA are comparison baselines; FEM/BDF2 are applications.",
+    "G3": "Greedy shared rational dictionary basis and interpolation are paper-specific.",
+    "G4": "Finite input matrices close every unspecified engineering choice.",
+    "G5": "Eight hidden cases and complete case-shortcut matrix.",
+    "G6": "core_algorithm_audits/0021_core_blind.json",
+    "G7": "curation_reports/0021_core_g7.json",
+    "G8": "Two deterministic official-adapter runs and an independently structured Algorithm 2.1 implementation."
+  },
+  "gates": {
+    "G1_core_centrality": true,
+    "G2_unique_core": true,
+    "G3_scientific_specificity": true,
+    "G4_executable_closure": true,
+    "G5_hazard_coverage": true,
+    "G6_blind_identification": true,
+    "G7_blind_implementation": true,
+    "G8_oracle_validity": true,
+    "all_shortcuts_fail_hidden": true,
+    "curator_reference_score_one": true,
+    "full_unredacted_paper": true,
+    "hash_mismatch_rejected": true,
+    "independent_all_cases": true,
+    "invalid_inputs_rejected": true,
+    "invalid_outputs_rejected": true,
+    "legacy_bytes_unchanged": true,
+    "nonfinite_json_rejected": true,
+    "oversized_json_rejected": true,
+    "partial_failure_rejected": true,
+    "public_memorizer_cap": true,
+    "stale_output_rejected": true,
+    "symlink_rejected": true,
+    "task_md_solution_only": true,
+    "three_public_eight_hidden": true,
+    "timeout_rejected": true,
+    "traversal_rejected": true
+  },
+  "hard_gate_failures": [],
+  "hidden_case_metrics": {
+    "case_01": {
+      "interpolation_condition_number": 25962466.345065422,
+      "minimum_relative_dictionary_maximum_gap": 1.6716502504618876e-05
+    },
+    "case_02": {
+      "interpolation_condition_number": 1604.6081600296413,
+      "minimum_relative_dictionary_maximum_gap": 0.00019738729453600394
+    },
+    "case_03": {
+      "interpolation_condition_number": 72.51425230054626,
+      "minimum_relative_dictionary_maximum_gap": 1.2025214399641988e-10
+    },
+    "case_04": {
+      "interpolation_condition_number": 1031.4916017416647,
+      "minimum_relative_dictionary_maximum_gap": 0.004504320317781517
+    },
+    "case_05": {
+      "interpolation_condition_number": 1601.7766078236464,
+      "minimum_relative_dictionary_maximum_gap": 0.0015630419681469086
+    },
+    "case_06": {
+      "interpolation_condition_number": 47176.845668695714,
+      "minimum_relative_dictionary_maximum_gap": 0.0010673403041917206
+    },
+    "case_07": {
+      "interpolation_condition_number": 1517.7937307268628,
+      "minimum_relative_dictionary_maximum_gap": 4.6374524732098566e-05
+    },
+    "case_08": {
+      "interpolation_condition_number": 4497.763459303537,
+      "minimum_relative_dictionary_maximum_gap": 0.0003733303645920107
+    }
+  },
+  "promotion_allowed": true,
+  "public_memorizer_score": 0.4,
+  "reference_score": 1.0,
+  "schema_version": 1,
+  "status": "ACCEPT",
+  "task_id": "scibench_replication_0021_core"
+}

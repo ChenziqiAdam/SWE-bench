@@ -1,0 +1,280 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E1",
+          "E4",
+          "E5",
+          "E6"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "Removing the spatial SUR eliminates both contagion adjustment and the reported conditional environmental effects."
+      },
+      "description": "Fit a SUR system with temporal residual covariance and date-specific spatial lags, then derive spatial impacts.",
+      "evidence": [
+        "E1",
+        "E4",
+        "E5",
+        "E6"
+      ],
+      "name": "Spatial-lag seemingly unrelated regression analysis",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E3"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "It is methodological background and a comparator, not the selected contagion model."
+      },
+      "description": "Stack date equations with cross-equation residual covariance but no spatial lag.",
+      "evidence": [
+        "E3"
+      ],
+      "name": "Classical non-spatial SUR",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E6"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "The empirical variants require it, but it does not itself estimate contagion or effects."
+      },
+      "description": "Construct lag8, lag11, and weighted lag11 environmental covariates.",
+      "evidence": [
+        "E6"
+      ],
+      "name": "Incubation-lag environmental averaging",
+      "role": "preprocessing"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E4",
+          "E7"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "It interprets the fitted model rather than defining the estimator."
+      },
+      "description": "Translate spatial-lag coefficients into own-province and spillover effects.",
+      "evidence": [
+        "E4",
+        "E7"
+      ],
+      "name": "Direct/indirect spatial-impact calculation",
+      "role": "evaluation"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E1",
+        "E2"
+      ],
+      "from": "goal",
+      "relation": "is estimated with",
+      "to": "C1"
+    },
+    {
+      "evidence": [
+        "E7"
+      ],
+      "from": "C1",
+      "relation": "supports inference of",
+      "to": "C2"
+    }
+  ],
+  "decision": "ACCEPT_FOR_DESIGN",
+  "evidence_catalog": [
+    {
+      "excerpt": "Use of spatial Seemingly Unrelated Regressions (SUR) allows us to model the incidence of reported cases of the disease per 100,000 population as an interregional contagion process",
+      "id": "E1",
+      "page": 1,
+      "section": "Abstract"
+    },
+    {
+      "excerpt": "our objective with this paper is to investigate the influence of environmental factors, concretely temperature, humidity, and sunshine, on the progression of the pandemic.",
+      "id": "E2",
+      "page": 2,
+      "section": "1 Introduction"
+    },
+    {
+      "excerpt": "The basis of this approach is well-known since the initial works of Zellner (1962)",
+      "id": "E3",
+      "page": 7,
+      "section": "4 Methods: the Spatial SUR Model"
+    },
+    {
+      "excerpt": "spatial SUR model that incorporates a spatial lag of the dependent variable as an explanatory factor.",
+      "id": "E4",
+      "page": 9,
+      "section": "4 Methods: the Spatial SUR Model"
+    },
+    {
+      "excerpt": "The coefficients of the spatially lagged variable are estimated for each time period",
+      "id": "E5",
+      "page": 9,
+      "section": "4 Methods: the Spatial SUR Model"
+    },
+    {
+      "excerpt": "we estimate three spatial SUR models to test the differences between the various temporal lags and weighting schemes for the environmental variables.",
+      "id": "E6",
+      "page": 13,
+      "section": "5.2 SUR Models"
+    },
+    {
+      "excerpt": "Our results offer strong support for the hypothesis that incidence of COVID-19 at the population level is lower at higher temperatures and levels of humidity",
+      "id": "E7",
+      "page": 23,
+      "section": "7 Concluding Remarks"
+    }
+  ],
+  "evidence_gaps": [],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E1",
+        "E7"
+      ],
+      "reason": "The environmental conclusions depend directly on the spatial SUR analysis.",
+      "status": "PASS"
+    },
+    "G2": {
+      "evidence": [
+        "E3",
+        "E4",
+        "E6"
+      ],
+      "reason": "One fitted spatial SUR family is central; non-spatial SUR and lag construction have subordinate roles.",
+      "status": "PASS"
+    },
+    "G3": {
+      "evidence": [
+        "E1",
+        "E4",
+        "E5"
+      ],
+      "reason": "The estimator embodies spatiotemporal contagion and epidemiological lag reasoning beyond generic regression.",
+      "status": "PASS"
+    },
+    "G4": {
+      "evidence": [
+        "E4",
+        "E5",
+        "E6"
+      ],
+      "reason": "The panel, covariates, spatial weights, and restrictions define estimable outputs.",
+      "status": "PASS"
+    },
+    "G5": {
+      "evidence": [
+        "E5",
+        "E6"
+      ],
+      "reason": "The same model can be tested on new panels, spatial structures, dates, and lag variants.",
+      "status": "PASS"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E1",
+        "E4",
+        "E5",
+        "E6"
+      ],
+      "id": "C1",
+      "summary": "A spatial SUR analysis with date-specific spatial-lag contagion effects and environmental lag specifications."
+    },
+    {
+      "evidence": [
+        "E7"
+      ],
+      "id": "C2",
+      "summary": "Estimated temperature, humidity, sunshine, and control-variable effects under contagion."
+    }
+  ],
+  "paper_id": "0020",
+  "research_goal": {
+    "evidence": [
+      "E1",
+      "E2"
+    ],
+    "summary": "Estimate environmental associations with COVID-19 incidence while representing temporal covariance and interprovincial contagion in Spain."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": {
+    "algorithm": "Spatial-lag seemingly unrelated regression analysis",
+    "assumptions": [
+      "spatial weights encode relevant contagion neighbors",
+      "SUR residual covariance links dates",
+      "model restrictions identify coefficients"
+    ],
+    "core_operations": [
+      "construct lagged covariates",
+      "stack SUR equations",
+      "estimate temporal covariance and spatial lags",
+      "compute spatial impacts"
+    ],
+    "dependent_contributions": [
+      "C1",
+      "C2"
+    ],
+    "dependent_experiments_results": [
+      "three environmental-lag models",
+      "date-wise and pooled fit",
+      "direct/indirect effect summaries"
+    ],
+    "evidence": [
+      "E1",
+      "E4",
+      "E5",
+      "E6"
+    ],
+    "inputs": [
+      "province-by-date incidence",
+      "environmental and socioeconomic covariates",
+      "spatial weights matrix"
+    ],
+    "outputs": [
+      "spatial-lag coefficients",
+      "regression coefficients",
+      "fit statistics",
+      "direct and indirect effects"
+    ],
+    "parameters": [
+      "lag window",
+      "coefficient restrictions",
+      "spatial weights",
+      "estimation method"
+    ],
+    "scientific_invariants": [
+      "dimensions agree across dates and provinces",
+      "spatial-lag operator remains invertible",
+      "reported impacts correspond to fitted spatial feedback"
+    ],
+    "scientific_purpose": "Estimate time-varying environmental and contagion effects on provincial disease incidence.",
+    "specificity_reason": "The procedure combines disease-incubation lags, temporal equation covariance, geographic contagion feedback, and spatial-impact interpretation."
+  },
+  "selected_core_algorithm": "Spatial-lag seemingly unrelated regression analysis",
+  "uniqueness_reason": "The spatial SUR-SLM is the only method joining temporal covariance, spatial contagion, and environmental inference; lag construction and impact decomposition are adjacent stages, and classical SUR is background."
+}

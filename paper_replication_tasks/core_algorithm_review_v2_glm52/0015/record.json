@@ -1,0 +1,329 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E2"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "Without Algorithm 2.1, the paper has no upper bound method for fixed-sparsity approximation; all main results depend on it."
+      },
+      "description": "Computes Z=AG with Gaussian G, then solves per-row least squares to recover entries on sparsity pattern S, yielding near-optimal approximation.",
+      "evidence": [
+        "E3"
+      ],
+      "name": "Algorithm 2.1: Fixed-sparse-matrix approximation",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E10"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Algorithm D.1 is an enhancement of Algorithm 2.1; the core contribution stands without it, as Corollary 1.4 already provides high-probability bounds."
+      },
+      "description": "Boosted version of Algorithm 2.1 using median trick to improve failure probability dependence from O(1/δ) to O(log(1/δ)).",
+      "evidence": [
+        "E10"
+      ],
+      "name": "Algorithm D.1: Boosted fixed-sparse-matrix recovery",
+      "role": "supporting"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E8"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Coloring methods are baselines for comparison, not the paper's core contribution."
+      },
+      "description": "Graph coloring methods partition columns and recover entries per color; compared against Algorithm 2.1 in section 4.",
+      "evidence": [
+        "E8"
+      ],
+      "name": "Coloring-based sparse recovery methods",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E7"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "This is a proof technique for the lower bound, not an implementable algorithm for the core task."
+      },
+      "description": "Theoretical construction using A=G^T G to prove Ω(s/ε) query lower bound for any adaptive algorithm.",
+      "evidence": [
+        "E7"
+      ],
+      "name": "Wishart matrix lower bound construction",
+      "role": "evaluation"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E2"
+      ],
+      "from": "Research Goal",
+      "relation": "C1 directly addresses the research goal",
+      "to": "C1"
+    },
+    {
+      "evidence": [
+        "E3"
+      ],
+      "from": "C1",
+      "relation": "C1 is realized by Algorithm 2.1",
+      "to": "Algorithm 2.1"
+    },
+    {
+      "evidence": [
+        "E6"
+      ],
+      "from": "Algorithm 2.1",
+      "relation": "Algorithm 2.1 is analyzed in Theorem 1.3",
+      "to": "Theorem 1.3"
+    },
+    {
+      "evidence": [
+        "E12"
+      ],
+      "from": "Algorithm 2.1",
+      "relation": "Algorithm 2.1 is tested in section 5",
+      "to": "Numerical experiments"
+    },
+    {
+      "evidence": [
+        "E7"
+      ],
+      "from": "C2",
+      "relation": "C2 is realized by Theorem 1.5 lower bound proof",
+      "to": "Theorem 1.5"
+    },
+    {
+      "evidence": [
+        "E8"
+      ],
+      "from": "C3",
+      "relation": "C3 compares Algorithm 2.1 with coloring methods",
+      "to": "Coloring methods comparison"
+    }
+  ],
+  "decision": "ACCEPT_FOR_DESIGN",
+  "evidence_catalog": [
+    {
+      "excerpt": "We study the problem of approximating a matrix A with a matrix that has a fixed sparsity pattern",
+      "id": "E1",
+      "page": 1,
+      "section": "Abstract"
+    },
+    {
+      "excerpt": "Our first contribution is to analyze a simple algorithm (Algorithm 2.1) that solves Problems 1.1 and 1.2.",
+      "id": "E2",
+      "page": 3,
+      "section": "1.2. Our contributions and roadmap"
+    },
+    {
+      "excerpt": "Algorithm 2.1. Fixed-sparse-matrix approximation.",
+      "id": "E3",
+      "page": 7,
+      "section": "2. An algorithm and upper bound"
+    },
+    {
+      "excerpt": "Specifically, the algorithm computes Z = AG, where G is a d\\times m matrix with independent standard Gaussian entries",
+      "id": "E4",
+      "page": 3,
+      "section": "1.2. Our contributions and roadmap"
+    },
+    {
+      "excerpt": "we provide an analysis of Algorithm 2.1 and prove the following.",
+      "id": "E5",
+      "page": 3,
+      "section": "1.2. Our contributions and roadmap"
+    },
+    {
+      "excerpt": "When the sparsity pattern S has at most s nonzero entries per row, this algorithm uses m = O(s/\\varepsilon ) nonadaptive matvec queries.",
+      "id": "E6",
+      "page": 3,
+      "section": "1.2. Our contributions and roadmap"
+    },
+    {
+      "excerpt": "We show that up to constant factors in the query complexity, the upper bound in Corollary 1.4 is optimal",
+      "id": "E7",
+      "page": 4,
+      "section": "1.2. Our contributions and roadmap"
+    },
+    {
+      "excerpt": "A number of methods for sparse-matrix and operator recovery based on graph colorings have been proposed",
+      "id": "E8",
+      "page": 14,
+      "section": "4. Comparison with coloring methods"
+    },
+    {
+      "excerpt": "Form G\\sim Gaussian(d,m)  \\triangleleft d \\times m i.i.d. Gaussian matrix",
+      "id": "E9",
+      "page": 7,
+      "section": "2. An algorithm and upper bound"
+    },
+    {
+      "excerpt": "Algorithm D.1. Fixed-sparse-matrix recovery (boosted).",
+      "id": "E10",
+      "page": 25,
+      "section": "Appendix D. High probability algorithm"
+    },
+    {
+      "excerpt": "Given a matrix A\\in \\BbbR n\\times d and a binary matrix S\\in \\{ 0, 1\\} n\\times d, find a matrix \\widetilde A so that \\widetilde A = S\\circ \\widetilde A",
+      "id": "E11",
+      "page": 2,
+      "section": "1.1. Fixed-sparsity matrix approximation"
+    },
+    {
+      "excerpt": "We consider A = M - 1, where M = tridiag( - 1, 4, - 1).",
+      "id": "E12",
+      "page": 17,
+      "section": "5. Numerical experiments"
+    },
+    {
+      "excerpt": "Algorithm 2.1 requires solving n least squares problems, each with a coefficient matrix of size m \\times s.",
+      "id": "E13",
+      "page": 10,
+      "section": "2. An algorithm and upper bound"
+    }
+  ],
+  "evidence_gaps": [
+    "No gaps identified; Algorithm 2.1 is clearly specified with inputs, outputs, and mathematical guarantees in the paper."
+  ],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E2"
+      ],
+      "reason": "Algorithm 2.1 directly implements the paper's main scientific contribution of fixed-sparsity matrix approximation from matvecs. Without it, the upper bound results and comparisons are meaningless.",
+      "status": "PASS"
+    },
+    "G2": {
+      "evidence": [
+        "E3"
+      ],
+      "reason": "Only Algorithm 2.1 satisfies the core definition. The lower bound is a proof technique, coloring methods are baselines, and Algorithm D.1 is a supporting variant of Algorithm 2.1.",
+      "status": "PASS"
+    },
+    "G3": {
+      "evidence": [
+        "E5"
+      ],
+      "reason": "Algorithm 2.1 requires paper-specific scientific reasoning about Gaussian sketching, sparsity-constrained least squares, and Frobenius norm error analysis. It is not a standard API or preprocessing step.",
+      "status": "PASS"
+    },
+    "G4": {
+      "evidence": [
+        "E9"
+      ],
+      "reason": "Clear input-output contract: given A (via matvec), S, and m, produce Ã with sparsity S. The algorithm is fully specified with deterministic steps after random sampling.",
+      "status": "PASS"
+    },
+    "G5": {
+      "evidence": [
+        "E12"
+      ],
+      "reason": "Hidden inputs can vary A, S (different sparsity patterns like diagonal, banded, block), and m to test generalization across different matrix types and sparsity structures.",
+      "status": "PASS"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E2"
+      ],
+      "id": "C1",
+      "summary": "Algorithm 2.1 for fixed-sparsity matrix approximation using O(s/ε) nonadaptive matvec queries with near-optimal error guarantees."
+    },
+    {
+      "evidence": [
+        "E7"
+      ],
+      "id": "C2",
+      "summary": "Matching lower bound (Theorem 1.5) showing Ω(s/ε) matvec queries are necessary even for adaptive algorithms."
+    },
+    {
+      "evidence": [
+        "E8"
+      ],
+      "id": "C3",
+      "summary": "Comparison with coloring-based methods showing Algorithm 2.1 can outperform them by quadratic factor."
+    }
+  ],
+  "paper_id": "0015",
+  "research_goal": {
+    "evidence": [
+      "E1"
+    ],
+    "summary": "Approximate a matrix A with a fixed sparsity pattern S using only matrix-vector product queries, achieving near-optimal Frobenius-norm error."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": {
+    "algorithm": "Algorithm 2.1: Fixed-sparse-matrix approximation",
+    "assumptions": [
+      "A ∈ R^{n×d} accessible only via matrix-vector products",
+      "S has at most s nonzero entries per row",
+      "m ≥ s+2 for the expectation bound to hold"
+    ],
+    "core_operations": [
+      "Form G ~ Gaussian(d,m) with i.i.d. standard normal entries",
+      "Compute Z = AG using m nonadaptive matvec queries",
+      "For each row i: extract nonzero indices S_i of row i of S",
+      "Solve least squares: ã_i = G_i† z_i where G_i is submatrix of G^T for indices S_i",
+      "Assemble Ã with recovered entries on sparsity pattern S"
+    ],
+    "dependent_contributions": [
+      "C1: Main upper bound contribution",
+      "C3: Comparison with coloring methods"
+    ],
+    "dependent_experiments_results": [
+      "Figure 2: Model problem convergence for banded sparsity",
+      "Figure 4: Trefethen primes inverse approximation",
+      "Theorem 1.3: Expected error bound",
+      "Corollary 1.4: High probability error bound"
+    ],
+    "evidence": [
+      "E9"
+    ],
+    "inputs": [
+      "Matrix A accessed via matvec queries",
+      "Binary sparsity pattern S ∈ {0,1}^{n×d}",
+      "Number of queries m ≥ s+2"
+    ],
+    "outputs": "Matrix Ã with sparsity pattern S (Ã = S∘Ã) approximating A in Frobenius norm",
+    "parameters": [
+      "m: number of matvec queries, controls accuracy via s/(m-s-1) factor",
+      "s: maximum nonzeros per row of sparsity pattern S",
+      "ε: desired approximation accuracy parameter"
+    ],
+    "scientific_invariants": [
+      "E[Ã] = S∘A (unbiased estimator of sparse part)",
+      "Error bound: E[||S∘A - Ã||²_F] ≤ s/(m-s-1) · ||A - S∘A||²_F",
+      "Zero-error recovery when A = S∘A and m ≥ s"
+    ],
+    "scientific_purpose": "Approximate matrix A by a matrix with fixed sparsity pattern S using nonadaptive matvec queries, achieving (1+ε) Frobenius error relative to best fixed-sparsity approximation.",
+    "specificity_reason": "Algorithm 2.1 combines Gaussian sketching with per-row least squares recovery tailored to a specified sparsity pattern. This is not a standard off-the-shelf procedure; it requires understanding the interaction between the sparsity pattern, Gaussian random matrices, and least squares estimation."
+  },
+  "selected_core_algorithm": "Algorithm 2.1: Fixed-sparse-matrix approximation",
+  "uniqueness_reason": "Algorithm 2.1 is the only candidate that directly implements the paper's main scientific contribution of fixed-sparsity approximation from matvecs. The lower bound is theoretical, coloring methods are baselines, and Algorithm D.1 is a supporting variant."
+}

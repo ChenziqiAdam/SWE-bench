@@ -1,0 +1,16 @@
+[
+  {
+    "attempt": 1,
+    "message": "paper_id mismatch",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:22:18.570853+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 2,
+    "message": "$.evidence_catalog[8].excerpt does not match PDF page 4",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:23:06.096771+00:00",
+    "type": "ResponseValidationError"
+  }
+]

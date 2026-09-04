@@ -1,0 +1,170 @@
+{
+  "candidate_implementation": "curation_tools/energy_tsa_core_scientific.py",
+  "cases": [
+    {
+      "case_id": "case_01",
+      "gold_source": "official_pinned_adapter_two_clean_checkouts",
+      "input_sha256": "95da9c3d08aa882dc426979c814522c742bdb5a74d18cd7747f31e906105441b",
+      "output_sha256": "7fd6eefbb4acebc5b99109dc71d224b71ca48b3698acc0e90dfbf4c126c0c9ac",
+      "runtime_seconds": 62.20124604101875,
+      "split": "public"
+    },
+    {
+      "case_id": "case_02",
+      "gold_source": "official_pinned_adapter_two_clean_checkouts",
+      "input_sha256": "ba9783f691e5b903cf01f7639a0159cdc1e6aa0f01e037d7e8efa99c533e06a4",
+      "output_sha256": "80ab7f8c4365d108a381e56eb5e907089ff46e8ffe6eb2ddd2e4fa654617075b",
+      "runtime_seconds": 106.9096304999839,
+      "split": "public"
+    },
+    {
+      "case_id": "case_03",
+      "gold_source": "official_pinned_adapter_two_clean_checkouts",
+      "input_sha256": "1ceea7aa39af673a64c97caf507f0cac7e90acf2f3657192aa894356bfa50a41",
+      "output_sha256": "08d75b2ee6894e2740ac21d7ee1a6680d52b671459e59e4e05d6afc55fef7a73",
+      "runtime_seconds": 229.56187600002158,
+      "split": "public"
+    },
+    {
+      "case_id": "case_01",
+      "gold_source": "official_pinned_adapter_two_clean_checkouts",
+      "input_sha256": "a82ccf81ef8f462965b8a6a4276ad5838dfd45c35dc56f7672adea20679993b5",
+      "output_sha256": "9281b5c09dfa32f1516ea5c4855ff410f69f26a074bb0668c9e5604388928490",
+      "runtime_seconds": 20.206349583007977,
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_02",
+      "gold_source": "official_pinned_adapter_two_clean_checkouts",
+      "input_sha256": "25ac8761469cc063ed50a5809084b8a30860aa28fa829f1965331ee29fbb54ee",
+      "output_sha256": "50b333ad155fb535e4f39b635011e18752dcb12999a521fbc67546115b329002",
+      "runtime_seconds": 20.01518295799906,
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_03",
+      "gold_source": "official_pinned_adapter_two_clean_checkouts",
+      "input_sha256": "0da9ab7f516dfe433b2442d22fa769695efdc22c146b106a7d3694d368c2dc9d",
+      "output_sha256": "ae7ce7c9f5f7f397376b292160914345c634be44ba69e1e7be30e0f23649ed2b",
+      "runtime_seconds": 44.00615274999291,
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_04",
+      "gold_source": "official_pinned_adapter_two_clean_checkouts",
+      "input_sha256": "71c34955070c778e8482a7eb7b5666ea553c9138fa86360e093c72c640d54df0",
+      "output_sha256": "9cb30d8f7965150d7670f65f9181b3f39605c5f8aa31d7a6b44adbe4119aa44e",
+      "runtime_seconds": 111.10607941698981,
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_05",
+      "gold_source": "official_pinned_adapter_two_clean_checkouts",
+      "input_sha256": "7f6d19ce9e5ffb2ea3399d066a95e55a42eef2966b8f91c9a5deb7efca57fb85",
+      "output_sha256": "ed67af6ea52485e21ded85b96404e3ff2131241acdd722bdfe4cb694e46fff65",
+      "runtime_seconds": 69.28816629201174,
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_06",
+      "gold_source": "official_pinned_adapter_two_clean_checkouts",
+      "input_sha256": "ebb8859f36b1e39ded105656c4112e6075978e10c0e1ddbc76e69a286194deef",
+      "output_sha256": "5fbc08fd8a410bc7a4a9e4141cf37339986027109d97cbd59cdac5714a15ec3d",
+      "runtime_seconds": 11.294911458011484,
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_07",
+      "gold_source": "official_pinned_adapter_two_clean_checkouts",
+      "input_sha256": "cc35a6ddc3eb0e583684bc00c630abfdb095836457457c13e7cbe7451a4ab7be",
+      "output_sha256": "ff37ec0300716a708ab9e3663d10d3daf953a3742d84d8e5d6920fdd61362d3e",
+      "runtime_seconds": 46.190789540996775,
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_08",
+      "gold_source": "official_pinned_adapter_two_clean_checkouts",
+      "input_sha256": "d7f0b5d2652f90be67375748f7002aee9504fa0a921e9e6357b473cde213cbd4",
+      "output_sha256": "f20c136705c4dd97e6913d49e4f16da398562afb12cc22739b5b1c26c575327d",
+      "runtime_seconds": 32.69013395799266,
+      "split": "hidden"
+    }
+  ],
+  "commit": "c162068f61bafbe640bbd40ee4a47312498ed153",
+  "g5_audit": {
+    "evidence": "curation_reports/official_runs/0018_core/g5_shortcuts/report.json",
+    "hazards_covered": 8,
+    "maximum_shortcut_hidden_score": 0.875,
+    "status": "pass"
+  },
+  "g6_audit": {
+    "configured_model": "z-ai/glm-5.2:free",
+    "evidence": "core_algorithm_audits/0018_core_blind.json",
+    "evidence_sha256": "517e07c628645b6fdc23a9bf8624d7682713207777960f5d1db143ab7a05fe3a",
+    "fallback_model": "minimax/minimax-m3:free",
+    "independent_contexts": 3,
+    "pass_count": 2,
+    "status": "pass"
+  },
+  "g7_audit": {
+    "all_cases_executed_without_timeout": true,
+    "codex_exit_code": null,
+    "evidence": "curation_reports/0018_core_g7.json",
+    "evidence_sha256": "4128bebea2f42fe36b2f87f7ba28aaff4ff172f38f737b3fabf6d378c2204c69",
+    "model": "gpt-5.6-sol",
+    "public_hidden_score": [
+      0.0,
+      0.0
+    ],
+    "solution_sha256": "32d050a2805f5a3db2f630556bebcfe78e3f5ef34349ff3a2877c2bcf7b488ee",
+    "status": "fail"
+  },
+  "g8_audit": {
+    "curator_reference_evidence": "curation_reports/official_runs/0018_core/g8_curator_reference/report.json",
+    "curator_reference_public_hidden_score": [
+      1.0,
+      1.0
+    ],
+    "derived_atol": 0.0006967848662498,
+    "derived_rtol": 2.962871958782513e-07,
+    "evidence": "curation_reports/official_runs/0018_core/g8/report.json",
+    "official_clean_repeats_exact": true,
+    "official_independent_evidence": "curation_reports/official_runs/0018_core/g8_official_independent/report.json",
+    "status": "pass",
+    "y_max_abs_error": 0.00013935697324996,
+    "y_max_relative_error": 5.9257439175650265e-08,
+    "z_r_w_exact_all_cases": true
+  },
+  "implementation_sha256": {
+    "curator_reference_submission": "aa7a9273d786218e28e1e44f1dbc52c8b29e2602a6ec656c9bcf6859ddc61d65",
+    "independent_scipy": "855ce81d33312f519e880baf6ba990fce972d7398221371f0f0eb89225e05257",
+    "official_adapter": "7e67e3a0f084f90ebfab794d69e3fb6b42849bcafbf729165fb6b6904a38f27e",
+    "shared_numeric": "9bf6e2ad4955ec599d966d432e61a4483914daef5532e02fb89c3605cfa0ff35"
+  },
+  "known_failures": [
+    "G7_blind_implementation"
+  ],
+  "legacy_task_preserved": "scibench_replication_0018",
+  "lifecycle": "validated",
+  "promotion_blockers": [],
+  "readiness_scope": "active validated benchmark under an explicit G7 waiver",
+  "repository": "https://github.com/ahilbers/a_posteriori_tsa_storage",
+  "runtime_seconds": {
+    "hidden/case_01": 20.206349583007977,
+    "hidden/case_02": 20.01518295799906,
+    "hidden/case_03": 44.00615274999291,
+    "hidden/case_04": 111.10607941698981,
+    "hidden/case_05": 69.28816629201174,
+    "hidden/case_06": 11.294911458011484,
+    "hidden/case_07": 46.190789540996775,
+    "hidden/case_08": 32.69013395799266,
+    "public/case_01": 62.20124604101875,
+    "public/case_02": 106.9096304999839,
+    "public/case_03": 229.56187600002158
+  },
+  "schema_version": 4,
+  "task_id": "scibench_replication_0018_core",
+  "validation_waivers": [
+    "G7_blind_implementation"
+  ]
+}

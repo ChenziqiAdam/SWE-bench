@@ -1,0 +1,69 @@
+{
+  "G7": "PASS",
+  "cases": [
+    {
+      "case_id": "case_01",
+      "passed": true,
+      "split": "public"
+    },
+    {
+      "case_id": "case_02",
+      "passed": true,
+      "split": "public"
+    },
+    {
+      "case_id": "case_03",
+      "passed": true,
+      "split": "public"
+    },
+    {
+      "case_id": "case_01",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_02",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_03",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_04",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_05",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_06",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_07",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "case_id": "case_08",
+      "passed": true,
+      "split": "hidden"
+    }
+  ],
+  "isolation": {
+    "environment": "minimal; Python isolated mode",
+    "network": "denied by macOS sandbox",
+    "repository_reads": "denied",
+    "temporary_workspace_cleaned": true
+  },
+  "schema_version": 1,
+  "score": 1.0,
+  "task_id": "scibench_replication_0015_core"
+}

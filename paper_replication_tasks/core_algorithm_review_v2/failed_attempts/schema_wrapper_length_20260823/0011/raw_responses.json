@@ -1,0 +1,146 @@
+[
+  {
+    "attempt": 1,
+    "response_id": "gen-1787507114-t1a8374Bv3U59pJbAeUF",
+    "stage": "full-review",
+    "text": null,
+    "timestamp": "2026-08-23T17:48:48.549967+00:00",
+    "usage": {
+      "completion_tokens": 8000,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 23949,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 64,
+        "video_tokens": 0
+      },
+      "total_tokens": 31949
+    }
+  },
+  {
+    "attempt": 1,
+    "finish_reason": "length",
+    "message_fields": [
+      "content",
+      "reasoning",
+      "reasoning_details",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787507433-9hSGCfFhI9dzr8jPqDaN",
+    "stage": "full-review",
+    "text": null,
+    "timestamp": "2026-08-23T17:54:20.625547+00:00",
+    "usage": {
+      "completion_tokens": 8000,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 23949,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 23936,
+        "video_tokens": 0
+      },
+      "total_tokens": 31949
+    }
+  },
+  {
+    "attempt": 2,
+    "finish_reason": "length",
+    "message_fields": [
+      "content",
+      "reasoning",
+      "reasoning_details",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787507661-w05hQksDsSBfhrFqwlCA",
+    "stage": "full-review",
+    "text": null,
+    "timestamp": "2026-08-23T17:57:58.409029+00:00",
+    "usage": {
+      "completion_tokens": 8000,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 23949,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 23936,
+        "video_tokens": 0
+      },
+      "total_tokens": 31949
+    }
+  },
+  {
+    "attempt": 3,
+    "finish_reason": "length",
+    "message_fields": [
+      "content",
+      "reasoning",
+      "reasoning_details",
+      "refusal",
+      "role"
+    ],
+    "response_id": "gen-1787507880-aaX18qAG1wJjt7zygIBK",
+    "stage": "full-review",
+    "text": "```json\n{\n  \"output_object\": {\n    \"schema_version\": \"core-algorithm-review-v2\",\n    \"paper_id\": \"0011\",\n    \"research_goal\": {\n      \"summary\": \"Enable accurate estimation of self-diffusion coefficients D* from molecular dynamics simulations with high statistical efficiency and reliable uncertainty quantification, using data from a single simulation trajectory instead of many replicas.\",\n      \"evidence\": [\n        {\n          \"page\": 1,\n          \"section\": \"Abstract\",\n          \"excerpt\": \"We present a scheme for estimatingD ∗ from a single simulation trajectory with high statistical efficiency and accurately estimating the uncertainty in the predicted value.\"\n        },\n        {\n          \"page\": 2,\n          \"section\": \"I. INTRODUCTION (continued)\",\n          \"excerpt\": \"Here, we describe an approximate Bayesian regression method for estimatingD ∗ with near-maximal statistical efficiency while accurately estimating the corresponding statistical uncertainty using data from a single simula- tion.\"\n        }\n      ]\n    },\n    \"main_contributions\": [\n      {\n        \"id\": \"C1\",\n        \"summary\": \"An approximate Bayesian regression scheme that estimates D* from a single trajectory with near-maximal statistical efficiency by modelling the MSD population as multivariate normal with an analytically derived, data-parameterised covariance matrix.\",\n        \"evidence\": [\n          {\n            \"page\": 2,\n            \"section\": \"I. INTRODUCTION (continued)\",\n            \"excerpt\": \"We model the statistical population of simulation MSDs as a multivariate normal distribution, using an ana- lytical covariance matrix derived for an equivalent sys- tem of freely diffusing particles, with this covariance ma- trix parameterised from the observed simulation data.\"\n          },\n          {\n            \"page\": 7,\n            \"section\": \"VI. SUMMARY AND DISCUSSION\",\n            \"excerpt\": \"We have introduced and demonstrated an approxi- mate Bayesian regression method for estimating the self-diffusion coefficient,D ∗, from molecular dynamics sim- ulation data.\"\n          }\n        ]\n      },\n      {\n        \"id\": \"C2\",\n        \"summary\": \"Accurate estimation of the statistical uncertainty σ²[D̂*] from the same single-trajectory analysis, avoiding the systematic underestimation of textbook OLS/WLS formulae.\",\n        \"evidence\": [\n          {\n            \"page\": 7,\n            \"section\": \"VI. SUMMARY AND DISCUSSION\",\n            \"excerpt\": \"Our method also provides reasonable estimates of the statis- tical uncertainty in the estimated value bD∗, in con- trast to OLS and WLS which systematically significantly underestimate the uncertainty in regression coefficients\"\n          },\n          {\n            \"page\": 5,\n            \"section\": \"IV. VALIDATION\",\n            \"excerpt\": \"Notably, the precision of this esti- mate is significantly greater than obtained using OLS or WLS and their respective textbook statistical formulae.\"\n          }\n        ]\n      }\n    ],\n    \"contribution_graph\": [\n      {\n        \"from\": \"Research goal: efficient, uncertainty-aware D* estimation from single trajectories\",\n        \"to\": \"C1: approximate Bayesian regression scheme\",\n        \"relation\": \"addresses\",\n        \"evidence\": [\n          {\n            \"page\": 1,\n            \"section\": \"Abstract\",\n            \"excerpt\": \"We present a scheme for estimatingD ∗ from a single simulation trajectory with high statistical efficiency\"\n          }\n        ]\n      },\n      {\n        \"from\": \"Research goal: efficient, uncertainty-aware D* estimation from single trajectories\",\n        \"to\": \"C2: accurate σ²[D̂*] estimation\",\n        \"relation\": \"addresses\",\n        \"evidence\": [\n          {\n            \"page\": 1,\n            \"section\": \"Abstract\",\n            \"excerpt\": \"and also gives an accurate estimate of the uncertainty itself.\"\n          }\n        ]\n      },\n      {\n        \"from\": \"C1\",\n        \"to\": \"Core algorithm: approximate Bayesian regression pipeline (overlapping-window MSD, variance rescaling Eqn 7, model covariance Eqn 6, reconditioning, MVN likelihood Eqn 5, MCMC posterior sampling)\",\n        \"relation\": \"implemented_by\",\n        \"evidence\": [\n          {\n            \"page\": 8,\n            \"section\": \"VII. METHODS A. Numerical implementation in KINISI\",\n            \"excerpt\": \"The parametrisation of the covariance matrix from the variancesσ 2[xi] and the number of independent observa- tionsN ′ i is defined by Eqn. 6.\"\n          }\n        ]\n      },\n      {\n        \"from\": \"C2\",\n        \"to\": \"Core algorithm: approximate Bayesian regression pipeline\",\n        \"relation\": \"implemented_by\",\n        \"evidence\": [\n          {\n            \"page\": 7,\n            \"section\": \"VI. SUMMARY AND DISCUSSION\",\n            \"excerpt\": \"This approach yields a marginal posterior distribution,p(D ∗|x), that gives a statistically efficient point estimate forD ∗ and allows the associated statistical uncertainty,σ 2[ bD∗], to be quantified.\"\n          }\n        ]\n      },\n      {\n        \"from\": \"Core algorithm: approximate Bayesian regression pipeline\",\n        \"to\": \"Fig. 4 random-walk validation and Fig. 5 LLZO application\",\n        \"relation\": \"produces\",\n        \"evidence\": [\n          {\n            \"page\": 4,\n            \"section\": \"IV. VALIDATION\",\n            \"excerpt\": \"To demonstrate the complete approximate Bayesian regression scheme we present two example use-cases.\"\n          }\n        ]\n      },\n      {\n        \"from\": \"OLS, WLS, GLS estimators\",\n        \"to\": \"Fig. 1 and Fig. 6 comparisons\",\n        \"relation\": \"baseline_comparison\",\n        \"evidence\": [\n          {\n            \"page\": 7,\n            \"section\": \"V. σ 2[ bD∗]SCALING AND COMP ARISON TO OLS, WLS, AND GLS\",\n            \"excerpt\": \"We compare four methods for estimatingD ∗ from the ob- served MSD data: OLS, WLS, the approximate Bayesian regression method described here, and GLS.\"\n          }\n        ]\n      },\n      {\n        \"from\": \"Flyvbjerg–Peterson block renormalisation\",\n        \"to\": \"Figs. S-3/S-4 SI comparison\",\n        \"relation\": \"alternative_baseline\",\n        \"evidence\": [\n          {\n            \"page\": 14,\n            \"section\": \"S-II: Estimatingσ 2[xi]: variance rescaling versus block renormalisation\",\n            \"excerpt\": \"A popu- lar form of block averaging is the block renormalisation method of Flyvbjerg and Peterson [52].\"\n          }\n        ]\n      }\n    ],\n    \"candidate_algorithms\": [\n      {\n        \"name\": \"approximate Bayesian regression scheme for D* (single-trajectory pipeline: overlapping-window MSD, variance rescaling Eqn 7, analytical model covariance Eqn 6, minimum-eigenvalue reconditioning, MVN likelihood Eqn 5, MAP initialisation from OLS, MCMC posterior sampling with improper prior D* ≥ 0)\",\n        \"role\": \"core\",\n        \"description\": \"The complete integrated estimation procedure implemented in kinisi: compute observed MSDs with overlapping sliding windows, estimate MSD variances by rescaling with the number of independent sub-trajectories, build and recondition the analytical covariance matrix Σ′, evaluate the multivariate normal likelihood for a linear model m = 6D*t + c, sample the posterior via ensemble MCMC, and report the mean and variance of the marginal posterior p(D*|x) as D̂* and σ̂²[D̂*].\",\n        \"evidence\": [\n          {\n            \"page\": 3,\n            \"section\": \"III. APPROXIMA TING Σ FROM SIMULA TION DA T A\",\n            \"excerpt\": \"We model the covariance matrix for the observed MSD from a given simulation using the covariance matrix for the MSD of an equivalent system of freely diffusing par- ticles,Σ ′.\"\n          },\n          {\n            \"page\": 4,\n            \"section\": \"III. APPROXIMA TING Σ FROM SIMULA TION DA T A\",\n            \"excerpt\": \"bσ2[xi] = 1 N ′ i σ2[∆r2 i ].(7)\"\n          },\n          {\n            \"page\": 8,\n            \"section\": \"VII. METHODS A. Numerical implementation in KINISI\",\n            \"excerpt\": \"To sample the joint posterior probability distribution of the linear model,kinisi uses theemcee package [40]\"\n          }\n        ],\n        \"deletion_test\": {\n          \"outcome\": \"FAILS_WITHOUT_ALGORITHM\",\n          \"reason\": \"Removing this scheme eliminates the paper's stated contribution: there would be no statistically efficient single-trajectory estimator of D* and no accurate uncertainty estimate; Figs. 4, 5, and 6 (all main results) could not be produced.\",\n          \"evidence\": [\n            {\n              \"page\": 7,\n              \"section\": \"VI. SUMMARY AND DISCUSSION\",\n              \"excerpt\": \"The approximate Bayesian regression scheme therefore provides more accurate single-point estimates of the self-diffusion coefficient than the commonly used OLS or WLS methods\"\n            }\n          ]\n        }\n      },\n      {\n        \"name\": \"ordinary least squares (OLS) regression\",\n        \"role\": \"baseline\",\n        \"description\": \"Textbook linear fit to MSD data; shown to be statistically inefficient with underestimated uncertainties; also used only as the initial guess inside the core pipeline.\",\n        \"evidence\": [\n          {\n            \"page\": 2,\n",
+    "timestamp": "2026-08-23T18:01:01.259587+00:00",
+    "usage": {
+      "completion_tokens": 8000,
+      "completion_tokens_details": {
+        "audio_tokens": 0,
+        "image_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "cost_details": {
+        "upstream_inference_completions_cost": 0,
+        "upstream_inference_cost": 0,
+        "upstream_inference_prompt_cost": 0
+      },
+      "is_byok": false,
+      "prompt_tokens": 23949,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": 0,
+        "cached_tokens": 64,
+        "video_tokens": 0
+      },
+      "total_tokens": 31949
+    }
+  }
+]

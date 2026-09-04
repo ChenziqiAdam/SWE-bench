@@ -1,0 +1,157 @@
+{
+  "G8": "PASS",
+  "commit": "9760b18408f17d226124a93755294a95f15230f8",
+  "fidelity_mapping": {
+    "REIM.m:G update": "adapter indexed interpolation matrix",
+    "REIM.m:L loop and max": "adapter residual_norms loop and np.argmax",
+    "REIM.m:gm/gset": "adapter gset/dictionary",
+    "REIM.m:rm and max": "adapter residual and np.argmax",
+    "online interpolation": "solve G C at all target columns and evaluate selected query columns"
+  },
+  "official_output_bundle_sha256": "a63be6d34deee4f09f6c84c93119ba4b146721072b8cd868c5ff98e5a82d3d7b",
+  "provenance": {
+    "blind_submission_sha256": "aa1da19a55ca826fed4519288ee33720430f2303e657b4fe386c16272250b4dd",
+    "curator_reference_sha256": "f3acf6344c3bd040eaa1cee92de41b403d75b74c12898d3f0223d5fc3f41b6ff",
+    "independent_implementation_sha256": "a973f1226ffb9e2e8b9191f97bacb4ab25f4704477a95e34884987ed3f9f729c",
+    "input_injection_patch_sha256": "0c0181b469bee90f0575be889e620678163d4ab0111f023305861fee7aa40c52",
+    "official_adapter_sha256": "dde153335c23872fd5a9d794e536637beca20dab9f90cce7a92e9d55bf2f390c"
+  },
+  "runs": [
+    {
+      "canonical_output_sha256": "b9a4b41d45b5b458e713d98b97a172bf1b6ddb0350a962177713ac32b7d93248",
+      "case_id": "case_01",
+      "run": 1,
+      "split": "public"
+    },
+    {
+      "canonical_output_sha256": "19026eada8e8489873eeb2f5eaf16693e0bc2db3e69f6a027976492c8a5ca0b7",
+      "case_id": "case_02",
+      "run": 1,
+      "split": "public"
+    },
+    {
+      "canonical_output_sha256": "7eb740f7f15a7f9e82b237c03502bfe2881eeb1baa4971bb052479b2c6a05ef3",
+      "case_id": "case_03",
+      "run": 1,
+      "split": "public"
+    },
+    {
+      "canonical_output_sha256": "cc3021e434e716d381b0df44e610ac008f41821be6126f20ef87cbe023a822bd",
+      "case_id": "case_01",
+      "run": 1,
+      "split": "hidden"
+    },
+    {
+      "canonical_output_sha256": "f85f59d5428e2aea2e27cc7d3f27077cd0733ca806ac5040803524270e2b090b",
+      "case_id": "case_02",
+      "run": 1,
+      "split": "hidden"
+    },
+    {
+      "canonical_output_sha256": "a475c190e781c64a8b48e9f0694c03c8478a9f3a242dbcec48e6b134afd97a92",
+      "case_id": "case_03",
+      "run": 1,
+      "split": "hidden"
+    },
+    {
+      "canonical_output_sha256": "4fe08640a9787cf09507aef510a144275c947c436d413626604ed3403dd04fe5",
+      "case_id": "case_04",
+      "run": 1,
+      "split": "hidden"
+    },
+    {
+      "canonical_output_sha256": "1b94428ccd9254d4148b8931f2eddc799ddbad751c0e8cf0c82ae6cb5e20e4fb",
+      "case_id": "case_05",
+      "run": 1,
+      "split": "hidden"
+    },
+    {
+      "canonical_output_sha256": "f6804fd8156d8708c411f9f1affd88b19e5d4bd852cce55c35ba4540867ee1de",
+      "case_id": "case_06",
+      "run": 1,
+      "split": "hidden"
+    },
+    {
+      "canonical_output_sha256": "36a75cb96699a1af696734529055536b664534243c96844eef92baf2bb27e321",
+      "case_id": "case_07",
+      "run": 1,
+      "split": "hidden"
+    },
+    {
+      "canonical_output_sha256": "d1dc8f7bb3b202220b959e6811076e59ddb01800681df3b96a9e6d8409521823",
+      "case_id": "case_08",
+      "run": 1,
+      "split": "hidden"
+    },
+    {
+      "canonical_output_sha256": "b9a4b41d45b5b458e713d98b97a172bf1b6ddb0350a962177713ac32b7d93248",
+      "case_id": "case_01",
+      "run": 2,
+      "split": "public"
+    },
+    {
+      "canonical_output_sha256": "19026eada8e8489873eeb2f5eaf16693e0bc2db3e69f6a027976492c8a5ca0b7",
+      "case_id": "case_02",
+      "run": 2,
+      "split": "public"
+    },
+    {
+      "canonical_output_sha256": "7eb740f7f15a7f9e82b237c03502bfe2881eeb1baa4971bb052479b2c6a05ef3",
+      "case_id": "case_03",
+      "run": 2,
+      "split": "public"
+    },
+    {
+      "canonical_output_sha256": "cc3021e434e716d381b0df44e610ac008f41821be6126f20ef87cbe023a822bd",
+      "case_id": "case_01",
+      "run": 2,
+      "split": "hidden"
+    },
+    {
+      "canonical_output_sha256": "f85f59d5428e2aea2e27cc7d3f27077cd0733ca806ac5040803524270e2b090b",
+      "case_id": "case_02",
+      "run": 2,
+      "split": "hidden"
+    },
+    {
+      "canonical_output_sha256": "a475c190e781c64a8b48e9f0694c03c8478a9f3a242dbcec48e6b134afd97a92",
+      "case_id": "case_03",
+      "run": 2,
+      "split": "hidden"
+    },
+    {
+      "canonical_output_sha256": "4fe08640a9787cf09507aef510a144275c947c436d413626604ed3403dd04fe5",
+      "case_id": "case_04",
+      "run": 2,
+      "split": "hidden"
+    },
+    {
+      "canonical_output_sha256": "1b94428ccd9254d4148b8931f2eddc799ddbad751c0e8cf0c82ae6cb5e20e4fb",
+      "case_id": "case_05",
+      "run": 2,
+      "split": "hidden"
+    },
+    {
+      "canonical_output_sha256": "f6804fd8156d8708c411f9f1affd88b19e5d4bd852cce55c35ba4540867ee1de",
+      "case_id": "case_06",
+      "run": 2,
+      "split": "hidden"
+    },
+    {
+      "canonical_output_sha256": "36a75cb96699a1af696734529055536b664534243c96844eef92baf2bb27e321",
+      "case_id": "case_07",
+      "run": 2,
+      "split": "hidden"
+    },
+    {
+      "canonical_output_sha256": "d1dc8f7bb3b202220b959e6811076e59ddb01800681df3b96a9e6d8409521823",
+      "case_id": "case_08",
+      "run": 2,
+      "split": "hidden"
+    }
+  ],
+  "schema_version": 1,
+  "source_sha256": "f27dea36e57994569963d35e50b3cdc6fff4fdd872ee68018949cbd0ef97e033",
+  "task_id": "scibench_replication_0021_core",
+  "two_clean_checkouts_match": true
+}

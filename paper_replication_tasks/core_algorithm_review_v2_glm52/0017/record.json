@@ -1,0 +1,344 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E1"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "Paper's main contribution is applying BFCA to cycling; without it no accessibility measurement or equity analysis is possible"
+      },
+      "description": "Normalized impedance weight FCA method balancing population and service allocation to avoid inflation/deflation",
+      "evidence": [
+        "E2"
+      ],
+      "name": "BFCA (Balanced Floating Catchment Area)",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E5"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Standard spatial interpolation technique; paper could use other disaggregation methods"
+      },
+      "description": "Smooths population from dissemination areas to 50x50m cells preserving total volume (Tobler 1979)",
+      "evidence": [
+        "E5"
+      ],
+      "name": "Pycnophylactic Interpolation",
+      "role": "preprocessing"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E6"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Used only as baseline for comparison; paper's contribution is BFCA not 2SFCA"
+      },
+      "description": "Conventional FCA method used for comparison to show inflation/deflation problems",
+      "evidence": [
+        "E7"
+      ],
+      "name": "2SFCA (Two-Step Floating Catchment Area)",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E8"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Standard routing procedure using existing R package; not a novel contribution"
+      },
+      "description": "Network routing from population cell centroids to docking stations using OpenStreetMap data",
+      "evidence": [
+        "E8"
+      ],
+      "name": "Travel Time Matrix via r5r",
+      "role": "preprocessing"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E9"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "Post-processing analysis enabled by BFCA's preservation property; not itself an algorithm"
+      },
+      "description": "Reaggregating accessibility scores by income quintiles to assess equity",
+      "evidence": [
+        "E9"
+      ],
+      "name": "Income-based Reaggregation",
+      "role": "evaluation"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E1"
+      ],
+      "from": "Research Goal",
+      "relation": "directly addressed by",
+      "to": "C1"
+    },
+    {
+      "evidence": [
+        "E2"
+      ],
+      "from": "C1",
+      "relation": "implemented by",
+      "to": "BFCA Algorithm"
+    },
+    {
+      "evidence": [
+        "E5"
+      ],
+      "from": "C2",
+      "relation": "preprocessing for",
+      "to": "Pycnophylactic Interpolation"
+    },
+    {
+      "evidence": [
+        "E6"
+      ],
+      "from": "C3",
+      "relation": "baseline for comparison",
+      "to": "2SFCA Comparison"
+    },
+    {
+      "evidence": [
+        "E9"
+      ],
+      "from": "C4",
+      "relation": "depends on re-aggregation property of",
+      "to": "BFCA Algorithm"
+    },
+    {
+      "evidence": [
+        "E4"
+      ],
+      "from": "BFCA Algorithm",
+      "relation": "produces",
+      "to": "Sensitivity Analysis Results"
+    },
+    {
+      "evidence": [
+        "E9"
+      ],
+      "from": "BFCA Algorithm",
+      "relation": "enables",
+      "to": "Income Equity Analysis"
+    }
+  ],
+  "decision": "ACCEPT_FOR_DESIGN",
+  "evidence_catalog": [
+    {
+      "excerpt": "This paper examines accessibility to Hamilton Bike Share using a balanced floating catchment area (BFCA) approach.",
+      "id": "E1",
+      "page": 2,
+      "section": "1. Introduction"
+    },
+    {
+      "excerpt": "The BFCA method was developed to address issues with demand and supply inflation that result from the overlapping catchment areas",
+      "id": "E2",
+      "page": 12,
+      "section": "4.1. Balanced Floating Catchment Area"
+    },
+    {
+      "excerpt": "The balanced approach of Páez et al. (2019) replaces the spatial weights with normalized versions as follows.",
+      "id": "E3",
+      "page": 13,
+      "section": "4.1. Balanced Floating Catchment Area"
+    },
+    {
+      "excerpt": "By allocating the population and level of service proportionally, this method preserves the values of the population and level of service",
+      "id": "E4",
+      "page": 13,
+      "section": "4.1. Balanced Floating Catchment Area"
+    },
+    {
+      "excerpt": "To obtain population at sub-census geography levels, we used pycnophylactic interpolation",
+      "id": "E5",
+      "page": 14,
+      "section": "4.2. Pycnophylactic Interpolation"
+    },
+    {
+      "excerpt": "To highlight the benefit of using the BFCA approach, we conducted a comparative analysis with the 2SFCA method.",
+      "id": "E6",
+      "page": 20,
+      "section": "5.2. Comparative Analysis"
+    },
+    {
+      "excerpt": "We also conduct a comparative analysis to the conventional two-step floating catchment area (2SFCA) approach",
+      "id": "E7",
+      "page": 2,
+      "section": "1. Introduction"
+    },
+    {
+      "excerpt": "Routing and travel time calculations were completed using theR package r5r, used for rapid realistic routing operations",
+      "id": "E8",
+      "page": 15,
+      "section": "4.3. Travel Time Matrix"
+    },
+    {
+      "excerpt": "A unique property of the BFCA method, which does not hold for the 2SFCA approach because of the inflation/deflation issues",
+      "id": "E9",
+      "page": 21,
+      "section": "5.3. Accessibility by Median Total Household Income"
+    },
+    {
+      "excerpt": "The first step in the FCA method is to allocate the population to be serviced by each docking station",
+      "id": "E10",
+      "page": 12,
+      "section": "4.1. Balanced Floating Catchment Area"
+    }
+  ],
+  "evidence_gaps": [
+    "Exact implementation details of weight normalization for binary threshold function not fully specified beyond equations"
+  ],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E1"
+      ],
+      "reason": "BFCA directly carries the paper's main scientific contribution of measuring bike share accessibility without inflation",
+      "status": "PASS"
+    },
+    "G2": {
+      "evidence": [
+        "E2"
+      ],
+      "reason": "Only BFCA qualifies as core; pycnophylactic interpolation is preprocessing, 2SFCA is baseline, r5r routing is standard",
+      "status": "PASS"
+    },
+    "G3": {
+      "evidence": [
+        "E3"
+      ],
+      "reason": "BFCA requires paper-specific scientific reasoning about normalized weight balancing to avoid demand/supply inflation",
+      "status": "PASS"
+    },
+    "G4": {
+      "evidence": [
+        "E10"
+      ],
+      "reason": "Clear input-output contract: population cells, stations, travel times, threshold -> accessibility scores per cell",
+      "status": "PASS"
+    },
+    "G5": {
+      "evidence": [
+        "E4"
+      ],
+      "reason": "Can generalize to different walking thresholds, station configurations, and cities with different inputs",
+      "status": "PASS"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E1"
+      ],
+      "id": "C1",
+      "summary": "Apply BFCA method to cycling literature for measuring accessibility to bike share stations"
+    },
+    {
+      "evidence": [
+        "E5"
+      ],
+      "id": "C2",
+      "summary": "Use pycnophylactic interpolation for disaggregated population to better reflect walking scale"
+    },
+    {
+      "evidence": [
+        "E6"
+      ],
+      "id": "C3",
+      "summary": "Compare BFCA with conventional 2SFCA to demonstrate inflation/deflation issues"
+    },
+    {
+      "evidence": [
+        "E9"
+      ],
+      "id": "C4",
+      "summary": "Assess equity by reaggregating accessibility by income groups across walking thresholds"
+    }
+  ],
+  "paper_id": "0017",
+  "research_goal": {
+    "evidence": [
+      "E1"
+    ],
+    "summary": "Examine equity in accessibility to Hamilton Bike Share using BFCA approach with disaggregated population data."
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": {
+    "algorithm": "BFCA (Balanced Floating Catchment Area)",
+    "assumptions": [
+      "Spatial weights based on travel time thresholds",
+      "Population and service proportionally allocated",
+      "Catchment areas defined by walking time threshold"
+    ],
+    "core_operations": [
+      "Step 1: Allocate population to stations using normalized weights w^i_ij",
+      "Step 2: Compute level of service L_j = S_j / sum(P_i * w^i_ij)",
+      "Step 3: Compute accessibility A_i = sum(S_j * w^j_ij) / sum(P_i * w^i_ij)",
+      "Normalization ensures sum of w^i_ij over j equals 1 and sum of w^j_ij over i equals 1"
+    ],
+    "dependent_contributions": [
+      "C1: BFCA application to cycling",
+      "C3: Comparison with 2SFCA",
+      "C4: Income-based equity analysis"
+    ],
+    "dependent_experiments_results": [
+      "Accessibility maps at 3/5/10/15 minute thresholds",
+      "Inflation/deflation comparison figures",
+      "Income quintile accessibility table"
+    ],
+    "evidence": [
+      "E3"
+    ],
+    "inputs": [
+      "Population at disaggregated cells",
+      "Station locations and capacities (bicycle racks)",
+      "Travel time matrix between population cells and stations",
+      "Walking time threshold parameter"
+    ],
+    "outputs": [
+      "Accessibility score per population cell",
+      "Level of service per station",
+      "Re-aggregatable accessibility preserving total population and service"
+    ],
+    "parameters": [
+      "Walking time threshold (gamma)",
+      "Distance decay function (binary in this paper)",
+      "Population cell size (50x50m)"
+    ],
+    "scientific_invariants": [
+      "Total accessibility equals total level of service: sum(A_i) = sum(L_j)",
+      "Population and service volumes preserved at any aggregation level"
+    ],
+    "scientific_purpose": "Measure accessibility to bike share stations while balancing demand and supply to avoid inflation/deflation from overlapping catchments",
+    "specificity_reason": "BFCA uses normalized impedance weights to balance supply and demand allocation, a non-standard scientific procedure specific to this paper's methodology"
+  },
+  "selected_core_algorithm": "BFCA (Balanced Floating Catchment Area)",
+  "uniqueness_reason": "Only BFCA satisfies all core requirements: it is the novel method, directly carries main contribution, and all other candidates are preprocessing, baseline, or evaluation."
+}

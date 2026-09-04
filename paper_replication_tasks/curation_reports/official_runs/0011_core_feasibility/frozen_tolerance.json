@@ -1,0 +1,25 @@
+{
+  "absolute_scale_floors": [
+    1e-08,
+    1e-12,
+    1e-08,
+    1e-08,
+    1e-08
+  ],
+  "field_order": [
+    "mean",
+    "variance",
+    "q2.5",
+    "q50",
+    "q97.5"
+  ],
+  "frozen_from": "five official seeds on three provisional public cases before hidden construction",
+  "relative_bounds": [
+    0.12379526307401312,
+    0.28103545682349085,
+    0.18214551404165366,
+    0.11266699782916283,
+    0.1745859459569251
+  ],
+  "rule": "max(mean absolute relative error + 4 sample SD, 1.10 * observed maximum)"
+}

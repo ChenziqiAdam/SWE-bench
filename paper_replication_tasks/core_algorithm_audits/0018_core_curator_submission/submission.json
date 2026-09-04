@@ -1,0 +1,8 @@
+{
+  "entrypoint": [
+    "python",
+    "solution.py"
+  ],
+  "schema_version": 4,
+  "task_id": "scibench_replication_0018_core"
+}

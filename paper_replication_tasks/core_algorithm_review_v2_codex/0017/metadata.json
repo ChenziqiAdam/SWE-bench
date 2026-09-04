@@ -1,0 +1,16 @@
+{
+  "call_count": 0,
+  "call_mode": "local_manual_review",
+  "character_count": 70119,
+  "model": "codex-local-review",
+  "nonempty_page_ratio": 1.0,
+  "page_count": 45,
+  "paper_id": "0017",
+  "redaction_markers": [],
+  "reviewed_at": "2026-08-24T17:11:35.808938+00:00",
+  "rubric_sha256": "80416258156139723a755924885396f7a54ce77809154816bace9db96702cfca",
+  "schema_version": "core-algorithm-review-v2",
+  "source_path": "/Users/adamchen/Desktop/VSCode/SWE-bench/paper_replication_tasks/scibench_replication_0017/public/paper.pdf",
+  "source_sha256": "997614b78010b3fbe8cd7858a1f1821c3dc40d34f0fcbd60490451088908e5de",
+  "token_usage": []
+}

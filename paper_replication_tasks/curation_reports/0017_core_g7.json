@@ -1,0 +1,92 @@
+{
+  "G7": "PASS",
+  "cases": [
+    {
+      "case_id": "case_01",
+      "exit_code": 0,
+      "split": "public",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_02",
+      "exit_code": 0,
+      "split": "public",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_03",
+      "exit_code": 0,
+      "split": "public",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_01",
+      "exit_code": 0,
+      "split": "hidden",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_02",
+      "exit_code": 0,
+      "split": "hidden",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_03",
+      "exit_code": 0,
+      "split": "hidden",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_04",
+      "exit_code": 0,
+      "split": "hidden",
+      "timed_out": false
+    },
+    {
+      "case_id": "case_05",
+      "exit_code": 0,
+      "split": "hidden",
+      "timed_out": false
+    }
+  ],
+  "codex_version": "codex-cli 0.149.1",
+  "environment": {
+    "platform": "macOS-26.4.1-arm64-arm-64bit",
+    "python": "3.12.7"
+  },
+  "failed_preflight_attempts": [
+    "chat-completions attempt 1: evaluator manifest absent after generation",
+    "chat-completions attempt 2: staged provenance remained candidate_revise",
+    "chat-completions attempt 3: 30 read-tool-call limit",
+    "chat-completions attempt 4: 100 read-tool-call limit"
+  ],
+  "full_success": true,
+  "generated_at": "2026-08-25T22:38:06.813445+00:00",
+  "hidden_score": 1.0,
+  "isolation": {
+    "agent_workspace": "temporary copy of final public bundle",
+    "codex_session": "ephemeral; user config and project rules ignored",
+    "hidden_and_curator_data": "copied only after agent process exited",
+    "repository_reads": "denied by macOS sandbox-exec",
+    "temporary_workspace_cleaned": true
+  },
+  "model": "gpt-5.6-sol",
+  "model_final_answer": "Implemented the general BFCA method in [solution.py](/tmp/scibench_0017_core_codex_g7_5kx4fiv1/workspace/solution.py).\n\nAll three public cases pass complete JSON comparison, including exact key order, identifiers, array ordering, and lengths. Maximum numeric difference was `5.77e-15`. Additional 3/5/10/15-minute conservation checks also pass for both hub filters. Only `solution.py` was added.",
+  "prompt": "Act as the blind implementation agent for this scientific benchmark. You may use only this directory, which contains the final public bundle; no repository, curator code, hidden cases, or network research is permitted. Infer the required method from public/paper.pdf and the public numeric I/O. Implement the general solution in solution.py only. The generic evaluator runs `python solution.py --input INPUT_JSON --output OUTPUT_DIRECTORY`; write OUTPUT_DIRECTORY/output.json. The output JSON must reproduce every key, identifier array, numeric array, ordering, and length visible in the public outputs; test the complete JSON with the benchmark comparator, not a single selected field. At evaluation time the public data directory is copied per case and exposed via SCIBENCH_PUBLIC_DATA_DIR. Standard Python, NumPy, pandas, and SciPy are available. You may inspect and test against public cases. Do not hard-code public outputs. Finish only after solution.py passes all public cases.",
+  "prompt_sha256": "2b72b55f843dccb3f541a266cd7e6c360f1583d762d302be65fde244740f0045",
+  "public_bundle_sha256": "57a25c5f7d0ad6d21d920d759f1e2a12fa7037beb679debfeee19714332ccdc3",
+  "public_score": 1.0,
+  "runner_sha256": "148380e5f48218cd603b9b506183c46e4fb6cabb937b462bf9a1cbba6486cf95",
+  "schema_version": 1,
+  "score": 1.0,
+  "solution_sha256": "9a4cb64d5247207b4941561bc269d4e829cb864d9d71555b2032b20cd6884f07",
+  "task_id": "scibench_replication_0017_core",
+  "usage": {
+    "cache_write_input_tokens": 0,
+    "cached_input_tokens": 677120,
+    "input_tokens": 771982,
+    "output_tokens": 8402,
+    "reasoning_output_tokens": 2729
+  }
+}

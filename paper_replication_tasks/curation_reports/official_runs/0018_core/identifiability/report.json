@@ -1,0 +1,56 @@
+{
+  "G4": "FAIL",
+  "alternative_parameter": 150.05,
+  "alternative_relative_perturbation": 0.0003333333333334091,
+  "conclusion": "The public bundle is not executable-closure complete: two parameterizations allowed by the paper are indistinguishable on all public cases but diverge on hidden case_02.",
+  "hashes": {
+    "paper": "f7de9fe507fe2bb0bff801bbc9975deb13c0a4b0853fd588935bd04f3af39dfa",
+    "recorder": "aa496a81b2f1201c2e58a56d7546460f6655add1e06e72cb82e5679cf1769489",
+    "scientific_implementation": "855ce81d33312f519e880baf6ba990fce972d7398221371f0f0eb89225e05257"
+  },
+  "hidden_divergent": true,
+  "hidden_result": {
+    "case": "hidden/cases/case_02",
+    "r_exact": true,
+    "w_exact": true,
+    "y_max_abs_error": 7.321101016992543,
+    "y_pass": false,
+    "z_exact": true
+  },
+  "official_parameter": 150.15,
+  "paper_evidence": "Appendix B, Table B.4 prints the Region 1-5 transmission cost as 150,000 and states only that regional costs are perturbed slightly (<0.1%); it does not specify the perturbation.",
+  "parameter": "CAP_COST[13], Region 1-5 transmission annual install cost (thousand GBP/MWyr)",
+  "public_equivalent": true,
+  "public_results": [
+    {
+      "case": "public/cases/case_01",
+      "r_exact": true,
+      "w_exact": true,
+      "y_max_abs_error": 2.0440305888769217e-05,
+      "y_pass": true,
+      "z_exact": true
+    },
+    {
+      "case": "public/cases/case_02",
+      "r_exact": true,
+      "w_exact": true,
+      "y_max_abs_error": 0.00013935697825218085,
+      "y_pass": true,
+      "z_exact": true
+    },
+    {
+      "case": "public/cases/case_03",
+      "r_exact": true,
+      "w_exact": true,
+      "y_max_abs_error": 2.5446476001889096e-06,
+      "y_pass": true,
+      "z_exact": true
+    }
+  ],
+  "schema_version": 1,
+  "task_id": "scibench_replication_0018_core",
+  "tolerances": {
+    "atol": 0.014901655163157557,
+    "rtol": 6.378690005441726e-06
+  }
+}

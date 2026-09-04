@@ -1,0 +1,183 @@
+{
+  "complete_count": 9,
+  "failed_count": 0,
+  "generated_at": "2026-08-25T06:43:11.278965+00:00",
+  "model": "z-ai/glm-5.2:free",
+  "papers": [
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [
+        "Exact MCMC sampling parameters may need verification from kinisi source code",
+        "SI derivation details for covariance matrix (Eqn 6) span multiple pages but core formula is clear"
+      ],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0011",
+      "selected_core_algorithm": "Approximate Bayesian regression for D* estimation",
+      "status": "COMPLETE"
+    },
+    {
+      "decision": "REJECT_PAPER",
+      "evidence_gaps": [
+        "No executable algorithm identified as the core contribution; paper is a theoretical analysis paper with numerical verification."
+      ],
+      "gates": {
+        "G1": "REJECT",
+        "G2": "REJECT",
+        "G3": "REJECT",
+        "G4": "REJECT",
+        "G5": "REJECT",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0014",
+      "selected_core_algorithm": null,
+      "status": "RESUMED"
+    },
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [
+        "No gaps identified; Algorithm 2.1 is clearly specified with inputs, outputs, and mathematical guarantees in the paper."
+      ],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0015",
+      "selected_core_algorithm": "Algorithm 2.1: Fixed-sparse-matrix approximation",
+      "status": "COMPLETE"
+    },
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [
+        "Exact implementation details of weight normalization for binary threshold function not fully specified beyond equations"
+      ],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0017",
+      "selected_core_algorithm": "BFCA (Balanced Floating Catchment Area)",
+      "status": "COMPLETE"
+    },
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [
+        "Blind identification test not yet performed",
+        "Dependency closure and oracle validity not yet assessed"
+      ],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0018",
+      "selected_core_algorithm": "Storage importance subsampling framework",
+      "status": "COMPLETE"
+    },
+    {
+      "decision": "REJECT_PAPER",
+      "evidence_gaps": [
+        "No executable algorithm with clear I/O contract exists; the paper is a theoretical mathematics paper proving inequalities and curvature bounds.",
+        "The numerical experiments in Section 4 are illustrative evaluations, not core algorithms."
+      ],
+      "gates": {
+        "G1": "REJECT",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "REJECT",
+        "G5": "REJECT",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0019",
+      "selected_core_algorithm": "Matrix trace inequality optimization",
+      "status": "RESUMED"
+    },
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [
+        "Exact ML estimation procedure details (log-likelihood, optimization) are referenced to López et al. (2014) and the spsur R package rather than fully specified in the paper"
+      ],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0020",
+      "selected_core_algorithm": "SUR-SLM estimation via maximum likelihood",
+      "status": "COMPLETE"
+    },
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [
+        "No explicit pseudocode for the application solvers beyond the core rEIM; implementation details for D(B) and Sigma sampling are in the referenced repository"
+      ],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0021",
+      "selected_core_algorithm": "rEIM (Algorithm 2.1)",
+      "status": "RESUMED"
+    },
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [
+        "No explicit pseudocode for OMP, SP, and Greedy variants in the paper; references to external sources are given instead."
+      ],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0022",
+      "selected_core_algorithm": "Sketch-and-select Arnoldi process",
+      "status": "COMPLETE"
+    }
+  ],
+  "schema_version": "core-algorithm-review-v2"
+}

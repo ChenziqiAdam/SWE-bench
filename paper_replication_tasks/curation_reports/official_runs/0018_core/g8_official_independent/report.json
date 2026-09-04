@@ -1,0 +1,110 @@
+{
+  "derived_atol": 0.0006967848662498,
+  "derived_rtol": 2.962871958782513e-07,
+  "implementation_sha256": {
+    "independent_scipy": "855ce81d33312f519e880baf6ba990fce972d7398221371f0f0eb89225e05257",
+    "official_adapter": "7e67e3a0f084f90ebfab794d69e3fb6b42849bcafbf729165fb6b6904a38f27e",
+    "shared_numeric": "9bf6e2ad4955ec599d966d432e61a4483914daef5532e02fb89c3605cfa0ff35"
+  },
+  "max_abs_error": 0.00013935697324996,
+  "max_relative_error": 5.9257439175650265e-08,
+  "official_clean_repeats_exact": true,
+  "official_commit": "c162068f61bafbe640bbd40ee4a47312498ed153",
+  "redesigned_clean_repeat_cases": [
+    "case_01",
+    "case_02",
+    "case_08"
+  ],
+  "rows": [
+    {
+      "case": "public/case_01",
+      "max_abs_error": 2.044030770775862e-05,
+      "max_relative_error": 1.1513633572915607e-08,
+      "r_exact": true,
+      "w_exact": true,
+      "z_exact": true
+    },
+    {
+      "case": "public/case_02",
+      "max_abs_error": 0.00013935697324996,
+      "max_relative_error": 5.9257439175650265e-08,
+      "r_exact": true,
+      "w_exact": true,
+      "z_exact": true
+    },
+    {
+      "case": "public/case_03",
+      "max_abs_error": 2.5446407789786463e-06,
+      "max_relative_error": 3.997600000104701e-09,
+      "r_exact": true,
+      "w_exact": true,
+      "z_exact": true
+    },
+    {
+      "case": "hidden/case_01",
+      "max_abs_error": 2.691737154236762e-05,
+      "max_relative_error": 2.672353971622089e-08,
+      "r_exact": true,
+      "w_exact": true,
+      "z_exact": true
+    },
+    {
+      "case": "hidden/case_02",
+      "max_abs_error": 2.5966039629565785e-05,
+      "max_relative_error": 3.046320422344417e-08,
+      "r_exact": true,
+      "w_exact": true,
+      "z_exact": true
+    },
+    {
+      "case": "hidden/case_03",
+      "max_abs_error": 3.245072457502829e-05,
+      "max_relative_error": 1.0060691299782308e-08,
+      "r_exact": true,
+      "w_exact": true,
+      "z_exact": true
+    },
+    {
+      "case": "hidden/case_04",
+      "max_abs_error": 1.695308765192749e-05,
+      "max_relative_error": 2.322006320606477e-08,
+      "r_exact": true,
+      "w_exact": true,
+      "z_exact": true
+    },
+    {
+      "case": "hidden/case_05",
+      "max_abs_error": 9.483101166551933e-06,
+      "max_relative_error": 1.3051517178355079e-08,
+      "r_exact": true,
+      "w_exact": true,
+      "z_exact": true
+    },
+    {
+      "case": "hidden/case_06",
+      "max_abs_error": 5.045738049602733e-06,
+      "max_relative_error": 3.4486721742410564e-08,
+      "r_exact": true,
+      "w_exact": true,
+      "z_exact": true
+    },
+    {
+      "case": "hidden/case_07",
+      "max_abs_error": 7.842713216632546e-07,
+      "max_relative_error": 4.409992133703078e-09,
+      "r_exact": true,
+      "w_exact": true,
+      "z_exact": true
+    },
+    {
+      "case": "hidden/case_08",
+      "max_abs_error": 1.5034815987746697e-06,
+      "max_relative_error": 1.4345999327022991e-08,
+      "r_exact": true,
+      "w_exact": true,
+      "z_exact": true
+    }
+  ],
+  "status": "official_independent_pass_curator_stale",
+  "task_id": "scibench_replication_0018_core"
+}

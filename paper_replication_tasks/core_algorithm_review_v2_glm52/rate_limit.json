@@ -1,0 +1,11 @@
+{
+  "call_epochs": [
+    1787640185.925718
+  ],
+  "effective_rpm": 10.0,
+  "last_call_epoch": 1787640185.925718,
+  "next_allowed_epoch": 0.0,
+  "reserve_rpm": 10.0,
+  "rpm": 20.0,
+  "schema_version": 2
+}

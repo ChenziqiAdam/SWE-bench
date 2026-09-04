@@ -1,0 +1,14 @@
+[
+  {
+    "attempt": 1,
+    "sequence": 1,
+    "stage": "full-review",
+    "timestamp": "2026-08-23T18:57:32.139704+00:00"
+  },
+  {
+    "attempt": 2,
+    "sequence": 2,
+    "stage": "full-review",
+    "timestamp": "2026-08-23T19:01:02.069040+00:00"
+  }
+]

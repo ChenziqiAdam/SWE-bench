@@ -1,0 +1,369 @@
+{
+  "candidate_algorithms": [
+    {
+      "deletion_test": {
+        "evidence": [
+          "E1"
+        ],
+        "outcome": "FAILS_WITHOUT_ALGORITHM",
+        "reason": "Removing rEIM eliminates the paper's main contribution; all applications and convergence analysis depend on it"
+      },
+      "description": "Greedy rational interpolation algorithm selecting basis functions from rational dictionary D(B) and interpolation points to produce partial fraction approximants",
+      "evidence": [
+        "E3"
+      ],
+      "name": "rEIM (Algorithm 2.1)",
+      "role": "core"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E8"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "ROGA is cited from prior work and only compared; paper's contribution stands without it"
+      },
+      "description": "Rational Orthogonal Greedy Algorithm from prior work [37], mentioned for comparison; not the paper's contribution",
+      "evidence": [
+        "E8"
+      ],
+      "name": "ROGA (Algorithm 2.2)",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E11"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "AAA is a standard baseline for comparison; removing it does not affect the paper's core contribution"
+      },
+      "description": "Classical AAA algorithm used as comparison baseline in numerical experiments",
+      "evidence": [
+        "E11"
+      ],
+      "name": "AAA rational approximation",
+      "role": "baseline"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E10"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "This is theoretical analysis supporting rEIM, not an independently executable algorithm"
+      },
+      "description": "Theoretical analysis deriving sub-exponential convergence rate of rEIM using metric entropy numbers",
+      "evidence": [
+        "E10"
+      ],
+      "name": "Convergence analysis via entropy numbers",
+      "role": "supporting"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E9"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "This is a downstream application of rEIM, not the core algorithm itself"
+      },
+      "description": "Application of rEIM to solve fractional elliptic and parabolic PDEs via rational approximation of power functions",
+      "evidence": [
+        "E9"
+      ],
+      "name": "Fractional PDE solver application",
+      "role": "evaluation"
+    },
+    {
+      "deletion_test": {
+        "evidence": [
+          "E15"
+        ],
+        "outcome": "SURVIVES_WITHOUT_ALGORITHM",
+        "reason": "This is a downstream application using rEIM interpolants, not the core method"
+      },
+      "description": "Application of rEIM to adaptive time-stepping for fractional heat equations",
+      "evidence": [
+        "E15"
+      ],
+      "name": "Adaptive step-size control",
+      "role": "evaluation"
+    }
+  ],
+  "contribution_graph": [
+    {
+      "evidence": [
+        "E2"
+      ],
+      "from": "Research Goal",
+      "relation": "rEIM algorithm is the main method achieving the goal",
+      "to": "C1"
+    },
+    {
+      "evidence": [
+        "E3"
+      ],
+      "from": "C1",
+      "relation": "rEIM is formally defined as Algorithm 2.1",
+      "to": "Algorithm 2.1"
+    },
+    {
+      "evidence": [
+        "E10"
+      ],
+      "from": "Algorithm 2.1",
+      "relation": "Convergence analysis applies to Algorithm 2.1",
+      "to": "C2"
+    },
+    {
+      "evidence": [
+        "E9"
+      ],
+      "from": "Algorithm 2.1",
+      "relation": "Applications use rEIM interpolants",
+      "to": "C3"
+    },
+    {
+      "evidence": [
+        "E11"
+      ],
+      "from": "C3",
+      "relation": "Numerical experiments validate rEIM applications",
+      "to": "Section 5 experiments"
+    }
+  ],
+  "decision": "ACCEPT_FOR_DESIGN",
+  "evidence_catalog": [
+    {
+      "excerpt": "We present a new rational approximation algorithm based on the empirical interpolation method for interpolating a family of parametrized functions to rational polynomials with invariant poles",
+      "id": "E1",
+      "page": 1,
+      "section": "Abstract"
+    },
+    {
+      "excerpt": "we present a Rational Approximation Algorithm via the Empirical Interpolation Method (rEIM), which produces rational approximants in the form (1.1).",
+      "id": "E2",
+      "page": 2,
+      "section": "1. Introduction"
+    },
+    {
+      "excerpt": "Algorithm 2.1 Rational Approximation via the EIM (rEIM)",
+      "id": "E3",
+      "page": 3,
+      "section": "2. Rational Approximation via the EIM"
+    },
+    {
+      "excerpt": "select gm = g(•, bm) ∈ D (B) such that",
+      "id": "E4",
+      "page": 3,
+      "section": "2. Rational Approximation via the EIM"
+    },
+    {
+      "excerpt": "of the proposed rEIM as well as classical EIMs",
+      "id": "E5",
+      "page": 4,
+      "section": "2. Rational Approximation via the EIM"
+    },
+    {
+      "excerpt": "the rEIM is able to eﬃciently interpolate them by applying a small-scale matrix G−1 n to ( f (x1), . . . , f(xn))⊤",
+      "id": "E6",
+      "page": 4,
+      "section": "2. Rational Approximation via the EIM"
+    },
+    {
+      "excerpt": "For any input target function f , the rEIM interpolant Π nf has a ﬁxed set of poles −b1, . . . ,−bn.",
+      "id": "E7",
+      "page": 4,
+      "section": "2. Rational Approximation via the EIM"
+    },
+    {
+      "excerpt": "Another dictionary-based rational approximation method is the Rational Orthogonal Greedy Algorithm (ROGA) based on a rational dictionary developed in [37]",
+      "id": "E8",
+      "page": 6,
+      "section": "2.2. Rational Orthogonal Greedy Algorithm"
+    },
+    {
+      "excerpt": "3. Applications of the rEIM.",
+      "id": "E9",
+      "page": 7,
+      "section": "3. Applications of the rEIM"
+    },
+    {
+      "excerpt": "we also derive a sub-exponential convergence rate of the rEIM",
+      "id": "E10",
+      "page": 2,
+      "section": "1. Introduction"
+    },
+    {
+      "excerpt": "we start with a numerical comparison of the rEIM, the OGA, and the popular AAA rational approximation algorithm for the target function x−s",
+      "id": "E11",
+      "page": 17,
+      "section": "5.1. Approximation of Power Functions"
+    },
+    {
+      "excerpt": "Input: an integer n > 0, a dictionary D(B) and a set Σ of possible interpolation points; set Π 0 = 0.",
+      "id": "E12",
+      "page": 3,
+      "section": "2. Rational Approximation via the EIM"
+    },
+    {
+      "excerpt": "Output: the rational interpolant Π nf for a family of target functions f which are not necessarily in D(B).",
+      "id": "E13",
+      "page": 3,
+      "section": "2. Rational Approximation via the EIM"
+    },
+    {
+      "excerpt": "the rEIM directly outputs approximants of the form (1.1), thereby avoiding the error arising from computing the poles",
+      "id": "E14",
+      "page": 2,
+      "section": "1. Introduction"
+    },
+    {
+      "excerpt": "the rEIM is suitable for generating rational approximants for a large number of τm",
+      "id": "E15",
+      "page": 9,
+      "section": "3.3. Adaptive Step-Size Control"
+    }
+  ],
+  "evidence_gaps": [
+    "No explicit pseudocode for the application solvers beyond the core rEIM; implementation details for D(B) and Sigma sampling are in the referenced repository"
+  ],
+  "gates": {
+    "G1": {
+      "evidence": [
+        "E1"
+      ],
+      "reason": "rEIM directly implements the paper's main scientific contribution; all applications and theory depend on it",
+      "status": "PASS"
+    },
+    "G2": {
+      "evidence": [
+        "E8"
+      ],
+      "reason": "Only one candidate (rEIM) is the core algorithm; ROGA is prior work, AAA is baseline, applications are downstream",
+      "status": "PASS"
+    },
+    "G3": {
+      "evidence": [
+        "E14"
+      ],
+      "reason": "rEIM involves novel scientific reasoning: rational dictionary, greedy pole/point selection, direct partial fraction output, invariant poles across function families",
+      "status": "PASS"
+    },
+    "G4": {
+      "evidence": [
+        "E12"
+      ],
+      "reason": "Clear input-output contract: n, D(B), Sigma, target functions f -> rational interpolant Pi_n f in partial fraction form",
+      "status": "PASS"
+    },
+    "G5": {
+      "evidence": [
+        "E11"
+      ],
+      "reason": "Can test with different target functions (x^{-s}, (x^s+k)^{-1}, exp(-tau*x), etc.), different n values, different intervals, different dictionaries",
+      "status": "PASS"
+    },
+    "G6": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G7": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    },
+    "G8": {
+      "evidence": [],
+      "reason": "deferred to later benchmark-design stage",
+      "status": "NOT_EVALUATED"
+    }
+  },
+  "main_contributions": [
+    {
+      "evidence": [
+        "E2"
+      ],
+      "id": "C1",
+      "summary": "New rEIM algorithm for rational approximation of function families with invariant poles"
+    },
+    {
+      "evidence": [
+        "E10"
+      ],
+      "id": "C2",
+      "summary": "Sub-exponential convergence rate analysis using entropy numbers"
+    },
+    {
+      "evidence": [
+        "E9"
+      ],
+      "id": "C3",
+      "summary": "Applications to fractional PDEs, preconditioning, and matrix exponentials"
+    }
+  ],
+  "paper_id": "0021",
+  "research_goal": {
+    "evidence": [
+      "E1"
+    ],
+    "summary": "Develop efficient rational approximation algorithm for families of parametrized functions with invariant poles for fractional PDEs, preconditioning, and matrix functions"
+  },
+  "schema_version": "core-algorithm-review-v2",
+  "scientific_contract": {
+    "algorithm": "rEIM (Algorithm 2.1)",
+    "assumptions": [
+      "Target functions belong to L1(D) variation norm space",
+      "Dictionary D(B) is finite subset of rational functions",
+      "Interval I has positive left endpoint eta > 0"
+    ],
+    "core_operations": [
+      "Greedy selection of basis function g_m maximizing residual",
+      "Greedy selection of interpolation point x_m maximizing residual",
+      "Construction of interpolation operator via Cauchy matrix inversion",
+      "Output partial fraction form directly without barycentric conversion"
+    ],
+    "dependent_contributions": [
+      "C1: rEIM algorithm itself",
+      "C2: Convergence analysis applies to rEIM",
+      "C3: All applications use rEIM interpolants"
+    ],
+    "dependent_experiments_results": [
+      "Section 5.1: approximation of power functions x^{-s}",
+      "Section 5.2-5.3: fractional Laplacian on uniform and graded grids",
+      "Section 5.4: adaptive step-size control for fractional heat equations",
+      "Section 5.5: approximation of other functions for preconditioning and matrix exponentials"
+    ],
+    "evidence": [
+      "E14"
+    ],
+    "inputs": [
+      "Integer n (number of basis functions)",
+      "Dictionary D(B) of rational basis functions g(x,b)=(eta+b)/(x+b)",
+      "Set Sigma of candidate interpolation points",
+      "Family of target functions f_j"
+    ],
+    "outputs": [
+      "Rational interpolant Pi_n f = sum c_i/(x+b_i) with invariant poles {-b_i}",
+      "Interpolation points {x_1,...,x_n}",
+      "Coefficients {c_i} for each target function"
+    ],
+    "parameters": [
+      "n: number of rational basis terms",
+      "B: finite set of pole parameters",
+      "Sigma: candidate interpolation points",
+      "eta: left endpoint of interval I"
+    ],
+    "scientific_invariants": [
+      "Poles {-b_i} are invariant across all target functions in the family",
+      "Interpolation points {x_i} are shared across all target functions",
+      "Output is always in partial fraction form sum c_i/(x+b_i)"
+    ],
+    "scientific_purpose": "Interpolate a family of target functions by rational polynomials with invariant poles using greedy selection from a rational dictionary",
+    "specificity_reason": "rEIM uses a novel rational dictionary with greedy EIM-style selection producing partial fractions directly, unlike AAA which outputs barycentric form requiring lossy conversion"
+  },
+  "selected_core_algorithm": "rEIM (Algorithm 2.1)",
+  "uniqueness_reason": "Only rEIM is the paper's novel contribution; ROGA is from prior work, AAA is a baseline, and all applications are downstream uses of rEIM"
+}

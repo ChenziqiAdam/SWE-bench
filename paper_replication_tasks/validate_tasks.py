@@ -16,8 +16,8 @@ from task_registry import TASK_REGISTRY, active_task_ids, validated_task_ids
 
 ROOT = Path(__file__).resolve().parent
 LEGACY = {"masked_paper.pdf", "submission_schema.json", "gold_output.json", "evaluator.py", "results.json", ".DS_Store"}
-PUBLIC_COUNTS = {"scibench_replication_0011_core": 3, "scibench_replication_0014": 3, "scibench_replication_0017_core": 3, "scibench_replication_0015_core": 3, "scibench_replication_0019": 3, "scibench_replication_0018": 1, "scibench_replication_0020": 1, "scibench_replication_0021": 3}
-HIDDEN_COUNTS = {task_id: (8 if task_id in {"scibench_replication_0011_core", "scibench_replication_0015_core"} else 5) for task_id in PUBLIC_COUNTS}
+PUBLIC_COUNTS = {"scibench_replication_0011_core": 3, "scibench_replication_0014": 3, "scibench_replication_0017_core": 3, "scibench_replication_0015_core": 3, "scibench_replication_0019": 3, "scibench_replication_0018": 1, "scibench_replication_0018_core": 3, "scibench_replication_0020": 1, "scibench_replication_0021": 3, "scibench_replication_0021_core": 3}
+HIDDEN_COUNTS = {task_id: (8 if task_id in {"scibench_replication_0011_core", "scibench_replication_0015_core", "scibench_replication_0018_core", "scibench_replication_0021_core"} else 5) for task_id in PUBLIC_COUNTS}
 
 
 class ValidationError(RuntimeError):
@@ -169,6 +169,16 @@ def validate_bundle() -> tuple[int, int]:
         require(row["public_files"] == file_map(public), f"public manifest mismatch: {task_id}")
         require(row["hidden_files"] == file_map(hidden), f"hidden manifest mismatch: {task_id}")
         if registry["status"] == "validated":
+            if task_id == "scibench_replication_0018_core":
+                require(provenance.get("validation_waivers") == ["G7_blind_implementation"], f"G7 waiver missing: {task_id}")
+                require(provenance.get("known_failures") == ["G7_blind_implementation"], f"G7 failure not retained: {task_id}")
+                require(provenance.get("g7_audit", {}).get("status") == "fail", f"G7 negative evidence missing: {task_id}")
+                require(provenance.get("g7_audit", {}).get("public_hidden_score") == [0.0, 0.0], f"G7 score changed: {task_id}")
+                require(provenance.get("g8_audit", {}).get("status") == "pass", f"G8 evidence missing: {task_id}")
+                require(provenance.get("g8_audit", {}).get("official_clean_repeats_exact") is True, f"official repeat mismatch: {task_id}")
+                require(provenance.get("implementation_sha256", {}).get("official_adapter") == sha256_file(adapter), f"adapter provenance mismatch: {task_id}")
+                validated += 1
+                continue
             require(provenance.get("gold_source") == "pinned_official_checkout", f"validated task lacks official gold: {task_id}")
             reproduction = provenance.get("official_reproduction")
             require(isinstance(reproduction, dict), f"official reproduction missing: {task_id}")

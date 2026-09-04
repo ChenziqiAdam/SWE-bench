@@ -1,0 +1,466 @@
+[
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 67,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:39:17.921039+00:00"
+  },
+  {
+    "attempt": 2,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 68,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:39:23.316757+00:00"
+  },
+  {
+    "attempt": 3,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 69,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:39:28.620078+00:00"
+  },
+  {
+    "attempt": 4,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 70,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:39:34.015216+00:00"
+  },
+  {
+    "attempt": 5,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 71,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:39:39.394172+00:00"
+  },
+  {
+    "attempt": 6,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 72,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:39:44.754936+00:00"
+  },
+  {
+    "attempt": 7,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 73,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:39:50.078520+00:00"
+  },
+  {
+    "attempt": 8,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 74,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:39:55.423779+00:00"
+  },
+  {
+    "attempt": 9,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 75,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:40:00.988959+00:00"
+  },
+  {
+    "attempt": 10,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 76,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:40:06.399770+00:00"
+  },
+  {
+    "attempt": 11,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 77,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:40:11.732539+00:00"
+  },
+  {
+    "attempt": 12,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 78,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:40:16.991444+00:00"
+  },
+  {
+    "attempt": 13,
+    "correction_retry": true,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 79,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:40:54.603763+00:00"
+  },
+  {
+    "attempt": 14,
+    "correction_retry": true,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 80,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:41:00.099036+00:00"
+  },
+  {
+    "attempt": 15,
+    "correction_retry": true,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 81,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:41:34.885329+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 8,
+    "stage": "full-review",
+    "timestamp": "2026-08-24T03:48:05.385074+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 6,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:09:02.784830+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 16,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:10:14.369003+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 25,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:11:16.045900+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 34,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:12:15.042965+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 43,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:13:16.067078+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 52,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:14:14.934205+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 61,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:15:13.974834+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 71,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:16:21.752485+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 82,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:17:51.762628+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 91,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:18:52.217953+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 102,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:20:18.299376+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 111,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:21:17.724679+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 120,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:22:17.516533+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 129,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:23:16.328113+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 139,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:24:36.815092+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 148,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:25:35.725050+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 157,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:26:35.207935+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 166,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:27:40.320142+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 174,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:28:34.050897+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 182,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:29:27.538623+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 5,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:31:00.395341+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 13,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:31:53.545306+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 21,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:32:46.734632+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 29,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:33:40.048590+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 38,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:34:56.405777+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 47,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:36:32.315574+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 55,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:37:25.258022+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 63,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:38:18.616737+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 71,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:39:11.893412+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 79,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:40:04.990442+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 87,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:40:57.890421+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 95,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:41:51.371888+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 103,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:42:47.509002+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 111,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:43:41.190923+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 119,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:44:34.300501+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 127,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:45:27.271405+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 135,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:46:20.768966+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 143,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:47:13.746975+00:00"
+  },
+  {
+    "attempt": 2,
+    "correction_retry": true,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 144,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:47:21.986408+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 152,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:48:15.199652+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 160,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:49:08.812589+00:00"
+  },
+  {
+    "attempt": 1,
+    "correction_retry": false,
+    "model": "z-ai/glm-5.2:free",
+    "sequence": 6,
+    "stage": "full-review-resume-correction",
+    "timestamp": "2026-08-24T15:50:38.873264+00:00"
+  }
+]

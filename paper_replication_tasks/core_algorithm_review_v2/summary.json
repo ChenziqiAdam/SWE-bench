@@ -1,0 +1,97 @@
+{
+  "complete_count": 3,
+  "failed_count": 6,
+  "generated_at": "2026-08-23T19:33:16.744712+00:00",
+  "model": "stealth/ox-alpha",
+  "papers": [
+    {
+      "error": "full-review failed after 4 attempts: selected_core_algorithm is not a candidate",
+      "paper_id": "0011",
+      "status": "FAILED"
+    },
+    {
+      "error": "full-review failed after 4 attempts: $.evidence_catalog[4].excerpt does not match PDF page 2",
+      "paper_id": "0014",
+      "status": "FAILED"
+    },
+    {
+      "error": "full-review failed after 4 attempts: $.evidence_catalog[1].excerpt does not match PDF page 3",
+      "paper_id": "0015",
+      "status": "FAILED"
+    },
+    {
+      "error": "full-review failed after 4 attempts: $.evidence_catalog[1].excerpt does not match PDF page 12",
+      "paper_id": "0017",
+      "status": "FAILED"
+    },
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [
+        "Exact clustering implementation details (Wald hierarchical) only briefly described",
+        "Operation model rolling-horizon details given only in prose"
+      ],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0018",
+      "selected_core_algorithm": "Storage importance subsampling framework",
+      "status": "COMPLETE"
+    },
+    {
+      "error": "full-review failed after 4 attempts: scientific_contract must be null without selected core",
+      "paper_id": "0019",
+      "status": "FAILED"
+    },
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [
+        "Paper does not provide closed-form likelihood derivation details, relying on Lopez et al. 2014 and spsur package references."
+      ],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0020",
+      "selected_core_algorithm": "SUR-SLM maximum likelihood estimation",
+      "status": "COMPLETE"
+    },
+    {
+      "decision": "ACCEPT_FOR_DESIGN",
+      "evidence_gaps": [
+        "Exact practical choices of B and Σ are repository-tuned, not fully specified in paper."
+      ],
+      "gates": {
+        "G1": "PASS",
+        "G2": "PASS",
+        "G3": "PASS",
+        "G4": "PASS",
+        "G5": "PASS",
+        "G6": "NOT_EVALUATED",
+        "G7": "NOT_EVALUATED",
+        "G8": "NOT_EVALUATED"
+      },
+      "paper_id": "0021",
+      "selected_core_algorithm": "rEIM greedy rational interpolation (Algorithm 2.1)",
+      "status": "COMPLETE"
+    },
+    {
+      "error": "full-review failed after 4 attempts: selected core and core-role count inconsistent",
+      "paper_id": "0022",
+      "status": "FAILED"
+    }
+  ],
+  "schema_version": "core-algorithm-review-v2"
+}

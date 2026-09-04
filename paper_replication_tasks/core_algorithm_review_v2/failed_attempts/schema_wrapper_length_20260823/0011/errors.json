@@ -1,0 +1,29 @@
+[
+  {
+    "message": "'NoneType' object has no attribute 'strip'",
+    "stage": "paper",
+    "timestamp": "2026-08-23T17:48:48.552713+00:00",
+    "type": "AttributeError"
+  },
+  {
+    "attempt": 1,
+    "message": "endpoint returned empty message.content (finish_reason='length', fields=['content', 'reasoning', 'reasoning_details', 'refusal', 'role'])",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T17:54:20.628164+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 2,
+    "message": "endpoint returned empty message.content (finish_reason='length', fields=['content', 'reasoning', 'reasoning_details', 'refusal', 'role'])",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T17:57:58.411455+00:00",
+    "type": "ResponseValidationError"
+  },
+  {
+    "attempt": 3,
+    "message": "invalid JSON: Expecting value: line 1 column 1 (char 0)",
+    "stage": "full-review",
+    "timestamp": "2026-08-23T18:01:01.264049+00:00",
+    "type": "ResponseValidationError"
+  }
+]

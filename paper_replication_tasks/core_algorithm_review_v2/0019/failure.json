@@ -1,0 +1,11 @@
+{
+  "call_count": 4,
+  "error": {
+    "message": "full-review failed after 4 attempts: scientific_contract must be null without selected core",
+    "stage": "paper",
+    "timestamp": "2026-08-23T19:27:05.658706+00:00",
+    "type": "ReviewError"
+  },
+  "paper_id": "0019",
+  "status": "FAILED"
+}
