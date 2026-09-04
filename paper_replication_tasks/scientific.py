@@ -48,6 +48,11 @@ def random_walk(case: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def kinisi_core(case: dict[str, Any]) -> dict[str, Any]:
+    from curation_tools.kinisi_core_scientific import solve as solve_kinisi_core
+    return solve_kinisi_core(case)
+
+
 def smw_stability(case: dict[str, Any]) -> dict[str, Any]:
     from curation_tools.smw_scientific import solve as solve_smw
     return solve_smw(case)
@@ -100,6 +105,7 @@ def energy_tsa_core(case: dict[str, Any]) -> dict[str, Any]:
 
 SOLVERS = {
     "scibench_replication_0011": random_walk,
+    "scibench_replication_0011_core": kinisi_core,
     "scibench_replication_0014": smw_stability,
     "scibench_replication_0015": fixed_sparsity,
     "scibench_replication_0015_core": fixed_sparsity_core,

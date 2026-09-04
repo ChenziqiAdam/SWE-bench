@@ -8,10 +8,8 @@ receives a task ID only after its official workflow and independent scientific a
 | Repository | Task ID | Scope |
 |---|---|---|
 | `arm61/msd-errors` | `scibench_replication_0011` | Seeded random walks, MSD, and OLS/WLS/GLS diffusion estimates |
-| `LinkaiMa/SMW` | `scibench_replication_0014` | SMW forward/backward errors and stability bounds |
 | `paezha/Accessibility-Sobi-Hamilton` | `scibench_replication_0017` | Deterministic BFCA/2SFCA accessibility and level-of-service using the archived travel-time matrix |
 | `tchen-research/fixed_sparsity_matrix_approximation` | `scibench_replication_0015` | Gaussian-sketch fixed-sparsity matrix approximation: off-pattern error, recovery RMSE/quantiles, and Theorem 1 bound curves |
-| `RalfZimmermannSDU/StiefelCurvatureSIMAX` | `scibench_replication_0019` | Sectional curvature of Grassmann, Stiefel (canonical/Euclidean), and SO(n) manifolds via the four pinned `seccurv_*.m` functions (Sections 4.1 and 4.3; the unseeded, non-bit-reproducible Figure 2 random-averaging experiment is out of scope) |
 | `ahilbers/a_posteriori_tsa_storage` | `scibench_replication_0018` | Six-region energy-system design capacities and unserved energy under time-series-aggregation methods A-F (a priori and storage-aware a posteriori), across six MT19937-resampled seed/year cases, via the pinned Calliope/CBC `get_design_estimate`+`get_operate_variables` workflow; independently audited by reimplementing the deterministic clustering pipeline and matching Calliope's own recovered day-to-cluster assignment (exact partition match, all 6 methods, all 6 cases) |
 | `paezha/covid19-environmental-correlates` | `scibench_replication_0020` | Panel spatial-SUR-SLM 3SLS estimation (province-level COVID-19 incidence vs. climatic lags) via the pinned `spsur::spsurtime()` workflow across three lag specifications, with and without the paper's cross-equation equality restrictions, plus the paper's LeSage-Pace direct/indirect/total marginal-effects decomposition via `spsur::impactspsur()` (deterministic point estimates only, via exact trace `type="mult"`; the unseeded Monte Carlo significance test is out of scope); independently audited by a from-scratch NumPy 3SLS + closed-form spatial-multiplier reimplementation (max error ~1e-7 across all 6 cases) |
 | `yuwenli925/REIM` | `scibench_replication_0021` | Rational empirical interpolation method (rEIM, Algorithm 2.1) via the pinned `REIM.m`/`FEM/*.m` MATLAB source under GNU Octave (one Octave-only compatibility patch, `curation_tools/patches/0021-reim-strcmp.patch`, for a char==string dispatch incompatibility with zero semantic effect on the reproducible `power` family), spanning rational approximation of power/time/exp/precon function families, fractional-Laplacian P1-FEM solves on uniform and graded meshes, and adaptive-step BDF2 fractional-heat-equation integration -- all 7 paper figures and Table 1; independently audited by a from-scratch NumPy/SciPy reimplementation of the rEIM recurrence, P1-FEM assembly, and BDF2 stepper (max abs discrepancy ~3.3e-6, max relative ~1.5e-4) |
@@ -25,6 +23,13 @@ for the covid19-environmental-correlates task (only 6 distinct paper-faithful
 input combinations exist for this task's parameter space, so it ships 1 public
 + 5 hidden case instead of the usual 3 public + 5 hidden). `0021` was used for
 the REIM task.
+
+## Excluded after core-algorithm review
+
+| Repository | Archived task ID | Reason |
+|---|---|---|
+| `LinkaiMa/SMW` | `scibench_replication_0014` | The paper contributes stability theorems; the executable SMW update is established machinery rather than a unique new core algorithm. |
+| `RalfZimmermannSDU/StiefelCurvatureSIMAX` | `scibench_replication_0019` | The paper's contribution is theorem-driven geometry; the curvature routines are supporting experiment functions rather than a unique new core algorithm. |
 
 ## Blocked
 

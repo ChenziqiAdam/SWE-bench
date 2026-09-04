@@ -1,8 +1,9 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-17",
+  "updated_at": "2026-09-04",
   "status_definitions": {
     "validated": "Formal v4 task validated with official gold and an independent scientific audit.",
+    "excluded_no_core_algorithm": "Excluded from the active benchmark because PAPER.md's core-algorithm admission gates reject the paper; historical artifacts are retained for audit.",
     "curator_reproduction": "Selected for curator reproduction but not yet promoted to a formal task.",
     "blocked_missing_paper_data": "Blocked because required paper data are unavailable.",
     "blocked_missing_paper_experiments": "Blocked because the official repository lacks the paper experiments.",
@@ -95,14 +96,14 @@
       "paper_title": "A Note on the Stability of the Sherman–Morrison–Woodbury Formula",
       "paper_url": "https://doi.org/10.1137/25M1747087",
       "github_url": "https://github.com/LinkaiMa/SMW",
-      "build_status": "validated"
+      "build_status": "excluded_no_core_algorithm"
     },
     {
       "task_id": "scibench_replication_0019",
       "paper_title": "High Curvature Means Low Rank: On the Sectional Curvature of Grassmann and Stiefel Manifolds and the Underlying Matrix Trace Inequalities",
       "paper_url": "https://doi.org/10.1137/24M1655755",
       "github_url": "https://github.com/RalfZimmermannSDU/StiefelCurvatureSIMAX",
-      "build_status": "validated"
+      "build_status": "excluded_no_core_algorithm"
     }
   ]
 }

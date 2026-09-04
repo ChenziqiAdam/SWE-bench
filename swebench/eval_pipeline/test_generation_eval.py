@@ -1796,10 +1796,19 @@ def _evaluate_one(
     inst_logger = setup_logger(instance_id, out_dir / "test_generation.log")
     report_path = out_dir / "report.json"
 
-    if prediction is None or not (prediction.get("model_patch") or "").strip():
+    inference_error = (prediction or {}).get("error", "")
+    inference_timed_out = inference_error.strip().lower() == "timeout"
+    if (
+        prediction is None
+        or not (prediction.get("model_patch") or "").strip()
+        or inference_timed_out
+    ):
+        inference_failed = bool(inference_error and not inference_timed_out)
         report = {
             instance_id: {
-                "status": "no-pred",
+                "status": "errored" if inference_failed else "no-pred",
+                "failure_reason": "inference_error" if inference_failed else "",
+                "error": inference_error,
                 "test_patch_applied": False,
                 "gold_patch_applied": False,
                 "base_failed_tests": [],

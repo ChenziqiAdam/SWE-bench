@@ -169,13 +169,104 @@ def test_test_generation_report_exports_resource_metrics(tmp_path, capsys):
 
     with open(output_csv, newline="") as f:
         row = next(csv.DictReader(f))
+    assert row["status"] == "no-pred"
     assert row["input_tokens"] == "100"
     assert row["cost_usd"] == "0.3"
     assert row["inference_wall_time_seconds"] == "12.5"
     assert row["inference_error"] == "timeout"
+    assert row["failure_reason"] == ""
     assert row["inference_usage_incomplete"] == "yes"
-    assert row["evaluation_wall_time_seconds"] == "7.25"
+    assert row["evaluation_wall_time_seconds"] == ""
     assert "tracked totals" in capsys.readouterr().out
+
+
+def test_test_generation_report_reclassifies_failed_empty_prediction(tmp_path):
+    predictions = tmp_path / "predictions.jsonl"
+    predictions.write_text(
+        json.dumps(
+            {
+                "instance_id": "demo__repo-1",
+                "model_patch": "",
+                "error": "provider: Insufficient Balance",
+            }
+        )
+        + "\n"
+    )
+    output_csv = tmp_path / "results.csv"
+    render_test_generation_table(
+        results={"demo__repo-1": {"status": "no-pred"}},
+        instances=[{"instance_id": "demo__repo-1", "repo": "demo/repo"}],
+        output_csv=str(output_csv),
+        predictions_path=str(predictions),
+    )
+
+    with output_csv.open(newline="") as handle:
+        row = next(csv.DictReader(handle))
+    assert row["status"] == "errored"
+    assert row["failure_reason"] == "inference_error"
+    assert row["inference_error"] == "provider: Insufficient Balance"
+
+
+def test_test_generation_report_keeps_empty_timeout_as_no_pred(tmp_path):
+    predictions = tmp_path / "predictions.jsonl"
+    predictions.write_text(
+        json.dumps(
+            {
+                "instance_id": "demo__repo-1",
+                "model_patch": "",
+                "error": "timeout",
+            }
+        )
+        + "\n"
+    )
+    output_csv = tmp_path / "results.csv"
+    render_test_generation_table(
+        results={"demo__repo-1": {"status": "no-pred"}},
+        instances=[{"instance_id": "demo__repo-1", "repo": "demo/repo"}],
+        output_csv=str(output_csv),
+        predictions_path=str(predictions),
+    )
+
+    with output_csv.open(newline="") as handle:
+        row = next(csv.DictReader(handle))
+    assert row["status"] == "no-pred"
+    assert row["failure_reason"] == ""
+    assert row["inference_error"] == "timeout"
+
+
+def test_test_generation_report_discards_cached_verdict_for_timed_out_patch(tmp_path):
+    predictions = tmp_path / "predictions.jsonl"
+    predictions.write_text(
+        json.dumps(
+            {
+                "instance_id": "demo__repo-1",
+                "model_patch": "diff --git a/test.py b/test.py\n",
+                "error": "timeout",
+            }
+        )
+        + "\n"
+    )
+    output_csv = tmp_path / "results.csv"
+    render_test_generation_table(
+        results={
+            "demo__repo-1": {
+                "status": "resolved",
+                "test_patch_applied": True,
+                "base_failed_tests": ["test_bug"],
+                "gold_passed_tests": ["test_bug"],
+            }
+        },
+        instances=[{"instance_id": "demo__repo-1", "repo": "demo/repo"}],
+        output_csv=str(output_csv),
+        predictions_path=str(predictions),
+    )
+
+    with output_csv.open(newline="") as handle:
+        row = next(csv.DictReader(handle))
+    assert row["status"] == "no-pred"
+    assert row["test_patch_applied"] == "no"
+    assert row["base_failed_tests"] == "0"
+    assert row["gold_passed_tests"] == "0"
 
 
 def test_test_generation_report_excludes_base_image_infrastructure_failure(

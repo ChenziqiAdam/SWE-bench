@@ -159,6 +159,52 @@ def test_relative_output_does_not_write_trajectory_inside_repo(tmp_path, monkeyp
     ).exists()
 
 
+def test_guarded_runtime_trajectory_is_outside_hidden_output_and_archived(
+    tmp_path, monkeypatch
+):
+    _install_fake_mini(tmp_path, monkeypatch)
+    repo = _make_git_repo(tmp_path / "repo")
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.mini_swe_agent_inference._clone_repo_at_commit",
+        lambda *args, **kwargs: repo,
+    )
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.mini_swe_agent_inference.validate_network_policy",
+        lambda *args, **kwargs: None,
+    )
+    captured = {}
+
+    def capture_guard(command, **_kwargs):
+        captured["runtime_trajectory"] = command[command.index("--output") + 1]
+        return command
+
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.mini_swe_agent_inference.guard_command",
+        capture_guard,
+    )
+    output = tmp_path / "predictions.jsonl"
+    stale = tmp_path / "mini_swe_agent_logs" / "demo__repo-1.traj.json"
+    stale.parent.mkdir()
+    stale.write_text('{"info":{"mini_version":"stale"},"messages":[]}')
+
+    run_mini_swe_agent_inference(
+        [_instance()],
+        str(output),
+        "gpt-test",
+        max_workers=1,
+        timeout=30,
+        command_timeout=17,
+        network_policy="model-only",
+    )
+
+    runtime_path = captured["runtime_trajectory"]
+    assert not runtime_path.startswith(str(tmp_path))
+    assert not os.path.exists(runtime_path)
+    archived = json.loads(stale.read_text())
+    assert archived["info"]["mini_version"] == "2.4.6"
+    assert json.loads(output.read_text())["metrics"]["api_calls"] == 2
+
+
 def test_custom_endpoint_uses_litellm_config_without_persisting_key(
     tmp_path, monkeypatch
 ):

@@ -7,8 +7,8 @@ instance gets a status derived from its harness report.json (NOT the raw
     resolved   FAIL_TO_PASS.success non-empty AND FAIL_TO_PASS.failure empty
     unresolved any FAIL_TO_PASS failed (a real, scored miss)
     excluded   non-scorable: empty FAIL_TO_PASS (placeholder PR) or non-buildable
-    errored    a prediction existed but no usable report (e.g. container 409)
-    no-pred    no/empty model patch
+    errored    inference/evaluation failed (e.g. provider error or container 409)
+    no-pred    inference completed without an error but returned no/empty patch
 
 Only `resolved`/`unresolved` count toward the denominator. This neutralises the
 two integrity bugs from sci_agent_001: vacuous resolves (empty F2P) and swallowed
@@ -24,6 +24,15 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 AGENT = "agent"
+
+
+def _is_inference_failure(error: object) -> bool:
+    """Timeout without a patch is a model non-submission, not infrastructure."""
+    return bool(error) and str(error).strip().lower() != "timeout"
+
+
+def _is_inference_timeout(error: object) -> bool:
+    return bool(error) and str(error).strip().lower() == "timeout"
 
 
 def collect_results(
@@ -124,12 +133,13 @@ def _classify(
     buildable: bool,
     f2p_empty: bool,
     has_pred: bool,
+    inference_failed: bool = False,
 ) -> str:
     """Map a single instance to one of the five status strings (see module docstring)."""
     if not buildable or f2p_empty:
         return "excluded"
     if report is None or not report.get("has_report"):
-        return "errored" if has_pred else "no-pred"
+        return "errored" if has_pred or inference_failed else "no-pred"
     if report["f2p_success"] > 0 and report["f2p_failure"] == 0:
         return "resolved"
     return "unresolved"
@@ -183,6 +193,7 @@ def render_comparison_table(
     meta = {inst["instance_id"]: inst for inst in instances}
     build_validation = build_validation or {}
     nonempty = _load_nonempty_prediction_ids(predictions_path)
+    predictions = _load_predictions(predictions_path)
 
     rows = []
     for instance_id in sorted(meta.keys()):
@@ -191,13 +202,25 @@ def render_comparison_table(
         buildable = bv.get("buildable", True)
         f2p_empty = not (inst.get("FAIL_TO_PASS") or [])
         has_pred = instance_id in nonempty
+        inference_failed = _is_inference_failure(
+            (predictions.get(instance_id) or {}).get("error")
+        )
         status = _classify(
             instance_id,
             results.get(instance_id),
             buildable=buildable,
             f2p_empty=f2p_empty,
             has_pred=has_pred,
+            inference_failed=inference_failed,
         )
+        if (
+            buildable
+            and not f2p_empty
+            and _is_inference_timeout(
+                (predictions.get(instance_id) or {}).get("error")
+            )
+        ):
+            status = "no-pred"
         if pipeline_failure and not (results.get(instance_id) or {}).get("has_report"):
             status = "errored"
         result_info = results.get(instance_id) or {}
@@ -293,9 +316,22 @@ def render_test_generation_table(
     for instance_id in sorted(meta.keys()):
         inst = meta[instance_id]
         info = results.get(instance_id) or {}
+        prediction = predictions.get(instance_id) or {}
+        inference_timed_out = _is_inference_timeout(prediction.get("error"))
+        if inference_timed_out:
+            # A dirty working-tree patch captured at the deadline was never
+            # submitted by the agent and must not inherit a cached verdict.
+            info = {}
+        empty_inference_failed = _is_inference_failure(prediction.get("error")) and (
+            instance_id not in nonempty
+        )
         status = info.get("status")
         if not status:
             status = "errored" if instance_id in nonempty else "no-pred"
+        if inference_timed_out:
+            status = "no-pred"
+        if status == "no-pred" and empty_inference_failed:
+            status = "errored"
         if pipeline_failure and not info:
             status = "errored"
         validation = build_validation.get(instance_id, {})
@@ -306,7 +342,6 @@ def render_test_generation_table(
         infrastructure_failure = not buildable
         if infrastructure_failure:
             status = "excluded"
-        prediction = predictions.get(instance_id) or {}
         metrics = prediction.get("metrics") or info.get(
             "inference_metrics"
         ) or {}
@@ -325,7 +360,9 @@ def render_test_generation_table(
             "failure_reason": (
                 "base_image_not_buildable"
                 if infrastructure_failure
-                else info.get("failure_reason", "") or (
+                else info.get("failure_reason", "")
+                or ("inference_error" if empty_inference_failed else "")
+                or (
                     "docker_infrastructure_failure" if pipeline_failure else ""
                 )
             ),

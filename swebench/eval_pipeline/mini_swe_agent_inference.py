@@ -360,6 +360,9 @@ def run_mini_swe_agent_inference(
     worktree_root = inference_worktree_root(AGENT_BACKEND)
     config_root = inference_worktree_root(f"{AGENT_BACKEND}-config")
     global_config_dir = Path(tempfile.mkdtemp(prefix="mswea_config_", dir=config_root))
+    runtime_trajectory_dir = Path(
+        tempfile.mkdtemp(prefix="mswea_trajectories_", dir=config_root)
+    )
     effective_hidden_paths = guarded_hidden_paths(
         network_policy, out_path, hidden_paths or []
     )
@@ -371,7 +374,8 @@ def run_mini_swe_agent_inference(
         instance_id = instance["instance_id"]
         repo_dir: Path | None = None
         started = time.perf_counter()
-        trajectory_path = logs_dir / f"{instance_id}.traj.json"
+        archived_trajectory_path = logs_dir / f"{instance_id}.traj.json"
+        runtime_trajectory_path = runtime_trajectory_dir / f"{instance_id}.traj.json"
         stdout_path = logs_dir / f"{instance_id}.stdout.log"
         stderr_path = logs_dir / f"{instance_id}.stderr.log"
         stdout_path.write_text("")
@@ -396,7 +400,7 @@ def run_mini_swe_agent_inference(
                 executable=executable,
                 repo_dir=repo_dir,
                 prompt=_mini_problem_text(instance, eval_mode),
-                trajectory_path=trajectory_path,
+                trajectory_path=runtime_trajectory_path,
                 model_name=model_name,
                 config_path=config_path,
                 command_timeout=command_timeout,
@@ -457,7 +461,7 @@ def run_mini_swe_agent_inference(
             logger.error("Error on %s: %s", instance_id, exc)
             traceback.print_exc()
         finally:
-            trajectory = _load_trajectory(trajectory_path, secret_to_redact)
+            trajectory = _load_trajectory(runtime_trajectory_path, secret_to_redact)
             if not trajectory:
                 if not error:
                     error = "mini-swe-agent did not write a trajectory"
@@ -469,7 +473,7 @@ def run_mini_swe_agent_inference(
                     "messages": [],
                     "trajectory_format": "swebench-mini-swe-agent-error-1",
                 }
-                trajectory_path.write_text(json.dumps(trajectory, indent=2))
+            archived_trajectory_path.write_text(json.dumps(trajectory, indent=2))
             if repo_dir:
                 try:
                     patch = _repair_patch(
@@ -517,3 +521,4 @@ def run_mini_swe_agent_inference(
                     progress.update(1)
     finally:
         shutil.rmtree(global_config_dir, ignore_errors=True)
+        shutil.rmtree(runtime_trajectory_dir, ignore_errors=True)

@@ -1847,6 +1847,54 @@ def test_evaluation_exception_records_failure_reason(monkeypatch, tmp_path):
     assert "image build failed" in report["demo__repo-1"]["error"]
 
 
+def test_empty_prediction_with_inference_error_is_errored(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.close_logger",
+        lambda *_args: None,
+    )
+
+    result = _evaluate_one(
+        {"instance_id": "demo__repo-1"},
+        {
+            "model_patch": "",
+            "model_name_or_path": "model",
+            "error": "provider: Insufficient Balance",
+        },
+        "run",
+        object(),
+        str(tmp_path),
+        1,
+    )
+
+    assert result["status"] == "errored"
+    assert result["failure_reason"] == "inference_error"
+    assert result["error"] == "provider: Insufficient Balance"
+
+
+def test_empty_prediction_timeout_is_no_pred(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "swebench.eval_pipeline.test_generation_eval.close_logger",
+        lambda *_args: None,
+    )
+
+    result = _evaluate_one(
+        {"instance_id": "demo__repo-1"},
+        {
+            "model_patch": "diff --git a/test.py b/test.py\n",
+            "model_name_or_path": "model",
+            "error": "timeout",
+        },
+        "run",
+        object(),
+        str(tmp_path),
+        1,
+    )
+
+    assert result["status"] == "no-pred"
+    assert result["failure_reason"] == ""
+    assert result["error"] == "timeout"
+
+
 def test_evaluation_rejects_runaway_cached_patch(monkeypatch, tmp_path):
     monkeypatch.setattr(
         "swebench.eval_pipeline.test_generation_eval.MAX_GENERATED_TEST_PATCH_BYTES",
