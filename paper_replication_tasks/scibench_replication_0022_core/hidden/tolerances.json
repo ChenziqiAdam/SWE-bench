@@ -1,0 +1,21 @@
+{
+  "comparison": "fieldwise",
+  "field_rules": {
+    "basis": {
+      "atol": 3.4228175849193576e-11,
+      "rtol": 1e-12
+    },
+    "hessenberg": {
+      "atol": 3.224709388405245e-11,
+      "rtol": 1e-12
+    },
+    "sketched_basis": {
+      "atol": 3.166233941698238e-11,
+      "rtol": 1e-12
+    },
+    "sketched_products": {
+      "atol": 1.5511147921642987e-11,
+      "rtol": 1e-12
+    }
+  }
+}

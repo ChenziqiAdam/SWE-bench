@@ -1,0 +1,173 @@
+{
+  "G7": "PASS",
+  "cases": [
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 6.328271240363392e-15,
+        "max_relative": 2.5230698189675206e-14,
+        "passed": true,
+        "rmse": 1.7164405303444577e-15,
+        "structural_errors": []
+      },
+      "id": "public:case_01",
+      "passed": true,
+      "split": "public"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 2.55351295663786e-15,
+        "max_relative": 5.6413738982030536e-14,
+        "passed": true,
+        "rmse": 4.40102470575441e-16,
+        "structural_errors": []
+      },
+      "id": "public:case_02",
+      "passed": true,
+      "split": "public"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 3.480549182199866e-14,
+        "max_relative": 1.9453923839603066e-12,
+        "passed": true,
+        "rmse": 6.69075135722991e-15,
+        "structural_errors": []
+      },
+      "id": "public:case_03",
+      "passed": true,
+      "split": "public"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 1.1102230246251565e-14,
+        "max_relative": 1.8535256281404583e-13,
+        "passed": true,
+        "rmse": 1.1529267254566688e-15,
+        "structural_errors": []
+      },
+      "id": "hidden:case_01",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 1.2032042029375134e-12,
+        "max_relative": 8.009581193883124e-12,
+        "passed": true,
+        "rmse": 1.2053437765134314e-13,
+        "structural_errors": []
+      },
+      "id": "hidden:case_02",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 8.43769498715119e-15,
+        "max_relative": 9.412409382356716e-13,
+        "passed": true,
+        "rmse": 1.2830474577027612e-15,
+        "structural_errors": []
+      },
+      "id": "hidden:case_03",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 3.68594044175552e-14,
+        "max_relative": 3.0328689824192745e-11,
+        "passed": true,
+        "rmse": 2.6878952354148077e-15,
+        "structural_errors": []
+      },
+      "id": "hidden:case_04",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 5.24691401437849e-12,
+        "max_relative": 2.0547317138965132e-09,
+        "passed": true,
+        "rmse": 5.329118615949475e-13,
+        "structural_errors": []
+      },
+      "id": "hidden:case_05",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 1.4654943925052066e-14,
+        "max_relative": 1.7059049104227989e-12,
+        "passed": true,
+        "rmse": 1.0680536884835315e-15,
+        "structural_errors": []
+      },
+      "id": "hidden:case_06",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 3.221728439584126e-14,
+        "max_relative": 4.0532442854965135e-12,
+        "passed": true,
+        "rmse": 2.997873293712338e-15,
+        "structural_errors": []
+      },
+      "id": "hidden:case_07",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 9.658940314238862e-15,
+        "max_relative": 8.501675553708587e-11,
+        "passed": true,
+        "rmse": 1.0762276682031632e-15,
+        "structural_errors": []
+      },
+      "id": "hidden:case_08",
+      "passed": true,
+      "split": "hidden"
+    }
+  ],
+  "environment": {
+    "platform": "macOS-26.4.1-arm64-arm-64bit",
+    "python": "3.12.7"
+  },
+  "full_success": true,
+  "generated_at": "2026-09-05T17:25:47.870410+00:00",
+  "hidden_score": 1.0,
+  "isolation": {
+    "execution_network": "solution receives only isolated case input",
+    "generation": "fresh ephemeral workspace containing only the final public bundle",
+    "generation_transcript": "ephemeral; not retained",
+    "hidden_data": "introduced only during this post-generation scoring run",
+    "repository_reads": "denied by sandbox-exec profile"
+  },
+  "model": "gpt-5.6-sol",
+  "prompt": "Act as the blind implementation agent for this scientific benchmark. You may use only this directory containing the final public bundle; no repository, curator code, hidden cases, prior responses, or network research is permitted. Infer the required method from public/paper.pdf and public numeric I/O. Implement the general solution in solution.py only. The evaluator runs `python solution.py --input INPUT_JSON --output OUTPUT_DIRECTORY`; write OUTPUT_DIRECTORY/output.json. Reproduce every output key, numeric array, ordering, and shape. NumPy and SciPy are available. Inspect and test all public cases; do not hard-code outputs.",
+  "prompt_sha256": "004b9fd938d8654da4adf5a570751150456d799324a3ad2acf2941711622d9ef",
+  "public_bundle_sha256": "a9239ac323bf9e8d993d6b3da6914d9dd506594ce251492845f305476262e557",
+  "public_score": 1.0,
+  "report_reconstruction": "Generated submission survived a concurrent report-handoff race; all retained claims are independently hash- or runner-verifiable.",
+  "runner_sha256": "148380e5f48218cd603b9b506183c46e4fb6cabb937b462bf9a1cbba6486cf95",
+  "schema_version": 1,
+  "score": 1.0,
+  "solution_sha256": "bc450bd17f6e7b70605ec085e0b8660d6719efa52f7a023e6a3a8611c1ac54f7",
+  "task_id": "scibench_replication_0022_core"
+}

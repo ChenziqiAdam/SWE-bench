@@ -1,0 +1,279 @@
+{
+  "G8": "PASS",
+  "maximum_absolute_discrepancy": 4.278521981149197e-12,
+  "maximum_relative_discrepancy": 3.615413464877281e-09,
+  "provenance": {
+    "adapter_patch_sha256": "9f373373d10ee121eaec56ce516599cc5101f1d32163601c672eda34a4b1e045",
+    "blind_submission_sha256": "bc450bd17f6e7b70605ec085e0b8660d6719efa52f7a023e6a3a8611c1ac54f7",
+    "case_design": [
+      {
+        "case_id": "case_01",
+        "hazard": "strongly nonnormal upper coupling"
+      },
+      {
+        "case_id": "case_02",
+        "hazard": "canonical starting vector with minimal sketch and selection budget one"
+      },
+      {
+        "case_id": "case_03",
+        "hazard": "oversampled sketch"
+      },
+      {
+        "case_id": "case_04",
+        "hazard": "slightly perturbed canonical start"
+      },
+      {
+        "case_id": "case_05",
+        "hazard": "moderately clustered spectrum and gradual Krylov conditioning"
+      },
+      {
+        "case_id": "case_06",
+        "hazard": "long strongly nonnormal recurrence"
+      },
+      {
+        "case_id": "case_07",
+        "hazard": "near-dependent sketch rows with selection margin"
+      },
+      {
+        "case_id": "case_08",
+        "hazard": "largest dimension and iteration count"
+      }
+    ],
+    "cases": [
+      {
+        "case_id": "case_01",
+        "diagnostics": {
+          "maximum_sketched_basis_condition": 5.632474606489282,
+          "minimum_selection_margin": 0.2599567062265312
+        },
+        "input_sha256": "5b22da1e144b91fcebd46da814b7aac841d4c2a04f754f66123031d2b7676b53",
+        "output_sha256": "f036a11174b032dee02ecefb168fb6521d556f8dd77b42d11be713de5231790b",
+        "split": "public"
+      },
+      {
+        "case_id": "case_02",
+        "diagnostics": {
+          "maximum_sketched_basis_condition": 1.3699144369945138,
+          "minimum_selection_margin": 0.09560580348936265
+        },
+        "input_sha256": "5e4ce6b278588671f3c92eec65289487e8afce6b81078a9f5c92d09b6f098ec9",
+        "output_sha256": "9f40317b1d4b9546ef9eaed7fe350afb179c235c64356aa1620bd07f76f48968",
+        "split": "public"
+      },
+      {
+        "case_id": "case_03",
+        "diagnostics": {
+          "maximum_sketched_basis_condition": 1.000000000000001,
+          "minimum_selection_margin": null
+        },
+        "input_sha256": "afd601f4a1d04a464b352b6b2b04e905c16c9b7097495c3f20ae0a947d645b65",
+        "output_sha256": "e925789349588786022f5af3e9ae34592ba845c28ebce4489fa927cbed16879d",
+        "split": "public"
+      },
+      {
+        "case_id": "case_01",
+        "diagnostics": {
+          "maximum_sketched_basis_condition": 9.073284805987248,
+          "minimum_selection_margin": 0.03737143052621095
+        },
+        "input_sha256": "c4b02fc39fcc2f51848dacdf213530f2399a7ea5f7649cd4cc4de994f1c0df3a",
+        "output_sha256": "8c1323372e4eb704015f2447ac108689d110a4ec3f91c343f1e88fa46d9c0488",
+        "split": "hidden"
+      },
+      {
+        "case_id": "case_02",
+        "diagnostics": {
+          "maximum_sketched_basis_condition": 10.841215775261501,
+          "minimum_selection_margin": 0.24159307517769446
+        },
+        "input_sha256": "16c1b6658caa71d97b5209f40e48cfd4aa5dc64ddee796620ce019e3658a3228",
+        "output_sha256": "34ba5ca7540ae3b23e475adeff75fc2a02904e5510050365561a80d8515ea41b",
+        "split": "hidden"
+      },
+      {
+        "case_id": "case_03",
+        "diagnostics": {
+          "maximum_sketched_basis_condition": 2.4038101407029435,
+          "minimum_selection_margin": 0.016325361687438172
+        },
+        "input_sha256": "cf6fe3d5c07001f75bc8302e725baef7d2a6161cfefbda0038812ebda65fbf09",
+        "output_sha256": "d81414639f475f8db9a1b1c231e8a9444e922a65005479bcd662907e8a0b82a1",
+        "split": "hidden"
+      },
+      {
+        "case_id": "case_04",
+        "diagnostics": {
+          "maximum_sketched_basis_condition": 9.827360746253131,
+          "minimum_selection_margin": 0.00569655833646443
+        },
+        "input_sha256": "75fbb4696a31b8fdc593c526fc9a7c2dc5d623b155c67507b2b9e88f8eed4cdc",
+        "output_sha256": "2b54f96ecf2eeac9c407f6889298b4624a86f72035b8585a6218d2b22ecb4db1",
+        "split": "hidden"
+      },
+      {
+        "case_id": "case_05",
+        "diagnostics": {
+          "maximum_sketched_basis_condition": 2.8701062313638315,
+          "minimum_selection_margin": 0.0015961891261984384
+        },
+        "input_sha256": "708461407bdc72ce3a20f5a127f383a289baae3ef030b872dcdc7eaee6280b93",
+        "output_sha256": "5e5a84a0745d2afe5ea48c96a399739b583bf4044370b64b5ab76cd68242df98",
+        "split": "hidden"
+      },
+      {
+        "case_id": "case_06",
+        "diagnostics": {
+          "maximum_sketched_basis_condition": 14.180693305853762,
+          "minimum_selection_margin": 0.025698447461282914
+        },
+        "input_sha256": "d684570a6a68d347fb7b196022d84fa7e639ec589acf67b527bdb7fc591eeda0",
+        "output_sha256": "a63b67d160715c2d11b00d93169dc738092d08f27f7fa0871c83f238be3c7dc8",
+        "split": "hidden"
+      },
+      {
+        "case_id": "case_07",
+        "diagnostics": {
+          "maximum_sketched_basis_condition": 1.478738716589926,
+          "minimum_selection_margin": 0.018618930858451073
+        },
+        "input_sha256": "1415bd2faefda38f0827ce96ae12fbc4665a0a0905c069ef25b455b92b1598de",
+        "output_sha256": "d185d3ce4af24ef6aa56f092341c467c4ec821395aead132403476c186095c60",
+        "split": "hidden"
+      },
+      {
+        "case_id": "case_08",
+        "diagnostics": {
+          "maximum_sketched_basis_condition": 2.9710760094613455,
+          "minimum_selection_margin": 0.01184821396673913
+        },
+        "input_sha256": "a9c992531d580b433ada6aca86b5e5564015ff534f022e1580dcaf40ea9d9d07",
+        "output_sha256": "78720033540ff60130beade20ac9a67bff146c6fccd42332990310ee65c7bafb",
+        "split": "hidden"
+      }
+    ],
+    "cases_bundle_sha256": "59512dccc147400103d1f7febdecdf230af12d3401e31c695bd1a98545a0d206",
+    "commit": "6e145837e4696bd9e26b3d6160b37f97e4188e10",
+    "construction_script_sha256": "25767fb50043b22087ecc9f20fec510248061f88fcfc7171a72f479e40fe0240",
+    "curator_reference_sha256": "0a4839e4fe4bdc6dfa707c540cc43ada40ae0320c49256219baa8f8a2bce9d23",
+    "dependency_artifact_sha256": null,
+    "environment": {
+      "numpy": "1.26.4",
+      "octave": "9.4.0",
+      "platform": "macOS-26.4.1-arm64-arm-64bit",
+      "python": "3.12.7"
+    },
+    "environment_lock_sha256": "27b4beb305d3f716fe387917b92d03b17307bf0118fc5eca2cb5d7ffa7314883",
+    "g6_audit": {
+      "configured_model": "minimax/minimax-m3:free",
+      "independent_contexts": 3,
+      "model_selection": "user_authorized_FALLBACK_MODEL_NAME",
+      "pass_count": 2,
+      "path": "core_algorithm_audits/0022_core_blind.json"
+    },
+    "g7_audit": {
+      "model": "gpt-5.6-sol",
+      "path": "curation_reports/0022_core_g7.json",
+      "score": 1.0,
+      "submission_sha256": "bc450bd17f6e7b70605ec085e0b8660d6719efa52f7a023e6a3a8611c1ac54f7"
+    },
+    "gold_source": "pinned_official_checkout",
+    "independent_audit": {
+      "derived_tolerances": {
+        "comparison": "fieldwise",
+        "field_rules": {
+          "basis": {
+            "atol": 3.4228175849193576e-11,
+            "rtol": 1e-12
+          },
+          "hessenberg": {
+            "atol": 3.224709388405245e-11,
+            "rtol": 1e-12
+          },
+          "sketched_basis": {
+            "atol": 3.166233941698238e-11,
+            "rtol": 1e-12
+          },
+          "sketched_products": {
+            "atol": 1.5511147921642987e-11,
+            "rtol": 1e-12
+          }
+        }
+      },
+      "maximum_absolute_discrepancy": 4.278521981149197e-12,
+      "maximum_relative_discrepancy": 3.615413464877281e-09,
+      "status": "passed"
+    },
+    "independent_implementation_sha256": "a78aadcbd5fe3a7a8e6226480f58a4b95c0e0ff08f40d9dc95bbce479c48cb94",
+    "lifecycle": "validated",
+    "official_adapter_sha256": "7a352acc9bab584f4cf9c76d31647b0273c8a721eb809bbc4260157c7222db92",
+    "official_reproduction": {
+      "adapter_sha256": "7a352acc9bab584f4cf9c76d31647b0273c8a721eb809bbc4260157c7222db92",
+      "clean_checkout_bundle_sha256": [
+        "5656896a9132e57597da45ea28c0025145163934bf31aa9de1b93d0e0f161b40",
+        "5656896a9132e57597da45ea28c0025145163934bf31aa9de1b93d0e0f161b40"
+      ],
+      "dependency_artifact_sha256": null,
+      "environment_lock_sha256": "27b4beb305d3f716fe387917b92d03b17307bf0118fc5eca2cb5d7ffa7314883",
+      "raw_and_normalized_outputs": "curation_reports/official_runs/0022_core",
+      "run_hashes": [
+        "5656896a9132e57597da45ea28c0025145163934bf31aa9de1b93d0e0f161b40",
+        "5656896a9132e57597da45ea28c0025145163934bf31aa9de1b93d0e0f161b40"
+      ],
+      "two_clean_runs_byte_identical": true
+    },
+    "official_source_sha256": "8d16f9492dac4ed4273e52f1ab25dce151378cf455bc3f89ef9f2f1ae5087c2a",
+    "outputs_bundle_sha256": "5656896a9132e57597da45ea28c0025145163934bf31aa9de1b93d0e0f161b40",
+    "paper_sha256": "ba434fecc9ffe9c73279e1a51921c589abc6df3f0cd0619b6b9dab31d21570f0",
+    "paper_version": "arXiv:2306.03592v3",
+    "repository": "https://github.com/simunec/sketch-select-arnoldi",
+    "runner_sha256": "148380e5f48218cd603b9b506183c46e4fb6cabb937b462bf9a1cbba6486cf95",
+    "schema_version": 4,
+    "task_id": "scibench_replication_0022_core",
+    "tolerances": {
+      "comparison": "fieldwise",
+      "field_rules": {
+        "basis": {
+          "atol": 3.4228175849193576e-11,
+          "rtol": 1e-12
+        },
+        "hessenberg": {
+          "atol": 3.224709388405245e-11,
+          "rtol": 1e-12
+        },
+        "sketched_basis": {
+          "atol": 3.166233941698238e-11,
+          "rtol": 1e-12
+        },
+        "sketched_products": {
+          "atol": 1.5511147921642987e-11,
+          "rtol": 1e-12
+        }
+      }
+    }
+  },
+  "schema_version": 1,
+  "status": "oracle_passed",
+  "task_id": "scibench_replication_0022_core",
+  "tolerances": {
+    "comparison": "fieldwise",
+    "field_rules": {
+      "basis": {
+        "atol": 3.4228175849193576e-11,
+        "rtol": 1e-12
+      },
+      "hessenberg": {
+        "atol": 3.224709388405245e-11,
+        "rtol": 1e-12
+      },
+      "sketched_basis": {
+        "atol": 3.166233941698238e-11,
+        "rtol": 1e-12
+      },
+      "sketched_products": {
+        "atol": 1.5511147921642987e-11,
+        "rtol": 1e-12
+      }
+    }
+  },
+  "two_clean_official_runs_match": true
+}

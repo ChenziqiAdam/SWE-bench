@@ -1,0 +1,41 @@
+{
+  "comparison": "fieldwise",
+  "field_rules": {
+    "beta": {
+      "atol": 8.415668162342627e-10,
+      "rtol": 8.791243236641051e-09
+    },
+    "beta_standard_errors": {
+      "atol": 1.638298385842063e-09,
+      "rtol": 5e-10
+    },
+    "direct_effects": {
+      "atol": 5e-10,
+      "rtol": 8.790937718328611e-09
+    },
+    "indirect_effects": {
+      "atol": 5e-10,
+      "rtol": 6.782599510444176e-09
+    },
+    "pooled_r2": {
+      "atol": 5e-10,
+      "rtol": 5e-10
+    },
+    "r2_by_equation": {
+      "atol": 5e-10,
+      "rtol": 5e-10
+    },
+    "rho": {
+      "atol": 5e-10,
+      "rtol": 2.035746023674707e-09
+    },
+    "rho_standard_errors": {
+      "atol": 5e-10,
+      "rtol": 5e-10
+    },
+    "total_effects": {
+      "atol": 5.159028759749162e-10,
+      "rtol": 8.828720567955896e-09
+    }
+  }
+}

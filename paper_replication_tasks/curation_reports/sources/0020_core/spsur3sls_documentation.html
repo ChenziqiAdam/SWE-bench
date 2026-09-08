@@ -1,0 +1,515 @@
+<!DOCTYPE html><html><head><title>R: Three Stages Least Squares estimation,3sls, of spatial SUR...</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css">
+<script type="text/javascript">
+const macros = { "\\R": "\\textsf{R}", "\\code": "\\texttt"};
+function processMathHTML() {
+    var l = document.getElementsByClassName('reqn');
+    for (let e of l) { katex.render(e.textContent, e, { throwOnError: false, macros }); }
+    return;
+}</script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"
+    onload="processMathHTML();"></script>
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body><div class="container"><main>
+
+<table style="width: 100%;"><tr><td>spsur3sls {spsur}</td><td style="text-align: right;">R Documentation</td></tr></table>
+
+<h2>Three Stages Least Squares estimation,3sls, of spatial SUR models.</h2>
+
+<h3>Description</h3>
+
+<p>The function estimates spatial SUR models using three stages
+least squares, where the instruments are obtained from the spatial lags
+of the <em>X</em> variables, assumed to be exogenous. The number of 
+equations, time periods and spatial units is not restricted. The user can 
+choose between a Spatial Durbin Model or a Spatial Lag Model, as described 
+below. The estimation procedure allows for the introduction of linear 
+restrictions on the <code class="reqn">\beta</code> parameters associated to the regressors.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class='language-R'>spsur3sls (formula = NULL, data = NULL, na.action,
+                  R = NULL, b = NULL, listw = NULL, 
+                  zero.policy = NULL, X= NULL, Y = NULL, G = NULL, 
+                  N = NULL, Tm = NULL, p = NULL,  
+                  type = "slm", Durbin = NULL, maxlagW = NULL,
+                  trace = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr><td><code id="formula">formula</code></td>
+<td>
+<p>An object type <code><a href="../../Formula/help/Formula.html">Formula</a></code> 
+similar to objects created with the package <span class="pkg">Formula</span> 
+describing the equations to be estimated in the model. 
+This model may contain several responses (explained 
+variables) and a varying number of regressors in each equation.</p>
+</td></tr>
+<tr><td><code id="data">data</code></td>
+<td>
+<p>An object of class data.frame or a matrix.</p>
+</td></tr>
+<tr><td><code id="na.action">na.action</code></td>
+<td>
+<p>A function (default <code>options("na.action")</code>),
+can also be <code>na.omit</code> or <code>na.exclude</code> with consequences 
+for residuals and fitted values. It may be necessary to set 
+<code>zero.policy</code> to <code>TRUE</code> because this subsetting may 
+create no-neighbour observations.</p>
+</td></tr>
+<tr><td><code id="R">R</code></td>
+<td>
+<p>A row vector of order <em>(1xpr)</em> with  the set of 
+<em>r</em> linear constraints on the <em>beta</em> parameters. The 
+<em>first</em> restriction appears in the first <em>p</em> terms,
+the second restriction in the next <em>p</em> terms and so on. 
+Default = <code>NULL</code>.</p>
+</td></tr>
+<tr><td><code id="b">b</code></td>
+<td>
+<p>A column vector of order <em>(rx1)</em> with the values of 
+the linear restrictions on the <em>beta</em> parameters. 
+Default = <code>NULL</code>.</p>
+</td></tr>
+<tr><td><code id="listw">listw</code></td>
+<td>
+<p>A <code>listw</code> object created for example by 
+<code><a href="../../spdep/help/nb2listw.html">nb2listw</a></code> from <span class="pkg">spatialreg</span> package; if 
+<code><a href="../../spdep/help/nb2listw.html">nb2listw</a></code> not given, set to 
+the same spatial weights as the <code>listw</code> argument. It can
+also be a spatial weighting matrix of order <em>(NxN)</em> instead of
+a <code>listw</code> object. Default = <code>NULL</code>.</p>
+</td></tr>
+<tr><td><code id="zero.policy">zero.policy</code></td>
+<td>
+<p>Similar to the corresponding parameter of 
+<code><a href="../../spatialreg/help/lagsarlm.html">lagsarlm</a></code> function in <span class="pkg">spatialreg</span> package. 
+If <code>TRUE</code> assign zero to the lagged value of zones without 
+neighbours, if <code>FALSE</code> assign <code>NA</code> - causing 
+<code>spsurml()</code> to terminate with an error. Default = <code>NULL</code>.</p>
+</td></tr>
+<tr><td><code id="X">X</code></td>
+<td>
+<p>A data matrix of order <em>(NTmGxp)</em> with the observations
+of the regressors. The number of covariates in the SUR model is 
+<em>p</em> = <code class="reqn">sum(p_{g})</code> where <em><code class="reqn">p_{g}</code></em> is the number 
+of regressors (including the intercept) in the g-th equation, 
+<em>g = 1,...,G</em>). The specification of &quot;X&quot; is only 
+necessary if not available a <code><a href="../../Formula/help/Formula.html">Formula</a></code> and a 
+data frame. Default = <code>NULL</code>.</p>
+</td></tr>
+<tr><td><code id="Y">Y</code></td>
+<td>
+<p>A column vector of order <em>(NTmGx1)</em>, with the 
+observations of the explained variables. The ordering of the data 
+must be (first) equation, (second) time dimension and (third) 
+cross-sectional/spatial units. The specification of <em>Y</em> is 
+only necessary if not available a <code><a href="../../Formula/help/Formula.html">Formula</a></code>
+and a data frame. Default = <code>NULL</code>.</p>
+</td></tr>
+<tr><td><code id="G">G</code></td>
+<td>
+<p>Number of equations.</p>
+</td></tr>
+<tr><td><code id="N">N</code></td>
+<td>
+<p>Number of cross-section or spatial units</p>
+</td></tr>
+<tr><td><code id="Tm">Tm</code></td>
+<td>
+<p>Number of time periods.</p>
+</td></tr>
+<tr><td><code id="p">p</code></td>
+<td>
+<p>Number of regressors by equation, including the intercept. 
+<em>p</em> can be a row vector of order <em>(1xG)</em>, if the number 
+of regressors is not the same for all the equations, or a scalar, 
+if the <em>G</em> equations have the same number of regressors. The 
+specification of <em>p</em> is only necessary if not available a 
+<code><a href="../../Formula/help/Formula.html">Formula</a></code> and a data frame.</p>
+</td></tr>
+<tr><td><code id="type">type</code></td>
+<td>
+<p>Type of spatial model, restricted to cases where lags of the 
+explained variable appear in the rigth hand side of the equations. There 
+are two possibilities: &quot;slm&quot; or &quot;sdm&quot;. Default = &quot;slm&quot;.</p>
+</td></tr>
+<tr><td><code id="Durbin">Durbin</code></td>
+<td>
+<p>If a formula object and model is type &quot;sdm&quot; the subset 
+of explanatory variables to lag for each equation.</p>
+</td></tr>
+<tr><td><code id="maxlagW">maxlagW</code></td>
+<td>
+<p>Maximum spatial lag order of the regressors employed to 
+produce spatial instruments for the spatial lags of the explained variables. 
+Default = 2. Note that in case of <code>type</code>=&quot;sdm&quot;, the default value for 
+<code>maxlagW</code> is set to 3 because the first lag of the regressors, 
+<code class="reqn">WX_{tg}</code>, can not be used as spatial instruments.</p>
+</td></tr>
+<tr><td><code id="trace">trace</code></td>
+<td>
+<p>A logical value to show intermediate results during 
+the estimation process. Default = <code>TRUE</code>.</p>
+</td></tr>
+</table>
+
+
+<h3>Details</h3>
+
+<p><em>spsur3sls</em> can be used to estimate two groups of spatial models:
+</p>
+
+<ul>
+<li><p> &quot;slm&quot;: SUR model with spatial lags of the endogenous in 
+the right hand side of the equations
+</p>
+<p style="text-align: center;"><code class="reqn">y_{tg} = \rho_{g} Wy_{tg} + X_{tg} \beta_{g} + \epsilon_{tg} </code>
+</p>
+
+</li>
+<li><p> &quot;sdm&quot;: SUR model of the Spatial Durbin type
+</p>
+<p style="text-align: center;"><code class="reqn"> y_{tg} = \rho_{g} Wy_{tg} + X_{tg} \beta_{g} +
+             WX_{tg} \theta_{g} + \epsilon_{tg} </code>
+</p>
+
+</li></ul>
+
+<p>where <code class="reqn">y_{tg}</code> and <code class="reqn">\epsilon_{tg}</code> are <em>(Nx1)</em> vectors,
+corresponding to the g-th equation and time period t; <code class="reqn">X_{tg}</code> is 
+the matrix of regressors, of order <em>(Nxp_g)</em>. Moreover, 
+<code class="reqn">\rho_{g}</code> is a spatial coefficient and <em>W</em> is a 
+<em>(NxN)</em> spatial weighting matrix.
+</p>
+<p>By default, the input of this function is an object created with 
+<code><a href="../../Formula/help/Formula.html">Formula</a></code> and a data frame. However, 
+<em>spsur3sls</em> also allows for the direct specification of vector
+<em>Y</em> and matrix <em>X</em>, with the explained variables and  regressors 
+respectively, as inputs (these terms may be the result, for example, 
+of <code><a href="../../spsur/help/dgp_spsur.html">dgp_spsur</a></code>). <br />
+</p>
+<p><code>spsur3sls</code> is a Least-Squares procedure in three-stages designed 
+to circumvent the endogeneity problems due to the presence of spatial 
+lags of the explained variable in the right hand side of the equations 
+do the SUR. The instruments are produced internally by <code>spsur3sls</code> 
+using a sequence of spatial lags of the <em>X</em> variables, which are 
+assumed to be exogenous. The user must define the number of (spatial) 
+instruments to be used in the procedure, through the argument 
+<code>maxlagW</code> (i.e. maxlagW = 3). Then, the collection of instruments 
+generated is <code class="reqn">[WX_{tg}; W*WX_{tg}; W*W*WX_{tg}]</code>. In the case of 
+a <em>SDM</em>, the first lag of the <em>X</em> matrix already is in the 
+equation and cannot be used as instrument. In the example above, the 
+list of instruments for a <em>SDM</em> model would be 
+<code class="reqn">[W^{2}X_{tg}; W^{3}X_{tg}]</code>.
+</p>
+<p>The <em>first</em> stage of the procedure consists in the least squares 
+of the <em>Y</em> variables on the set of instruments. From this 
+estimation, the procedure retains the estimates of <em>Y</em>
+in the so-called <em>Yls</em> variables. In the <em>second</em> stage, 
+the <em>Y</em> variables that appear in the right hand side of the equation 
+are substituted by <em>Yls</em> and the SUR model
+is estimated by Least Squares. The <em>third</em> stage improves the 
+estimates of the second stage through a Feasible Generalized Least Squares 
+estimation of the parameters of the model,
+using the residuals of the <em>second</em> stage to estimate the 
+<em>Sigma</em> matrix.
+</p>
+<p>The arguments <em>R</em> and <em>b</em> allows to introduce linear 
+restrictions on the <em>beta</em> coefficients of the <em>G</em> equations. 
+<code><a href="../../spsur/help/spsur3sls.html">spsur3sls</a></code>, first, introduces the linear restrictions in 
+the SUR model and builds, internally, the corresponding constrained
+SUR model. Then, the function estimates the restricted model which is 
+shown in the output. The function does not compute the unconstrained 
+model nor test for the linear restrictions. The user may ask for the 
+unconstrained estimation using another <code><a href="../../spsur/help/spsurml.html">spsurml</a></code>
+estimation. Moreover, the function <code><a href="../../spsur/help/wald_betas.html">wald_betas</a></code> obtains 
+the Wald test of a set of linear restrictions for an object created 
+previously by <code><a href="../../spsur/help/spsurml.html">spsurml</a></code> or <code><a href="../../spsur/help/spsur3sls.html">spsur3sls</a></code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Object of <code>spsur</code> class with the output of the  three-stages 
+least-squares estimation of the specified spatial model.
+A list with:
+</p>
+
+<table>
+<tr>
+ <td style="text-align: left;">
+    <code>call</code> </td><td style="text-align: left;"> Matched call. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>type</code> </td><td style="text-align: left;">  Type of model specified. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>Durbin</code> </td><td style="text-align: left;"> Value of <code>Durbin</code> argument. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>coefficients</code> </td><td style="text-align: left;"> Estimated coefficients for the regressors. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>deltas</code> </td><td style="text-align: left;"> Estimated spatial coefficients. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>rest.se</code> </td><td style="text-align: left;"> Estimated standard errors for the estimates of 
+      <em><code class="reqn">\beta</code></em> coefficients. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>deltas.se</code> </td><td style="text-align: left;"> Estimated standard errors for the estimates of 
+      the spatial coefficients. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>resvar</code> </td><td style="text-align: left;"> Estimated covariance matrix for the estimates of 
+      <em>beta's</em> and spatial coefficients.</td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>R2</code> </td><td style="text-align: left;"> Coefficient of determination for each equation, 
+      obtained as the squared of the correlation coefficient between the 
+      corresponding explained variable and fitted values. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>R2 pooled</code> </td><td style="text-align: left;"> <em>Global</em> coefficient of determination 
+      obtained for the set of the <em>G</em> equations. 
+      It is computed in the same way than uniequational <code>R2</code> but 
+      joining the dependent variable and fitted values in single vectors 
+      instead of one vector for each equation. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>Sigma</code> </td><td style="text-align: left;"> Estimated covariance matrix for the residuals of the 
+      <em>G</em> equations. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>residuals</code> </td><td style="text-align: left;"> Residuals of the model. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>df.residuals</code> </td><td style="text-align: left;"> Degrees of freedom for the residuals. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>fitted.values</code> </td><td style="text-align: left;"> Estimated values for the dependent variables. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>G</code> </td><td style="text-align: left;"> Number of equations. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>N</code> </td><td style="text-align: left;"> Number of cross-sections or spatial units. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>Tm</code> </td><td style="text-align: left;"> Number of time periods. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>p</code> </td><td style="text-align: left;"> Number of regressors by equation (including intercepts). </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>Y</code> </td><td style="text-align: left;"> If <em>data</em> is <em>NULL</em>, vector <em>Y</em> of the explained variables of the SUR model. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>X</code> </td><td style="text-align: left;"> If <em>data</em> is <em>NULL</em>, matrix <em>X</em> of the regressors of the SUR model. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>W</code> </td><td style="text-align: left;"> Spatial weighting matrix. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>zero.policy</code> </td><td style="text-align: left;"> Logical value of <code>zero.policy</code> . </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+    <code>listw_style</code> </td><td style="text-align: left;">	Style of neighborhood matrix <code>W</code>. </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+ </td>
+</tr>
+
+</table>
+
+
+
+<h3>Author(s)</h3>
+
+
+<table>
+<tr>
+ <td style="text-align: left;">
+  Fernando Lopez  </td><td style="text-align: left;"> <a href="mailto:fernando.lopez@upct.es">fernando.lopez@upct.es</a> </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+  Roman Minguez  </td><td style="text-align: left;"> <a href="mailto:roman.minguez@uclm.es">roman.minguez@uclm.es</a> </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+  Jesus Mur  </td><td style="text-align: left;"> <a href="mailto:jmur@unizar.es">jmur@unizar.es</a> </td>
+</tr>
+<tr>
+ <td style="text-align: left;">
+  </td>
+</tr>
+
+</table>
+
+
+
+<h3>References</h3>
+
+
+<ul>
+<li><p> Anselin, L. (2016) Estimation and Testing in the Spatial Seemingly 
+Unrelated Regression (SUR). <em>Geoda Center for Geospatial Analysis 
+and Computation, Arizona State University</em>. Working Paper 2016-01.
+&lt;doi:10.13140/RG.2.2.15925.40163&gt;
+</p>
+</li>
+<li><p>, Anselin, L. (1988). <em>Spatial Econometrics: Methods and Models</em>. 
+Kluwer Academic Publishers, Dordrecht, The Netherlands (p. 146).
+</p>
+</li>
+<li><p> Anselin, L., Le Gallo, J., Hubert J. (2008) Spatial Panel Econometrics. 
+In <em>The econometrics of panel data. 
+Fundamentals and recent developments in theory and practice</em>. (Chap 19, p. 653)
+</p>
+</li>
+<li><p> Minguez, R., Lopez, F.A. and Mur, J.  (2022).
+spsur: An R Package for Dealing with Spatial 
+Seemingly Unrelated Regression Models. 
+<em>Journal of Statistical Software</em>, 
+104(11), 1&ndash;43.
+&lt;doi:10.18637/jss.v104.i11&gt;
+</p>
+</li>
+<li><p> Lopez, F. A., Minguez, R., Mur, J. (2020). ML versus IV estimates 
+of spatial SUR models: evidence from the case of Airbnb in Madrid urban 
+area. <em>The Annals of Regional Science</em>, 64(2), 313-347.
+&lt;doi:10.1007/s00168-019-00914-1&gt;
+</p>
+</li></ul>
+
+
+
+<h3>See Also</h3>
+
+<p><code><a href="../../spsur/help/spsurml.html">spsurml</a></code>, <code><a href="../../spatialreg/help/stsls.html">stsls</a></code>, 
+<code><a href="../../spsur/help/wald_betas.html">wald_betas</a></code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class='language-R'>
+#################################################
+######## CLASSIC PANEL DATA (G=1; Tm&gt;1)  ########
+#################################################
+
+#### Example 1: Spatial Phillips-Curve. Anselin (1988, p. 203)
+## A SUR model without spatial effects
+rm(list = ls()) # Clean memory
+data(spc)
+lwspc &lt;- spdep::mat2listw(Wspc, style = "W")
+Tformula &lt;- WAGE83 | WAGE81 ~ UN83 + NMR83 + SMSA | UN80 + NMR80 + SMSA
+
+## A SUR-SLM model (3SLS Estimation)
+spcsur_slm_3sls &lt;-spsur3sls(formula = Tformula, data = spc,
+                            type = "slm", listw = lwspc)
+summary(spcsur_slm_3sls)
+print(spcsur_slm_3sls)
+
+if (require(gridExtra)) {
+  pl &lt;- plot(spcsur_slm_3sls, viewplot = FALSE) 
+  grid.arrange(pl$lplbetas[[1]], pl$lplbetas[[2]], 
+               pl$pldeltas, nrow = 3)
+}
+
+## VIP: The output of the whole set of the examples can be examined 
+## by executing demo(demo_spsur3sls, package="spsur")
+
+
+## A SUR-SDM model (3SLS Estimation)
+spcsur_sdm_3sls &lt;- spsur3sls(formula = Tformula, data = spc,
+                             type = "sdm", listw = lwspc)
+summary(spcsur_sdm_3sls)
+if (require(gridExtra)) {
+  pl &lt;- plot(spcsur_sdm_3sls, viewplot = FALSE) 
+  grid.arrange(pl$lplbetas[[1]], pl$lplbetas[[2]], 
+               pl$pldeltas, nrow = 3)
+}
+rm(spcsur_sdm_3sls)
+
+## A SUR-SDM model with different spatial lags in each equation
+ TformulaD &lt;-  ~ UN83 + NMR83 + SMSA | UN80 + NMR80  
+ spcsur_sdm2_3sls &lt;-spsur3sls(formula = Tformula, data = spc,
+                             type = "sdm", listw = lwspc,
+                             Durbin = TformulaD)
+ summary(spcsur_sdm2_3sls)
+if (require(gridExtra)) {
+  pl &lt;- plot(spcsur_sdm2_3sls, viewplot = FALSE) 
+  grid.arrange(pl$lplbetas[[1]], pl$lplbetas[[2]], 
+               pl$pldeltas, nrow = 3)
+}
+rm(spcsur_sdm2_3sls)
+
+
+#################################################
+###  MULTI-DIMENSIONAL PANEL DATA (G&gt;1; Tm&gt;1) ###
+#################################################
+
+#### Example 3: Homicides + Socio-Economics (1960-90)
+# Homicides and selected socio-economic characteristics for continental
+# U.S. counties.
+# Data for four decennial census years: 1960, 1970, 1980 and 1990.
+# https://geodacenter.github.io/data-and-lab/ncovr/
+
+
+rm(list = ls()) # Clean memory
+data(NCOVR, package = "spsur")
+nbncovr &lt;- spdep::poly2nb(NCOVR.sf, queen = TRUE)
+## Some regions with no links...
+lwncovr &lt;- spdep::nb2listw(nbncovr, style = "W", zero.policy = TRUE)
+Tformula &lt;- HR80  | HR90 ~ PS80 + UE80 | PS90 + UE90
+## A SUR-SLM model
+NCOVRSUR_slm_3sls &lt;- spsur3sls(formula = Tformula, data = NCOVR.sf, 
+                               type = "slm", zero.policy = TRUE,
+                               listw = lwncovr, trace = FALSE)
+summary(NCOVRSUR_slm_3sls)
+if (require(gridExtra)) {
+  pl &lt;- plot(NCOVRSUR_slm_3sls, viewplot = FALSE) 
+  grid.arrange(pl$lplbetas[[1]], pl$lplbetas[[2]], 
+               pl$pldeltas, nrow = 3)
+}
+rm(NCOVRSUR_slm_3sls)
+
+</code></pre>
+
+<hr /><div style="text-align: center;">[Package <em>spsur</em> version 1.0.2.5 <a href="00Index.html">Index</a>]</div></main>
+
+</div>
+</body></html>

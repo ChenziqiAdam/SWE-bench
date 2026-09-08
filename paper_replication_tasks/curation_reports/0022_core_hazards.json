@@ -1,0 +1,258 @@
+{
+  "case_by_shortcut": {
+    "correlation_selection": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": true
+    },
+    "euclidean_normalization": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": false
+    },
+    "full_arnoldi": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": true
+    },
+    "incorrect_initial_normalization": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": false
+    },
+    "recent_truncated_arnoldi": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": false
+    },
+    "recompute_after_selection": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": true
+    },
+    "sketch_and_truncate": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": true
+    },
+    "unsketched_selection": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": false
+    }
+  },
+  "coverage_complete": true,
+  "hidden_hazards": [
+    {
+      "case_id": "case_01",
+      "expected_invariant": "finite complete recurrence with sketch-norm-one new column and stable top-budget coefficient support",
+      "hazard": "strongly nonnormal upper coupling",
+      "rejected_shortcuts": [
+        "correlation_selection",
+        "euclidean_normalization",
+        "full_arnoldi",
+        "incorrect_initial_normalization",
+        "recent_truncated_arnoldi",
+        "recompute_after_selection",
+        "sketch_and_truncate",
+        "unsketched_selection"
+      ]
+    },
+    {
+      "case_id": "case_02",
+      "expected_invariant": "finite complete recurrence with sketch-norm-one new column and stable top-budget coefficient support",
+      "hazard": "canonical starting vector with minimal sketch and selection budget one",
+      "rejected_shortcuts": [
+        "correlation_selection",
+        "euclidean_normalization",
+        "full_arnoldi",
+        "incorrect_initial_normalization",
+        "recent_truncated_arnoldi",
+        "recompute_after_selection",
+        "sketch_and_truncate",
+        "unsketched_selection"
+      ]
+    },
+    {
+      "case_id": "case_03",
+      "expected_invariant": "finite complete recurrence with sketch-norm-one new column and stable top-budget coefficient support",
+      "hazard": "oversampled sketch",
+      "rejected_shortcuts": [
+        "correlation_selection",
+        "euclidean_normalization",
+        "full_arnoldi",
+        "incorrect_initial_normalization",
+        "recent_truncated_arnoldi",
+        "recompute_after_selection",
+        "sketch_and_truncate",
+        "unsketched_selection"
+      ]
+    },
+    {
+      "case_id": "case_04",
+      "expected_invariant": "finite complete recurrence with sketch-norm-one new column and stable top-budget coefficient support",
+      "hazard": "slightly perturbed canonical start",
+      "rejected_shortcuts": [
+        "correlation_selection",
+        "euclidean_normalization",
+        "full_arnoldi",
+        "incorrect_initial_normalization",
+        "recent_truncated_arnoldi",
+        "recompute_after_selection",
+        "sketch_and_truncate",
+        "unsketched_selection"
+      ]
+    },
+    {
+      "case_id": "case_05",
+      "expected_invariant": "finite complete recurrence with sketch-norm-one new column and stable top-budget coefficient support",
+      "hazard": "moderately clustered spectrum and gradual Krylov conditioning",
+      "rejected_shortcuts": [
+        "correlation_selection",
+        "euclidean_normalization",
+        "full_arnoldi",
+        "incorrect_initial_normalization",
+        "recent_truncated_arnoldi",
+        "recompute_after_selection",
+        "sketch_and_truncate",
+        "unsketched_selection"
+      ]
+    },
+    {
+      "case_id": "case_06",
+      "expected_invariant": "finite complete recurrence with sketch-norm-one new column and stable top-budget coefficient support",
+      "hazard": "long strongly nonnormal recurrence",
+      "rejected_shortcuts": [
+        "correlation_selection",
+        "euclidean_normalization",
+        "full_arnoldi",
+        "incorrect_initial_normalization",
+        "recent_truncated_arnoldi",
+        "recompute_after_selection",
+        "sketch_and_truncate",
+        "unsketched_selection"
+      ]
+    },
+    {
+      "case_id": "case_07",
+      "expected_invariant": "finite complete recurrence with sketch-norm-one new column and stable top-budget coefficient support",
+      "hazard": "near-dependent sketch rows with selection margin",
+      "rejected_shortcuts": [
+        "correlation_selection",
+        "euclidean_normalization",
+        "full_arnoldi",
+        "incorrect_initial_normalization",
+        "recent_truncated_arnoldi",
+        "recompute_after_selection",
+        "sketch_and_truncate",
+        "unsketched_selection"
+      ]
+    },
+    {
+      "case_id": "case_08",
+      "expected_invariant": "finite complete recurrence with sketch-norm-one new column and stable top-budget coefficient support",
+      "hazard": "largest dimension and iteration count",
+      "rejected_shortcuts": [
+        "correlation_selection",
+        "euclidean_normalization",
+        "full_arnoldi",
+        "incorrect_initial_normalization",
+        "recent_truncated_arnoldi",
+        "recompute_after_selection",
+        "sketch_and_truncate",
+        "unsketched_selection"
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "shortcut_names": [
+    "correlation_selection",
+    "euclidean_normalization",
+    "full_arnoldi",
+    "incorrect_initial_normalization",
+    "recent_truncated_arnoldi",
+    "recompute_after_selection",
+    "sketch_and_truncate",
+    "unsketched_selection"
+  ],
+  "sources": [
+    {
+      "evidence": "Sections 2-4 and 6: canonical pinv selection, conditioning, starting-vector sensitivity, and comparison with truncated Arnoldi",
+      "sha256": "ba434fecc9ffe9c73279e1a51921c589abc6df3f0cd0619b6b9dab31d21570f0",
+      "title": "A sketch-and-select Arnoldi process",
+      "version": "arXiv:2306.03592v3 / SIAM DOI 10.1137/23M1588007"
+    },
+    {
+      "evidence": "paper_ssa_final_test1a.m sketch-and-select Arnoldi (pinv) block",
+      "sha256": "8d16f9492dac4ed4273e52f1ab25dce151378cf455bc3f89ef9f2f1ae5087c2a",
+      "title": "Pinned official MATLAB realization",
+      "version": "6e145837e4696bd9e26b3d6160b37f97e4188e10"
+    }
+  ],
+  "status": "passed",
+  "task_id": "scibench_replication_0022_core"
+}

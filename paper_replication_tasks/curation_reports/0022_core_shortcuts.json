@@ -1,0 +1,120 @@
+{
+  "case_by_shortcut": {
+    "correlation_selection": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": true
+    },
+    "euclidean_normalization": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": false
+    },
+    "full_arnoldi": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": true
+    },
+    "incorrect_initial_normalization": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": false
+    },
+    "recent_truncated_arnoldi": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": false
+    },
+    "recompute_after_selection": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": true
+    },
+    "sketch_and_truncate": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": true
+    },
+    "unsketched_selection": {
+      "hidden:case_01": false,
+      "hidden:case_02": false,
+      "hidden:case_03": false,
+      "hidden:case_04": false,
+      "hidden:case_05": false,
+      "hidden:case_06": false,
+      "hidden:case_07": false,
+      "hidden:case_08": false,
+      "public:case_01": false,
+      "public:case_02": false,
+      "public:case_03": false
+    }
+  },
+  "maximum_shortcut_score": 0.0,
+  "public_memorizer_score": 0.4,
+  "shortcut_hidden_scores": {
+    "correlation_selection": 0.0,
+    "euclidean_normalization": 0.0,
+    "full_arnoldi": 0.0,
+    "incorrect_initial_normalization": 0.0,
+    "recent_truncated_arnoldi": 0.0,
+    "recompute_after_selection": 0.0,
+    "sketch_and_truncate": 0.0,
+    "unsketched_selection": 0.0
+  }
+}

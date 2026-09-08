@@ -1,0 +1,34 @@
+{
+  "references": {
+    "implementation_and_ml_baseline": {
+      "path": "curation_reports/sources/0020_core/spsur_jss_v104i11.pdf",
+      "sha256": "5aef0bab497032bb7b0ccb38b38660060c4788612f943577333e1c5034b0690f"
+    },
+    "ml_vs_iv_baseline": {
+      "path": "curation_reports/sources/0020_core/lopez_minguez_mur_2020_ml_vs_iv.html",
+      "sha256": "7cf864cf6f36cd3d99b8d4d5a2645ef385cf02a1e24af22d34e62ebf225488cf"
+    },
+    "original_spatial_system_methodology": {
+      "path": "curation_reports/sources/0020_core/kelejian_prucha_2004_methodology.html",
+      "sha256": "f685df55a6fbee2b15e5e0ee5e0af6239a78ed72f155bc2166c34df3f278a06e"
+    },
+    "spsur3sls_documentation": {
+      "path": "curation_reports/sources/0020_core/spsur3sls_documentation.html",
+      "sha256": "af386c2cc6f4df7b4ffcbd04eea0c3df32ee53df1169dfad35ab6a7cc7184f75"
+    },
+    "target_paper": {
+      "path": "scibench_replication_0020_core/public/paper.pdf",
+      "sha256": "380ffdb8a8c1e48cf204fb1742aa7f071d8c2898734b1dbe16b9b543570a02f2"
+    }
+  },
+  "hazards": [
+    "The spatially lagged response is endogenous; treating it as an ordinary regressor is inconsistent.",
+    "The documented SLM instrument set includes X, WX, and W2X; dropping the second lag changes weak and strong-dependence behavior.",
+    "SUR efficiency depends on estimating and using off-diagonal cross-equation error covariance.",
+    "Linear equality restrictions must change estimation while reported coefficients remain expanded by equation.",
+    "IV estimates are not bounded by a likelihood Jacobian and can behave differently under strong spatial dependence.",
+    "A fitted spatial-lag coefficient is not a marginal effect; exact direct and spillover impacts use the spatial multiplier."
+  ],
+  "schema_version": 1,
+  "task_id": "scibench_replication_0020_core"
+}

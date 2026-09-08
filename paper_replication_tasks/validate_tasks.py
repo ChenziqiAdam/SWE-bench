@@ -16,8 +16,8 @@ from task_registry import TASK_REGISTRY, active_task_ids, validated_task_ids
 
 ROOT = Path(__file__).resolve().parent
 LEGACY = {"masked_paper.pdf", "submission_schema.json", "gold_output.json", "evaluator.py", "results.json", ".DS_Store"}
-PUBLIC_COUNTS = {"scibench_replication_0011_core": 3, "scibench_replication_0014": 3, "scibench_replication_0017_core": 3, "scibench_replication_0015_core": 3, "scibench_replication_0019": 3, "scibench_replication_0018": 1, "scibench_replication_0018_core": 3, "scibench_replication_0020": 1, "scibench_replication_0021": 3, "scibench_replication_0021_core": 3}
-HIDDEN_COUNTS = {task_id: (8 if task_id in {"scibench_replication_0011_core", "scibench_replication_0015_core", "scibench_replication_0018_core", "scibench_replication_0021_core"} else 5) for task_id in PUBLIC_COUNTS}
+PUBLIC_COUNTS = {"scibench_replication_0011_core": 3, "scibench_replication_0017_core": 3, "scibench_replication_0015_core": 3, "scibench_replication_0018_core": 3, "scibench_replication_0021_core": 3, "scibench_replication_0022_core": 3}
+HIDDEN_COUNTS = {task_id: (8 if task_id in {"scibench_replication_0011_core", "scibench_replication_0015_core", "scibench_replication_0018_core", "scibench_replication_0021_core", "scibench_replication_0022_core"} else 5) for task_id in PUBLIC_COUNTS}
 
 
 class ValidationError(RuntimeError):
@@ -220,7 +220,7 @@ def validate_bundle() -> tuple[int, int]:
             require(isinstance(bundle_hashes, list) and len(bundle_hashes) == 2 and bundle_hashes[0] == bundle_hashes[1], f"clean official run hashes differ: {task_id}")
             require(independent.get("derived_tolerances") == read_json(hidden / "tolerances.json"), f"derived tolerance mismatch: {task_id}")
             evidence_root = ROOT / reproduction["raw_and_normalized_outputs"]
-            if task_id == "scibench_replication_0011_core":
+            if task_id in {"scibench_replication_0011_core", "scibench_replication_0022_core"}:
                 for record in case_records.values():
                     stem = f"{record['split']}_{record['case_id']}"
                     for run_number in (1, 2):

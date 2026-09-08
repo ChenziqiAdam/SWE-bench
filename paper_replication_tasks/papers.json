@@ -5,14 +5,14 @@
       "github_url": "https://github.com/arm61/msd-errors",
       "paper_title": "Accurate Estimation of Diffusion Coefficients and their Uncertainties from Computer Simulation",
       "paper_url": "https://doi.org/10.1021/acs.jctc.4c01249",
-      "task_id": "scibench_replication_0011"
+      "task_id": "scibench_replication_0011_core"
     },
     {
       "build_status": "validated",
       "github_url": "https://github.com/paezha/Accessibility-Sobi-Hamilton",
       "paper_title": "Examining Equity in Accessibility to Bike Share: A Balanced Floating Catchment Area Approach",
       "paper_url": "https://doi.org/10.1016/j.trd.2021.103091",
-      "task_id": "scibench_replication_0017"
+      "task_id": "scibench_replication_0017_core"
     },
     {
       "build_status": "blocked_missing_paper_data",
@@ -29,11 +29,11 @@
       "task_id": null
     },
     {
-      "build_status": "validated",
+      "build_status": "excluded_no_core_algorithm",
       "github_url": "https://github.com/paezha/covid19-environmental-correlates",
       "paper_title": "A Spatio-Temporal Analysis of the Environmental Correlates of COVID-19 Incidence in Spain",
       "paper_url": "https://doi.org/10.1111/gean.12241",
-      "task_id": "scibench_replication_0020"
+      "task_id": null
     },
     {
       "build_status": "scoped_pilot",
@@ -64,32 +64,32 @@
       "task_id": "scibench_replication_0021_core"
     },
     {
-      "build_status": "collected_candidate",
+      "build_status": "validated",
       "github_url": "https://github.com/simunec/sketch-select-arnoldi",
       "paper_title": "A Sketch-and-Select Arnoldi Process",
       "paper_url": "https://doi.org/10.1137/23M1588007",
-      "task_id": null
+      "task_id": "scibench_replication_0022_core"
     },
     {
       "build_status": "validated",
       "github_url": "https://github.com/tchen-research/fixed_sparsity_matrix_approximation",
       "paper_title": "Fixed-Sparsity Matrix Approximation from Matrix-Vector Products",
       "paper_url": "https://doi.org/10.1137/25M1742710",
-      "task_id": "scibench_replication_0015"
+      "task_id": "scibench_replication_0015_core"
     },
     {
       "build_status": "excluded_no_core_algorithm",
       "github_url": "https://github.com/LinkaiMa/SMW",
       "paper_title": "A Note on the Stability of the Sherman\u2013Morrison\u2013Woodbury Formula",
       "paper_url": "https://doi.org/10.1137/25M1747087",
-      "task_id": "scibench_replication_0014"
+      "task_id": null
     },
     {
       "build_status": "excluded_no_core_algorithm",
       "github_url": "https://github.com/RalfZimmermannSDU/StiefelCurvatureSIMAX",
       "paper_title": "High Curvature Means Low Rank: On the Sectional Curvature of Grassmann and Stiefel Manifolds and the Underlying Matrix Trace Inequalities",
       "paper_url": "https://doi.org/10.1137/24M1655755",
-      "task_id": "scibench_replication_0019"
+      "task_id": null
     }
   ],
   "schema_version": 1,
@@ -103,5 +103,5 @@
     "scoped_pilot": "Selected for a scoped feasibility pilot.",
     "validated": "Formal v4 task validated with official gold and an independent scientific audit."
   },
-  "updated_at": "2026-09-04"
+  "updated_at": "2026-09-06"
 }

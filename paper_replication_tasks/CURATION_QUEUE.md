@@ -7,11 +7,11 @@ receives a task ID only after its official workflow and independent scientific a
 
 | Repository | Task ID | Scope |
 |---|---|---|
-| `arm61/msd-errors` | `scibench_replication_0011` | Seeded random walks, MSD, and OLS/WLS/GLS diffusion estimates |
-| `paezha/Accessibility-Sobi-Hamilton` | `scibench_replication_0017` | Deterministic BFCA/2SFCA accessibility and level-of-service using the archived travel-time matrix |
-| `tchen-research/fixed_sparsity_matrix_approximation` | `scibench_replication_0015` | Gaussian-sketch fixed-sparsity matrix approximation: off-pattern error, recovery RMSE/quantiles, and Theorem 1 bound curves |
+| `bjmorgan/kinisi` | `scibench_replication_0011_core` | Approximate Bayesian MSD regression with covariance reconditioning and a nonnegative diffusion posterior. Promoted under an explicit G7 blind-implementation waiver. |
+| `paezha/Accessibility-Sobi-Hamilton` | `scibench_replication_0017_core` | Balanced floating catchment area accessibility and level of service under threshold and active-station configuration inputs |
+| `tchen-research/fixed_sparsity_matrix_approximation` | `scibench_replication_0015_core` | Paper Section 2 core fixed-sparse-matrix approximation: shared Gaussian sketch and row-restricted least-squares recovery |
+| `simunec/sketch-select-arnoldi` | `scibench_replication_0022_core` | Canonical pseudoinverse sketch-and-select Arnoldi basis construction with sparse coefficient support and sketch-norm normalization |
 | `ahilbers/a_posteriori_tsa_storage` | `scibench_replication_0018_core` | Two-stage storage-aware a-posteriori representative-day aggregation and final capacity redesign over explicit numeric `x/n/p/q` inputs. G1-G6/G8 pass; promoted under an explicit G7 blind-implementation waiver with the 0.0/0.0 failure retained. |
-| `paezha/covid19-environmental-correlates` | `scibench_replication_0020` | Panel spatial-SUR-SLM 3SLS estimation (province-level COVID-19 incidence vs. climatic lags) via the pinned `spsur::spsurtime()` workflow across three lag specifications, with and without the paper's cross-equation equality restrictions, plus the paper's LeSage-Pace direct/indirect/total marginal-effects decomposition via `spsur::impactspsur()` (deterministic point estimates only, via exact trace `type="mult"`; the unseeded Monte Carlo significance test is out of scope); independently audited by a from-scratch NumPy 3SLS + closed-form spatial-multiplier reimplementation (max error ~1e-7 across all 6 cases) |
 | `yuwenli925/REIM` | `scibench_replication_0021_core` | rEIM Algorithm 2.1 greedy shared-basis construction and multi-target rational interpolation over explicit finite numerical dictionaries; excludes FEM, BDF2, ROGA, AAA, and figure replication. Two clean pinned replays, independent implementation, curator reference, and blind G7 submission agree across 3 public + 8 hidden cases. |
 
 Identifier `scibench_replication_0010` is retired and is not reusable. Identifier
@@ -19,9 +19,7 @@ Identifier `scibench_replication_0010` is retired and is not reusable. Identifie
 avoid a collision with the then-still-deferred `0015`. `0018` was used for the
 energy-TSA candidate once its full six-seed official-run workflow completed;
 `0019` was used for StiefelCurvatureSIMAX to avoid a collision. `0020` was used
-for the covid19-environmental-correlates task (only 6 distinct paper-faithful
-input combinations exist for this task's parameter space, so it ships 1 public
-+ 5 hidden case instead of the usual 3 public + 5 hidden). `0021` was used for
+for the now-excluded covid19-environmental-correlates task. `0021` was used for
 the REIM task.
 
 ## Excluded after core-algorithm review
@@ -30,6 +28,7 @@ the REIM task.
 |---|---|---|
 | `LinkaiMa/SMW` | `scibench_replication_0014` | The paper contributes stability theorems; the executable SMW update is established machinery rather than a unique new core algorithm. |
 | `RalfZimmermannSDU/StiefelCurvatureSIMAX` | `scibench_replication_0019` | The paper's contribution is theorem-driven geometry; the curvature routines are supporting experiment functions rather than a unique new core algorithm. |
+| `paezha/covid19-environmental-correlates` | `scibench_replication_0020` | Spatial SUR-SLM is the paper's applied scientific model. The repository uses 3SLS, but the paper permits ML or IV, so 3SLS is a replaceable estimator rather than a unique core algorithm; blind G6/G7 consistently selected ML. |
 
 ## Blocked
 

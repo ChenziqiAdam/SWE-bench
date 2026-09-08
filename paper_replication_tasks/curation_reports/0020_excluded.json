@@ -1,0 +1,25 @@
+{
+  "bundle_file_count": 17,
+  "bundle_file_map_sha256": "b9c6e72f9e53d7f03a21f39e83834af42ab1673a2d810aa4c6e369f54c99b625",
+  "candidate_task_id": "scibench_replication_0020_core",
+  "decision": "REJECT_PAPER",
+  "excluded_at": "2026-09-06",
+  "former_manifest_entry_sha256": "6d1f127d102e7602f251fd4c79748dcba6cf958b34cbc69766c9c538b8ba73f5",
+  "gate_basis": ["G1", "G2", "G3"],
+  "historical_artifacts": "preserved",
+  "supporting_blind_evidence": {
+    "G6": "0/3 fallback contexts identified the required 3SLS estimator; all selected ML",
+    "G7": "The public-only implementation selected ML and scored 0.0"
+  },
+  "paper_evidence": {
+    "author_repository_commit": "6e84cf31ef7012daa08168bcdc8315f8ca3ec7c6",
+    "author_repository_source": "Environmental-Correlates-of-COVID19-Spain/Environmental-Correlates-of-COVID19-Spain.Rmd lines 873-941",
+    "author_repository_url": "https://github.com/paezha/covid19-environmental-correlates/blob/6e84cf31ef7012daa08168bcdc8315f8ca3ec7c6/Environmental-Correlates-of-COVID19-Spain/Environmental-Correlates-of-COVID19-Spain.Rmd#L873-L941",
+    "author_repository_uses_3sls": true,
+    "paper_allows_both_ml_and_iv": true
+  },
+  "reason": "The paper's scientific contribution is the applied spatial SUR-SLM contagion model and its impact interpretation. The authors used 3SLS in the replication code, but the paper explicitly permits both ML and IV estimation; replacing 3SLS with ML leaves the main contribution intact. Therefore 3SLS is not a unique core algorithm, and paper plus public I/O does not uniquely identify the benchmark target.",
+  "schema_version": 1,
+  "status": "excluded_no_core_algorithm",
+  "task_id": "scibench_replication_0020"
+}

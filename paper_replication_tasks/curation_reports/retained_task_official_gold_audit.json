@@ -9,24 +9,8 @@
       "sha256": "63c1cdee21063ec66b427eadf8b7ea6a3cdc6bb069f02739ebfd2ec97fe0be93"
     },
     {
-      "path": "curation_tools/stiefelcurv_adapter.py",
-      "sha256": "50713d46ffeff329c58bc7571a1cde6c970739bd2944b0fe1ea548a869f45402"
-    },
-    {
       "path": "curation_tools/reim_adapter.py",
       "sha256": "4850c053e9b4cdfd2730477806ad66ef3e2eabe7dfaf897891bab4a9039ce817"
-    },
-    {
-      "path": "curation_tools/fixed_sparsity_core_adapter.py",
-      "sha256": "e32327b10c2e8037cf349aba77251fb8c95e1858c52e6b1a800b0c8bb51afc74"
-    },
-    {
-      "path": "curation_tools/fixed_sparsity_core_adapter.py",
-      "sha256": "e32327b10c2e8037cf349aba77251fb8c95e1858c52e6b1a800b0c8bb51afc74"
-    },
-    {
-      "path": "curation_tools/fixed_sparsity_core_adapter.py",
-      "sha256": "e32327b10c2e8037cf349aba77251fb8c95e1858c52e6b1a800b0c8bb51afc74"
     },
     {
       "path": "curation_tools/fixed_sparsity_core_adapter.py",
@@ -55,14 +39,6 @@
       "environment_file_sha256": "curation_tools/environments/0017-r-environment.yml (curator-authored, conda-forge r-base=4.3/r-dplyr=1.1.4/r-sf=1.0_20)",
       "finding": "First R-based validated task. All eight cases (3 public, 5 hidden) invoke the pinned sobiEquity::b2sfca()/c2sfca() functions verbatim via a curator Rscript driver against the archived ttm_walk travel-time matrix joined with population_50x50 and sobi_hubs$RACKS_AMOU (README.Rmd's own join chunks), generated twice from independent clean checkouts with byte-identical results (no RNG in the official method). Maximum independent error against the clean-room pandas reimplementation (sobiEquity_scientific.py) is 1.2434497875801753e-14. R was pinned to 4.3 instead of the repository's renv.lock 4.2.1 because conda-forge ships no r-sf build for R 4.2.x; sf is used only for st_drop_geometry() (no coordinate/CRS computation), and the deviation was verified not to affect gold (see curation_reports/accessibility_sobi_hamilton.json).",
       "hidden_case_design": "Five hidden cases isolate distinct regimes along the threshold axis and method/filter combinations documented via a direct threshold sweep of the archived data: case_01 sparse near-minimum-threshold coverage (b2sfca, threshold=1, conventional_active, n_pop=721), case_02 the non-monotonic balancing-factor dip regime where newly-reachable low-rack hubs depress system-wide accessibility despite more population reached (b2sfca, threshold=3, conventional_active), case_03 near-saturation smoothing extreme with equity stations included (b2sfca, threshold=25, all_active), case_04 the unbalanced conventional 2SFCA method at the paper's average threshold (c2sfca, threshold=6, conventional_active), case_05 conventional 2SFCA combined with equity-station inclusion at an extended threshold (c2sfca, threshold=12, all_active).",
-      "status": "validated"
-    },
-    "scibench_replication_0019": {
-      "commit": "1dad75cf55f0f688d59b61e0d9a58b61779efe9f",
-      "environment_file_sha256": "438ed4ae0883e7d7c9e9609e6d30b51de257a60e300facaf87439730b31ae77f",
-      "finding": "First MATLAB/Octave-based validated task (no MATLAB license available locally; GNU Octave 9.4.0 substitutes). All eight cases (3 public, 5 hidden) invoke the four pinned seccurv_Stiefel_canon/seccurv_Stiefel_euclid/seccurv_Grassmann/seccurv_SOn.m functions verbatim via a curator Octave driver on curator-constructed tangent-vector matrices matching Section 4.1 (Figure 1) and Section 4.3 (Figures 3-4) configurations, generated twice from independent clean checkouts with byte-identical results (no RNG in the pinned functions; normalized bundle sha256 263b839de8adc51804879f803a774427f8475f8475b8e27563ff2e56ec12e4fc). Maximum independent error against the clean-room NumPy reimplementation (stiefelcurv_scientific.py) is 3.3306690738754696e-16 absolute / 5.828670879282077e-16 relative (machine epsilon). Verified via full read of all 8 repository files that no MATLAB toolbox functions are used anywhere (core-language only: zeros, linspace, size, norm, trace, rand), so Octave reproduces MATLAB's own evaluation exactly. Paper sourced from the open-access arXiv:2403.01879v3 (confirmed to match the published SIAM title/authors/abstract); full 29-page read confirmed no embedded code listings requiring redaction under the current masking policy. Independently re-verified after the 2026-08-19 hidden-case redesign with a third fresh checkout: all 8 cases reproduce exactly.",
-      "hidden_case_design": "Redesigned 2026-08-19 from an initial coverage-only design (which only varied metric/parameter region without targeting a numerical hazard) to target the hazard every seccurv_*.m formula shares: Gram-Schmidt orthogonalization (normX, then normY after projecting the X-component out of Y) divides by normY, which collapses toward zero for a nearly-parallel-but-still-linearly-independent pair (the paper's own boundary assumption). case_01 is a Stiefel-Euclidean pair with Y = c*X plus a 1e-6 perturbation (post-projection normY ~ 1e-6, vs. O(1) on well-separated cases); case_04 is a Grassmann pair with rank-deficient, near-parallel B-blocks (post-projection normY ~ 9e-8, combining the hazard with low rank); case_05 is a generic but high-dimensional (n=30) SO(n) skew pair testing floating-point accumulation at scale, beyond the paper's own p=4 hand-checkable examples. case_02 (late-stage high-rank Stiefel-canonical Figure-1 point) and case_03 (alternate A3-vs-A2 DDVV pairing under the Euclidean metric) are unchanged from the original coverage design. All three new/changed cases were verified numerically valid (normY > 0, finite curvature) and reproduce to machine epsilon against the independent implementation across two clean official checkouts plus a third independent spot-check.",
-      "scope_exclusion": "script_curvature_SIMAX_exp42.m (Figure 2, Section 4.2) is out of scope: it calls rand(2*p) with no rng(...)/rand('seed',...) call anywhere in the repository, so results are not bit-reproducible without modifying official code; it is also the repository's only runtime/budget risk at paper settings (runs=100, max_dim=1000, matrices up to 2000x2000) and blocks on an interactive input() prompt.",
       "status": "validated"
     },
     "scibench_replication_0021": {

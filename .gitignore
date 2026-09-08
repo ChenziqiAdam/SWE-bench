@@ -172,6 +172,8 @@ notebooks/
 *logs/
 
 PROGRESS.md
+outputs/
+scripts/
 
 AGENTS.md
 CLAUDE.md
