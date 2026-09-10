@@ -1,11 +1,18 @@
 # SciBench paper-replication functional tests (v4)
 
-> Curation status: the active catalog contains eight validated functional tasks.
-> Each is backed by pinned official reproduction and an independent scientific
-> audit; task-specific provenance records the exact case count and environment.
+> Curation status: the active catalog contains seven validated functional tasks
+> (`task_registry.py`). Each is backed by pinned official reproduction (or, for
+> the one port-oracle task, a pinned Python transcription under a recorded G8
+> waiver) and an independent scientific audit; task-specific provenance records
+> the exact case count and environment.
 > Task 0017 is the first R-based task, reproducing sobiEquity's balanced/
 > conventional floating catchment area accessibility methods via a curator
 > Rscript adapter; agents still submit pure Python solutions.
+> Task 0023 replicates the paper's random time-shift distribution computation
+> (Julia `RandomTimeShifts.jl`); with no Julia toolchain in this repo the oracle
+> is a pinned Python port (paper Eq. 19 `(n+1)!` Taylor bound), promoted under a
+> recorded `G8_oracle_validity` waiver and cross-checked against an independently
+> written Python implementation plus the SIR closed form.
 
 The 2026-08-15 fixed-sparsity and a posteriori TSA pilots were deferred before
 ID assignment: their full official-plus-independent workflows exceeded the proposed

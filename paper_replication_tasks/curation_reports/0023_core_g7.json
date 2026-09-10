@@ -1,0 +1,182 @@
+{
+  "G7": "PASS",
+  "cases": [
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 2.021351974690333e-10,
+        "max_relative": 7.357541403102184e-11,
+        "passed": true,
+        "rmse": 4.942360596438528e-11,
+        "structural_errors": []
+      },
+      "id": "public:case_01",
+      "passed": true,
+      "split": "public"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 7.531752999057062e-11,
+        "max_relative": 3.1370016058720505e-11,
+        "passed": true,
+        "rmse": 1.8132134658512563e-11,
+        "structural_errors": []
+      },
+      "id": "public:case_02",
+      "passed": true,
+      "split": "public"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 1.1448730852237077e-11,
+        "max_relative": 1.1448766767803871e-11,
+        "passed": true,
+        "rmse": 5.291940291128535e-12,
+        "structural_errors": []
+      },
+      "id": "public:case_03",
+      "passed": true,
+      "split": "public"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 7.274236768495257e-11,
+        "max_relative": 8.677920795190661e-11,
+        "passed": true,
+        "rmse": 2.850475364210533e-11,
+        "structural_errors": []
+      },
+      "id": "hidden:case_01",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 8.111237548291683e-08,
+        "max_relative": 6.673444730227988e-11,
+        "passed": true,
+        "rmse": 1.4374743725645351e-08,
+        "structural_errors": []
+      },
+      "id": "hidden:case_02",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 3.771856427192688e-08,
+        "max_relative": 8.114708936732392e-11,
+        "passed": true,
+        "rmse": 6.2931977654942665e-09,
+        "structural_errors": []
+      },
+      "id": "hidden:case_03",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 1.4411583038054232e-11,
+        "max_relative": 1.4411593774586962e-11,
+        "passed": true,
+        "rmse": 4.3815796413805e-12,
+        "structural_errors": []
+      },
+      "id": "hidden:case_04",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 1.9952040020143613e-11,
+        "max_relative": 2.1414080616029067e-11,
+        "passed": true,
+        "rmse": 6.9804928805909565e-12,
+        "structural_errors": []
+      },
+      "id": "hidden:case_05",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 8.111237548291683e-08,
+        "max_relative": 1.893763781919869e-09,
+        "passed": true,
+        "rmse": 1.4377623051082623e-08,
+        "structural_errors": []
+      },
+      "id": "hidden:case_06",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 1.0508460768221539e-10,
+        "max_relative": 1.4217750934237421e-10,
+        "passed": true,
+        "rmse": 3.187955629205887e-11,
+        "structural_errors": []
+      },
+      "id": "hidden:case_07",
+      "passed": true,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 7.275957614183426e-12,
+        "max_relative": 2.9879099004083282e-12,
+        "passed": true,
+        "rmse": 1.3566984353081444e-12,
+        "structural_errors": []
+      },
+      "id": "hidden:case_08",
+      "passed": true,
+      "split": "hidden"
+    }
+  ],
+  "codex_version": "codex-cli 0.153.4",
+  "environment": {
+    "platform": "macOS-26.4.1-arm64-arm-64bit",
+    "python": "3.12.7"
+  },
+  "full_success": true,
+  "generated_at": "2026-09-10T14:08:59.311604+00:00",
+  "hidden_score": 1.0,
+  "isolation": {
+    "agent_workspace": "temporary final-public-bundle copy",
+    "context": "fresh ephemeral",
+    "execution_network": "offline; solution receives only isolated input",
+    "hidden_data": "introduced only after agent exit",
+    "network_research": "not requested or permitted",
+    "repository_reads": "denied by sandbox-exec"
+  },
+  "model": "gpt-5.6-sol",
+  "model_final_answer": "Implemented the general branching-process solution in [solution.py](/tmp/0023_core_g7_i_6p5rzj/workspace/solution.py).\n\nVerified all three public cases:\n\n- CDF maximum error: \\(6.8\\times10^{-11}\\)\n- Moment maximum error: \\(2.1\\times10^{-10}\\)\n- Required keys, ordering, arrays, and output path confirmed.",
+  "prompt": "Act as the blind implementation agent for this scientific benchmark. You may use only this directory containing the final public bundle; no repository, curator code, hidden cases, prior responses, or network research is permitted. Infer the required method from public/paper.pdf and the public numeric I/O. Implement the general solution in solution.py only. The evaluator runs `python solution.py --input INPUT_JSON --output OUTPUT_DIRECTORY`; write OUTPUT_DIRECTORY/output.json. Reproduce every output key, numeric array, ordering, and shape. NumPy and SciPy are available. Inspect and test all public cases; do not hard-code outputs.",
+  "prompt_sha256": "c08067937b6b4fb398c5995eb9455ce6ae4e01c3c597a47c3a4575b8833c73ec",
+  "public_bundle_sha256": "a18dbdc70d9e4c04a3cc49e768a986c77474dd9bd75e689d5f6d70aa1d76efeb",
+  "public_score": 1.0,
+  "runner_sha256": "148380e5f48218cd603b9b506183c46e4fb6cabb937b462bf9a1cbba6486cf95",
+  "schema_version": 1,
+  "score": 1.0,
+  "solution_sha256": "6b70c40adc66780db47cf3f771f8f64c63ae223285aa8b0d64a8fdd8c8ebc70e",
+  "task_id": "scibench_replication_0023_core",
+  "usage": {
+    "cache_write_input_tokens": 0,
+    "cached_input_tokens": 521088,
+    "input_tokens": 583547,
+    "output_tokens": 11035,
+    "reasoning_output_tokens": 4369
+  }
+}

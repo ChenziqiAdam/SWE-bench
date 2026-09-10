@@ -1,0 +1,295 @@
+{
+  "G8": "WAIVER",
+  "maximum_absolute_discrepancy": 1.025509845931083e-07,
+  "maximum_relative_discrepancy": 2.529781585521304e-09,
+  "provenance": {
+    "case_design": [
+      {
+        "case_id": "case_01",
+        "hazard": "SIR analytic single founder"
+      },
+      {
+        "case_id": "case_02",
+        "hazard": "near-critical growth"
+      },
+      {
+        "case_id": "case_03",
+        "hazard": "quadratic high extinction"
+      },
+      {
+        "case_id": "case_04",
+        "hazard": "strong type asymmetry"
+      },
+      {
+        "case_id": "case_05",
+        "hazard": "low moment count"
+      },
+      {
+        "case_id": "case_06",
+        "hazard": "low moment count near-critical"
+      },
+      {
+        "case_id": "case_07",
+        "hazard": "large embedding step"
+      },
+      {
+        "case_id": "case_08",
+        "hazard": "multi-founder SEIR"
+      }
+    ],
+    "cases": [
+      {
+        "case_id": "case_01",
+        "diagnostics": {
+          "cdf_min_increment": 0.0018692775350921398,
+          "cdf_tail": 0.9944356151231214,
+          "lambda": 1.4,
+          "mean_moment": 1.7142857142854877,
+          "q_star": 0.4166666666665896
+        },
+        "input_sha256": "db0a86772b0a0c6af7c82b618de2d3410e78e5ab820f8f322c103d36ac01ea59",
+        "output_sha256": "55e3d60d11519fd20bc39e5da414a7d47234795307d0a7e081546a205c84a3a0",
+        "split": "public"
+      },
+      {
+        "case_id": "case_02",
+        "diagnostics": {
+          "cdf_min_increment": -5.055621263072574e-05,
+          "cdf_tail": 0.9999278562208551,
+          "lambda": 0.10596442562694075,
+          "mean_moment": 1.177382506965581,
+          "q_star": 0.6249999999998641
+        },
+        "input_sha256": "5ac37e069e2e0f3809cab40306fa0cec05a61b7bc455e481bd49330c5fa3f044",
+        "output_sha256": "7e0a2688c801c3319dc6abd21c932a10b8d54b95fcaef6f24495b7411d78234a",
+        "split": "public"
+      },
+      {
+        "case_id": "case_03",
+        "diagnostics": {
+          "cdf_min_increment": -0.0001707262191968928,
+          "cdf_tail": 0.9999967583639365,
+          "lambda": 0.11407799603126036,
+          "mean_moment": 0.5352569564976316,
+          "q_star": 0.49999999999997585
+        },
+        "input_sha256": "0c5406759a3f3d5e152f3f284aac18e0144133b239a7c54f972f1caafb0dac4c",
+        "output_sha256": "57e2bcbb242707a1229ab427e7637dceecb2d176ee9498689fba771933405988",
+        "split": "public"
+      },
+      {
+        "case_id": "case_01",
+        "diagnostics": {
+          "cdf_min_increment": 0.002499576933002179,
+          "cdf_tail": 0.9933145525274654,
+          "lambda": 2.4,
+          "mean_moment": 1.2500000000000129,
+          "q_star": 0.20000000000000823
+        },
+        "input_sha256": "95c8bf3473e9703df4dff8bcfe07fbbfacbc6ad2a85f45d8548f71d38d982383",
+        "output_sha256": "35d0e7729b7e269608957f45587675dcb49d66ee89072230226c42a78c9bf711",
+        "split": "hidden"
+      },
+      {
+        "case_id": "case_02",
+        "diagnostics": {
+          "cdf_min_increment": 0.0004748785568865488,
+          "cdf_tail": 0.9975329704694563,
+          "lambda": 0.038244802131872646,
+          "mean_moment": 2.8894919520405753,
+          "q_star": 0.8333333333337781
+        },
+        "input_sha256": "c733d9c40e703dfb18ddd38cedf22be1c68a6b4dbca55a3523a20e8c07b4dd46",
+        "output_sha256": "804f0ffd83314f799ad99a84cd4291334fdb8d0c76e6c7820f0a614e9fa7272b",
+        "split": "hidden"
+      },
+      {
+        "case_id": "case_03",
+        "diagnostics": {
+          "cdf_min_increment": 0.001117822723911699,
+          "cdf_tail": 0.9908212064855636,
+          "lambda": 0.30000000000000004,
+          "mean_moment": 4.333333333331218,
+          "q_star": 0.7692307692306566
+        },
+        "input_sha256": "c59d22c648c586f881c300d15868eceb575315d075e967d9a7bd7e4f934e2b42",
+        "output_sha256": "5166a6795fa5bfd529d492e82d83b7dc3ca4c519748838f6ca6992db2f306c2b",
+        "split": "hidden"
+      },
+      {
+        "case_id": "case_04",
+        "diagnostics": {
+          "cdf_min_increment": -9.224766453785893e-05,
+          "cdf_tail": 1.0,
+          "lambda": 0.13484692283495336,
+          "mean_moment": 0.81489362755184,
+          "q_star": 0.03703703703703378
+        },
+        "input_sha256": "acfad21d006c3cba6dcc63b46f62881e6e545acc637fa85a75b5ad0b39f0c816",
+        "output_sha256": "9e7d1880891405c3bb40a10132c76fca75cb6362837983732034e3f229ae6922",
+        "split": "hidden"
+      },
+      {
+        "case_id": "case_05",
+        "diagnostics": {
+          "cdf_min_increment": -0.0005558220536994174,
+          "cdf_tail": 0.9934026318568498,
+          "lambda": 0.12210766250815375,
+          "mean_moment": 1.0821472438496238,
+          "q_star": 0.5882352941176566
+        },
+        "input_sha256": "558de26f72c114b0901d5933b0b2204894c5409f8f9485c473f2c74273925260",
+        "output_sha256": "e4d76fc7d50d9935b78649dd2e78791c48bbe9f74d5761d0d102ebf3dc699419",
+        "split": "hidden"
+      },
+      {
+        "case_id": "case_06",
+        "diagnostics": {
+          "cdf_min_increment": 0.0,
+          "cdf_tail": 1.0,
+          "lambda": 0.038244802131872646,
+          "mean_moment": 2.8894919520405753,
+          "q_star": 0.8333333333337781
+        },
+        "input_sha256": "c31e7ac507d45ad7381208b1c8623222fa428332d36b9f5189c09b23b8fedf84",
+        "output_sha256": "2222db7b14e3c2087d40b9f91a706db950a6b161d2762065f22c8c0377b96eeb",
+        "split": "hidden"
+      },
+      {
+        "case_id": "case_07",
+        "diagnostics": {
+          "cdf_min_increment": -4.4624680314853116e-05,
+          "cdf_tail": 0.9999743324305538,
+          "lambda": 0.12210766250815375,
+          "mean_moment": 1.0821472438496238,
+          "q_star": 0.5882352941176566
+        },
+        "input_sha256": "65781991ce8402661c06de990979c103958da9841863beaf53af25e8dcc764cd",
+        "output_sha256": "6fa711ec5e10883309757905f57f66375eccf785c94af783129eed6b70ea62cf",
+        "split": "hidden"
+      },
+      {
+        "case_id": "case_08",
+        "diagnostics": {
+          "cdf_min_increment": 0.0008121905874719504,
+          "cdf_tail": 0.9981223060535896,
+          "lambda": 0.2420146297818424,
+          "mean_moment": 3.424300193399487,
+          "q_star": 0.004009047798677071
+        },
+        "input_sha256": "29e8177dbd9ab59a1f5047edc734753d56c16f4a46a000b251cfe2d9c2716692",
+        "output_sha256": "b93477e149f7576033d6f9e26aa53ea9f9e948da27ae79cc441d357e35cbafa0",
+        "split": "hidden"
+      }
+    ],
+    "cases_bundle_sha256": "a5d2f2725f82589c515f427d8ac049d037e005869895a9ff1862d8c943b3f8e2",
+    "cme_table_sha256": "483a16dcb6c1378b1ce6b3ff003b2008bdfa419fa4d7dc5e394950faacd9d3b8",
+    "commit": "baf6da64fce7489503d709a9d1bc99080c5a5aa7",
+    "common_module_sha256": "38309ebf5823fea0b9d9ebe668a40a017e24de53060e1da7c14448f90607f590",
+    "construction_script_sha256": "cde3c9c55cf9d57b51eb5ca1471f67b3c688f38571af043902254eb267c03e75",
+    "curator_reference_sha256": "11b85dd9fb3dca7ebe4eff759be544f10009d489a88d31e5266361f89983c7f3",
+    "environment": {
+      "numpy": "1.26.4",
+      "platform": "macOS-26.4.1-arm64-arm-64bit",
+      "python": "3.12.7"
+    },
+    "environment_lock_sha256": "6f33225a0cffe59a98e6425446e7cb8f458e8cd0bfa27dda2b2c12aedb8da2b7",
+    "g8_status": "waiver",
+    "g8_waiver_reason": "official implementation is Julia (RandomTimeShifts.jl); repo has no Julia toolchain. Oracle is a pinned Python port, cross-checked against an independent Python implementation and the SIR closed form.",
+    "gold_source": "python_port_oracle",
+    "independent_audit": {
+      "derived_tolerances": {
+        "comparison": "fieldwise",
+        "field_rules": {
+          "lambda": {
+            "atol": 1e-10,
+            "rtol": 1e-09
+          },
+          "q_star": {
+            "atol": 1e-10,
+            "rtol": 1e-09
+          },
+          "w_cdf": {
+            "atol": 1.879317501618516e-08,
+            "rtol": 1e-08
+          },
+          "w_moments": {
+            "atol": 8.204078767448664e-07,
+            "rtol": 1e-08
+          }
+        }
+      },
+      "maximum_absolute_discrepancy": 1.025509845931083e-07,
+      "maximum_relative_discrepancy": 2.529781585521304e-09,
+      "status": "passed"
+    },
+    "independent_implementation_sha256": "8e955994c5ad3116f88b6ee0cf5dac28dbc4688a9ed9410458875c8772db6d36",
+    "lifecycle": "candidate_ready",
+    "official_adapter_sha256": "ef984202fb7de428364a4f637dd4778202ec494edb7bbdbd9b67328b98e37373",
+    "official_reproduction": {
+      "adapter_sha256": "ef984202fb7de428364a4f637dd4778202ec494edb7bbdbd9b67328b98e37373",
+      "environment_lock_sha256": "6f33225a0cffe59a98e6425446e7cb8f458e8cd0bfa27dda2b2c12aedb8da2b7",
+      "note": "'official' here means the pinned Python port; see g8_status.",
+      "raw_and_normalized_outputs": "curation_reports/official_runs/0023_core",
+      "run_hashes": [
+        "1c0da8eec013455326080d4ffbabf95e53efb168886fb05094817b8a145d0fe3",
+        "1c0da8eec013455326080d4ffbabf95e53efb168886fb05094817b8a145d0fe3"
+      ],
+      "two_clean_runs_byte_identical": true
+    },
+    "outputs_bundle_sha256": "1c0da8eec013455326080d4ffbabf95e53efb168886fb05094817b8a145d0fe3",
+    "paper_sha256": "228fb9a21cdaa68a52711aaa7f6cf25b5fee0eba429743760c9c70696d49e1dc",
+    "paper_version": "J. Math. Biol. 89:33 (2024), publisher PDF",
+    "port_provenance_sha256": "a622fa4b0cfa864484d274b3dc9f9ded873e3a47ba2d492b3e389cb1b17ab263",
+    "repository": "https://github.com/djmorris7/RandomTimeShifts.jl",
+    "runner_sha256": "148380e5f48218cd603b9b506183c46e4fb6cabb937b462bf9a1cbba6486cf95",
+    "schema_version": 4,
+    "task_id": "scibench_replication_0023_core",
+    "tolerances": {
+      "comparison": "fieldwise",
+      "field_rules": {
+        "lambda": {
+          "atol": 1e-10,
+          "rtol": 1e-09
+        },
+        "q_star": {
+          "atol": 1e-10,
+          "rtol": 1e-09
+        },
+        "w_cdf": {
+          "atol": 1.879317501618516e-08,
+          "rtol": 1e-08
+        },
+        "w_moments": {
+          "atol": 8.204078767448664e-07,
+          "rtol": 1e-08
+        }
+      }
+    }
+  },
+  "schema_version": 1,
+  "status": "oracle_cross_checked",
+  "task_id": "scibench_replication_0023_core",
+  "tolerances": {
+    "comparison": "fieldwise",
+    "field_rules": {
+      "lambda": {
+        "atol": 1e-10,
+        "rtol": 1e-09
+      },
+      "q_star": {
+        "atol": 1e-10,
+        "rtol": 1e-09
+      },
+      "w_cdf": {
+        "atol": 1.879317501618516e-08,
+        "rtol": 1e-08
+      },
+      "w_moments": {
+        "atol": 8.204078767448664e-07,
+        "rtol": 1e-08
+      }
+    }
+  },
+  "two_clean_official_runs_match": true
+}

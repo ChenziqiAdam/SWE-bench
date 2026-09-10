@@ -1,0 +1,309 @@
+{
+  "case_by_shortcut": {
+    "hidden:case_01": {
+      "fixed_n": false,
+      "independent_types": true,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "hidden:case_02": {
+      "fixed_n": true,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "hidden:case_03": {
+      "fixed_n": false,
+      "independent_types": true,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "hidden:case_04": {
+      "fixed_n": false,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "hidden:case_05": {
+      "fixed_n": false,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "hidden:case_06": {
+      "fixed_n": false,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "hidden:case_07": {
+      "fixed_n": true,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "hidden:case_08": {
+      "fixed_n": false,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "public:case_01": {
+      "fixed_n": false,
+      "independent_types": true,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": true,
+      "skip_recursion": false
+    },
+    "public:case_02": {
+      "fixed_n": true,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": true,
+      "skip_recursion": false
+    },
+    "public:case_03": {
+      "fixed_n": false,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": true,
+      "skip_recursion": false
+    }
+  },
+  "contribution_graph": "core_algorithm_audits/0023.md (Contribution graph section)",
+  "coverage_complete": true,
+  "g8_status": "waiver",
+  "hidden_hazards": [
+    {
+      "case_id": "case_01",
+      "expected_invariant": "CDF matches the closed form q + (1-q)(1-e^{-(1-q)w}); w_moments match k!/(1-q)^k (W | W>0)",
+      "hazard": "SIR analytic single founder",
+      "rejected_shortcuts": [
+        "fixed_n",
+        "linear_only",
+        "mean_only_cdf",
+        "moments_only",
+        "no_point_mass",
+        "public_memorizer",
+        "skip_recursion"
+      ]
+    },
+    {
+      "case_id": "case_02",
+      "expected_invariant": "small lambda forces a long recursion (large kappa); the CDF stays monotone and reaches 1",
+      "hazard": "near-critical growth",
+      "rejected_shortcuts": [
+        "independent_types",
+        "linear_only",
+        "mean_only_cdf",
+        "moments_only",
+        "no_point_mass",
+        "public_memorizer",
+        "skip_recursion"
+      ]
+    },
+    {
+      "case_id": "case_03",
+      "expected_invariant": "w_cdf(0) equals the large q_star; the conditional tail is a proper exponential-type decay",
+      "hazard": "quadratic high extinction",
+      "rejected_shortcuts": [
+        "fixed_n",
+        "linear_only",
+        "mean_only_cdf",
+        "moments_only",
+        "no_point_mass",
+        "public_memorizer",
+        "skip_recursion"
+      ]
+    },
+    {
+      "case_id": "case_04",
+      "expected_invariant": "the multinomial moment aggregation over a mixed multi-type founder set is exact",
+      "hazard": "strong type asymmetry",
+      "rejected_shortcuts": [
+        "fixed_n",
+        "independent_types",
+        "linear_only",
+        "mean_only_cdf",
+        "moments_only",
+        "no_point_mass",
+        "public_memorizer",
+        "skip_recursion"
+      ]
+    },
+    {
+      "case_id": "case_05",
+      "expected_invariant": "the 3-moment truncation shifts the CDF ~7e-3 from an n=30 computation; gold is the correct n=3 result",
+      "hazard": "low moment count",
+      "rejected_shortcuts": [
+        "fixed_n",
+        "independent_types",
+        "linear_only",
+        "mean_only_cdf",
+        "moments_only",
+        "no_point_mass",
+        "public_memorizer",
+        "skip_recursion"
+      ]
+    },
+    {
+      "case_id": "case_06",
+      "expected_invariant": "small n and small lambda: the n=4 truncation shifts the CDF ~4e-3 from n=30, long recursion",
+      "hazard": "low moment count near-critical",
+      "rejected_shortcuts": [
+        "fixed_n",
+        "independent_types",
+        "linear_only",
+        "mean_only_cdf",
+        "moments_only",
+        "no_point_mass",
+        "public_memorizer",
+        "skip_recursion"
+      ]
+    },
+    {
+      "case_id": "case_07",
+      "expected_invariant": "the embedded progeny GF over a long step and mu=exp(lambda h) leave the answer h-insensitive within tolerance",
+      "hazard": "large embedding step",
+      "rejected_shortcuts": [
+        "independent_types",
+        "linear_only",
+        "mean_only_cdf",
+        "moments_only",
+        "no_point_mass",
+        "public_memorizer",
+        "skip_recursion"
+      ]
+    },
+    {
+      "case_id": "case_08",
+      "expected_invariant": "phi_W = prod_i phi_{W_i}^{Z0_i}; the multinomial moment aggregation over 7 founders is exact",
+      "hazard": "multi-founder SEIR",
+      "rejected_shortcuts": [
+        "fixed_n",
+        "independent_types",
+        "linear_only",
+        "mean_only_cdf",
+        "moments_only",
+        "no_point_mass",
+        "public_memorizer",
+        "skip_recursion"
+      ]
+    }
+  ],
+  "maximum_shortcut_hidden_score": 0.25,
+  "maximum_shortcut_total_score": 0.2833333333333333,
+  "public_memorizer_score": 0.4,
+  "schema_version": 1,
+  "scientific_contract": "core_algorithm_audits/0023.md (Scientific Contract section)",
+  "shortcut_hidden_scores": {
+    "fixed_n": 0.25,
+    "independent_types": 0.25,
+    "linear_only": 0.0,
+    "mean_only_cdf": 0.0,
+    "moments_only": 0.0,
+    "no_point_mass": 0.0,
+    "public_memorizer": 0.0,
+    "skip_recursion": 0.0
+  },
+  "shortcut_names": [
+    "fixed_n",
+    "independent_types",
+    "linear_only",
+    "mean_only_cdf",
+    "moments_only",
+    "no_point_mass",
+    "public_memorizer",
+    "skip_recursion"
+  ],
+  "shortcuts_rejected_by_case_count": {
+    "fixed_n": 6,
+    "independent_types": 6,
+    "linear_only": 8,
+    "mean_only_cdf": 8,
+    "moments_only": 8,
+    "no_point_mass": 8,
+    "public_memorizer": 8,
+    "skip_recursion": 8
+  },
+  "sources": [
+    {
+      "authors": "Morris, Maclean & Black",
+      "evidence": "Sections 3.2-3.6 (moment engine, Taylor LST, recursive contraction, CME inversion, moment matching); Eq. 41-42 (SIR closed form)",
+      "sha256": "228fb9a21cdaa68a52711aaa7f6cf25b5fee0eba429743760c9c70696d49e1dc",
+      "title": "Computation of random time-shift distributions for stochastic population models",
+      "version": "J. Math. Biol. 89:33 (2024), DOI 10.1007/s00285-024-02132-6"
+    },
+    {
+      "authors": "Barbour, Hamza, Kaspi & Klebaner",
+      "evidence": "Existence of the random time-shift limit that this paper makes computable (origin paper)",
+      "sha256": null,
+      "title": "Approximating the distribution of a random walk with heavy tails / limiting martingale W",
+      "version": "Ann. Appl. Probab. 25 (2015)"
+    },
+    {
+      "authors": "Horvath, Sekcova & Telek",
+      "evidence": "21-term quadrature used for the LST inversion (supplied as cme_coefficients input data)",
+      "sha256": "483a16dcb6c1378b1ce6b3ff003b2008bdfa419fa4d7dc5e394950faacd9d3b8",
+      "title": "A concentrated matrix exponential distribution / numerical inverse Laplace transform",
+      "version": "2020; coefficient table http://inverselaplace.org/"
+    },
+    {
+      "authors": "curator port",
+      "evidence": "rts_core_adapter.py (follows paper Eq. 19 (n+1)! where the Julia uses n!); G8 waiver recorded in curation_reports/0023_core_oracle.json",
+      "sha256": "ef984202fb7de428364a4f637dd4778202ec494edb7bbdbd9b67328b98e37373",
+      "title": "Pinned Python-port oracle of RandomTimeShifts.jl",
+      "version": "baf6da64fce7489503d709a9d1bc99080c5a5aa7"
+    },
+    {
+      "authors": "gpt-5.6-sol, public bundle only",
+      "evidence": "score 1.0, full_success True; core_algorithm_audits/0023_core_g7_submission/",
+      "sha256": "6b70c40adc66780db47cf3f771f8f64c63ae223285aa8b0d64a8fdd8c8ebc70e",
+      "title": "Blind implementation agent submission (G7 PASS)",
+      "version": "curation_reports/0023_core_g7.json"
+    }
+  ],
+  "status": "passed",
+  "task_id": "scibench_replication_0023_core"
+}

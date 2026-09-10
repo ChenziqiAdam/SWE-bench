@@ -1,0 +1,10 @@
+name: scibench-fsl-candidate
+channels:
+  - defaults
+dependencies:
+  - python=3.9
+  - pip=23.0.1
+  - numpy=1.23.1
+  - pip:
+      - qiskit==0.41.0
+      - graycode==1.0.5

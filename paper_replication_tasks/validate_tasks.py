@@ -16,8 +16,11 @@ from task_registry import TASK_REGISTRY, active_task_ids, validated_task_ids
 
 ROOT = Path(__file__).resolve().parent
 LEGACY = {"masked_paper.pdf", "submission_schema.json", "gold_output.json", "evaluator.py", "results.json", ".DS_Store"}
-PUBLIC_COUNTS = {"scibench_replication_0011_core": 3, "scibench_replication_0017_core": 3, "scibench_replication_0015_core": 3, "scibench_replication_0018_core": 3, "scibench_replication_0021_core": 3, "scibench_replication_0022_core": 3}
-HIDDEN_COUNTS = {task_id: (8 if task_id in {"scibench_replication_0011_core", "scibench_replication_0015_core", "scibench_replication_0018_core", "scibench_replication_0021_core", "scibench_replication_0022_core"} else 5) for task_id in PUBLIC_COUNTS}
+PUBLIC_COUNTS = {"scibench_replication_0011_core": 3, "scibench_replication_0017_core": 3, "scibench_replication_0015_core": 3, "scibench_replication_0018_core": 3, "scibench_replication_0021_core": 3, "scibench_replication_0022_core": 3, "scibench_replication_0023_core": 3}
+HIDDEN_COUNTS = {task_id: (8 if task_id in {"scibench_replication_0011_core", "scibench_replication_0015_core", "scibench_replication_0018_core", "scibench_replication_0021_core", "scibench_replication_0022_core", "scibench_replication_0023_core"} else 5) for task_id in PUBLIC_COUNTS}
+# Tasks whose oracle is a pinned Python port of the official (non-Python) code,
+# executed under a recorded G8 waiver rather than a live official checkout.
+PORT_ORACLE_TASKS = {"scibench_replication_0023_core"}
 
 
 class ValidationError(RuntimeError):
@@ -63,6 +66,11 @@ def validate_official(root: Path) -> None:
     pending: list[str] = []
     for task_id in active_task_ids():
         provenance = read_json(ROOT / task_id / "hidden/provenance.json")
+        if task_id in PORT_ORACLE_TASKS:
+            # No official checkout to reproduce; the Python-port oracle is
+            # validated structurally in validate_bundle under a G8 waiver.
+            require(provenance.get("gold_source") == "python_port_oracle", f"port oracle gold source: {task_id}")
+            continue
         if TASK_REGISTRY[task_id]["status"] != "validated":
             # A single checkout is enough to audit the pinned identity of pending
             # work; validated tasks below require two independent checkouts.
@@ -169,6 +177,43 @@ def validate_bundle() -> tuple[int, int]:
         require(row["public_files"] == file_map(public), f"public manifest mismatch: {task_id}")
         require(row["hidden_files"] == file_map(hidden), f"hidden manifest mismatch: {task_id}")
         if registry["status"] == "validated":
+            if task_id in PORT_ORACLE_TASKS:
+                # Python-port oracle under a recorded G8 waiver (no Julia
+                # toolchain).  G1-G7 stand on their own evidence.
+                waivers = provenance.get("validation_waivers") or []
+                require(waivers == ["G8_oracle_validity"], f"unexpected validation_waivers: {task_id}: {waivers}")
+                require(provenance.get("gold_source") == "python_port_oracle", f"unexpected gold source: {task_id}")
+                require(provenance.get("g8_status") == "waiver", f"g8_status not waiver: {task_id}")
+                oracle = ROOT / registry["adapter_path"]
+                require(provenance.get("official_adapter_sha256") == sha256_file(oracle), f"port oracle hash mismatch: {task_id}")
+                require(provenance.get("commit") == registry["commit"], f"port commit mismatch: {task_id}")
+                reproduction = provenance.get("official_reproduction")
+                require(isinstance(reproduction, dict) and reproduction.get("two_clean_runs_byte_identical") is True, f"port runs not byte-identical: {task_id}")
+                run_hashes = reproduction.get("run_hashes")
+                require(isinstance(run_hashes, list) and len(run_hashes) == 2 and run_hashes[0] == run_hashes[1], f"port run hashes differ: {task_id}")
+                require(reproduction.get("adapter_sha256") == sha256_file(oracle), f"port reproduction adapter mismatch: {task_id}")
+                independent = provenance.get("independent_audit")
+                require(isinstance(independent, dict) and independent.get("status") == "passed", f"independent audit missing: {task_id}")
+                require(independent.get("derived_tolerances") == read_json(hidden / "tolerances.json"), f"derived tolerance mismatch: {task_id}")
+                impl_hashes = [
+                    provenance.get("official_adapter_sha256"),
+                    provenance.get("independent_implementation_sha256"),
+                    provenance.get("curator_reference_sha256"),
+                    provenance.get("blind_submission_sha256"),
+                ]
+                require(all(impl_hashes) and len(set(impl_hashes)) == 4, f"implementation provenance not distinct: {task_id}")
+                g7_audit = provenance.get("g7_audit", {})
+                require(g7_audit.get("full_success") is True and g7_audit.get("score") == 1.0, f"G7 not a clean pass: {task_id}")
+                g6_audit = provenance.get("g6_audit", {})
+                require(g6_audit.get("pass_count", 0) >= 2, f"G6 not >= 2/3: {task_id}")
+                evidence_root = ROOT / reproduction["raw_and_normalized_outputs"]
+                for record in case_records.values():
+                    stem = f"{record['split']}_{record['case_id']}"
+                    require((evidence_root / f"independent/{stem}.json").is_file(), f"independent evidence missing: {task_id}/{stem}")
+                    for run_number in (1, 2):
+                        require((evidence_root / f"run_{run_number}/{stem}.json").is_file(), f"port run evidence missing: {task_id}/{stem}/run_{run_number}")
+                validated += 1
+                continue
             if task_id == "scibench_replication_0018_core":
                 require(provenance.get("validation_waivers") == ["G7_blind_implementation"], f"G7 waiver missing: {task_id}")
                 require(provenance.get("known_failures") == ["G7_blind_implementation"], f"G7 failure not retained: {task_id}")

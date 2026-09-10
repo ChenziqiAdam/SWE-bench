@@ -1,0 +1,133 @@
+{
+  "G6": "PASS",
+  "completed_contexts": 3,
+  "configured_model": "gpt-5.6-sol",
+  "configured_primary_model": "gpt-5.6-sol",
+  "generated_at": "2026-09-10T14:10:42.614086+00:00",
+  "independent_contexts_required": 3,
+  "model_selection": "codex_cli_gpt-5.6-sol_protocol_deviation",
+  "pass_count": 3,
+  "prompt": "You are a blind scientific benchmark reviewer. The file paper.txt in your working directory is the complete paper. Below is the public numeric I/O of a benchmark task. Identify the one specific method in the paper that maps these inputs to these outputs. Return ONLY JSON with exactly identified_algorithm (string), paper_evidence (array of objects with page_or_section and concise_quote), and reasoning (string). Do not propose code. No repository, curator files, hidden data, or web research are available.\n\nPUBLIC NUMERIC I/O (worked examples)\n\n== case_01 ==\ninput.json keys: cdf_grid, cme_coefficients, embedding_step, initial_condition, lifetimes, linear_terms, mean_matrix, n_moments, quadratic_terms, taylor_epsilon\n{\"cdf_grid\": [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0], \"cme_coefficients\": {\"beta_imag\": [0, 5.0526738216031815, 10.105347643206363, 15.158021464809545, 20.210695286412726, 25.263369108015908, 30.31604292961909, 35.36871675122227, 40.42139057282545, 45.47406439442864, 50.526738216031816, 55.579412037635, 60.63208585923818, 65.68475968084137, 70.73743350244455, 75.79010732404772, 80.8427811456509, 85.89545496725408, 90.94812878885728, 96.00080261046045, 101.05347643206363], \"beta_real\": [8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444], \"eta_imag\": [0, -8938.026629493128, -6460.818035680991, 3500.2182722823027, 7904.380386623193, 2379.587634928153, -4604.809077888778, -4669.403269710524, 324.36244532844285, 3247.0197930214563, 1702.180809603379, -838.1975774221696, -1283.834059562857, -257.60540657904835, 371.08201509137956, 222.6472363948352, -24.026085178886035, -49.001817877703836, -5.133487379163849, 3.3112869444689634, 0.25951100825067525], \"eta_real\": [4892.76882097293, 3639.563895000703, -6636.718514891709, -7924.503708338811, 279.75212465251906, 6642.49195098979, 4073.276245292947, -2332.684484151443, -4287.690659915167, -1065.2964872403713, 1968.3636074964643, 1687.7593382899179, -86.12182389197194, -778.7777029819406, -307.99553346440314, 128.81526084347016, 119.22350550437042, 4.364609364679164, -15.199431391585998, -1.7882507296626056, 0.39949123248368934]}, \"embedding_step\": 0.1, \"initial_condition\": [1], \"lifetimes\": [3.4], \"linear_terms\": [], \"mean_matrix\": [[1.4]], \"n_moments\": 21, \"quadratic_terms\": [[1, 1, 1, 2.4]], \"taylor_epsilon\": 1e-10}\noutput.json keys: lambda, q_star, w_cdf, w_moments\n{\"lambda\": 1.4, \"q_star\": 0.4166666666665896, \"w_cdf\": [0.4166666666665896, 0.5642188835764687, 0.6744169438501397, 0.7567251150739951, 0.8182077352372289, 0.8641383210953185, 0.8984539588952942, 0.9240941968860656, 0.9432540754290102, 0.9575728026182286, 0.9682745618093216, 0.9762738367121191, 0.982253651442682, 0.9867242099123062, 0.990066853430425, 0.9925663375880293, 0.9944356151231214], \"w_moments\": [1.7142857142854877, 5.877551020407389, 30.227405247809426, 207.27363598497897, 1776.6311655855338]}\n\n== case_02 ==\ninput.json keys: cdf_grid, cme_coefficients, embedding_step, initial_condition, lifetimes, linear_terms, mean_matrix, n_moments, quadratic_terms, taylor_epsilon\n{\"cdf_grid\": [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0], \"cme_coefficients\": {\"beta_imag\": [0, 5.0526738216031815, 10.105347643206363, 15.158021464809545, 20.210695286412726, 25.263369108015908, 30.31604292961909, 35.36871675122227, 40.42139057282545, 45.47406439442864, 50.526738216031816, 55.579412037635, 60.63208585923818, 65.68475968084137, 70.73743350244455, 75.79010732404772, 80.8427811456509, 85.89545496725408, 90.94812878885728, 96.00080261046045, 101.05347643206363], \"beta_real\": [8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444], \"eta_imag\": [0, -8938.026629493128, -6460.818035680991, 3500.2182722823027, 7904.380386623193, 2379.587634928153, -4604.809077888778, -4669.403269710524, 324.36244532844285, 3247.0197930214563, 1702.180809603379, -838.1975774221696, -1283.834059562857, -257.60540657904835, 371.08201509137956, 222.6472363948352, -24.026085178886035, -49.001817877703836, -5.133487379163849, 3.3112869444689634, 0.25951100825067525], \"eta_real\": [4892.76882097293, 3639.563895000703, -6636.718514891709, -7924.503708338811, 279.75212465251906, 6642.49195098979, 4073.276245292947, -2332.684484151443, -4287.690659915167, -1065.2964872403713, 1968.3636074964643, 1687.7593382899179, -86.12182389197194, -778.7777029819406, -307.99553346440314, 128.81526084347016, 119.22350550437042, 4.364609364679164, -15.199431391585998, -1.7882507296626056, 0.39949123248368934]}, \"embedding_step\": 1.0, \"initial_condition\": [1, 0], \"lifetimes\": [0.4, 1.04], \"linear_terms\": [[1, 2, 0.4]], \"mean_matrix\": [[-0.4, 0.4], [0.6400000000000001, -0.4]], \"n_moments\": 30, \"quadratic_terms\": [[2, 1, 2, 0.6400000000000001]], \"taylor_epsilon\": 1e-06}\noutput.json keys: lambda, q_star, w_cdf, w_moments\n{\"lambda\": 0.10596442562694075, \"q_star\": 0.6249999999998641, \"w_cdf\": [0.6249999999998641, 0.7583710391883766, 0.8414589562064767, 0.8953965926766486, 0.9307978954745945, 0.954109156470869, 0.9695308604356763, 0.9796979831749095, 0.9864887215357319, 0.9909970403656314, 0.9939899995065165, 0.9959718365393084, 0.9972850687373925, 0.9981907524787003, 0.9987801188994521, 0.9991486851333569, 0.9994273257270929, 0.9996132139349975, 0.9996413144822716, 0.9998131208127141, 0.9997625646000834, 0.9998975877865399, 0.9998908369239442, 0.9999080349853644, 0.9999278562208551], \"w_moments\": [1.177382506965581, 2.8420776888099164, 10.384016161955525, 50.81580216266745, 311.6582547381565]}\n\n== case_03 ==\ninput.json keys: cdf_grid, cme_coefficients, embedding_step, initial_condition, lifetimes, linear_terms, mean_matrix, n_moments, quadratic_terms, taylor_epsilon\n{\"cdf_grid\": [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0], \"cme_coefficients\": {\"beta_imag\": [0, 5.0526738216031815, 10.105347643206363, 15.158021464809545, 20.210695286412726, 25.263369108015908, 30.31604292961909, 35.36871675122227, 40.42139057282545, 45.47406439442864, 50.526738216031816, 55.579412037635, 60.63208585923818, 65.68475968084137, 70.73743350244455, 75.79010732404772, 80.8427811456509, 85.89545496725408, 90.94812878885728, 96.00080261046045, 101.05347643206363], \"beta_real\": [8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444, 8.6736267672444], \"eta_imag\": [0, -8938.026629493128, -6460.818035680991, 3500.2182722823027, 7904.380386623193, 2379.587634928153, -4604.809077888778, -4669.403269710524, 324.36244532844285, 3247.0197930214563, 1702.180809603379, -838.1975774221696, -1283.834059562857, -257.60540657904835, 371.08201509137956, 222.6472363948352, -24.026085178886035, -49.001817877703836, -5.133487379163849, 3.3112869444689634, 0.25951100825067525], \"eta_real\": [4892.76882097293, 3639.563895000703, -6636.718514891709, -7924.503708338811, 279.75212465251906, 6642.49195098979, 4073.276245292947, -2332.684484151443, -4287.690659915167, -1065.2964872403713, 1968.3636074964643, 1687.7593382899179, -86.12182389197194, -778.7777029819406, -307.99553346440314, 128.81526084347016, 119.22350550437042, 4.364609364679164, -15.199431391585998, -1.7882507296626056, 0.39949123248368934]}, \"embedding_step\": 1.0, \"initial_condition\": [1, 0, 0], \"lifetimes\": [0.5, 0.5, 1.0499999999999998], \"linear_terms\": [[1, 2, 0.5], [2, 3, 0.5]], \"mean_matrix\": [[-0.5, 0.5, 0.0], [0.0, -0.5, 0.5], [0.7, 0.0, -0.35]], \"n_moments\": 25, \"quadratic_terms\": [[3, 1, 3, 0.7]], \"taylor_epsilon\": 1e-06}\noutput.json keys: lambda, q_star, w_cdf, w_moments\n{\"lambda\": 0.11407799603126036, \"q_star\": 0.49999999999997585, \"w_cdf\": [0.49999999999997585, 0.8037330530460092, 0.9225321611536259, 0.9692740430079853, 0.9877596386775133, 0.9950531157978109, 0.9979809381670114, 0.9992122571754521, 0.9995745061967051, 0.999759806942897, 0.9997963624069863, 0.999952251599706, 0.9998833499634112, 0.9999913451072844, 0.9998206188880875, 0.9998950227040417, 0.9998729122230938, 0.9999419019561704, 0.99988450204248, 0.9999722880000106, 0.9998793028581934, 0.9999968629313949, 0.9999070044721404, 1.0, 0.9999967583639365], \"w_moments\": [0.5352569564976316, 0.5749051821543929, 0.9275891471899267, 1.9971598674325715, 5.377808760853191]}",
+  "prompt_sha256": "61dafc868f229cbea7014ea9f12c39725a5a8f87ab8e3fdefbbc078d99352d56",
+  "protocol_deviation": "The .env OpenRouter key is non-functional (free models retired, paid blocked). G6 was run via three fresh ephemeral `codex exec` contexts (gpt-5.6-sol, --ignore-user-config, sandbox-exec denying all repository reads, paper text + public I/O only). A curator must accept this deviation before promotion.",
+  "redaction": "credentials, endpoint, provider IDs, request IDs, and raw envelopes not retained",
+  "runs": [
+    {
+      "actual_model": "gpt-5.6-sol",
+      "answer": {
+        "identified_algorithm": "Probability-estimation (PE) method: Algorithm 1’s moment-expanded Laplace–Stieltjes transform with embedded discrete-time multitype branching-process recursion, followed by concentrated matrix exponential (CME) inversion.",
+        "paper_evidence": [
+          {
+            "concise_quote": "The two hyperparameters are the number of moments used in the LST expansions, n, and the size of the discrete time step, h.",
+            "page_or_section": "Section 3.2, Algorithm 1 (pp. 11–13)"
+          },
+          {
+            "concise_quote": "From the functional equation we can derive a simple recursive algorithm for evaluating the LSTs at θ ∈ C.",
+            "page_or_section": "Section 3.2, Eq. (22) and Algorithm 1 (pp. 12–13)"
+          },
+          {
+            "concise_quote": "We refer to this method as the probability-estimation (PE) method. Inversion of φ(θ)/θ recovers the CDF.",
+            "page_or_section": "Section 3.3, Distribution of W using inversion (p. 14)"
+          },
+          {
+            "concise_quote": "In this work we utilise the concentrated matrix exponential (CME) method ... with 21 terms.",
+            "page_or_section": "Section 3.3 (p. 14)"
+          },
+          {
+            "concise_quote": "The vector q can be calculated by solving for the minimal nonnegative solution ... f_i(q) = q_i.",
+            "page_or_section": "Section 3.3, Eq. (25) (pp. 14–15)"
+          },
+          {
+            "concise_quote": "The nth derivative of the ith MGF yields the nth moment of W_i ... linear or quadratic progeny generating functions ... yield a system of linear equations that when solved gives the moments.",
+            "page_or_section": "Section 3.4, Calculating moments (p. 15)"
+          }
+        ],
+        "reasoning": "The input fields uniquely expose the PE pipeline: the dominant eigenvalue of mean_matrix gives lambda; lifetimes plus linear_terms and quadratic_terms define the branching process used for extinction and recursive moment equations; initial_condition combines the type-specific results into q_star and moments of W; n_moments, taylor_epsilon, and embedding_step control Algorithm 1's Taylor/embedded-process LST evaluation; and the supplied 21-term CME coefficients invert φ(θ)/θ on cdf_grid to produce w_cdf. The alternative MM method fits a generalized-gamma surrogate and does not use CME coefficients or repeated LST inversion."
+      },
+      "configured_model": "gpt-5.6-sol",
+      "judgment": "PE pipeline for the distribution of W identified",
+      "passed": true,
+      "prompt_sha256": "61dafc868f229cbea7014ea9f12c39725a5a8f87ab8e3fdefbbc078d99352d56",
+      "run": 1
+    },
+    {
+      "actual_model": "gpt-5.6-sol",
+      "answer": {
+        "identified_algorithm": "Probability-estimation (PE) method: recursive moment expansion of the Laplace–Stieltjes transform using an embedded branching process, followed by concentrated matrix exponential (CME) inverse-Laplace transformation",
+        "paper_evidence": [
+          {
+            "concise_quote": "a Taylor series expansion ... yields an approximation to the LST in terms of the first n moments of Wi",
+            "page_or_section": "Section 3.2, page 11"
+          },
+          {
+            "concise_quote": "If θ ∉ An,ε, then we can recursively evaluate Eq. (22) κ times until θe−λhκ ∈ An,ε.",
+            "page_or_section": "Section 3.2, page 13, Algorithm 1"
+          },
+          {
+            "concise_quote": "We refer to this method as the probability-estimation (PE) method.",
+            "page_or_section": "Section 3.3, page 14"
+          },
+          {
+            "concise_quote": "Inversion of φ(θ)/θ recovers the CDF ... In this work we utilise the concentrated matrix exponential (CME) method.",
+            "page_or_section": "Section 3.3, page 14"
+          },
+          {
+            "concise_quote": "all the moments can be obtained by differentiating Eq. (27) n times ... [forming] a linear system that can be solved recursively",
+            "page_or_section": "Section 3.4, pages 15–17"
+          }
+        ],
+        "reasoning": "The mean matrix supplies its dominant eigenvalue λ. Lifetimes plus linear and quadratic offspring rates define the continuous-time multitype branching process. The PE procedure recursively calculates moments, solves the progeny fixed-point equations for the extinction mass q_star, controls the Taylor LST approximation with n_moments and taylor_epsilon, extends it using the embedded process with step h, and applies the supplied CME coefficients to invert φ(θ)/θ on cdf_grid. The reported w_moments are the first five moments conditioned on non-extinction. These inputs uniquely distinguish PE from the paper's generalized-gamma moment-matching method."
+      },
+      "configured_model": "gpt-5.6-sol",
+      "judgment": "PE pipeline for the distribution of W identified",
+      "passed": true,
+      "prompt_sha256": "61dafc868f229cbea7014ea9f12c39725a5a8f87ab8e3fdefbbc078d99352d56",
+      "run": 2
+    },
+    {
+      "actual_model": "gpt-5.6-sol",
+      "answer": {
+        "identified_algorithm": "Probability-estimation (PE) method for W using the moment-expanded Laplace–Stieltjes transform, embedded discrete-time multitype branching-process recursion, and concentrated matrix exponential (CME) inversion",
+        "paper_evidence": [
+          {
+            "concise_quote": "The dominant eigenvalue λ is the Malthusian parameter; only the super-critical regime λ > 0 is considered.",
+            "page_or_section": "Section 3.1, p. 9"
+          },
+          {
+            "concise_quote": "A Taylor series gives an approximation to the LST in terms of the first n moments of Wi.",
+            "page_or_section": "Section 3.2, Eq. (17), p. 11"
+          },
+          {
+            "concise_quote": "The embedded-process functional equation recursively evaluates the LST outside the Taylor neighbourhood using h, λ, and the error tolerance.",
+            "page_or_section": "Section 3.2, Eqs. (22)–(23) and Algorithm 1, p. 13"
+          },
+          {
+            "concise_quote": "We refer to this method as the probability-estimation (PE) method; inversion of φ(θ)/θ recovers the CDF, and this work utilises the concentrated matrix exponential (CME) method.",
+            "page_or_section": "Section 3.3, p. 14"
+          },
+          {
+            "concise_quote": "The extinction vector is the minimal nonnegative solution of fi(q)=qi, with the initial-condition extinction probability obtained by multiplying the corresponding powers of qi.",
+            "page_or_section": "Section 3.3, Eq. (25), p. 14"
+          },
+          {
+            "concise_quote": "Differentiating the MGF equations yields a recursive system of linear equations for the moments.",
+            "page_or_section": "Section 3.4, Eqs. (35)–(36), pp. 16–17"
+          },
+          {
+            "concise_quote": "The conditional moments satisfy E[W*^k]=(1−q*)^−1 E[W^k].",
+            "page_or_section": "Section 3.6, p. 19"
+          }
+        ],
+        "reasoning": "The inputs expose every stage of the PE method. The Perron–Frobenius eigenvalue of mean_matrix gives lambda. The lifetime rates and linear/quadratic reproduction terms define the progeny generating functions, whose minimal fixed point gives q_star. Their differentiated MGF equations yield the W moments; division by 1−q_star gives the reported five conditional w_moments. The Taylor LST is controlled by n_moments and taylor_epsilon, extended through the embedded process using embedding_step, combined according to initial_condition, and inverted at cdf_grid using the supplied CME coefficients. The resulting unconditional CDF includes the extinction mass at zero, explaining w_cdf[0]=q_star. Supplying CME coefficients rules out the paper’s alternative moment-matching method and uniquely identifies PE."
+      },
+      "configured_model": "gpt-5.6-sol",
+      "judgment": "PE pipeline for the distribution of W identified",
+      "passed": true,
+      "prompt_sha256": "61dafc868f229cbea7014ea9f12c39725a5a8f87ab8e3fdefbbc078d99352d56",
+      "run": 3
+    }
+  ],
+  "schema_version": 1,
+  "task_id": "scibench_replication_0023_core",
+  "threshold": "at least 2/3"
+}

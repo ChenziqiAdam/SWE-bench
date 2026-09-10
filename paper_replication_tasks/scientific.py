@@ -33,11 +33,17 @@ def energy_tsa_core(case: dict[str, Any]) -> dict[str, Any]:
     return solve_energy_tsa_core(case)
 
 
+def random_time_shift_core(case: dict[str, Any]) -> dict[str, Any]:
+    from curation_tools.rts_core_scientific import solve as solve_random_time_shift_core
+    return solve_random_time_shift_core(case)
+
+
 SOLVERS = {
     "scibench_replication_0011_core": kinisi_core,
     "scibench_replication_0015_core": fixed_sparsity_core,
     "scibench_replication_0017_core": sobi_equity_core,
     "scibench_replication_0018_core": energy_tsa_core,
+    "scibench_replication_0023_core": random_time_shift_core,
 }
 
 

@@ -1,0 +1,21 @@
+{
+  "comparison": "fieldwise",
+  "field_rules": {
+    "lambda": {
+      "atol": 1e-10,
+      "rtol": 1e-09
+    },
+    "q_star": {
+      "atol": 1e-10,
+      "rtol": 1e-09
+    },
+    "w_cdf": {
+      "atol": 1.879317501618516e-08,
+      "rtol": 1e-08
+    },
+    "w_moments": {
+      "atol": 8.204078767448664e-07,
+      "rtol": 1e-08
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "commit": "baf6da64fce7489503d709a9d1bc99080c5a5aa7",
+  "description": "Provenance for rts_core_adapter.py, a Python port of RandomTimeShifts.jl used as the 0023 oracle under a G8 waiver.",
+  "g8_status": "waiver",
+  "paper_doi": "10.1007/s00285-024-02132-6",
+  "repository": "https://github.com/djmorris7/RandomTimeShifts.jl",
+  "source_sha256": {
+    "rts_iltcme_ext.json": "483a16dcb6c1378b1ce6b3ff003b2008bdfa419fa4d7dc5e394950faacd9d3b8",
+    "src/LST_approximation.jl": "0f40fa3bd4a003ee326a7811aeffc219e4399ed59bb22cfcd808c80be58d80d3",
+    "src/RandomTimeShifts.jl": "7024c9a64c7a6288fb61b7e8971d20960fd4383f8a7bfdbe7da1a82bd9990c4b",
+    "src/diff_phi_functional_equations.jl": "e188badef16585f150a7d976de333870d1ad77c687597eb2f1d48d007b17a38f",
+    "src/inverse_LST.jl": "252037405f052e08b4db0ec3c1e9fd57ada1cd51e5b176d9c159c0757f8be67a",
+    "src/moment_matching.jl": "6bee4913237f14ce4057137cb0d2a52c396dc42c347eb0adf4cc8a05d3952fa6",
+    "src/numerically_approx_pdf_cdf.jl": "358cb017a01d1ea0a01e31b48e23fc7f7af232596f739a5a81dea376924752d2"
+  }
+}

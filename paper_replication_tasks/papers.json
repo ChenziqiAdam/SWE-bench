@@ -90,6 +90,29 @@
       "paper_title": "High Curvature Means Low Rank: On the Sectional Curvature of Grassmann and Stiefel Manifolds and the Underlying Matrix Trace Inequalities",
       "paper_url": "https://doi.org/10.1137/24M1655755",
       "task_id": null
+    },
+    {
+      "build_status": "validated",
+      "github_url": "https://github.com/djmorris7/RandomTimeShifts.jl",
+      "paper_title": "Computation of random time-shift distributions for stochastic population models",
+      "paper_url": "https://doi.org/10.1007/s00285-024-02132-6",
+      "task_id": "scibench_replication_0023_core"
+    },
+    {
+      "build_status": "collected_candidate",
+      "github_url": "https://github.com/mcmahon-lab/Fourier-Series-Loader",
+      "note": "Candidate core algorithm: Fourier Series Loader (FSL) construction of a linear-depth quantum circuit preparing a state encoding a truncated (multi-dimensional) Fourier series. G1/G2/G3 strong. Executable closure: target function / Fourier coefficients + qubit count -> gate sequence (or resulting statevector). Zenodo 8331675 reproduces all figures. Needs full audit + blind identification; care that target is the circuit construction, not downstream QSP/readout.",
+      "paper_title": "Linear-depth quantum circuits for loading Fourier approximations of arbitrary functions",
+      "paper_url": "https://doi.org/10.1088/2058-9565/acfc62",
+      "task_id": null
+    },
+    {
+      "build_status": "collected_candidate",
+      "github_url": "https://github.com/kelley-group/mixed-basis-interpolation",
+      "note": "Candidate core algorithm: mixed-basis PES interpolation - trigonometric interpolation on periodic reaction coordinates and polynomial (Chebyshev) interpolation on non-periodic coordinates, with the tensor-product construction. G1/G2/G3 look strong (paper title contribution, unique, non-standard vs plain spline/GP). Executable closure: sampled energies on a grid + query geometries -> interpolated PES values. GitHub URL unconfirmed - locate exact repo from SI before promotion. Needs full audit + blind identification.",
+      "paper_title": "Efficient Approximation of Potential Energy Surfaces with Mixed-Basis Interpolation",
+      "paper_url": "https://doi.org/10.1021/acs.jctc.1c00569",
+      "task_id": null
     }
   ],
   "schema_version": 1,
@@ -103,5 +126,5 @@
     "scoped_pilot": "Selected for a scoped feasibility pilot.",
     "validated": "Formal v4 task validated with official gold and an independent scientific audit."
   },
-  "updated_at": "2026-09-06"
+  "updated_at": "2026-09-10"
 }

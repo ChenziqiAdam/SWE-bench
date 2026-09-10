@@ -1,0 +1,174 @@
+{
+  "case_by_shortcut": {
+    "hidden:case_01": {
+      "fixed_n": false,
+      "independent_types": true,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "hidden:case_02": {
+      "fixed_n": true,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "hidden:case_03": {
+      "fixed_n": false,
+      "independent_types": true,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "hidden:case_04": {
+      "fixed_n": false,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "hidden:case_05": {
+      "fixed_n": false,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "hidden:case_06": {
+      "fixed_n": false,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "hidden:case_07": {
+      "fixed_n": true,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "hidden:case_08": {
+      "fixed_n": false,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": false,
+      "skip_recursion": false
+    },
+    "public:case_01": {
+      "fixed_n": false,
+      "independent_types": true,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": true,
+      "skip_recursion": false
+    },
+    "public:case_02": {
+      "fixed_n": true,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": true,
+      "skip_recursion": false
+    },
+    "public:case_03": {
+      "fixed_n": false,
+      "independent_types": false,
+      "linear_only": false,
+      "mean_only_cdf": false,
+      "moments_only": false,
+      "no_point_mass": false,
+      "public_memorizer": true,
+      "skip_recursion": false
+    }
+  },
+  "gate_evidence": {
+    "G1": "Paper title and abstract make the time-shift distribution computation the sole contribution.",
+    "G2": "PE and MM are one contribution on a shared moment engine; the CDF+moments output defeats partial implementations.",
+    "G3": "Bounded-error Taylor region, recursive embedded-GF contraction, and multinomial moment aggregation are paper-specific.",
+    "G4": "Branching-process spec + hyperparameters close every engineering choice; outputs are deterministic.",
+    "G5": "Eight hidden cases across near-critical, quadratic, multi-type, low-n, large-h, multi-founder, and fine-grid hazards.",
+    "G6": "core_algorithm_audits/0023_core_blind.json",
+    "G7": "curation_reports/0023_core_g7.json",
+    "G8": "WAIVER (Python-port oracle). Evidence: independent Python implementation agreement + SIR closed form."
+  },
+  "gates": {
+    "G1_core_centrality": true,
+    "G2_unique_core": true,
+    "G3_scientific_specificity": true,
+    "G4_executable_closure": true,
+    "G5_hazard_coverage": true,
+    "G8_oracle_validity_waiver_recorded": true,
+    "all_shortcuts_fail_hidden": true,
+    "curator_reference_score_one": true,
+    "full_unredacted_paper": true,
+    "hash_mismatch_rejected": true,
+    "independent_all_cases": true,
+    "invalid_inputs_rejected": true,
+    "invalid_outputs_rejected": true,
+    "nonfinite_json_rejected": true,
+    "oversized_json_rejected": true,
+    "partial_failure_rejected": true,
+    "port_commit_pinned": true,
+    "public_memorizer_cap": true,
+    "sir_analytic_hidden": true,
+    "sir_analytic_public": true,
+    "symlink_rejected": true,
+    "task_md_solution_only": true,
+    "three_public_eight_hidden": true,
+    "timeout_rejected": true,
+    "traversal_rejected": true
+  },
+  "hard_gate_failures": [],
+  "informational": {
+    "G6_blind_identification": true,
+    "G7_blind_implementation": true
+  },
+  "maximum_shortcut_hidden_score": 0.25,
+  "maximum_shortcut_total_score": 0.2833333333333333,
+  "promotion_allowed": true,
+  "public_memorizer_score": 0.4,
+  "reference_score": 1.0,
+  "schema_version": 1,
+  "shortcut_hidden_scores": {
+    "fixed_n": 0.25,
+    "independent_types": 0.25,
+    "linear_only": 0.0,
+    "mean_only_cdf": 0.0,
+    "moments_only": 0.0,
+    "no_point_mass": 0.0,
+    "public_memorizer": 0.0,
+    "skip_recursion": 0.0
+  },
+  "status": "ACCEPT",
+  "task_id": "scibench_replication_0023_core"
+}

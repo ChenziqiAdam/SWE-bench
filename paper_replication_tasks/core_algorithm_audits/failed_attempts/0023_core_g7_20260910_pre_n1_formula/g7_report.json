@@ -1,0 +1,184 @@
+{
+  "G7": "FAIL",
+  "cases": [
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 2.851637215250946e-08,
+        "max_relative": 2.903157663056394e-08,
+        "passed": true,
+        "rmse": 1.1262139453812839e-08,
+        "structural_errors": []
+      },
+      "id": "public:case_01",
+      "passed": true,
+      "split": "public"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 0.00012039652662787503,
+        "max_relative": 0.00012042511981435816,
+        "passed": false,
+        "rmse": 3.8453863774510386e-05,
+        "structural_errors": []
+      },
+      "id": "public:case_02",
+      "passed": false,
+      "split": "public"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 0.00016226485303816318,
+        "max_relative": 0.0001622939655101531,
+        "passed": false,
+        "rmse": 7.097302971633329e-05,
+        "structural_errors": []
+      },
+      "id": "public:case_03",
+      "passed": false,
+      "split": "public"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 7.080132091719094e-08,
+        "max_relative": 7.170646567661716e-08,
+        "passed": false,
+        "rmse": 1.89617196564898e-08,
+        "structural_errors": []
+      },
+      "id": "hidden:case_01",
+      "passed": false,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 6.376362116178313e-05,
+        "max_relative": 6.511132048900012e-05,
+        "passed": false,
+        "rmse": 3.357993558480738e-05,
+        "structural_errors": []
+      },
+      "id": "hidden:case_02",
+      "passed": false,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 3.7689460441470146e-08,
+        "max_relative": 3.068696326881802e-08,
+        "passed": false,
+        "rmse": 1.4278920080113138e-08,
+        "structural_errors": []
+      },
+      "id": "hidden:case_03",
+      "passed": false,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 0.00020450934653237773,
+        "max_relative": 0.00020458101090274592,
+        "passed": false,
+        "rmse": 5.015455819018148e-05,
+        "structural_errors": []
+      },
+      "id": "hidden:case_04",
+      "passed": false,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 169.2826939063293,
+        "max_relative": 1.0,
+        "passed": false,
+        "rmse": 36.09119162625103,
+        "structural_errors": []
+      },
+      "id": "hidden:case_05",
+      "passed": false,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 0.0013308259304631864,
+        "max_relative": 0.0013308259304631864,
+        "passed": false,
+        "rmse": 0.0004357350661811457,
+        "structural_errors": []
+      },
+      "id": "hidden:case_06",
+      "passed": false,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 0.00011206791565354646,
+        "max_relative": 0.0001127627597738771,
+        "passed": false,
+        "rmse": 3.191740203712565e-05,
+        "structural_errors": []
+      },
+      "id": "hidden:case_07",
+      "passed": false,
+      "split": "hidden"
+    },
+    {
+      "critical": true,
+      "diagnostics": {
+        "max_abs": 0.00018089601454929216,
+        "max_relative": 0.00018240029669121374,
+        "passed": false,
+        "rmse": 4.59634452018145e-05,
+        "structural_errors": []
+      },
+      "id": "hidden:case_08",
+      "passed": false,
+      "split": "hidden"
+    }
+  ],
+  "codex_version": "codex-cli 0.153.4",
+  "environment": {
+    "platform": "macOS-26.4.1-arm64-arm-64bit",
+    "python": "3.12.7"
+  },
+  "full_success": false,
+  "generated_at": "2026-09-10T13:39:29.080961+00:00",
+  "hidden_score": 0.0,
+  "isolation": {
+    "agent_workspace": "temporary final-public-bundle copy",
+    "context": "fresh ephemeral",
+    "execution_network": "offline; solution receives only isolated input",
+    "hidden_data": "introduced only after agent exit",
+    "network_research": "not requested or permitted",
+    "repository_reads": "denied by sandbox-exec"
+  },
+  "model": "gpt-5.6-sol",
+  "model_final_answer": "Implemented the general branching-process solution in [solution.py](/tmp/0023_core_g7_yildt6rk/workspace/solution.py).\n\nValidated all three public cases, including output keys, array shapes, ordering, CLI behavior, and JSON generation. Only `solution.py` was added.",
+  "prompt": "Act as the blind implementation agent for this scientific benchmark. You may use only this directory containing the final public bundle; no repository, curator code, hidden cases, prior responses, or network research is permitted. Infer the required method from public/paper.pdf and the public numeric I/O. Implement the general solution in solution.py only. The evaluator runs `python solution.py --input INPUT_JSON --output OUTPUT_DIRECTORY`; write OUTPUT_DIRECTORY/output.json. Reproduce every output key, numeric array, ordering, and shape. NumPy and SciPy are available. Inspect and test all public cases; do not hard-code outputs.",
+  "prompt_sha256": "c08067937b6b4fb398c5995eb9455ce6ae4e01c3c597a47c3a4575b8833c73ec",
+  "public_bundle_sha256": "ba3d0091e55131f030229f89f1903f2275e3362d49f6561f9a690bc525933fde",
+  "public_score": 0.3333333333333333,
+  "rescore_note": "Re-scored the retained blind submission against updated gold/tolerances; generation not re-run.",
+  "rescored_at": "2026-09-10T14:00:02.182392+00:00",
+  "runner_sha256": "148380e5f48218cd603b9b506183c46e4fb6cabb937b462bf9a1cbba6486cf95",
+  "schema_version": 1,
+  "score": 0.13333333333333333,
+  "solution_sha256": "8d27794deace01f41bca9a7c4bb1dbca4469fbd15a8be6d6eee04d9999a70bc2",
+  "task_id": "scibench_replication_0023_core",
+  "usage": {
+    "cache_write_input_tokens": 0,
+    "cached_input_tokens": 2815360,
+    "input_tokens": 2955048,
+    "output_tokens": 26346,
+    "reasoning_output_tokens": 12742
+  }
+}

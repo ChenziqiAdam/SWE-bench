@@ -268,10 +268,11 @@ def evaluate(task_dir: Path, execution_report: Path) -> dict[str, Any]:
     task_dir = task_dir.resolve()
     _validate_bundle_integrity(task_dir)
     provenance = read_json(task_dir / "hidden/provenance.json")
-    if (
-        provenance.get("lifecycle") != "validated"
-        or provenance.get("gold_source") != "pinned_official_checkout"
-    ):
+    # "python_port_oracle" gold is a pinned Python transcription of official code
+    # in a language with no toolchain in this repo, promoted under a recorded
+    # G8 waiver (validate_tasks.py enforces the waiver + cross-check evidence).
+    eligible_gold = {"pinned_official_checkout", "python_port_oracle"}
+    if provenance.get("lifecycle") != "validated" or provenance.get("gold_source") not in eligible_gold:
         raise EvaluationInputError(
             f"task is not eligible for scoring: {provenance.get('lifecycle', 'unknown')}"
         )
