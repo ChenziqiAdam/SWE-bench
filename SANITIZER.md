@@ -151,6 +151,88 @@ arithmetic rather than a domain law, drop it. The bank's value is measured by
 distinct triggered *scientific* root-cause families (section 7), not by
 sanitizer count.
 
+### 5.7 State a general law, not a known bug
+
+A sanitizer must be one the curator could write **without knowing whether the
+repository has a defect at that point**. It asserts a general scientific law
+and lets the evaluation discover whether the code obeys it. It must not be
+reverse-engineered from a specific failing input.
+
+Concretely:
+
+- **Precondition = the input class over which the law holds**, expressed as a
+  continuous or enumerable family (all sequence lengths, all split points, all
+  ionic strengths in a range, all rigid motions, all substitution matrices).
+  It must **not** pin the single degenerate point that happens to fail (the
+  empty sequence, the one-residue peptide, the all-`ATG`/`TGG` coding
+  sequence, a two-element residue set).
+- **Alarm = violation of the law.** It compares two values the law says must
+  agree (a quantity and its transform through the real API, or a quantity and
+  an independent path to it). It must **not** compare the result to a
+  hard-coded constant that is the "right answer" for one input.
+- **Domain of meaning.** The sanitizer must be meaningful across the whole
+  precondition family, not on exactly one input. A degenerate case is in scope
+  only when it is *covered by* a general family -- the empty sequence as the
+  `k = 0` end of a split-additivity law, the one-residue peptide as `L = 1` of
+  a length-decomposition law -- never as a hand-written special case.
+
+Red flags that a candidate is a disguised bug report, not a law:
+
+| Symptom | Why it is wrong |
+|---|---|
+| Precondition names one input or a tiny finite set | The curator already knows that input fails; the sanitizer only re-describes it. |
+| Alarm is `result != <literal>` or `result != 0` | Asserts the expected output of one case, not a relationship that holds generally. |
+| Removing the sanitizer would lose coverage of exactly one input | It is a unit test for a known bug, not a scientific invariant. |
+| The rationale explains a mechanism ("end atoms of the chain are added even when empty") | The curator is describing the bug's cause, which means they worked backward from it. |
+
+Good pattern: the sanitizer states a law over a family; whether any member of
+that family violates it is unknown at design time and is exactly what the
+evaluation measures (SANITIZER.md 5.4). Physical- and chemical-constant
+consistency checks are a natural fit: assert that a constant used in a formula
+(a condensation-water mass, a residue-mass table entry, the gas constant `R`)
+matches the repository's own authoritative table or an accepted reference
+value, without knowing whether it does.
+
+#### 5.7.1 Order of work: law first, triggering later
+
+The construction order is not negotiable:
+
+1. Pick a function with an identifiable scientific quantity.
+2. Write down the law that quantity must obey -- precondition, invariant,
+   observation point, alarm, rationale -- **as a document, before writing any
+   checker code and before running a single input through the function to see
+   what it does.**
+3. Implement the checker from that document.
+4. Only *after* the sanitizer is written and reviewed, and as a **separate
+   activity**, explore whether it can be triggered on the pinned commit
+   (SANITIZER.md 5.4, 8). The result is recorded as audit metadata; it never
+   feeds back into whether the sanitizer is kept.
+
+If you have already run inputs and seen a failure at some spot, you are no
+longer in a position to write an unbiased sanitizer there: you will
+unconsciously shape the precondition and alarm around the failure you saw.
+Either hand that spot to a different curator, or write the law you would have
+written *without* the failure in view and check that the wording does not
+mention it.
+
+#### 5.7.2 The triggerability trap
+
+Finding a bug gives instant feedback -- a trigger fires, the log fills, it
+feels productive. Writing a law that may stay silent forever gives no
+feedback at all. This asymmetry pulls curators toward "find something that
+triggers" and away from "state the invariant that matters". Resist it:
+
+- A bank of well-chosen laws that are **all silent** on the pinned commit is a
+  *success*, not a failure -- it means the code is correct at every point
+  checked, and the bank will catch the first regression that is not.
+- Do not go looking for triggering inputs while designing. Do not prefer a
+  candidate because you already have a witness for it. Do not drop a candidate
+  because you cannot find one.
+- The primary metric (distinct triggered scientific root-cause families) is
+  raw audit data about the code under test. It is **not** a measure of bank
+  quality. The bank's quality is the set of laws it states and whether each is
+  a genuine domain invariant written without foreknowledge of a bug.
+
 ## 6. Scientific Scenarios to Inspect
 
 Manual code scanning should consider more than long-range variable flow.
@@ -211,18 +293,28 @@ Useful code patterns include division, normalization, iterative search,
 windowing, aggregation, casting, unit conversion, translation, complementing,
 matrix operations, and cross-module calls.
 
+This step is a **static read for scientific quantities and their laws**. It is
+not a debugging session: do not run inputs through the function to see whether
+it misbehaves. Finding a concrete failure here biases every sanitizer you then
+write for that spot (SANITIZER.md 5.7.1).
+
 ### Step 3: Formulate the sanitizer
 
-For each candidate, write:
+For each candidate, write, **as a document, before implementing the checker
+and before observing any run of the function**:
 
-- the valid-input precondition;
+- the valid-input precondition -- the input family over which the law holds,
+  never a single failing point (SANITIZER.md 5.7);
 - the scientific invariant;
 - the observation point;
-- the alarm predicate;
+- the alarm predicate -- a comparison of two things the law says must agree,
+  never `result != <literal>`;
 - why a violation would be meaningful;
 - the root-cause family.
 
-Do this before implementing the checker.
+A reader of this document must not be able to tell whether the code has a bug
+at this point. If they can, the candidate was reverse-engineered from a
+failure -- rewrite it or drop it.
 
 ### Step 4: Instrument the code
 
@@ -239,9 +331,18 @@ Reject or revise sanitizers that:
 - omit essential preconditions;
 - merely duplicate another sanitizer without adding an observation point;
 - change normal program behavior;
-- alarm on documented valid behavior.
+- alarm on documented valid behavior;
+- were reverse-engineered from a known failing input: a precondition that pins
+  one degenerate case, or an alarm of the form `result != <literal>` (see
+  5.7).
 
-The review need not establish whether the sanitizer is reachable.
+Review test, applied to the formulation document alone: hand it to someone who
+has not seen the code run. If they can tell that the code fails at this point,
+the sanitizer encodes a known bug -- send it back.
+
+The review need not establish whether the sanitizer is reachable. A sanitizer
+that no known input triggers is accepted on the strength of its law
+(SANITIZER.md 5.4, 5.7.2); do not weaken or discard it for being silent.
 
 ### Step 6: Group related sanitizers
 

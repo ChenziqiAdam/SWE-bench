@@ -245,19 +245,6 @@ SPECS_FMT = {
     },
 }
 
-# Template spec for CMake+CTest/GoogleTest repos.
-# Build commands and test targets must be filled in per PR.
-# Keys are PR number strings.
-SPECS_OPENBABEL = {
-    # Add entries here: "<PR_NUMBER>": {"build": [...], "test_cmd": [...]}
-    # Build pattern:
-    #   "mkdir -p build",
-    #   "cmake -B build -S . -DENABLE_TESTS=ON",
-    #   "cmake --build build --parallel $(nproc) --target <test_target>",
-    # Test pattern:
-    #   "ctest --test-dir build -V -R <test_regex>"
-}
-
 
 def _openmm_python_app_spec(
     test_file: str, test_filter: str, test_class: str | None = None
@@ -504,41 +491,6 @@ def _openmm_cuda_targets_spec(*targets: str, plugin: str | None = None) -> dict:
     }
 
 
-def _openmm_gpu_non_evaluable_spec(reason: str) -> dict:
-    """Exclude a GPU-only regression when no faithful GPU runtime is available."""
-    return {
-        "pre_install": [],
-        "build": [],
-        "test_cmd": [f"echo 'not evaluable: {reason}' && false"],
-        "fail_to_pass": ["scientific_spec::gpu_runtime_required"],
-        "test_generation_use_spec_cmd": True,
-    }
-
-
-def _openmm_source_check_spec(
-    name: str, condition: str, python_app_overlay: bool = False
-) -> dict:
-    """Expose a source/data/documentation-only correction as a parsed test."""
-    nodeid = f"scientific_spec::{name}"
-    spec = {
-        "pre_install": [],
-        "build": [],
-        "test_cmd": [
-            f"if {condition}; then echo '{nodeid} PASSED'; "
-            f"else echo '{nodeid} FAILED'; false; fi"
-        ],
-        "fail_to_pass": [nodeid],
-        # In bug-reproduction mode the generated pytest must supply the oracle;
-        # do not let this fixed source check resolve an empty/irrelevant patch.
-        "test_generation_requires_generated_pytest": True,
-    }
-    if python_app_overlay:
-        app_spec = _openmm_python_app_spec("TestForceField.py", "generated")
-        spec["pre_install"] = app_spec["pre_install"]
-        spec["build"] = app_spec["build"]
-    return spec
-
-
 def _openmm_native_python_spec(
     test_file: str, test_filter: str, *, amoeba: bool = False
 ) -> dict:
@@ -594,35 +546,6 @@ def _openmm_native_python_spec(
         ],
         "fail_to_pass": [f"wrappers/python/tests/{test_file}"],
         "test_generation_use_spec_cmd": True,
-    }
-
-
-def _openmm_python_unit_spec(test_filter: str | list[str]) -> dict:
-    """Run OpenMM Python unit tests against patched simtk.unit modules."""
-    if isinstance(test_filter, list):
-        test_names = test_filter
-    else:
-        test_names = re.findall(r"test[A-Za-z0-9_]+|test_[A-Za-z0-9_]+", test_filter)
-    fallback_tests = [
-        f"wrappers/python/tests/TestAPIUnits.py::TestAPIUnits::{name}"
-        for name in test_names
-    ]
-    test_selector = " ".join(
-        f"TestAPIUnits.py::TestAPIUnits::{name}" for name in test_names
-    ) or "TestAPIUnits.py"
-    return {
-        "pre_install": [
-            "python -m pip install --no-cache-dir --upgrade pip setuptools wheel",
-            "python -m pip install --no-cache-dir openmm numpy scipy pytest",
-        ],
-        "build": [
-            "SIMTK_SITE=$(python -c 'import simtk, os; print(os.path.dirname(simtk.__file__))') && "
-            "if [ -d /testbed/wrappers/python/simtk/unit ]; then cp -r /testbed/wrappers/python/simtk/unit \"$SIMTK_SITE/\"; fi",
-        ],
-        "test_cmd": [
-            f"cd wrappers/python/tests && python -m pytest -xvs {test_selector}",
-        ],
-        "fail_to_pass": fallback_tests,
     }
 
 
@@ -737,96 +660,6 @@ def _rdkit_cpp_targets_spec(
     return spec
 
 
-def _rdkit_cpp_ctest_regex_spec(test_regex: str, new_boost: bool = False) -> dict:
-    """Build RDKit C++ tests broadly, then run a focused CTest regex."""
-    spec = _rdkit_cpp_targets_spec(extra_cmake="", new_boost=new_boost)
-    spec["build"][-1] = "cmake --build build --parallel $(nproc)"
-    spec["test_cmd"] = [
-        f"RDBASE=$PWD LD_LIBRARY_PATH=$PWD/lib:${{LD_LIBRARY_PATH:-}} "
-        f"ctest --test-dir build -V -R '{test_regex}'"
-    ]
-    spec["fail_to_pass"] = [test_regex]
-    return spec
-
-
-def _rdkit_python_wrapper_spec(
-    test_path: str | tuple[str, ...],
-    new_boost: bool = False,
-    extra_cmake: str = "",
-    legacy_boost_endian: bool = False,
-    extra_apt_packages: tuple[str, ...] = (),
-    build_jobs: int | None = None,
-) -> dict:
-    """Build RDKit in-tree with Python wrappers and run a focused Python test."""
-    test_paths = (test_path,) if isinstance(test_path, str) else test_path
-    spec = _rdkit_cpp_targets_spec(
-        extra_cmake=extra_cmake,
-        new_boost=new_boost,
-        legacy_boost_endian=legacy_boost_endian,
-    )
-    spec["build"][1] = spec["build"][1].replace(
-        "-DRDK_BUILD_CPP_TESTS=ON ",
-        "-DRDK_BUILD_CPP_TESTS=OFF ",
-    )
-    spec["build"][1] = spec["build"][1].replace(
-        "-DRDK_BUILD_PYTHON_WRAPPERS=OFF ",
-        "-DRDK_BUILD_PYTHON_WRAPPERS=ON ",
-    )
-    spec["pre_install"].append("apt-get install -y --no-install-recommends python3-dev python3-numpy")
-    if extra_apt_packages:
-        spec["pre_install"].append(
-            "apt-get install -y --no-install-recommends "
-            + " ".join(extra_apt_packages)
-        )
-    parallelism = str(build_jobs) if build_jobs is not None else "$(nproc)"
-    spec["build"][-1] = f"cmake --build build --parallel {parallelism}"
-    runtime = "RDBASE=$PWD PYTHONPATH=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
-    spec["test_cmd"] = [
-        ("cp -a build/rdkit/. rdkit/ && " if index == 0 else "")
-        + runtime
-        + f"python3 {path}"
-        for index, path in enumerate(test_paths)
-    ]
-    spec["fail_to_pass"] = list(test_paths)
-    return spec
-
-
-def _rdkit_mixed_tests_spec(
-    cpp_targets: tuple[str, ...],
-    python_tests: tuple[str, ...],
-    new_boost: bool = False,
-    extra_cmake: str = "",
-    legacy_boost_endian: bool = False,
-) -> dict:
-    """Build and run generated RDKit tests spanning C++ and Python wrappers."""
-    spec = _rdkit_cpp_targets_spec(
-        *cpp_targets,
-        extra_cmake=extra_cmake,
-        new_boost=new_boost,
-        legacy_boost_endian=legacy_boost_endian,
-    )
-    spec["build"][1] = spec["build"][1].replace(
-        "-DRDK_BUILD_PYTHON_WRAPPERS=OFF ",
-        "-DRDK_BUILD_PYTHON_WRAPPERS=ON ",
-    )
-    spec["pre_install"].append(
-        "apt-get install -y --no-install-recommends python3-dev python3-numpy"
-    )
-    # A full build is required to create both wrapper modules and C++ targets.
-    spec["build"][-1] = "cmake --build build --parallel $(nproc)"
-    runtime = "RDBASE=$PWD PYTHONPATH=$PWD LD_LIBRARY_PATH=$PWD/lib:${LD_LIBRARY_PATH:-} "
-    spec["test_cmd"].extend(
-        [
-            ("cp -a build/rdkit/. rdkit/ && " if index == 0 else "")
-            + runtime
-            + f"python3 {path}"
-            for index, path in enumerate(python_tests)
-        ]
-    )
-    spec["fail_to_pass"] = [*cpp_targets, *python_tests]
-    return spec
-
-
 class _OpenMMSpecs(dict):
     """Return a non-evaluable placeholder for uncurated numeric OpenMM PR specs."""
 
@@ -852,23 +685,10 @@ class _OpenMMSpecs(dict):
 
 
 SPECS_OPENMM = _OpenMMSpecs({
-    # Current Scientific Issues sheet.  PRs without authored tests use the
-    # closest registered subsystem suite; source-only fixes get a narrow
-    # parsed check so they do not fall through to the non-evaluable placeholder.
-    "4138": _openmm_source_check_spec(
-        "langevin_documentation_variance",
-        "grep -Fq 'normal distribution with mean zero and unit variance' "
-        "docs-source/usersguide/theory/04_integrators.rst",
-    ),
     "4618": _openmm_opencl_targets_spec(
         "TestOpenCLMonteCarloFlexibleBarostat", gpu=True
     ),
     "2318": _openmm_opencl_targets_spec("TestOpenCLNonbondedForce", gpu=True),
-    "5219": _openmm_source_check_spec(
-        "cm_motion_remover_documentation",
-        "grep -Fq 'not a rigorous constraint' "
-        "docs-source/usersguide/theory/02_standard_forces.rst",
-    ),
     "2322": _openmm_opencl_targets_spec("TestOpenCLCustomCentroidBondForce", gpu=True),
     "2257": _openmm_opencl_targets_spec("TestOpenCLNonbondedForce", gpu=True),
     "4440": _openmm_cpp_targets_spec(
@@ -882,129 +702,11 @@ SPECS_OPENMM = _OpenMMSpecs({
     "5302": _openmm_cuda_targets_spec(
         "TestCudaAmoebaMultipoleForce", plugin="amoeba"
     ),
-    "4760": _openmm_source_check_spec(
-        "absinth_force_field_removed",
-        "test ! -e wrappers/python/openmm/app/data/absinth.xml "
-        "-a ! -e wrappers/python/simtk/openmm/app/data/absinth.xml",
-        python_app_overlay=True,
-    ),
-    "4161": _openmm_python_app_spec(
-        "TestForceField.py", "test_IgnoreExternalBonds"
-    ),
-    "3851": _openmm_python_app_spec("TestForceField.py", "test_CharmmPolar"),
-    # PR #3311 changes both the AMOEBA XML and native HarmonicBondForce
-    # validation.  A PyPI wheel would bypass the native half of the gold patch,
-    # so build matching wrappers and the AMOEBA Reference plugin from source.
     "3311": _openmm_native_python_spec(
         "TestForceField.py",
         "test_Amoeba18BPTI or test_Amoeba18Nucleic",
         amoeba=True,
     ),
-    "3210": _openmm_python_app_spec("TestCharmmFiles.py", "test_NBFIX"),
-    "2897": _openmm_source_check_spec(
-        "benchmark_hydrogen_mass",
-        "grep -Fq 'hydrogenMass = 1.5*unit.amu' examples/benchmark.py",
-    ),
-    "3872": _openmm_opencl_targets_spec("TestOpenCLAmoebaVdwForce", amoeba=True),
-    "3659": _openmm_python_app_spec(
-        "TestPdbxFile.py", "testChemCompBonds or testMultiChain"
-    ),
-    "2802": _openmm_python_unit_spec(
-        ["testCustomGBForce", "testCustomNonbondedForce"]
-    ),
-    "3260": _openmm_cpp_targets_spec(
-        "TestReferenceMonteCarloAnisotropicBarostat"
-    ),
-    # PR #4832: flexibleConstraints option for AmberPrmtopFile (Python-only change).
-    # The C base image has python3/pip but NO conda, so install OpenMM via pip
-    # to get the compiled `_openmm` extension + native libs. The patch edits the
-    # pure-Python `openmm/app/amberprmtopfile.py` in /testbed; overlay that package
-    # onto the installed copy in site-packages so the patch takes effect without a
-    # full C++ build, then run the pytest FAIL_TO_PASS test against it.
-    "4832": {
-        # pre_install runs at IMAGE BUILD time (before the model patch). Install the
-        # compiled OpenMM (native _openmm*.so + libs) here — heavy, patch-independent.
-        "pre_install": [
-            # scipy: the test loads an Amber NetCDF restart via scipy.io.netcdf_file.
-            "python -m pip install --no-cache-dir --upgrade pip setuptools wheel",
-            "python -m pip install --no-cache-dir openmm numpy scipy pytest",
-        ],
-        # build runs in eval.sh, AFTER the model patch is applied to /testbed. Overlay
-        # the *patched* pure-Python openmm package onto the pip-installed copy so the
-        # test imports the patched code (keeps pip's compiled _openmm*.so untouched).
-        "build": [
-            "SITE=$(python -c 'import openmm, os; print(os.path.dirname(openmm.__file__))') && "
-            "cp -r /testbed/wrappers/python/openmm/app \"$SITE/\"",
-        ],
-        # The test reads data files via RELATIVE paths ('systems/...inpcrd'), so we
-        # MUST cd into wrappers/python/tests for them to resolve. That makes pytest
-        # emit a path-stripped nodeid (TestAmberPrmtopFile.py::...), which won't match
-        # the full-path FAIL_TO_PASS key directly — the log parser's _reconcile_nodeids
-        # suffix-matches it back to the real key. The harness's post-test `git checkout`
-        # runs from /testbed (eval.sh re-cd's), so the subdir cd here is safe.
-        "test_cmd": [
-            "cd wrappers/python/tests && python -m pytest -xvs TestAmberPrmtopFile.py::TestAmberPrmtopFile::testFlexibleConstraints",
-        ],
-        "fail_to_pass": [
-            "wrappers/python/tests/TestAmberPrmtopFile.py::TestAmberPrmtopFile::testFlexibleConstraints"
-        ],
-    },
-    "4989": _openmm_python_app_spec(
-        "TestForceField.py", "test_CharmmLoad or test_CharmmVersionMismatchCheck"
-    ),
-    "4881": _openmm_cpp_targets_spec(
-        "TestReferenceMonteCarloAnisotropicBarostat",
-        "TestReferenceMonteCarloBarostat",
-        "TestReferenceMonteCarloFlexibleBarostat",
-        "TestReferenceMonteCarloMembraneBarostat",
-    ),
-    "4870": _openmm_native_python_spec(
-        "TestAPIUnits.py", "testConstantPotentialForce"
-    ),
-    # PR #5137 only modifies OpenCL FFT coverage. Keep a concrete CPU-buildable
-    # spec so test-generation mode can apply/diagnose generated patches, but do
-    # not pretend a GPU/OpenCL runtime is available.
-    "5137": {
-        "pre_install": [
-            "apt-get update -q",
-            "apt-get install -y --no-install-recommends "
-            "cmake g++ make ocl-icd-opencl-dev pocl-opencl-icd",
-        ],
-        "build_after_test_patch": [
-            _OPENMM_OPENCL_COMPAT_HEADER_COMMAND,
-            _OPENMM_POCL_CPU_COMPAT_COMMAND,
-            "cmake -B build -S . "
-            "-DCMAKE_BUILD_TYPE=Release "
-            "-DCMAKE_CXX_FLAGS='-include /tmp/swebench_opencl_compat.h' "
-            "-DOPENMM_BUILD_CUDA_LIB=OFF "
-            "-DOPENMM_BUILD_OPENCL_LIB=ON "
-            "-DOPENMM_BUILD_HIP_LIB=OFF "
-            "-DOPENMM_BUILD_PYTHON_WRAPPERS=OFF "
-            "-DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF",
-            "cmake --build build --parallel $(nproc) --target TestOpenCLFFT",
-        ],
-        "test_cmd": [
-            _OPENMM_POCL_TEST_ENV
-            + "LD_LIBRARY_PATH=$PWD/build:$PWD/build/platforms/opencl:${LD_LIBRARY_PATH:-} "
-            "OPENMM_PLUGIN_DIR=$PWD/build/platforms/opencl "
-            "./build/TestOpenCLFFT",
-        ],
-    },
-    # ── Generated-test fallback specs for issue rows without mined F2P ───────
-    "1495": _openmm_cpp_targets_spec("TestReferenceCustomExternalForce", "TestParser"),
-    "1802": _openmm_cpp_targets_spec("TestReferenceEwald"),
-    "2241": _openmm_cpp_targets_spec("TestReferenceCustomIntegrator"),
-    "3286": _openmm_cpp_targets_spec(
-        "TestReferenceGBSAOBCForce",
-        "TestReferenceHarmonicAngleForce",
-        "TestReferenceHarmonicBondForce",
-        "TestReferenceNonbondedForce",
-        "TestReferencePeriodicTorsionForce",
-    ),
-    "4732": _openmm_cpp_targets_spec("TestReferenceNonbondedForce"),
-    "5031": _openmm_cpp_targets_spec("TestReferenceCustomCentroidBondForce"),
-    "5198": _openmm_cpp_targets_spec("TestCpuLocalEnergyMinimizer"),
-    "5322": _openmm_cpp_targets_spec("TestReferenceMonteCarloFlexibleBarostat"),
     # ── Issues_No_Tests_split.xlsx: CPU/Reference regression families ──────
     # These PRs intentionally contain no authored tests.  Build and run the
     # narrowest registered CPU/Reference suite for the production subsystem
@@ -1012,12 +714,10 @@ SPECS_OPENMM = _OpenMMSpecs({
     **{
         pr: _openmm_cpp_targets_spec(*targets)
         for pr, targets in {
-            "4294": ("TestReferenceEwald",),
             "3326": (
                 "TestReferenceHarmonicAngleForce",
                 "TestReferenceNonbondedForce",
             ),
-            "2781": ("TestCpuNonbondedForce",),
             "2644": ("TestReferenceCMAPTorsionForce",),
             "1592": ("TestCpuGBSAOBCForce",),
             "3280": ("TestReferenceCustomNonbondedForce",),
@@ -1027,7 +727,6 @@ SPECS_OPENMM = _OpenMMSpecs({
             "3321": ("TestReferenceNonbondedForce",),
             "2544": ("TestCpuNonbondedForce",),
             "2328": ("TestCpuNonbondedForce",),
-            "631": ("TestCpuGBSAOBCForce",),
         }.items()
     },
     # ── Issues_No_Tests_split.xlsx: Common/OpenCL regression families ──────
@@ -1036,12 +735,10 @@ SPECS_OPENMM = _OpenMMSpecs({
     **{
         pr: _openmm_opencl_targets_spec(*targets, amoeba=amoeba, gpu=True)
         for pr, targets, amoeba in [
-            ("2819", ("TestOpenCLNonbondedForce",), False),
             ("5069", ("TestOpenCLNonbondedForce",), False),
             ("1679", ("TestOpenCLCustomIntegrator",), False),
             ("3240", ("TestOpenCLCustomExternalForce",), False),
             ("5242", ("TestOpenCLLocalEnergyMinimizer",), False),
-            ("1382", ("TestOpenCLCustomExternalForce",), False),
             ("5346", ("TestOpenCLCustomCVForce",), False),
             ("5117", ("TestOpenCLCustomBondForce",), False),
             ("3460", ("TestOpenCLNonbondedForce",), False),
@@ -1050,12 +747,10 @@ SPECS_OPENMM = _OpenMMSpecs({
                 ("TestOpenCLNonbondedForce", "TestOpenCLAmoebaMultipoleForce"),
                 True,
             ),
-            ("1924", ("TestOpenCLNonbondedForce",), False),
             ("4079", ("TestOpenCLRpmd",), False),
             ("4249", ("TestOpenCLCustomNonbondedForce",), False),
             ("4148", ("TestOpenCLCustomNonbondedForce",), False),
             ("4119", ("TestOpenCLMonteCarloBarostat",), False),
-            ("4090", ("TestOpenCLRpmd",), False),
             ("3771", ("TestOpenCLNonbondedForce",), False),
             ("3057", ("TestOpenCLNonbondedForce",), False),
             ("1682", ("TestOpenCLNonbondedForce",), False),
@@ -1067,187 +762,37 @@ SPECS_OPENMM = _OpenMMSpecs({
         for pr, test_file, test_filter in [
             ("1540", "TestForceField.py", "test_ImplicitSolvent"),
             ("1932", "TestTopology.py", "test_getters"),
-            ("3630", "TestGromacsTopFile.py", "test_NonbondedMethod"),
-            ("4293", "TestModeller.py", "testNestedVirtualSites"),
             ("4748", "TestModeller.py", "test_addExtraParticles"),
-            ("5149", "TestPdbxFile.py", "test_FormatConversion"),
-            ("5213", "TestPdbFile.py", "test_WriteFile"),
-            ("5221", "TestModeller.py", "test_addHydrogensPdb3"),
-            ("5359", "TestStateDataReporter.py", "testAppend"),
-            ("4986", "TestForceField.py", "test_CustomNonbondedGenerator"),
             ("4279", "TestForceField.py", "test_residueMatcher"),
             ("4104", "TestModeller.py", "test_addSolventIons"),
-            ("3442", "TestForceField.py", "test_Forces"),
             ("3241", "TestModeller.py", "test_addSolventPeriodicBox"),
-            ("3198", "TestGromacsTopFile.py", "test_NonbondedMethod"),
-            ("3041", "TestAmberPrmtopFile.py", "test_NonbondedMethod"),
             ("2639", "TestStateDataReporter.py", "testAppend"),
-            ("2575", "TestPdbxFile.py", "test_FormatConversion"),
-            ("2563", "TestPdbxFile.py", "test_FormatConversion"),
             ("2429", "TestCharmmFiles.py", "test_Drude"),
-            ("2363", "TestForceField.py", "test_ImplicitSolventParameters"),
-            ("1957", "TestPdbFile.py", "test_Triclinic"),
-            ("1363", "TestForceField.py", "test_ImpropersOrdering"),
-            ("1250", "TestForceField.py", "test_RigidWaterAndConstraints"),
         ]
     },
-    # PR 3923 changes the SWIG exposure of AmoebaVdwForce parameters, so the
-    # patched native wrappers (rather than a pip app overlay) must be built.
-    "3923": _openmm_native_python_spec(
-        "TestAPIUnits.py", "testAmoebaVdwForce", amoeba=True
-    ),
-    # These regressions depend on CUDA/OpenCL kernel behavior; they now run
-    # against the real GPU devices available on the eval host instead of the
-    # POCL CPU-emulation path used for other OpenCL targets.
     "1640": _openmm_cuda_targets_spec(
         "TestCudaAmoebaMultipoleForce", plugin="amoeba"
     ),
     "2152": _openmm_cuda_targets_spec(
         "TestCudaAmoebaMultipoleForce", plugin="amoeba"
     ),
-    "2255": _openmm_opencl_targets_spec(
-        "TestOpenCLLocalEnergyMinimizer", gpu=True
-    ),
-    "2829": _openmm_opencl_targets_spec("TestOpenCLNonbondedForce", gpu=True),
     "4364": _openmm_cuda_targets_spec("TestCudaCustomNonbondedForce"),
-    # Generated tests for these GPU issues target CUDA specifically. The host
-    # now exposes real NVIDIA devices, so evaluate the requested backend
-    # instead of excluding the tests or silently substituting OpenCL.
-    "1924": _openmm_cuda_targets_spec("TestCudaLangevinIntegrator"),
     "3057": _openmm_cuda_targets_spec("TestCudaNonbondedForce"),
     "3428": _openmm_cuda_targets_spec("TestCudaNonbondedForce"),
     "3771": _openmm_cuda_targets_spec("TestCudaNonbondedForce"),
     "5069": _openmm_cuda_targets_spec("TestCudaNonbondedForce"),
     "5346": _openmm_cuda_targets_spec("TestCudaCustomCVForce"),
-    # ── Exact Python wrapper tests ───────────────────────────────────────────
-    # These PRs add or modify focused Python app tests. Use pip's compiled
-    # OpenMM package for native libraries, then overlay the patched pure-Python
-    # app package from /testbed before running the exact pytest selector.
-    **{
-        pr: (
-            _openmm_native_python_spec(test_file, test_filter, amoeba=True)
-            if pr == "826"
-            else _openmm_python_app_spec(test_file, test_filter)
-        )
-        for pr, test_file, test_filter in [
-            ("826", "TestForceField.py", "test_RigidWater"),
-            ("1302", "TestPdbFile.py", "test_ExtraParticles"),
-            (
-                "1668",
-                "TestTopology.py",
-                "test_bondtype_singleton or test_residue_bonds",
-            ),
-            ("2040", "TestForceField.py", "test_Disulfides"),
-            (
-                "2362",
-                "TestAmberPrmtopFile.py",
-                "test_ImplicitSolventZeroSA or test_HydrogenMass",
-            ),
-            ("2381", "TestCharmmFiles.py", "test_NBXMod"),
-            ("2511", "TestForceField.py", "test_ImpropersOrdering_smirnoff"),
-            ("2738", "TestForceField.py", "test_CharmmPolar"),
-            ("3214", "TestForceField.py", "test_ImplicitSolventForces"),
-            ("4188", "TestGromacsTopFile.py", "test_Vsite3"),
-            (
-                "3303",
-                "TestForceField.py TestModeller.py",
-                "test_Glycam or test_addHydrogensGlycam",
-            ),
-            ("3313", "TestForceField.py", "test_Amoeba18Nucleic"),
-            ("3324", "TestCharmmFiles.py", "test_NBFIX14"),
-            ("4028", "TestGromacsTopFile.py", "test_GROMOS"),
-            (
-                "4536",
-                "TestGromacsTopFile.py",
-                "test_Vsite3Func1 or test_Vsite3Func4",
-            ),
-            ("4794", "TestXtcFile.py", "test_xtc_small"),
-            ("4852", "TestForceField.py", "test_CMAPTorsionGeneratorMapAssignment"),
-            ("5155", "TestGromacsTopFile.py", "test_Vsite3Func3"),
-            ("5236", "TestForceField.py", "test_TemplateConstraintsMultipleMols"),
-        ]
-    },
-    # ── Exact C++ CPU/Reference/serialization tests ─────────────────────────
-    # These avoid CUDA/OpenCL/HIP and run the C++ test executables touched by
-    # the PR's test patch. Plugin-heavy/GPU-only cases stay as placeholders.
-    **{
-        pr: _openmm_cpp_targets_spec(*targets)
-        for pr, targets in {
-            "1487": ("TestReferenceAndersenThermostat",),
-            "1858": ("TestReferenceVirtualSites", "TestSerializeSystem"),
-            "2057": ("TestReferenceCustomIntegrator",),
-            "2105": ("TestReferenceNonbondedForce",),
-            "2187": ("TestReferenceCustomNonbondedForce",),
-            "2561": (
-                "TestReferenceBAOABLangevinIntegrator",
-                "TestSerializeIntegrator",
-            ),
-            "2570": ("TestReferenceNonbondedForce", "TestSerializeNonbondedForce"),
-            "2806": ("TestCpuNonbondedForce",),
-            "2818": ("TestReferenceVerletIntegrator",),
-            "4523": ("TestReferenceDrudeForce",),
-            "4740": ("TestReferenceLangevinMiddleIntegrator",),
-            "4907": ("TestReferenceEwald",),
-            "5251": ("TestReferenceMonteCarloFlexibleBarostat",),
-            "5278": ("TestReferenceMonteCarloAnisotropicBarostat",),
-        }.items()
-    },
-    # ── Full C++ Reference-platform builds ────────────────────────────────────
-    # 1837 (CustomCVForce), 5278 (MonteCarloMembraneBarostat), 4799 (DPDIntegrator)
-    # each add a Reference-platform C++ test (Test<Name>.cpp under
-    # platforms/reference/tests/). Unlike 4832's pip-overlay, these need a real
-    # in-tree OpenMM build. Some tests are new files from test_patch, so the
-    # CMake configure/build must run only after test_patch is applied. Keep
-    # pre_install limited to toolchain deps so base image validation does not try
-    # to build a target that cannot exist yet.
-    **{
-        pr: {
-            "pre_install": [
-                "apt-get update -q",
-                "apt-get install -y --no-install-recommends cmake g++ make",
-            ],
-            "build_after_test_patch": [
-                "cmake -B build -S . "
-                "-DCMAKE_BUILD_TYPE=Release "
-                "-DOPENMM_BUILD_CUDA_LIB=OFF "
-                "-DOPENMM_BUILD_OPENCL_LIB=OFF "
-                "-DOPENMM_BUILD_HIP_LIB=OFF "
-                "-DOPENMM_BUILD_PYTHON_WRAPPERS=OFF "
-                "-DOPENMM_BUILD_C_AND_FORTRAN_WRAPPERS=OFF",
-                f"cmake --build build --parallel $(nproc) --target {target}",
-            ],
-            "test_cmd": [
-                f"LD_LIBRARY_PATH=$PWD/build:${{LD_LIBRARY_PATH:-}} "
-                f"OPENMM_PLUGIN_DIR=$PWD/build "
-                f"./build/{target}",
-            ],
-        }
-        for pr, target in {
-            "1837": "TestReferenceCustomIntegrator",
-            "4799": "TestReferenceDPDIntegrator",
-        }.items()
-    },
 })
 
-# Generated patch 1837 touches both Python and native tests.  The gold patch
-# changes native kernels, so force the concrete in-tree C++ command instead of
-# the pip-backed dynamic pytest path.
-SPECS_OPENMM["1837"]["test_generation_use_spec_cmd"] = True
 
-SPECS_OPENMC = {
-    # Add entries here: "<PR_NUMBER>": {"build": [...], "test_cmd": [...]}
-    # Build pattern:
-    #   "mkdir -p build",
-    #   "cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug",
-    #   "cmake --build build --parallel $(nproc)",
-    # Test pattern:
-    #   "cd tests && python -m pytest -v <test_file>"
-}
-
-_QGIS_316_BUILD_IMAGE = (
-    "qgis/qgis3-build-deps@"
-    "sha256:2bb32b415971fcc63124eb5993c48777cf024f1478d6e414c601a1d8afb9c3eb"
+# Issues_No_Tests_new.xlsx: PR 2038 (2018) is a pure-Python fix to
+# simtk/openmm/app/modeller.py::addMembrane -> exercised by
+# wrappers/python/tests/TestModeller.py. Same pattern as the curated PR 3151.
+SPECS_OPENMM["2038"] = _openmm_python_app_spec(
+    "TestModeller.py", "test_addMembrane or test_addSolventPeriodicBox"
 )
+
+
 _QGIS_QT6_BUILD_IMAGE = (
     "qgis/qgis3-build-deps-ubuntu-qt6@"
     "sha256:81b4d845b8704c068e2cc94238d45fee4fcd8d603744d635edea8a2966202005"
@@ -1340,51 +885,7 @@ SPECS_QGIS = {
         ctest_regex="^test_analysis_processingalgspt1$",
         base_image=_QGIS_QT6_BUILD_IMAGE,
     ),
-    "35852": _qgis_spec(
-        ("PyQgsRasterColorRampShader",),
-        ctest_regex="^PyQgsRasterColorRampShader$",
-        base_image=_QGIS_316_BUILD_IMAGE,
-        bindings=True,
-    ),
-    "40837": _qgis_spec(
-        ("ProcessingGrass7AlgorithmsVectorTest",),
-        ctest_regex="^ProcessingGrass7AlgorithmsVectorTest$",
-        base_image=_QGIS_316_BUILD_IMAGE,
-        bindings=True,
-        grass=True,
-        python_test_path=(
-            "python/plugins/processing/tests/Grass7AlgorithmsVectorTest.py"
-        ),
-    ),
-    "63639": _qgis_spec(
-        (
-            "test_analysis_processingcheckgeometry",
-            "test_geometry_checker_geometrychecks",
-        ),
-        ctest_regex=(
-            "^(test_analysis_processingcheckgeometry|"
-            "test_geometry_checker_geometrychecks)$"
-        ),
-        base_image=_QGIS_QT6_BUILD_IMAGE,
-    ),
-    "66353": _qgis_spec(
-        ("PyQgsPostgresRasterProvider",),
-        ctest_regex="^PyQgsPostgresRasterProvider$",
-        base_image=_QGIS_QT6_BUILD_IMAGE,
-        bindings=True,
-        postgres=True,
-    ),
-    # Issues_No_Tests_v2.xlsx additions: native:concavehull / native:xyztiles
-    # are both exercised by python/plugins/processing/tests/QgisAlgorithmsTest4.py
-    # (testdata/qgis_algorithm_tests4.yaml), registered as CTest target
-    # ProcessingQgisAlgorithmsTestPt4.
     "64781": _qgis_spec(
-        ("ProcessingQgisAlgorithmsTestPt4",),
-        ctest_regex="^ProcessingQgisAlgorithmsTestPt4$",
-        base_image=_QGIS_QT6_BUILD_IMAGE,
-        bindings=True,
-    ),
-    "66606": _qgis_spec(
         ("ProcessingQgisAlgorithmsTestPt4",),
         ctest_regex="^ProcessingQgisAlgorithmsTestPt4$",
         base_image=_QGIS_QT6_BUILD_IMAGE,
@@ -1429,439 +930,23 @@ SPECS_RDKIT = _RDKitSpecs({
             ],
         }
         for pr in [
-            "2083",
-            "2377",
-            "2548",
-            "3015",
-            "3050",
             "3098",
-            "3196",
-            "3354",
-            "3412",
-            "3615",
-            "3729",
-            "3749",
-            "3930",
-            "4303",
-            "4414",
-            "5063",
-            "5232",
-            "5468",
-            "5570",
-            "6021",
-            "6193",
-            "6199",
-            "6231",
-            "6250",
-            "6506",
-            "6686",
-            "6948",
-            "7116",
-            "7137",
-            "7152",
-            "7384",
-            "7426",
-            "7571",
-            "7975",
-            "8179",
-            "8192",
-            "8210",
-            "8211",
-            "8217",
-            "8264",
-            "8266",
-            "8269",
-            "8289",
-            "8294",
-            "8367",
-            "8385",
-            "8493",
-            "8515",
-            "8542",
-            "8550",
-            "8587",
-            "8588",
-            "8652",
-            "8680",
-            "8734",
-            "8767",
-            "8795",
-            "8808",
-            "8824",
-            "8874",
-            "8907",
-            "8974",
-            "8999",
-            "9002",
-            "9012",
-            "9022",
-            "9119",
-            "9120",
-            "9125",
             "9228",
-            "9300",
-            "9302",
-            "9325",
-            "9332",
-            "9348",
-            "9355",
         ]
     },
-    "2059": _rdkit_cpp_targets_spec("smiTest1", legacy_boost_endian=True),
-    # Current Scientific Issues sheet: exact Catch2/CTest targets touched by
-    # each closing PR.  PR 8957 is defined separately below.
-    "9141": _rdkit_cpp_targets_spec("fileParsersCatchTest", new_boost=True),
-    "7183": _rdkit_cpp_targets_spec(
-        "molfileStereoCatchTest", "chiralityTestsCatch"
-    ),
-    "8904": _rdkit_cpp_targets_spec(
-        "graphmolTestsCatch", "fileParsersCatchTest", new_boost=True
-    ),
-    "8736": _rdkit_cpp_targets_spec("chiralityTestsCatch", new_boost=True),
-    "8247": _rdkit_cpp_targets_spec("testRascalMCES", new_boost=True),
-    "8301": _rdkit_cpp_targets_spec(
-        "molopsTestsCatch", "fileParsersCatchTest", new_boost=True
-    ),
-    "8257": _rdkit_cpp_targets_spec("graphmolAdjustQueryCatch", new_boost=True),
-    "3018": _rdkit_cpp_targets_spec(
-        "graphmolTestsCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
-    ),
     "7990": _rdkit_cpp_targets_spec("deprotectTest", new_boost=True),
-    "7347": _rdkit_cpp_targets_spec("chiralityTestsCatch"),
-    "5560": _rdkit_cpp_targets_spec("chiralityTestsCatch"),
-    "6240": _rdkit_cpp_targets_spec("chiralityTestsCatch"),
-    "6892": _rdkit_cpp_targets_spec("cdxmlParserCatchTest"),
-    "4806": _rdkit_cpp_targets_spec(
-        "graphmolTestsCatch",
-        "fileParsersCatchTest",
-        extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE,
-    ),
-    "5407": _rdkit_cpp_targets_spec("chiralityTestsCatch"),
-    # Scientific Issues sheet: concrete targets from each PR's base CMake files.
-    "986": _rdkit_cpp_targets_spec(
-        "moldraw2DTest1", legacy_boost_endian=True
-    ),
-    "1473": _rdkit_cpp_targets_spec("smaTest1", legacy_boost_endian=True),
-    "1521": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/MMPA/Wrap/testMMPA.py", legacy_boost_endian=True
-    ),
-    "1654": _rdkit_mixed_tests_spec(
-        ("smiTest1",),
-        ("rdkit/Chem/UnitTestSmiles.py",),
-        legacy_boost_endian=True,
-    ),
-    "2255": _rdkit_mixed_tests_spec(
-        ("testAvalonLib1",),
-        ("External/AvalonTools/Wrap/testAvalonTools.py",),
-        extra_cmake="-DRDK_BUILD_AVALON_SUPPORT=ON ",
-        legacy_boost_endian=True,
-    ),
-    "2646": _rdkit_cpp_targets_spec("graphmolTestsCatch"),
-    "2651": _rdkit_cpp_targets_spec("testSubgraphs2"),
-    "3170": _rdkit_cpp_targets_spec("testSGroup"),
-    "3237": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/MolDraw2D/Wrap/testMolDraw2D.py"
-    ),
-    "3507": _rdkit_python_wrapper_spec("rdkit/Chem/UnitTestMol3D.py"),
-    "3900": _rdkit_mixed_tests_spec(
-        ("testFMCS",), ("Code/GraphMol/FMCS/Wrap/testFMCS.py",)
-    ),
-    "5425": _rdkit_cpp_targets_spec("moldraw2DTestCatch"),
-    "5735": _rdkit_cpp_targets_spec("testRGroupDecomp"),
-    "5775": _rdkit_cpp_targets_spec("moldraw2DTestCatch"),
-    "5776": _rdkit_cpp_targets_spec("moldraw2DTestCatch"),
-    "6247": _rdkit_cpp_targets_spec("testRGroupDecomp"),
-    "6897": _rdkit_cpp_targets_spec("rxnTestCatch"),
-    "6972": _rdkit_python_wrapper_spec("Code/GraphMol/Wrap/rough_test.py"),
-    "7166": _rdkit_cpp_targets_spec(
-        "cffi_test", extra_cmake="-DRDK_BUILD_CFFI_LIB=ON "
-    ),
-    "7419": _rdkit_cpp_targets_spec(
-        "testInchi", extra_cmake="-DRDK_BUILD_INCHI_SUPPORT=ON "
-    ),
-    "8173": _rdkit_cpp_targets_spec("molHashCatchTest", new_boost=True),
-    "6646": _rdkit_python_wrapper_spec("Code/GraphMol/FMCS/Wrap/testFMCS.py"),
-    "8376": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/RascalMCES/Wrap/testRascalMCES.py"
-    ),
-    "8668": _rdkit_cpp_targets_spec("atropisomersCatch", new_boost=True),
-    "8968": _rdkit_cpp_ctest_regex_spec(
-        "smiTest|Smi|MolOps|molops", new_boost=True
-    ),
-    "8957": _rdkit_cpp_targets_spec("chiralityTestsCatch", new_boost=True),
-    "9331": _rdkit_cpp_targets_spec(
-        "chemdrawCatchTest",
-        extra_cmake=(
-            "-DRDK_BUILD_CHEMDRAW_SUPPORT=ON "
-            "-DCMAKE_CXX_FLAGS=-I/testbed/External/ChemDraw "
-        ),
-        new_boost=True,
-        chemdraw_include_compat=True,
-        defer_target_build=True,
-    ),
-    "6506": _rdkit_python_wrapper_spec("rdkit/Chem/UnitTestRegistrationHash.py"),
-    "6948": _rdkit_python_wrapper_spec("Code/GraphMol/Wrap/rough_test.py"),
-    "7426": _rdkit_python_wrapper_spec(
-        "rdkit/Chem/UnitTestRegistrationHash.py",
-        new_boost=True,
-    ),
-    "8791": _rdkit_cpp_ctest_regex_spec("ForceField|forceField", new_boost=True),
-    "8795": _rdkit_cpp_targets_spec("graphmolTestsCatch", new_boost=True),
-    "8999": _rdkit_python_wrapper_spec(
-        "External/pubchem_shape/Wrap/test_rdshapealign.py",
-        new_boost=True,
-    ),
-    # ── Issues_No_Tests_split.xlsx fallback regression families ────────────
-    "8796": _rdkit_python_wrapper_spec(
-        "rdkit/Chem/UnitTestPandasTools.py",
-        new_boost=True,
-        extra_cmake="-DRDK_BUILD_CAIRO_SUPPORT=ON ",
-        extra_apt_packages=(
-            "libcairo2-dev",
-            "python3-pandas",
-            "python3-openpyxl",
-            "python3-xlsxwriter",
-        ),
-    ),
-    "8166": _rdkit_python_wrapper_spec(
-        "rdkit/Chem/Draw/UnitTestIPython.py",
-        new_boost=True,
-        extra_apt_packages=("python3-ipython", "python3-pil"),
-    ),
     "7814": _rdkit_cpp_targets_spec(
         "testMMFFForceField",
         extra_cmake="-DRDK_TEST_MMFF_COMPLIANCE=ON ",
         new_boost=True,
     ),
-    "5261": _rdkit_python_wrapper_spec(
-        "rdkit/Chem/Draw/UnitTestDraw.py",
-        extra_apt_packages=("python3-pil",),
-    ),
-    "5103": _rdkit_python_wrapper_spec(
-        "rdkit/Chem/UnitTestPandasTools.py",
-        extra_apt_packages=(
-            "python3-pandas",
-            "python3-openpyxl",
-            "python3-xlsxwriter",
-            "python3-pil",
-        ),
-    ),
-    "4793": _rdkit_python_wrapper_spec(
-        "rdkit/Chem/Draw/UnitTestDraw.py",
-        extra_apt_packages=("python3-pil",),
-        # This older full-wrapper build has repeatedly failed when it is the
-        # final validation job on high-core hosts. Limit compiler fan-out to
-        # avoid an OOM-driven setup_repo.sh exit while retaining parallelism.
-        build_jobs=4,
-    ),
-    # ── issues_testgen_001 generated-test specs ────────────────────────────
-    # These targets correspond to the test files touched by the generated
-    # patches.  Keeping them concrete avoids excluding valid generated tests
-    # through the numeric non-evaluable fallback above.
-    "2083": _rdkit_cpp_targets_spec("fileParsersTest1", legacy_boost_endian=True),
-    "2377": _rdkit_cpp_targets_spec("testReaction", legacy_boost_endian=True),
-    "2548": _rdkit_mixed_tests_spec(
-        ("testReaction",),
-        ("Code/GraphMol/ChemReactions/Wrap/testSanitize.py",),
-        extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE,
-    ),
-    "3015": _rdkit_python_wrapper_spec("rdkit/Chem/UnitTestMol3D.py"),
-    "3050": _rdkit_cpp_targets_spec("testReaction"),
+    "2021": _rdkit_cpp_targets_spec("graphmolMolOpsTest", legacy_boost_endian=True),
+    "3855": _rdkit_cpp_targets_spec("graphmolMolOpsTest", legacy_boost_endian=True),
+    "3176": _rdkit_cpp_targets_spec("testMolAlign", legacy_boost_endian=True),
     "3098": _rdkit_cpp_targets_spec(
         "rxnTestCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
     ),
-    "3354": _rdkit_cpp_targets_spec("resMolSupplierTest"),
-    "3729": _rdkit_cpp_targets_spec("testReaction"),
-    "3749": _rdkit_python_wrapper_spec("Code/GraphMol/FMCS/Wrap/testFMCS.py"),
-    "5570": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/RGroupDecomposition/Wrap/test_rgroups.py"
-    ),
-    "6021": _rdkit_cpp_targets_spec(
-        "rxnTestCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
-    ),
-    "6193": _rdkit_cpp_targets_spec("testReaction"),
-    "6199": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/ChemReactions/Wrap/testReactionWrapper.py"
-    ),
-    "6686": _rdkit_cpp_targets_spec(
-        "moldraw2DTestCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
-    ),
-    "7116": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/ChemReactions/Wrap/testSanitize.py"
-    ),
-    "7152": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/ChemReactions/Wrap/testReactionWrapper.py"
-    ),
-    "7384": _rdkit_mixed_tests_spec(
-        ("rxnTestCatch", "smiTestCatch", "cxsmilesTest"),
-        (
-            "Code/GraphMol/ChemReactions/Wrap/testReactionWrapper.py",
-            "Code/GraphMol/Wrap/rough_test.py",
-        ),
-        extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE,
-    ),
-    "7975": _rdkit_cpp_targets_spec("molopsTestsCatch", new_boost=True),
-    "8192": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/ChemReactions/Wrap/testReactionWrapper.py",
-        new_boost=True,
-    ),
-    "8210": _rdkit_cpp_targets_spec("moldraw2DTestCatch", new_boost=True),
-    "8211": _rdkit_cpp_targets_spec("moldraw2DTestCatch", new_boost=True),
-    "8264": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/ForceFieldHelpers/Wrap/testHelpers.py", new_boost=True
-    ),
-    "8266": _rdkit_python_wrapper_spec(
-        "rdkit/Chem/UnitTestInchi.py",
-        new_boost=True,
-        extra_cmake="-DRDK_BUILD_INCHI_SUPPORT=ON ",
-    ),
-    "8269": _rdkit_cpp_targets_spec("fileParsersCatchTest", new_boost=True),
-    "8289": _rdkit_mixed_tests_spec(
-        ("chemTransformsTestCatch",),
-        ("Code/GraphMol/Wrap/rough_test.py",),
-        new_boost=True,
-    ),
-    "8294": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/MolDraw2D/Wrap/testMolDraw2D.py", new_boost=True
-    ),
-    "8367": _rdkit_cpp_targets_spec("cxsmilesTest", new_boost=True),
-    "8385": _rdkit_cpp_targets_spec("testReducedGraphs", new_boost=True),
-    "8493": _rdkit_mixed_tests_spec(
-        ("tautomerQueryTestCatch",),
-        ("Code/GraphMol/TautomerQuery/Wrap/rough_test.py",),
-        new_boost=True,
-    ),
-    "8542": _rdkit_cpp_targets_spec("graphmolTestsCatch", new_boost=True),
-    "8550": _rdkit_cpp_targets_spec(
-        "testSynthonSpaceSubstructureSearch", new_boost=True
-    ),
-    "8587": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/Wrap/rough_test.py", new_boost=True
-    ),
-    "8652": _rdkit_cpp_targets_spec(
-        "testSynthonSpaceSubstructureSearch", new_boost=True
-    ),
-    "8680": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/MolDraw2D/Wrap/testMolDraw2D.py", new_boost=True
-    ),
-    "8767": _rdkit_mixed_tests_spec(
-        ("chiralityTestsCatch",),
-        ("Code/GraphMol/Wrap/test_cdxml.py",),
-        new_boost=True,
-    ),
-    "8808": _rdkit_cpp_targets_spec(
-        "cffi_test",
-        extra_cmake="-DRDK_BUILD_CFFI_LIB=ON ",
-        new_boost=True,
-    ),
-    "8824": _rdkit_cpp_targets_spec("fileParsersCatchTest", new_boost=True),
-    "8907": _rdkit_cpp_targets_spec("cxsmilesTest", new_boost=True),
-    "8974": _rdkit_cpp_targets_spec("testAtropisomers", new_boost=True),
-    "9002": _rdkit_cpp_targets_spec("cxsmilesTest", new_boost=True),
-    "9119": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/MolStandardize/Wrap/testMolStandardize.py",
-        new_boost=True,
-    ),
-    "9120": _rdkit_cpp_targets_spec(
-        "determineBondsCatchTest",
-        extra_cmake="-DRDK_BUILD_XYZ2MOL_SUPPORT=ON ",
-        new_boost=True,
-    ),
     "9228": _rdkit_cpp_targets_spec("testUFFForceField", new_boost=True),
-    "9302": _rdkit_cpp_targets_spec("moldraw2DTestCatch", new_boost=True),
-    "9325": _rdkit_cpp_targets_spec("moldraw2DTestCatch", new_boost=True),
-    "9332": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/MolDraw2D/Wrap/testMolDraw2D.py", new_boost=True
-    ),
-    # ── sci_cc_001 concrete fallback specs ──────────────────────────────────
-    # These rows previously inherited explicit non-evaluable placeholders.
-    # Use the touched test family as the scorable key so fix-mode evaluation
-    # does not silently exclude them when dynamic mining observes zero F2P.
-    "3196": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/ChemReactions/Wrap/testReactionWrapper.py"
-    ),
-    "3412": _rdkit_cpp_targets_spec(
-        "chiralityTestsCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
-    ),
-    "3615": _rdkit_cpp_targets_spec(
-        "fileParsersCatchTest",
-        "moldraw2DTestCatch",
-        extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE,
-    ),
-    "3930": _rdkit_cpp_targets_spec(
-        "moldraw2DTestCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
-    ),
-    "4303": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/MolTransforms/Wrap/testMolTransforms.py"
-    ),
-    "4414": _rdkit_cpp_targets_spec(
-        "rxnTestCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
-    ),
-    "5063": _rdkit_cpp_targets_spec(
-        "moldraw2DTestCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
-    ),
-    "5232": _rdkit_cpp_targets_spec("rgroupCatchTests"),
-    "5468": _rdkit_cpp_targets_spec("smiTestCatch"),
-    "6231": _rdkit_cpp_targets_spec(
-        "graphmolOrganometallicsCatch",
-        "graphmolMolOpsTest",
-        "moldraw2DTestCatch",
-    ),
-    "6250": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/ChemReactions/Wrap/testReactionWrapper.py"
-    ),
-    "7137": _rdkit_cpp_targets_spec("canonTestsCatch"),
-    "7571": _rdkit_cpp_targets_spec("moldraw2DTestCatch"),
-    "8179": _rdkit_cpp_targets_spec(
-        "molfileStereoCatchTest",
-        "moldraw2DTestCatch",
-        new_boost=True,
-    ),
-    "8217": _rdkit_cpp_targets_spec("moldraw2DTestCatch", new_boost=True),
-    "8515": _rdkit_python_wrapper_spec(
-        "Code/GraphMol/Wrap/rough_test.py", new_boost=True
-    ),
-    "8588": _rdkit_cpp_targets_spec("testMMPA", new_boost=True),
-    "8734": _rdkit_cpp_targets_spec("molTransformsTestCatch", new_boost=True),
-    "8874": _rdkit_python_wrapper_spec("Code/GraphMol/Wrap/rough_test.py", new_boost=True),
-    "9012": _rdkit_cpp_targets_spec(
-        "testSynthonSpaceSubstructureSearch",
-        "testSynthonSpaceFingerprintSearch",
-        "testSynthonSpaceRascalSearch",
-        new_boost=True,
-    ),
-    "9022": _rdkit_cpp_targets_spec(
-        "testSynthonSpaceSubstructureSearch",
-        "testSynthonSpaceFingerprintSearch",
-        "testSynthonSpaceRascalSearch",
-        new_boost=True,
-    ),
-    "9125": _rdkit_cpp_targets_spec(
-        "graphmolMolOpsTest",
-        "molopsTestsCatch",
-        new_boost=True,
-    ),
-    "9300": _rdkit_cpp_targets_spec("moldraw2DTestCatch", new_boost=True),
-    "9348": _rdkit_cpp_targets_spec(
-        "chemdrawCatchTest",
-        extra_cmake=(
-            "-DRDK_BUILD_CHEMDRAW_SUPPORT=ON "
-            "-DCMAKE_CXX_FLAGS=-I/testbed/External/ChemDraw "
-        ),
-        new_boost=True,
-        chemdraw_include_compat=True,
-        defer_target_build=True,
-    ),
-    "9355": _rdkit_cpp_targets_spec(
-        "chemdrawCatchTest",
-        extra_cmake=(
-            "-DRDK_BUILD_CHEMDRAW_SUPPORT=ON "
-            "-DCMAKE_CXX_FLAGS=-I/testbed/External/ChemDraw "
-        ),
-        new_boost=True,
-        chemdraw_include_compat=True,
-        defer_target_build=True,
-    ),
 })
 
 
@@ -1935,7 +1020,6 @@ def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
 
 
 SPECS_LAMMPS = {
-    "5039": _lammps_test_generation_spec("MANYBODY"),
     "5042": _lammps_test_generation_spec("SPIN", "KSPACE"),
     "4887": _lammps_test_generation_spec("GPU"),
     "4590": _lammps_test_generation_spec("SRD"),
@@ -1943,45 +1027,121 @@ SPECS_LAMMPS = {
     "4768": _lammps_test_generation_spec("KOKKOS", kokkos=True),
     "4760": _lammps_test_generation_spec("RIGID"),
     "4732": _lammps_test_generation_spec("MOLECULE"),
-    "4019": _lammps_test_generation_spec("MC", "RIGID"),
     "4545": _lammps_test_generation_spec("RHEO"),
     "4481": _lammps_test_generation_spec(),
     "2026": _lammps_test_generation_spec("GPU", "ASPHERE"),
     "2105": _lammps_test_generation_spec(),
     "2367": _lammps_test_generation_spec("RIGID"),
     "4443": _lammps_test_generation_spec("REAXFF"),
-    "4310": _lammps_test_generation_spec("MOLECULE", "EXTRA-MOLECULE", "OPENMP"),
     "4312": _lammps_test_generation_spec("REAXFF"),
     "4346": _lammps_test_generation_spec("KOKKOS", "GRANULAR", kokkos=True),
     "4339": _lammps_test_generation_spec("GRANULAR", "RHEO", "EXTRA-FIX"),
-    "4243": _lammps_test_generation_spec("SPH", "DPD-MESO", "DPD-SMOOTH", "MACHDYN"),
-    "4239": _lammps_test_generation_spec(),
     "4202": _lammps_test_generation_spec(),
     "4195": _lammps_test_generation_spec("GRANULAR", "BPM"),
-    "4134": _lammps_test_generation_spec("MANYBODY"),
     "4123": _lammps_test_generation_spec("RIGID"),
     "4120": _lammps_test_generation_spec("ASPHERE"),
     "3553": _lammps_test_generation_spec(),
     "3931": _lammps_test_generation_spec(),
     "3941": _lammps_test_generation_spec("MANYBODY", "KOKKOS", kokkos=True),
     "4407": _lammps_test_generation_spec("EXTRA-FIX", "BPM", "GRANULAR"),
-    "3930": _lammps_test_generation_spec("KOKKOS", kokkos=True),
-    # Issues_No_Tests_v2.xlsx additions
-    "4715": _lammps_test_generation_spec(
-        "DIELECTRIC", "DIPOLE", "KOKKOS", "SPIN", kokkos=True
-    ),
     "4507": _lammps_test_generation_spec("REAXFF", "OPENMP"),
     "4485": _lammps_test_generation_spec("EXTRA-PAIR"),
     "3129": _lammps_test_generation_spec("GPU"),
     "597": _lammps_test_generation_spec("GPU"),
     "4319": _lammps_test_generation_spec("GPU"),
     "4370": _lammps_test_generation_spec("BPM", "GRANULAR", "SPH"),
-    "4291": _lammps_test_generation_spec("REPLICA"),
     "4152": _lammps_test_generation_spec(),
-    "3898": _lammps_test_generation_spec(
-        "KOKKOS", "REAXFF", "QEQ", kokkos=True
+    "1237": _lammps_test_generation_spec("EXTRA-COMPUTE", "MISC"),
+    "1374": _lammps_test_generation_spec(
+        "CLASS2", "KSPACE", "MOLECULE", "FEP", "MOFFF", "SMTBQ"
+    ),
+    "1388": _lammps_test_generation_spec(),
+    "1452": _lammps_test_generation_spec("MANYBODY", "INTEL", "OPENMP"),
+    "1719": _lammps_test_generation_spec("KSPACE", "OPENMP"),
+    "1746": _lammps_test_generation_spec("ASPHERE", "INTEL"),
+    "1750": _lammps_test_generation_spec("GRANULAR"),
+    "1759": _lammps_test_generation_spec(),
+    "1928": _lammps_test_generation_spec("KIM", "MESSAGE", "INTEL"),
+    "2010": _lammps_test_generation_spec("KSPACE"),
+    "2181": _lammps_test_generation_spec("KSPACE"),
+    "2187": _lammps_test_generation_spec("GPU"),
+    "3699": _lammps_test_generation_spec(),
+}
+
+# ---------------------------------------------------------------------------
+# Issues_No_Tests_new.xlsx additions (2026-09-09).
+# ---------------------------------------------------------------------------
+
+# samtools: autotools build against a sibling htslib checkout; the regression
+# suite is test/test.pl. PR 2099 (2024) touches bam_consensus.c.
+_SAMTOOLS_GEN_SPEC = {
+    "pre_install": [
+        "apt-get update -q",
+        "apt-get install -y --no-install-recommends "
+        "autoconf automake make gcc perl zlib1g-dev libbz2-dev liblzma-dev "
+        "libcurl4-openssl-dev libncurses5-dev git",
+        "git clone --depth 1 https://github.com/samtools/htslib.git ../htslib "
+        "&& (cd ../htslib && git submodule update --init --recursive && "
+        "autoreconf -i && ./configure && make -j\"$(nproc)\")",
+    ],
+    "build": [
+        "autoreconf -i",
+        "./configure --with-htslib=../htslib",
+        "make -j\"$(nproc)\"",
+    ],
+    "test_cmd": ["make test"],
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("c",),
+}
+SPECS_SAMTOOLS = {"2099": dict(_SAMTOOLS_GEN_SPEC)}
+
+
+def _not_evaluable_c(repo: str, pr: str, needs: str) -> dict:
+    """Explicit non-evaluable placeholder (mirrors the RDKit convention).
+
+    Keeps the pipeline from silently relying on a fallback; `needs` records
+    what curation is still required before this PR can be scored.
+    """
+    return {
+        "pre_install": [],
+        "build": [],
+        "test_cmd": [
+            f"echo '{repo}#{pr} not evaluable: {needs}' && false",
+        ],
+        "_curation_todo": needs,
+    }
+
+
+# QGIS: 2023-2024 core C++ changes. Each needs the CTest target / Python test
+# that exercises the touched path plus a matching build-deps image for that
+# QGIS minor (no Qt5 3.30/3.34 image constant exists yet).
+SPECS_QGIS.update(
+    {
+        pr: _not_evaluable_c("qgis", pr, needs)
+        for pr, needs in {
+            # 52476: same geometry_checker subsystem as the curated PR 63639
+            #   (targets test_analysis_processingcheckgeometry /
+            #   test_geometry_checker_geometrychecks) -- reuse once a Qt5
+            #   QGIS 3.30 build-deps image is pinned.
+            # 57840: PyQgsSensorThingsProvider python test covers this path.
+            "52213": "QGIS 3.30 (Qt5) build-deps image; no clean unit test for elevation-shading renderer (GUI)",
+            "52303": "QGIS 3.30 (Qt5) build-deps image; layout/canvas move-item-content has no isolated unit test",
+            "52476": "QGIS 3.30 (Qt5) build-deps image; then reuse PR 63639 targets (geometry_checker)",
+            "57840": "QGIS 3.38 build-deps image; target PyQgsSensorThingsProvider",
+        }.items()
+    }
+)
+
+# fenics/dolfinx: PR 1264 (2020) touches cpp/dolfinx/fem/assemble_vector_impl.h.
+# DOLFINx needs the full FEniCS stack (basix, ufl, ffcx, PETSc/MPI); use the
+# upstream dolfinx dev image once pinned.
+SPECS_DOLFINX = {
+    "1264": _not_evaluable_c(
+        "dolfinx", "1264",
+        "dolfinx/dev-env image (basix/ufl/ffcx/PETSc) + cpp demo/unit ctest target",
     ),
 }
+
 
 MAP_REPO_VERSION_TO_SPECS_C = {
     "redis/redis": SPECS_REDIS,  # c
@@ -1990,12 +1150,12 @@ MAP_REPO_VERSION_TO_SPECS_C = {
     "micropython/micropython": SPECS_MICROPYTHON,  # c
     "valkey-io/valkey": SPECS_VALKEY,  # c
     "fmtlib/fmt": SPECS_FMT,  # c++
-    "openbabel/openbabel": SPECS_OPENBABEL,  # c++
     "openmm/openmm": SPECS_OPENMM,  # c++
-    "openmc-dev/openmc": SPECS_OPENMC,  # c++
     "qgis/QGIS": SPECS_QGIS,  # c++
     "rdkit/rdkit": SPECS_RDKIT,  # c++
     "lammps/lammps": SPECS_LAMMPS,  # c++
+    "samtools/samtools": SPECS_SAMTOOLS,  # c
+    "fenics/dolfinx": SPECS_DOLFINX,  # c++ (non-evaluable placeholder)
 }
 
 # Constants - Repository Specific Installation Instructions

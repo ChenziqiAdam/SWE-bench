@@ -93,6 +93,20 @@ def test_every_v2_prompt_excludes_gold_and_mined_hints():
         assert build_pilot_prompt(altered) == prompt
 
 
+def test_new_collection_selection_maps_75_rows_to_75_instances():
+    instances = full.select_full_instances(
+        ROOT / "Issues_No_Tests_new.xlsx",
+        [ROOT / "outputs/issues_no_tests_new_ds/instances.jsonl"],
+    )
+    selection = full._workbook_selection(ROOT / "Issues_No_Tests_new.xlsx")
+    assert selection["row_count"] == 75
+    assert selection["unique_instance_count"] == 75
+    assert selection["duplicate_mappings"] == {}
+    assert [item["instance_id"] for item in instances] == selection[
+        "ordered_instance_ids"
+    ]
+
+
 def test_real_v2_manifest_records_all_input_hashes():
     excel = ROOT / "Issues_No_Tests_v2.xlsx"
     source = ROOT / "outputs/issues_testgenwo_v2/instances.jsonl"

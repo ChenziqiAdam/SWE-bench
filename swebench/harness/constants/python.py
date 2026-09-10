@@ -695,7 +695,7 @@ _ASTROPY_TEST_GENERATION_SPEC = {
 SPECS_ASTROPY.update(
     {
         pr: dict(_ASTROPY_TEST_GENERATION_SPEC)
-        for pr in ("16366", "17850", "17209")
+        for pr in ("17209",)
     }
 )
 
@@ -1284,7 +1284,7 @@ _BIOPYTHON_TEST_GENERATION_SPEC = {
 
 SPECS_BIOPYTHON = {
     pr: dict(_BIOPYTHON_TEST_GENERATION_SPEC)
-    for pr in ("4439", "3846", "3281", "2283", "3761")
+    for pr in ("3761",)
 }
 
 
@@ -1364,7 +1364,7 @@ _DEEPCHEM_TEST_GENERATION_SPEC = {
 }
 SPECS_DEEPCHEM = {
     pr: dict(_DEEPCHEM_TEST_GENERATION_SPEC)
-    for pr in ("2620", "2132", "1896", "1769")
+    for pr in ("2132", "1896", "1769")
 }
 
 
@@ -1428,43 +1428,15 @@ _QUTIP_LEGACY_TEST_GENERATION_SPEC = {
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
-_QUTIP_ANCIENT_TEST_GENERATION_SPEC = {
-    "python": "3.7",
-    "pre_install": ["apt-get update -q", "apt-get install -y --no-install-recommends gcc g++"],
-    "install": "python -m pip install --no-build-isolation -e .",
-    "pip_packages": [
-        "pytest<8",
-        "cython==0.29.21",
-        "numpy==1.16.6",
-        "scipy==1.2.1",
-        "setuptools<60",
-        "wheel<0.38",
-    ],
-    "validation_cmd": "python -c 'import qutip'",
-    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
-    "oracle_kind": "generated_test",
-    "test_generation_capabilities": ("python",),
-}
 SPECS_QUTIP = {
     **{
         pr: dict(_QUTIP_MODERN_TEST_GENERATION_SPEC)
-        for pr in (
-            "2582", "2541", "2493", "2466", "2371", "2303",
-        )
+        for pr in ("2466",)
     },
     **{
         pr: dict(_QUTIP_LEGACY_TEST_GENERATION_SPEC)
-        for pr in ("2011", "1195", "1475", "1452", "1436")
+        for pr in ("1195",)
     },
-    **{
-        pr: dict(_QUTIP_ANCIENT_TEST_GENERATION_SPEC)
-        for pr in ("428", "259")
-    },
-}
-# PR 1436 is from the QuTiP 4.x build era. It still reads legacy NumPy
-# BLAS configuration attributes that are absent from NumPy 1.25+ wheels.
-SPECS_QUTIP["1436"] = {
-    **_QUTIP_LEGACY_TEST_GENERATION_SPEC,
 }
 
 
@@ -1494,8 +1466,513 @@ _QISKIT_TEST_GENERATION_SPEC = {
 }
 SPECS_QISKIT = {
     pr: dict(_QISKIT_TEST_GENERATION_SPEC)
-    for pr in ("13379", "12387")
+    for pr in ("12387",)
 }
+
+# ---------------------------------------------------------------------------
+# Issues_No_Tests_new.xlsx additions (2026-09-09).
+# Per-PR eval test specs keyed by pull_number for the 68 new instances that
+# lacked one. Static authoring (verify-later): Python version and dependency
+# pins chosen for each repo's build era; every target PR touches only Python
+# source, so a plain editable install of the base checkout is sufficient
+# unless the repo ships compiled extensions (pyscf).
+# ---------------------------------------------------------------------------
+
+# qiskit-terra build eras (verified against setup.py at each base commit):
+#  - 845 (0.6.0, 2018): setup.py.in template + CMake-built C++ simulator; a
+#    plain `pip install -e .` cannot work. Non-evaluable until the CMake
+#    build is curated.
+#  - 1940 / 3419 / 4803 / 5166 (2019-2020, terra 0.8-0.16): Cython-only
+#    setuptools build, `setup_requires=['Cython>=0.27.1']`, no Rust/CMake.
+#    Test suite is unittest-based (QiskitTestCase -> fixtures/testtools),
+#    normally run via stestr; pytest collects it fine. `ddt` is required for
+#    the parametrised tests.
+#  - 8447 / 10866 (2022-2023): setuptools-rust build (qiskit._accelerate),
+#    needs a Rust toolchain -> reuse _QISKIT_TEST_GENERATION_SPEC.
+#  - 12387 already curated; 15604 / 16103 (2026, PyO3 core) -> Rust toolchain.
+_QISKIT_CYTHON_SPEC = {
+    "python": "3.8",
+    "install": (
+        "python -m pip install 'Cython<3' 'setuptools<66' wheel && "
+        "python -m pip install -e . --no-build-isolation"
+    ),
+    "pip_packages": [
+        "pytest",
+        "ddt==1.4.4",
+        "fixtures",
+        "testtools",
+        "numpy==1.21.6",
+        "scipy==1.7.3",
+        "sympy==1.9",
+        "retworkx==0.11.0",
+        "python-constraint>=1.4",
+        "python-dateutil",
+    ],
+    "validation_cmd": "python -c 'import ddt; import qiskit'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+SPECS_QISKIT["845"] = {
+    "python": "3.8",
+    "install": "true",
+    "test_cmd": (
+        "echo 'qiskit#845 not evaluable: terra 0.6.0 setup.py.in + CMake "
+        "C++ simulator build needs curation' && false"
+    ),
+    "_curation_todo": "terra 0.6.0 CMake C++ simulator build",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+SPECS_QISKIT.update(
+    {pr: dict(_QISKIT_CYTHON_SPEC) for pr in ("1940", "3419", "4803", "5166")}
+)
+SPECS_QISKIT.update(
+    {
+        pr: dict(_QISKIT_TEST_GENERATION_SPEC)  # setuptools-rust / PyO3 era
+        for pr in ("8447", "10866", "15604", "16103")
+    }
+)
+
+# qutip:
+#  - 1058 (2019, QuTiP 4.4): Cython at setup import; reuse the legacy 4.x
+#    template (cython 0.29 / numpy 1.21 / --no-build-isolation).
+#  - 2574 (2024) & 2826 (2026, QuTiP 5.x): pyproject requires numpy>=2 for
+#    the build and setuptools>=77 (2826); the existing "modern" template
+#    pins numpy 1.25 / packaging<22, which is wrong here.
+_QUTIP_5X_TEST_GENERATION_SPEC = {
+    "python": "3.11",
+    "pre_install": [
+        "apt-get update -q",
+        "apt-get install -y --no-install-recommends gcc g++",
+    ],
+    "install": "python -m pip install -e .",
+    "pip_packages": [
+        "pytest",
+        "cython>=0.29.20",
+        "numpy>=2.0",
+        "scipy>=1.9",
+        "setuptools>=77.0.3",
+    ],
+    "validation_cmd": "python -c 'import qutip'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+SPECS_QUTIP.update(
+    {
+        "1058": dict(_QUTIP_LEGACY_TEST_GENERATION_SPEC),
+        "2574": dict(_QUTIP_5X_TEST_GENERATION_SPEC),
+        "2826": dict(_QUTIP_5X_TEST_GENERATION_SPEC),
+    }
+)
+
+# astropy: verified python_requires at each base commit.
+#  - 5612 (2016, astropy 1.3-dev, py2.7/3.4-3.5), 6045/6400 (2017, astropy
+#    2.0-3.0), 8108/8111 (2018, astropy 3.1, py3.5-3.7): reuse the proven
+#    pinned pre-4.0 dict from the existing "0.1..1.3" block (py3.6 + numpy
+#    1.16 + Cython 0.27.3).
+#  - 9079 (2019, astropy 4.0-dev, requires-python>=3.6, numpy>=1.13): py3.8
+#    + numpy 1.19 + Cython 0.29.
+#  - 12525 (2021, py>=3.8, numpy>=1.18, scipy>=1.3), 16529 (2024, py>=3.10,
+#    numpy>=1.23/build numpy>=2.0rc1): modern [test] extra.
+_ASTROPY_PRE4_GEN_SPEC = {
+    **SPECS_ASTROPY["1.3"],  # py3.6 / setuptools 38.2.4 / numpy 1.16 / Cython 0.27.3
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+_ASTROPY_4X_GEN_SPEC = {
+    "python": "3.8",
+    "install": "python -m pip install -e .[test] --verbose",
+    "pre_install": [
+        "python -m pip install 'setuptools<60' 'setuptools_scm<7' wheel "
+        "'Cython<3' 'numpy==1.19.5'",
+    ],
+    "pip_packages": [
+        "pytest==7.1.2",
+        "numpy==1.19.5",
+        "pyerfa==2.0.0.1",
+        "PyYAML==6.0",
+        "packaging==21.3",
+    ],
+    "validation_cmd": "python -c 'import astropy; import numpy'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+_ASTROPY_5X_GEN_SPEC = {
+    "python": "3.11",
+    "install": "python -m pip install -e .[test] --verbose",
+    "pip_packages": [
+        "pytest",
+        "numpy==1.26.4",
+        "scipy==1.11.4",
+        "pyparsing==3.1.1",
+    ],
+    "validation_cmd": "python -c 'import astropy; import numpy'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+SPECS_ASTROPY.update(
+    {
+        pr: dict(_ASTROPY_PRE4_GEN_SPEC)
+        for pr in ("5612", "6045", "6400", "8108", "8111")
+    }
+)
+SPECS_ASTROPY["9079"] = dict(_ASTROPY_4X_GEN_SPEC)
+SPECS_ASTROPY.update(
+    {pr: dict(_ASTROPY_5X_GEN_SPEC) for pr in ("12525", "16529")}
+)
+
+# pyscf: setup.py runs CMake at install to build/download libcint + libxc
+# (needs a compiler, gfortran, cmake, BLAS and network). PRs touch only
+# Python.  551 = pyscf 1.7.1 (2020); 794/1143/1164/1219 = 2021-2022
+# (classifiers py3.6-3.9).
+_PYSCF_BASE_PRE_INSTALL = [
+    "apt-get update -q",
+    "apt-get install -y --no-install-recommends "
+    "gcc g++ gfortran cmake make curl libblas-dev liblapack-dev",
+]
+_PYSCF_17_GEN_SPEC = {
+    "python": "3.8",
+    "pre_install": _PYSCF_BASE_PRE_INSTALL
+    + ["python -m pip install 'numpy==1.21.6' 'setuptools<60' wheel cmake"],
+    "install": "python -m pip install -e . --no-build-isolation",
+    "pip_packages": ["pytest", "numpy==1.21.6", "scipy==1.7.3", "h5py==3.1.0"],
+    "validation_cmd": "python -c 'import pyscf'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+_PYSCF_2X_GEN_SPEC = {
+    "python": "3.9",
+    "pre_install": _PYSCF_BASE_PRE_INSTALL
+    + ["python -m pip install 'numpy==1.23.5' setuptools wheel cmake"],
+    "install": "python -m pip install -e . --no-build-isolation",
+    "pip_packages": ["pytest", "numpy==1.23.5", "scipy==1.9.3", "h5py==3.7.0"],
+    "validation_cmd": "python -c 'import pyscf'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+SPECS_PYSCF = {"551": dict(_PYSCF_17_GEN_SPEC)}
+SPECS_PYSCF.update(
+    {pr: dict(_PYSCF_2X_GEN_SPEC) for pr in ("794", "1143", "1164", "1219")}
+)
+
+# obspy: verified python classifiers at base commits.
+#  - 956 (2015, obspy 0.10): Python 2.6/2.7/3.3/3.4 only -> cannot build on
+#    any harness Python. Non-evaluable.
+#  - 2560 / 2570 (2020, obspy 1.1/1.2): Python 3.4-3.8, setup.py uses
+#    numpy.distutils (removed in numpy>=1.26 / py3.12). Build on Python 3.8
+#    with numpy pinned and installed before the editable build.
+_OBSPY_GEN_SPEC = {
+    "python": "3.8",
+    "pre_install": [
+        "apt-get update -q",
+        "apt-get install -y --no-install-recommends gcc gfortran",
+        # numpy.distutils must exist and NumPy must be importable before
+        # `pip install -e .` runs setup.py.
+        "python -m pip install 'numpy==1.21.6' 'setuptools<60' wheel",
+    ],
+    "install": "python -m pip install -e . --no-build-isolation",
+    "pip_packages": [
+        "pytest",
+        "numpy==1.21.6",
+        "scipy==1.7.3",
+        "matplotlib==3.5.3",
+        "lxml==4.9.2",
+        "sqlalchemy==1.4.46",
+        "requests==2.28.2",
+        "decorator==5.1.1",
+    ],
+    "validation_cmd": "python -c 'import obspy'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+SPECS_OBSPY = {pr: dict(_OBSPY_GEN_SPEC) for pr in ("2560", "2570")}
+SPECS_OBSPY["956"] = {
+    "python": "3.8",
+    "install": "true",
+    "test_cmd": (
+        "echo 'obspy#956 not evaluable: obspy 0.10 supports only "
+        "Python 2.6-3.4' && false"
+    ),
+    "_curation_todo": "obspy 0.10 legacy Python",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+
+# psi4: PR 2453 (2022) touches only psi4/driver/procrouting (pure Python).
+# The compiled core is heavy; install the conda-forge binary and run the
+# generated test against the Python driver layer.
+_PSI4_GEN_SPEC = {
+    "python": "3.9",
+    "conda_channels": ["conda-forge"],
+    "install": "conda install -y -c conda-forge psi4 && python -m pip install -e . --no-deps --no-build-isolation || true",
+    "pip_packages": ["pytest", "numpy==1.23.5"],
+    "validation_cmd": "python -c 'import psi4'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+SPECS_PSI4 = {"2453": dict(_PSI4_GEN_SPEC)}
+# PRs 1244 (2018) & 3005 (2023) touch compiled C++ (dfocc / libfock). Building
+# psi4 from source is a multi-hour CMake job; mark non-evaluable until a
+# curated base image + ctest target exists.
+SPECS_PSI4.update(
+    {
+        pr: {
+            "python": "3.9",
+            "install": "true",
+            "test_cmd": (
+                f"echo 'psi4#{pr} not evaluable: needs psi4 source-build "
+                f"image + ctest target' && false"
+            ),
+            "_curation_todo": "psi4 source build image + ctest target",
+            "oracle_kind": "generated_test",
+            "test_generation_capabilities": ("cpp",),
+        }
+        for pr in ("1244", "3005")
+    }
+)
+
+# scanpy: pure-Python, four distinct dependency eras (verified against
+# setup.py / pyproject.toml at each base commit):
+#  - 1464 (2020, scanpy 1.6, py>=3.6, pandas 1.x): flat layout, [test] extra.
+#  - 2832 (2024-01, scanpy 1.9.8, py>=3.9, pandas>=2.1.3, anndata>=0.7.4):
+#    numba must match numpy; use numba 0.59 / numpy 1.26.
+#  - 3771 (2025, scanpy 1.11, py>=3.11, src/ layout).
+#  - 4231 (2026, scanpy 1.12-dev, py>=3.12, numpy>=2.1, scipy>=1.15).
+_SCANPY_16_SPEC = {
+    "python": "3.8",
+    "install": "python -m pip install -e .[test]",
+    "pip_packages": [
+        "pytest",
+        "numpy==1.21.6",
+        "scipy==1.7.3",
+        "pandas==1.3.5",
+        "anndata==0.7.8",
+        "scikit-learn==1.0.2",
+        "numba==0.55.2",
+        "llvmlite==0.38.1",
+        "matplotlib==3.5.3",
+        "h5py==3.7.0",
+        "networkx==2.6.3",
+        "natsort",
+        "joblib",
+        "patsy",
+        "statsmodels",
+        "tables",
+    ],
+    "validation_cmd": "python -c 'import scanpy'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+_SCANPY_198_SPEC = {
+    "python": "3.10",
+    "install": "python -m pip install -e .[test]",
+    "pip_packages": [
+        "pytest",
+        "numpy==1.26.4",
+        "scipy==1.11.4",
+        "pandas==2.1.4",
+        "anndata==0.10.5",
+        "scikit-learn==1.3.2",
+        "numba==0.59.1",
+        "matplotlib==3.8.2",
+        "h5py==3.10.0",
+        "networkx==3.2.1",
+        "natsort",
+        "joblib",
+        "session-info",
+        "legacy-api-wrap",
+    ],
+    "validation_cmd": "python -c 'import scanpy'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+_SCANPY_111_SPEC = {  # 3771 (2025, scanpy 1.11, py3.11-3.13)
+    "python": "3.11",
+    "install": "python -m pip install -e .[test]",
+    "pip_packages": ["pytest", "numpy<2.2", "scipy", "pandas", "anndata", "scikit-learn", "numba", "matplotlib", "legacy-api-wrap", "session-info", "h5py", "natsort", "joblib"],
+    "validation_cmd": "python -c 'import scanpy'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+_SCANPY_112_SPEC = {  # 4231 (2026, scanpy >=1.12 dev, requires-python>=3.12)
+    **_SCANPY_111_SPEC,
+    "python": "3.12",
+    "pip_packages": ["pytest", "numpy>=2.1", "scipy>=1.15", "pandas", "anndata", "scikit-learn", "numba", "matplotlib", "legacy-api-wrap", "session-info2", "h5py", "natsort", "joblib"],
+}
+SPECS_SCANPY = {
+    "1464": dict(_SCANPY_16_SPEC),
+    "2832": dict(_SCANPY_198_SPEC),
+    "3771": dict(_SCANPY_111_SPEC),
+    "4231": dict(_SCANPY_112_SPEC),
+}
+
+# sunpy:
+#  - 1505 (2015, sunpy 0.6): Python 2.7 / early 3.x, numpy.distutils era.
+#    Non-evaluable on harness Pythons.
+#  - 4260 (2020, sunpy 2.0, py3.6-3.8): modern setuptools_scm build.
+_SUNPY_GEN_SPEC = {
+    "python": "3.8",
+    "install": "python -m pip install -e .[all,tests]",
+    "pip_packages": [
+        "pytest",
+        "numpy==1.21.6",
+        "scipy==1.7.3",
+        "astropy==4.3.1",
+        "matplotlib==3.5.3",
+        "pandas==1.3.5",
+        "parfive==1.5.1",
+    ],
+    "validation_cmd": "python -c 'import sunpy'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+SPECS_SUNPY = {"4260": dict(_SUNPY_GEN_SPEC)}
+SPECS_SUNPY["1505"] = {
+    "python": "3.8",
+    "install": "true",
+    "test_cmd": (
+        "echo 'sunpy#1505 not evaluable: sunpy 0.6 (2015) predates "
+        "supported Python' && false"
+    ),
+    "_curation_todo": "sunpy 0.6 legacy Python",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+
+# yt: pure-Python + Cython C extensions built at install.
+#  - 2128 (2019) / 2485 (2020): yt 3.5/3.6, classifiers only 3.4/3.5,
+#    setup.py hard-checks Cython>=0.24 / numpy>=1.10; builds fail on a
+#    modern toolchain. Non-evaluable pending a curated py3.7 + old-numpy env.
+#  - 3532 / 3556 (2021): yt 4.0, py3.6-3.9.
+#  - 5221 (2025): yt 4.4+, py>=3.10, numpy 2.
+_YT_40_GEN_SPEC = {
+    "python": "3.9",
+    "pre_install": [
+        "apt-get update -q",
+        "apt-get install -y --no-install-recommends gcc g++",
+        "python -m pip install 'cython<3' 'numpy==1.21.6' 'setuptools<66' wheel",
+    ],
+    "install": "python -m pip install -e . --no-build-isolation",
+    "pip_packages": [
+        "pytest",
+        "cython<3",
+        "numpy==1.21.6",
+        "scipy==1.7.3",
+        "matplotlib==3.5.3",
+        "sympy==1.9",
+        "unyt==2.8.0",
+        "more-itertools==8.13.0",
+        "packaging==21.3",
+        "tomli==2.0.1",
+    ],
+    "validation_cmd": "python -c 'import yt'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+_YT_MODERN_GEN_SPEC = {
+    "python": "3.11",
+    "pre_install": [
+        "apt-get update -q",
+        "apt-get install -y --no-install-recommends gcc g++",
+    ],
+    "install": "python -m pip install -e . --no-build-isolation",
+    "pip_packages": ["pytest", "cython>=3.0.3", "numpy>=2.0", "setuptools>=61.2", "scipy", "matplotlib", "sympy", "unyt", "more-itertools", "packaging", "ewah-bool-utils"],
+    "validation_cmd": "python -c 'import yt'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+_YT_NONEVAL = lambda pr: {
+    "python": "3.9",
+    "install": "true",
+    "test_cmd": (
+        f"echo 'yt#{pr} not evaluable: yt 3.x Cython build needs curated "
+        f"py3.7 + numpy<1.20 env' && false"
+    ),
+    "_curation_todo": "yt 3.x legacy Cython build",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+SPECS_YT = {
+    "2128": _YT_NONEVAL("2128"),
+    "2485": _YT_NONEVAL("2485"),
+    "3532": dict(_YT_40_GEN_SPEC),
+    "3556": dict(_YT_40_GEN_SPEC),
+    "5221": dict(_YT_MODERN_GEN_SPEC),
+}
+
+# nilearn: pure-Python, nilearn 0.7 (2020-2021). No [test] extra at that tag;
+# install plainly and add test deps. py3.6-3.9 -> use 3.8.
+_NILEARN_GEN_SPEC = {
+    "python": "3.8",
+    "install": "python -m pip install -e .",
+    "pip_packages": [
+        "pytest",
+        "numpy==1.21.6",
+        "scipy==1.7.3",
+        "scikit-learn==1.0.2",
+        "pandas==1.3.5",
+        "nibabel==3.2.2",
+        "matplotlib==3.5.3",
+        "joblib==1.1.1",
+    ],
+    "validation_cmd": "python -c 'import nilearn'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+SPECS_NILEARN = {pr: dict(_NILEARN_GEN_SPEC) for pr in ("2431", "2706")}
+
+# mne-python: pure-Python.
+#  - 9459 (2021-06, mne 0.24, py3.7-3.10): setup.py builds install_requires
+#    from requirements.txt; only numpy/scipy are hard. `import mne` also
+#    pulls packaging/decorator/pooch/tqdm/jinja2; the touched viz code needs
+#    matplotlib.
+#  - 13123 (2025, mne 1.9, hatchling, py>=3.10): numpy>=1.25, lazy-loader.
+_MNE_LEGACY_SPEC = {
+    "python": "3.9",
+    "install": "python -m pip install -e .",
+    "pip_packages": [
+        "pytest",
+        "numpy==1.22.4",
+        "scipy==1.8.1",
+        "matplotlib==3.5.3",
+        "scikit-learn==1.1.3",
+        "pooch==1.7.0",
+        "decorator==5.1.1",
+        "packaging==23.1",
+        "tqdm",
+        "jinja2",
+    ],
+    "validation_cmd": "python -c 'import mne'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+_MNE_MODERN_SPEC = {
+    "python": "3.12",
+    "install": "python -m pip install -e . --config-settings editable_mode=compat",
+    "pip_packages": ["pytest", "numpy>=1.25,<3", "scipy>=1.11", "matplotlib", "scikit-learn", "pooch", "decorator", "packaging", "lazy-loader", "jinja2"],
+    "validation_cmd": "python -c 'import mne'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+SPECS_MNE = {"9459": dict(_MNE_LEGACY_SPEC), "13123": dict(_MNE_MODERN_SPEC)}
 
 # Constants - Task Instance Instllation Environment
 MAP_REPO_VERSION_TO_SPECS_PY = {
@@ -1527,6 +2004,14 @@ MAP_REPO_VERSION_TO_SPECS_PY = {
     "deepchem/deepchem": SPECS_DEEPCHEM,
     "qutip/qutip": SPECS_QUTIP,
     "qiskit/qiskit": SPECS_QISKIT,
+    "pyscf/pyscf": SPECS_PYSCF,
+    "obspy/obspy": SPECS_OBSPY,
+    "psi4/psi4": SPECS_PSI4,
+    "scverse/scanpy": SPECS_SCANPY,
+    "sunpy/sunpy": SPECS_SUNPY,
+    "yt-project/yt": SPECS_YT,
+    "nilearn/nilearn": SPECS_NILEARN,
+    "mne-tools/mne-python": SPECS_MNE,
 }
 
 # Constants - Repository Specific Installation Instructions

@@ -54,6 +54,31 @@ DATASET_PROFILES = {
         },
         "duplicate_mappings": {"lammps__lammps-4481": [4487, 4499]},
     },
+    "new": {
+        "workbook_rows": 75,
+        "instances": 75,
+        "repos": {
+            "lammps/lammps": 13,
+            "qiskit/qiskit": 10,
+            "astropy/astropy": 8,
+            "rdkit/rdkit": 6,
+            "pyscf/pyscf": 5,
+            "qgis/QGIS": 5,
+            "yt-project/yt": 5,
+            "scverse/scanpy": 4,
+            "obspy/obspy": 3,
+            "psi4/psi4": 3,
+            "qutip/qutip": 3,
+            "mne-tools/mne-python": 2,
+            "nilearn/nilearn": 2,
+            "sunpy/sunpy": 2,
+            "deepchem/deepchem": 1,
+            "fenics/dolfinx": 1,
+            "openmm/openmm": 1,
+            "samtools/samtools": 1,
+        },
+        "duplicate_mappings": {},
+    },
 }
 MAX_FETCH_ATTEMPTS = 3
 ABNORMAL_FILE_COUNT = 3
@@ -112,18 +137,19 @@ def _workbook_selection(excel_path: Path) -> dict[str, Any]:
                 continue
             for values in rows:
                 row = dict(zip(headers, values))
-                if not row.get("Repo") or not row.get("Closing PR #"):
+                pull_number = row.get("Closing PR #") or row.get("Matched PR #")
+                if not row.get("Repo") or not pull_number:
                     continue
                 instance_id = (
                     str(row["Repo"]).replace("/", "__", 1)
-                    + f"-{int(row['Closing PR #'])}"
+                    + f"-{int(pull_number)}"
                 )
                 rows_found.append(
                     {
                         "instance_id": instance_id,
                         "repo": str(row["Repo"]),
                         "issue_number": int(row["Issue Number"]),
-                        "closing_pr": int(row["Closing PR #"]),
+                        "closing_pr": int(pull_number),
                         "sheet": sheet.title,
                     }
                 )
