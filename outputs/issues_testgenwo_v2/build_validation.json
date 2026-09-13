@@ -1,0 +1,202 @@
+{
+  "deepchem__deepchem-2620": {
+    "buildable": false,
+    "error": "env image failed: sweb.env.py.x86_64.cb4c6739a449475a022803:latest",
+    "spec_hash": "413370a4c18a2a7f"
+  },
+  "deepchem__deepchem-2132": {
+    "buildable": false,
+    "error": "env image failed: sweb.env.py.x86_64.cb4c6739a449475a022803:latest",
+    "spec_hash": "8b8d9279532d4e86"
+  },
+  "deepchem__deepchem-1896": {
+    "buildable": false,
+    "error": "env image failed: sweb.env.py.x86_64.cb4c6739a449475a022803:latest",
+    "spec_hash": "fe445b4076aadb68"
+  },
+  "deepchem__deepchem-1769": {
+    "buildable": false,
+    "error": "env image failed: sweb.env.py.x86_64.cb4c6739a449475a022803:latest",
+    "spec_hash": "8ba7da87833c2a6d"
+  },
+  "lammps__lammps-4715": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "c7a21ef5d77f2432"
+  },
+  "lammps__lammps-4507": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "f442fa849854da2b"
+  },
+  "lammps__lammps-4481": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "13400a9023ead4d6"
+  },
+  "lammps__lammps-4485": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "74080ebaeffc4d8a"
+  },
+  "lammps__lammps-3129": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "8cfe50cf70939ad5"
+  },
+  "lammps__lammps-597": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "ac16b7013379fefc"
+  },
+  "lammps__lammps-4319": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "e39ba446d4c422c5"
+  },
+  "lammps__lammps-4443": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "880c7ecf0de00bd4"
+  },
+  "lammps__lammps-4370": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "8c8c5e20c781da26"
+  },
+  "lammps__lammps-4339": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "3c48accea5042d99"
+  },
+  "lammps__lammps-4291": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "8d29c70763c2ed99"
+  },
+  "lammps__lammps-4152": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "d5e7f991727ced5e"
+  },
+  "lammps__lammps-4134": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "a256df1286ba99c7"
+  },
+  "lammps__lammps-3930": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "98dab59044ff0893"
+  },
+  "lammps__lammps-3898": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "724cff7ddbb453e9"
+  },
+  "biopython__biopython-3761": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "d894d845e1b8ecb4"
+  },
+  "astropy__astropy-16366": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "cd8bb217ee3944a6"
+  },
+  "astropy__astropy-17850": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "e6e9f52b27d3e79d"
+  },
+  "qgis__QGIS-64781": {
+    "buildable": false,
+    "error": "2026-08-09 22:37:18,771 - ERROR - docker.errors.BuildError during sweb.eval.x86_64.qgis__qgis-64781:latest: building at STEP \"RUN /bin/bash /root/setup_repo.sh\": while running runtime: exit status 1",
+    "spec_hash": "3fbc09218e44da9c"
+  },
+  "astropy__astropy-17209": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "af8a853837cd2b90"
+  },
+  "qgis__QGIS-66606": {
+    "buildable": false,
+    "error": "2026-08-09 22:40:12,059 - ERROR - docker.errors.BuildError during sweb.eval.x86_64.qgis__qgis-66606:latest: building at STEP \"RUN /bin/bash /root/setup_repo.sh\": while running runtime: exit status 1",
+    "spec_hash": "e378be14b9060b67"
+  },
+  "qiskit__qiskit-13379": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "39ab2bfa00abad3e"
+  },
+  "qiskit__qiskit-12387": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "40387d737696de3a"
+  },
+  "qutip__qutip-2582": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "8cba0c9894594132"
+  },
+  "qutip__qutip-2541": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "e323c8e56b6713a0"
+  },
+  "qutip__qutip-2493": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "fb366f9d6d1ab4b9"
+  },
+  "qutip__qutip-2466": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "5e28228127ae8e66"
+  },
+  "qutip__qutip-2371": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "5636d45eb7f1f391"
+  },
+  "qutip__qutip-2303": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "debfc212d227d4b4"
+  },
+  "qutip__qutip-2011": {
+    "buildable": false,
+    "error": "2026-08-09 22:52:36,143 - ERROR - docker.errors.BuildError during sweb.eval.x86_64.qutip__qutip-2011:latest: building at STEP \"RUN /bin/bash /root/setup_repo.sh\": while running runtime: exit status 1",
+    "spec_hash": "ce24466cd501252b"
+  },
+  "qutip__qutip-1195": {
+    "buildable": false,
+    "error": "2026-08-09 22:55:54,174 - ERROR - docker.errors.BuildError during sweb.eval.x86_64.qutip__qutip-1195:latest: building at STEP \"RUN /bin/bash /root/setup_repo.sh\": while running runtime: exit status 1",
+    "spec_hash": "a19f4cfdf0427da9"
+  },
+  "qutip__qutip-1475": {
+    "buildable": false,
+    "error": "2026-08-09 22:56:34,172 - ERROR - docker.errors.BuildError during sweb.eval.x86_64.qutip__qutip-1475:latest: building at STEP \"RUN /bin/bash /root/setup_repo.sh\": while running runtime: exit status 1",
+    "spec_hash": "5889238eba4413d5"
+  },
+  "qutip__qutip-1452": {
+    "buildable": false,
+    "error": "2026-08-09 22:57:26,824 - ERROR - docker.errors.BuildError during sweb.eval.x86_64.qutip__qutip-1452:latest: building at STEP \"RUN /bin/bash /root/setup_repo.sh\": while running runtime: exit status 1",
+    "spec_hash": "320303d3637d8e40"
+  },
+  "qutip__qutip-1436": {
+    "buildable": false,
+    "error": "post-build validation failed: Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/testbed/qutip/__init__.py\", line 111, in <module>\n    qutip.settings.eigh_unsafe = (_blas_info() == \"OPENBLAS\" and\n                                  ^^^^^^^^^^^^\n  File \"/testbed/qutip/utilities.py\", line 430, in _blas_info\n    blas_info = config.blas_opt_info\n                ^^^^^^^^^^^^^^^^^^^^\nAttributeError: module 'numpy.__config__' has no attribute 'blas_opt_info'",
+    "spec_hash": "b1fad79132b43461"
+  },
+  "qutip__qutip-428": {
+    "buildable": false,
+    "error": "2026-08-09 22:59:02,584 - ERROR - docker.errors.BuildError during sweb.eval.x86_64.qutip__qutip-428:latest: building at STEP \"RUN /bin/bash /root/setup_repo.sh\": while running runtime: exit status 1",
+    "spec_hash": "46fdb301cb54bcfb"
+  },
+  "qutip__qutip-259": {
+    "buildable": false,
+    "error": "2026-08-09 22:59:01,254 - ERROR - docker.errors.BuildError during sweb.eval.x86_64.qutip__qutip-259:latest: building at STEP \"RUN /bin/bash /root/setup_repo.sh\": while running runtime: exit status 1",
+    "spec_hash": "740e76cd5fbbc962"
+  }
+}

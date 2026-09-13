@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-4294",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-4294",
+    "model_patch": "diff --git a/platforms/reference/tests/TestReferencePMEComments.py b/platforms/reference/tests/TestReferencePMEComments.py\nnew file mode 100644\nindex 0000000..6b48984\n--- /dev/null\n+++ b/platforms/reference/tests/TestReferencePMEComments.py\n@@ -0,0 +1,14 @@\n+import pathlib\n+import unittest\n+\n+\n+class TestReferencePMEComments(unittest.TestCase):\n+    def test_interpolation_order_comments_match_configured_order(self):\n+        source = (pathlib.Path(__file__).parents[1] / \"src\" / \"SimTKReference\" /\n+                  \"ReferencePME.cpp\").read_text()\n+        self.assertIn(\"PME interpolation order. Almost always 5\", source)\n+        self.assertIn(\"typically 5*5*5=125\", source)\n+\n+\n+if __name__ == \"__main__\":\n+    unittest.main()\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "af88f40604a9a04de15146a7cdc8d7a97b7e919ad723b4dc1be5f1d7ee8a1c3a",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/reference/tests/TestReferencePMEComments.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-4294.jsonl",
+      "trajectory_sha256": "e28c08d98f864d7e1dcc1459e8abfcd7e4bd94502fe4f7ba919a6b807f250883",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "e28c08d98f864d7e1dcc1459e8abfcd7e4bd94502fe4f7ba919a6b807f250883",
+    "metrics": {
+      "input_tokens": 154598,
+      "output_tokens": 1612,
+      "cache_read_input_tokens": 116480,
+      "total_tokens": 156210,
+      "wall_time_seconds": 49.825813
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-4294",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/reference/tests/TestReferencePMEComments.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-4294.jsonl",
+    "trajectory_sha256": "e28c08d98f864d7e1dcc1459e8abfcd7e4bd94502fe4f7ba919a6b807f250883",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

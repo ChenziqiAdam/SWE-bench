@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3311",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3311",
+    "model_patch": "diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py\nindex a7e07c1..898849f 100644\n--- a/wrappers/python/tests/TestForceField.py\n+++ b/wrappers/python/tests/TestForceField.py\n@@ -1297,5 +1297,20 @@ class AmoebaTestForceField(unittest.TestCase):\n         system = self.forcefield1.createSystem(self.pdb1.topology, rigidWater=None)\n         self.assertEqual(0, system.getNumConstraints())\n \n+    def test_FlexibleWaterContext(self):\n+        \"\"\"Test that a Context can be created for flexible AMOEBA water.\"\"\"\n+\n+        topology = Topology()\n+        residue = topology.addResidue('HOH', topology.addChain())\n+        h1 = topology.addAtom('H1', elem.hydrogen, residue)\n+        h2 = topology.addAtom('H2', elem.hydrogen, residue)\n+        oxygen = topology.addAtom('O', elem.oxygen, residue)\n+        topology.addBond(h1, oxygen)\n+        topology.addBond(h2, oxygen)\n+        for filename in ('amoeba2013.xml', 'amoeba2018.xml'):\n+            system = ForceField(filename).createSystem(topology, rigidWater=False)\n+            integrator = VerletIntegrator(0.001)\n+            context = Context(system, integrator, Platform.getPlatformByName('Reference'))\n+\n     def test_Forces(self):\n         \"\"\"Compute forces and compare them to ones generated with a previous version of OpenMM to ensure they haven't changed.\"\"\"\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "ba0abddc302eee945e769ee64ca12c77d2c5b6f296bd10cf4a8ad3e53a60c531",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestForceField.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3311.jsonl",
+      "trajectory_sha256": "f00d56a94fb2fcbf575a305db17ec4818ee9e7c23030342ca5932d75eb4d0936",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "f00d56a94fb2fcbf575a305db17ec4818ee9e7c23030342ca5932d75eb4d0936",
+    "metrics": {
+      "input_tokens": 286236,
+      "output_tokens": 3621,
+      "cache_read_input_tokens": 257024,
+      "total_tokens": 289857,
+      "wall_time_seconds": 113.4248
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3311",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestForceField.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3311.jsonl",
+    "trajectory_sha256": "f00d56a94fb2fcbf575a305db17ec4818ee9e7c23030342ca5932d75eb4d0936",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3241",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3241",
+    "model_patch": "diff --git a/wrappers/python/tests/TestModeller.py b/wrappers/python/tests/TestModeller.py\nindex 53f8d5b..cc69cf5 100644\n--- a/wrappers/python/tests/TestModeller.py\n+++ b/wrappers/python/tests/TestModeller.py\n@@ -1,6 +1,7 @@\n from collections import defaultdict\n import unittest\n import math\n+import numpy as np\n import sys\n \n from validateModeller import *\n@@ -376,5 +377,23 @@ class TestModeller(unittest.TestCase):\n         modeller.addSolvent(self.forcefield, numAdded=1000)\n         self.assertEqual(numInitial+1000, len(list(modeller.topology.residues())))\n \n+    def test_addSolventNumpyPositions(self):\n+        \"\"\"Test that NumPy positions produce the same centered solvent box as Vec3 positions.\"\"\"\n+        modeller = Modeller(self.topology_start, self.positions)\n+        modeller.deleteWater()\n+        topology = modeller.topology\n+        vec3Positions = modeller.positions\n+        numpyPositions = np.array(vec3Positions.value_in_unit(nanometers))\n+\n+        solvated = []\n+        for positions in (vec3Positions, numpyPositions):\n+            modeller = Modeller(topology, positions)\n+            modeller.addSolvent(self.forcefield, boxSize=Vec3(3, 3, 3)*nanometers)\n+            solvated.append(modeller.positions)\n+\n+        self.assertEqual(len(solvated[0]), len(solvated[1]))\n+        for vec3Position, numpyPosition in zip(*solvated):\n+            self.assertVecAlmostEqual(vec3Position, numpyPosition)\n+\n     def test_addSolventNeutralSolvent(self):\n         \"\"\" Test the addSolvent() method; test adding ions to neutral solvent. \"\"\"\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "1435dc3a71a0d58845c732881d0617d71327bcd1747f56e66753b64f174a2693",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestModeller.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3241.jsonl",
+      "trajectory_sha256": "0d001ed3633d54cfb806bd944f9d0f92c3ddcbb745df47fc22572b904da60b3b",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "0d001ed3633d54cfb806bd944f9d0f92c3ddcbb745df47fc22572b904da60b3b",
+    "metrics": {
+      "input_tokens": 334596,
+      "output_tokens": 3809,
+      "cache_read_input_tokens": 305664,
+      "total_tokens": 338405,
+      "wall_time_seconds": 135.447002
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3241",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestModeller.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3241.jsonl",
+    "trajectory_sha256": "0d001ed3633d54cfb806bd944f9d0f92c3ddcbb745df47fc22572b904da60b3b",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

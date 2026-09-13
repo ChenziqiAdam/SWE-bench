@@ -1,0 +1,47 @@
+{
+  "instance_id": "rdkit__rdkit-5103",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "rdkit__rdkit-5103",
+    "model_patch": "diff --git a/rdkit/Chem/UnitTestPandasTools.py b/rdkit/Chem/UnitTestPandasTools.py\nindex e362ea8..ac1a4a0 100644\n--- a/rdkit/Chem/UnitTestPandasTools.py\n+++ b/rdkit/Chem/UnitTestPandasTools.py\n@@ -137,6 +137,13 @@ class TestPandasTools(unittest.TestCase):\n     self.assertIn('35024984', result)\n     self.assertNotIn('35024985', result)\n \n+  def test_repeated_repr_html(self):\n+    df = PandasTools.LoadSDF(getStreamIO(methane + peroxide))\n+    for _ in range(2):\n+      html = df.head()._repr_html_()\n+      self.assertIn('<img data-content=\"rdkit/molecule\"', html)\n+      self.assertNotIn('&lt;img data-content=\"rdkit/molecule\"', html)\n+\n   def test_AddMoleculeColumnToFrame(self):\n     df = PandasTools.LoadSDF(getStreamIO(methane + peroxide), isomericSmiles=True,\n                              smilesName='Smiles')\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "cbec3c2e0a7fdefab612f53d7f17737d0b71eb6d383c691c711f99c72e057347",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "rdkit/Chem/UnitTestPandasTools.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/rdkit__rdkit-5103.jsonl",
+      "trajectory_sha256": "2aae9de96a33e08b987de7b9a63623b8102d9928cefc522d833b75cebab5819a",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "2aae9de96a33e08b987de7b9a63623b8102d9928cefc522d833b75cebab5819a",
+    "metrics": {
+      "input_tokens": 208645,
+      "output_tokens": 2057,
+      "cache_read_input_tokens": 179712,
+      "total_tokens": 210702,
+      "wall_time_seconds": 83.028049
+    }
+  },
+  "audit": {
+    "instance_id": "rdkit__rdkit-5103",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "rdkit/Chem/UnitTestPandasTools.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/rdkit__rdkit-5103.jsonl",
+    "trajectory_sha256": "2aae9de96a33e08b987de7b9a63623b8102d9928cefc522d833b75cebab5819a",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "instance_id": "lammps__lammps-4861",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "lammps__lammps-4861",
+    "model_patch": "diff --git a/unittest/commands/CMakeLists.txt b/unittest/commands/CMakeLists.txt\nindex cf7fde5..a80ff60 100644\n--- a/unittest/commands/CMakeLists.txt\n+++ b/unittest/commands/CMakeLists.txt\n@@ -12,6 +12,9 @@ if(PKG_PLUGIN)\n endif()\n \n target_link_libraries(test_simple_commands PRIVATE lammps GTest::GMock)\n+if(PKG_RHEO)\n+  target_compile_definitions(test_simple_commands PRIVATE -DLMP_RHEO)\n+endif()\n add_test(NAME SimpleCommands COMMAND test_simple_commands)\n if(CMAKE_VERSION VERSION_LESS 3.20)\n   set_tests_properties(SimpleCommands PROPERTIES\ndiff --git a/unittest/commands/test_simple_commands.cpp b/unittest/commands/test_simple_commands.cpp\nindex a1a39d3..29ecec1 100644\n--- a/unittest/commands/test_simple_commands.cpp\n+++ b/unittest/commands/test_simple_commands.cpp\n@@ -25,6 +25,11 @@\n #include \"utils.h\"\n #include \"variable.h\"\n \n+#ifdef LMP_RHEO\n+#include \"fix_rheo.h\"\n+#include \"modify.h\"\n+#endif\n+\n #include \"../testing/core.h\"\n #include \"../testing/utils.h\"\n #include \"gmock/gmock.h\"\n@@ -51,6 +56,23 @@ TEST_F(SimpleCommandsTest, UnknownCommand)\n     TEST_FAILURE(\".*ERROR: Unknown command.*\", command(\"XXX one two\"););\n }\n \n+#ifdef LMP_RHEO\n+TEST_F(SimpleCommandsTest, RheoRhoSumSelfMass)\n+{\n+    HIDE_OUTPUT([&] {\n+        command(\"atom_style rheo\");\n+        command(\"region box block 0 1 0 1 0 1\");\n+        command(\"create_box 1 box\");\n+        command(\"fix integrator all rheo 1.0 quintic 10 rho/sum self/mass\");\n+    });\n+\n+    auto *fix = dynamic_cast<FixRHEO *>(lmp->modify->get_fix_by_id(\"integrator\"));\n+    ASSERT_NE(fix, nullptr);\n+    EXPECT_EQ(fix->rhosum_flag, 1);\n+    EXPECT_EQ(fix->rhosum_self_mass_flag, 1);\n+}\n+#endif\n+\n TEST_F(SimpleCommandsTest, Echo)\n {\n     ASSERT_EQ(lmp->input->echo_screen, 1);\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "3dd4062e7f7f1301af002f202222c77c1a4ebeb842099dcd6ae8d30b3a256f80",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/test_simple_commands.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4861.jsonl",
+      "trajectory_sha256": "1604d01c6c93a542aeff9e40288473397dc2f56c9ca362b9d72f75390d0494f1",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "1604d01c6c93a542aeff9e40288473397dc2f56c9ca362b9d72f75390d0494f1",
+    "metrics": {
+      "input_tokens": 878141,
+      "output_tokens": 4299,
+      "cache_read_input_tokens": 772096,
+      "total_tokens": 882440,
+      "wall_time_seconds": 313.837454
+    }
+  },
+  "audit": {
+    "instance_id": "lammps__lammps-4861",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "unittest/commands/CMakeLists.txt",
+      "unittest/commands/test_simple_commands.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/lammps__lammps-4861.jsonl",
+    "trajectory_sha256": "1604d01c6c93a542aeff9e40288473397dc2f56c9ca362b9d72f75390d0494f1",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

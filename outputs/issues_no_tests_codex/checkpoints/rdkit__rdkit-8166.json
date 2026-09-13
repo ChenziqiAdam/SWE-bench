@@ -1,0 +1,47 @@
+{
+  "instance_id": "rdkit__rdkit-8166",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "rdkit__rdkit-8166",
+    "model_patch": "diff --git a/rdkit/Chem/Draw/UnitTestIPython.py b/rdkit/Chem/Draw/UnitTestIPython.py\nindex 79505f7..eb4597f 100644\n--- a/rdkit/Chem/Draw/UnitTestIPython.py\n+++ b/rdkit/Chem/Draw/UnitTestIPython.py\n@@ -107,6 +107,16 @@ class TestCase(unittest.TestCase):\n     self.assertIn('prop-1', html)\n     self.assertNotIn('prop-8', html)\n \n+  @unittest.skipIf(IPythonConsole is None, 'IPython not available')\n+  def testMolPropertyRenderingPreservesSubstructureHighlight(self):\n+    m = Chem.MolFromSmiles('C1=CC=CC=C1Br')\n+    m.GetSubstructMatch(Chem.MolFromSmarts('c1ccccc1'))\n+    m.SetProp('DB_ID', 'bromobenzene')\n+\n+    IPythonConsole.ipython_useSVG = True\n+    html = m._repr_html_()\n+    self.assertIn('#FF7F7F', html)\n+\n   @unittest.skipIf(IPythonConsole is None, 'IPython not available')\n   def testMolsMatrixToGridImage(self):\n     # For testMolsMatrixToLinear and testMolsMatrixToLinear (which test MolsMatrixToGridImage and its helper _MolsNestedToLinear)\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "285f42469f65131fd346d668d6df641cfbaca1cc9c53337c587b043e2bedb66a",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "rdkit/Chem/Draw/UnitTestIPython.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/rdkit__rdkit-8166.jsonl",
+      "trajectory_sha256": "978fb8b6c5d19a44ece4ecd0f9922a91927032be785f85c66555d03bdf7021d5",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "978fb8b6c5d19a44ece4ecd0f9922a91927032be785f85c66555d03bdf7021d5",
+    "metrics": {
+      "input_tokens": 174144,
+      "output_tokens": 2222,
+      "cache_read_input_tokens": 156160,
+      "total_tokens": 176366,
+      "wall_time_seconds": 71.389483
+    }
+  },
+  "audit": {
+    "instance_id": "rdkit__rdkit-8166",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "rdkit/Chem/Draw/UnitTestIPython.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/rdkit__rdkit-8166.jsonl",
+    "trajectory_sha256": "978fb8b6c5d19a44ece4ecd0f9922a91927032be785f85c66555d03bdf7021d5",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

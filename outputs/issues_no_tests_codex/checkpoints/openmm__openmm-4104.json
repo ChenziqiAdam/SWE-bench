@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-4104",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-4104",
+    "model_patch": "diff --git a/wrappers/python/tests/TestModeller.py b/wrappers/python/tests/TestModeller.py\nindex 1f29bc9..cf01528 100644\n--- a/wrappers/python/tests/TestModeller.py\n+++ b/wrappers/python/tests/TestModeller.py\n@@ -1,5 +1,6 @@\n from collections import defaultdict\n import unittest\n+from unittest.mock import patch\n \n from validateModeller import *\n from openmm.app import *\n@@ -418,5 +419,26 @@ class TestModeller(unittest.TestCase):\n         self.assertEqual(sodium_count, expected_ions)\n         self.assertEqual(chlorine_count, expected_ions)\n \n+    def test_addSolventDoesNotReplaceExistingWaterWithIon(self):\n+        \"\"\"Test that ions only replace waters added by addSolvent().\"\"\"\n+        topology = Topology()\n+        chain = topology.addChain()\n+        water = topology.addResidue('HOH', chain, id='protected')\n+        oxygen = topology.addAtom('O', Element.getBySymbol('O'), water)\n+        hydrogen1 = topology.addAtom('H1', Element.getBySymbol('H'), water)\n+        hydrogen2 = topology.addAtom('H2', Element.getBySymbol('H'), water)\n+        topology.addBond(oxygen, hydrogen1)\n+        topology.addBond(oxygen, hydrogen2)\n+        positions = [Vec3(0, 0, 0), Vec3(0.09572, 0, 0),\n+                     Vec3(-0.03191, 0.09266, 0)]*nanometers\n+\n+        modeller = Modeller(topology, positions)\n+        with patch('openmm.app.modeller.random.choice', side_effect=lambda waters: waters[0]):\n+            modeller.addSolvent(self.forcefield, numAdded=10, ionicStrength=5*molar,\n+                                neutralize=False)\n+\n+        self.assertIn('protected', [residue.id for residue in modeller.topology.residues()\n+                                    if residue.name == 'HOH'])\n+\n     def test_addSolventNegativeSolvent(self):\n         \"\"\" Test the addSolvent() method; test adding ions to a negatively charged solvent. \"\"\"\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "3bd77e8609125984f17493d9a4465613d2ca1733db686b9292a72ae941fd2765",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestModeller.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-4104.jsonl",
+      "trajectory_sha256": "ba9a987ed3888a9602420ffaa51d40c25bfe149e40a59bd5e73b6a74e95e7b4c",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "ba9a987ed3888a9602420ffaa51d40c25bfe149e40a59bd5e73b6a74e95e7b4c",
+    "metrics": {
+      "input_tokens": 240768,
+      "output_tokens": 2897,
+      "cache_read_input_tokens": 216320,
+      "total_tokens": 243665,
+      "wall_time_seconds": 83.949872
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-4104",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestModeller.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-4104.jsonl",
+    "trajectory_sha256": "ba9a987ed3888a9602420ffaa51d40c25bfe149e40a59bd5e73b6a74e95e7b4c",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

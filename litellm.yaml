@@ -1,0 +1,14 @@
+model_list:
+  - model_name: claude-haiku-4-5
+    litellm_params:
+      model: deepseek/deepseek-v4-flash
+      api_key: sk-c2e4be00a94a41cfafad9f908726225a
+      api_base: https://api.deepseek.com   # DeepSeek 官方 base url
+
+general_settings:
+  master_key: mk-c2e4be00a94a41cfafad9f908726225a
+
+router_settings:
+  num_retries: 10
+  retry_after: 60
+  enable_pre_call_checks: true

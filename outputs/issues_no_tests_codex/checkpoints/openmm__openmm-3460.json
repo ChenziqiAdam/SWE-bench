@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3460",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3460",
+    "model_patch": "diff --git a/tests/TestNonbondedForce.h b/tests/TestNonbondedForce.h\nindex 31c0440..aefb400 100644\n--- a/tests/TestNonbondedForce.h\n+++ b/tests/TestNonbondedForce.h\n@@ -724,6 +724,54 @@ void testChangingParameters() {\n     ASSERT_EQUAL_TOL(state.getPotentialEnergy(), referenceState.getPotentialEnergy(), tol);\n }\n \n+void testZeroingParticleParameters() {\n+    // Create two water molecules and then turn off all nonbonded interactions\n+    // for one of them, as is commonly done when perturbing a molecule.\n+    System system;\n+    NonbondedForce* nonbonded = new NonbondedForce();\n+    vector<Vec3> positions;\n+    for (int molecule = 0; molecule < 2; molecule++) {\n+        int first = system.getNumParticles();\n+        system.addParticle(16.0);\n+        system.addParticle(1.0);\n+        system.addParticle(1.0);\n+        nonbonded->addParticle(-0.834, 0.315, 0.636);\n+        nonbonded->addParticle(0.417, 0.1, 0.0);\n+        nonbonded->addParticle(0.417, 0.1, 0.0);\n+        nonbonded->addException(first, first+1, 0.0, 0.1, 0.0);\n+        nonbonded->addException(first, first+2, 0.0, 0.1, 0.0);\n+        nonbonded->addException(first+1, first+2, 0.0, 0.1, 0.0);\n+        system.addConstraint(first, first+1, 0.09572);\n+        system.addConstraint(first, first+2, 0.09572);\n+        system.addConstraint(first+1, first+2, 0.15139);\n+        double x = 0.5+1.0*molecule;\n+        positions.push_back(Vec3(x, 0.5, 0.5));\n+        positions.push_back(Vec3(x+0.09572, 0.5, 0.5));\n+        positions.push_back(Vec3(x-0.02399872, 0.59266272, 0.5));\n+    }\n+    nonbonded->setNonbondedMethod(NonbondedForce::PME);\n+    nonbonded->setCutoffDistance(1.2);\n+    nonbonded->setUseSwitchingFunction(true);\n+    nonbonded->setSwitchingDistance(1.0);\n+    system.addForce(nonbonded);\n+    system.setDefaultPeriodicBoxVectors(Vec3(3, 0, 0), Vec3(0, 3, 0), Vec3(0, 0, 3));\n+\n+    VerletIntegrator integrator(0.001);\n+    Context context(system, integrator, platform);\n+    context.setPositions(positions);\n+    for (int i = 0; i < 3; i++)\n+        nonbonded->setParticleParameters(i, 0.0, 0.0, 0.0);\n+    nonbonded->updateParametersInContext(context);\n+\n+    State state = context.getState(State::Forces | State::Energy);\n+    ASSERT(isfinite(state.getPotentialEnergy()));\n+    for (int i = 0; i < state.getForces().size(); i++) {\n+        ASSERT(isfinite(state.getForces()[i][0]));\n+        ASSERT(isfinite(state.getForces()[i][1]));\n+        ASSERT(isfinite(state.getForces()[i][2]));\n+    }\n+}\n+\n void testSwitchingFunction(NonbondedForce::NonbondedMethod method) {\n     System system;\n     system.setDefaultPeriodicBoxVectors(Vec3(6, 0, 0), Vec3(0, 6, 0), Vec3(0, 0, 6));\n@@ -993,6 +1041,7 @@ int main(int argc, char* argv[]) {\n         testLargeSystem();\n         testDispersionCorrection();\n         testChangingParameters();\n+        testZeroingParticleParameters();\n         testSwitchingFunction(NonbondedForce::CutoffNonPeriodic);\n         testSwitchingFunction(NonbondedForce::PME);\n         testTwoForces();\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "f29ff4a294df3cd1c445b28c27362ecea5456702d3ff3a817b25658584232676",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestNonbondedForce.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3460.jsonl",
+      "trajectory_sha256": "7302ecca6b75675f1f3d3947fd8b521b3bfe62d955c672e071e3bc8aad73ef87",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "7302ecca6b75675f1f3d3947fd8b521b3bfe62d955c672e071e3bc8aad73ef87",
+    "metrics": {
+      "input_tokens": 1911200,
+      "output_tokens": 7682,
+      "cache_read_input_tokens": 1823488,
+      "total_tokens": 1918882,
+      "wall_time_seconds": 422.227469
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3460",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestNonbondedForce.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3460.jsonl",
+    "trajectory_sha256": "7302ecca6b75675f1f3d3947fd8b521b3bfe62d955c672e071e3bc8aad73ef87",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-2318",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-2318",
+    "model_patch": "diff --git a/tests/TestNonbondedForce.h b/tests/TestNonbondedForce.h\nindex 88871aa..7859ec3 100644\n--- a/tests/TestNonbondedForce.h\n+++ b/tests/TestNonbondedForce.h\n@@ -97,6 +97,36 @@ void testLJ() {\n     ASSERT_EQUAL_TOL(4.0*eps*(std::pow(x, 12.0)-std::pow(x, 6.0)), state.getPotentialEnergy(), TOL);\n }\n \n+void testExceptionMatchesParticleInteraction() {\n+    vector<Vec3> positions(2);\n+    positions[0] = Vec3(0, 0, 0);\n+    positions[1] = Vec3(0.6, 0, 0);\n+    vector<Vec3> forces[2];\n+    double energies[2];\n+    for (int useException = 0; useException < 2; useException++) {\n+        System system;\n+        system.addParticle(1.0);\n+        system.addParticle(1.0);\n+        NonbondedForce* force = new NonbondedForce();\n+        force->setNonbondedMethod(NonbondedForce::CutoffNonPeriodic);\n+        force->setCutoffDistance(1.0);\n+        force->addParticle(0.7, 0.3, 0.5);\n+        force->addParticle(-0.4, 0.4, 0.8);\n+        if (useException)\n+            force->addException(0, 1, -0.28, 0.35, sqrt(0.5*0.8));\n+        system.addForce(force);\n+        VerletIntegrator integrator(0.01);\n+        Context context(system, integrator, platform);\n+        context.setPositions(positions);\n+        State state = context.getState(State::Forces | State::Energy);\n+        energies[useException] = state.getPotentialEnergy();\n+        forces[useException] = state.getForces();\n+    }\n+    ASSERT_EQUAL_TOL(energies[0], energies[1], TOL);\n+    ASSERT_EQUAL_VEC(forces[0][0], forces[1][0], TOL);\n+    ASSERT_EQUAL_VEC(forces[0][1], forces[1][1], TOL);\n+}\n+\n void testExclusionsAnd14() {\n     System system;\n     NonbondedForce* nonbonded = new NonbondedForce();\n@@ -805,6 +835,7 @@ int main(int argc, char* argv[]) {\n         initializeTests(argc, argv);\n         testCoulomb();\n         testLJ();\n+        testExceptionMatchesParticleInteraction();\n         testExclusionsAnd14();\n         testCutoff();\n         testCutoff14();\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "982a60ac46d14472147cf1fab8e6272fa8533a8c371d1ffd72f8cfbbb005bfb8",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestNonbondedForce.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-2318.jsonl",
+      "trajectory_sha256": "97403937aa5bad17ce6955cdaf900127a6beecf72f3f0e8878be6784144eefa1",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "97403937aa5bad17ce6955cdaf900127a6beecf72f3f0e8878be6784144eefa1",
+    "metrics": {
+      "input_tokens": 213842,
+      "output_tokens": 2972,
+      "cache_read_input_tokens": 179968,
+      "total_tokens": 216814,
+      "wall_time_seconds": 86.358478
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-2318",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestNonbondedForce.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-2318.jsonl",
+    "trajectory_sha256": "97403937aa5bad17ce6955cdaf900127a6beecf72f3f0e8878be6784144eefa1",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

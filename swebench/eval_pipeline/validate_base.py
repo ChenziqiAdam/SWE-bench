@@ -29,6 +29,7 @@ from swebench.harness.docker_build import (
     build_env_images,
     build_instance_images,
 )
+from swebench.harness.docker_utils import remove_image_with_retry
 from swebench.harness.test_spec.test_spec import MAP_REPO_VERSION_TO_SPECS, make_test_spec
 
 logger = logging.getLogger(__name__)
@@ -307,7 +308,7 @@ def validate_buildable(
                     for spec, *_rest in batch_successful:
                         passed_smoke = spec.instance_id not in smoke_failed_ids
                         try:
-                            client.images.remove(spec.instance_image_key, force=True)
+                            remove_image_with_retry(client, spec.instance_image_key)
                             if passed_smoke:
                                 logger.info(
                                     "Validation passed for %s; removed instance image %s",

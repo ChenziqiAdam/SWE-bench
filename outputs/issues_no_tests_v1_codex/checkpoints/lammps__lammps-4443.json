@@ -1,0 +1,49 @@
+{
+  "instance_id": "lammps__lammps-4443",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "lammps__lammps-4443",
+    "model_patch": "diff --git a/unittest/commands/CMakeLists.txt b/unittest/commands/CMakeLists.txt\nindex f6a73b5..18d6772 100644\n--- a/unittest/commands/CMakeLists.txt\n+++ b/unittest/commands/CMakeLists.txt\n@@ -14,6 +14,14 @@ add_test(NAME SimpleCommands COMMAND test_simple_commands)\n set_tests_properties(SimpleCommands PROPERTIES\n           ENVIRONMENT \"LAMMPS_PLUGIN_BIN_DIR=${CMAKE_BINARY_DIR}\")\n \n+if(PKG_REAXFF)\n+  add_executable(test_reaxff_species test_reaxff_species.cpp)\n+  target_compile_definitions(test_reaxff_species PRIVATE\n+          TEST_POTENTIALS_FOLDER=${LAMMPS_POTENTIALS_DIR})\n+  target_link_libraries(test_reaxff_species PRIVATE lammps GTest::GMock)\n+  add_test(NAME ReaxFFSpecies COMMAND test_reaxff_species)\n+endif()\n+\n add_executable(test_lattice_region test_lattice_region.cpp)\n target_link_libraries(test_lattice_region PRIVATE lammps GTest::GMock)\n add_test(NAME LatticeRegion COMMAND test_lattice_region)\ndiff --git a/unittest/commands/test_reaxff_species.cpp b/unittest/commands/test_reaxff_species.cpp\nnew file mode 100644\nindex 0000000..e4f8399\n--- /dev/null\n+++ b/unittest/commands/test_reaxff_species.cpp\n@@ -0,0 +1,86 @@\n+/* ----------------------------------------------------------------------\n+   LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator\n+   https://www.lammps.org/, Sandia National Laboratories\n+------------------------------------------------------------------------- */\n+\n+#include \"../testing/core.h\"\n+#include \"platform.h\"\n+#include \"utils.h\"\n+#include \"gmock/gmock.h\"\n+#include \"gtest/gtest.h\"\n+\n+#include <cstring>\n+#include <fstream>\n+#include <mpi.h>\n+\n+bool verbose = false;\n+\n+#define STRINGIFY(val) XSTR(val)\n+#define XSTR(val) #val\n+\n+namespace LAMMPS_NS {\n+\n+class ReaxFFSpeciesTest : public LAMMPSTest {\n+protected:\n+    void SetUp() override\n+    {\n+        testbinary = \"ReaxFFSpeciesTest\";\n+        LAMMPSTest::SetUp();\n+        platform::unlink(\"reaxff_species_position.out\");\n+    }\n+\n+    void TearDown() override\n+    {\n+        LAMMPSTest::TearDown();\n+        platform::unlink(\"reaxff_species_position.out\");\n+        platform::unlink(\"reaxff_species.out\");\n+    }\n+};\n+\n+TEST_F(ReaxFFSpeciesTest, PositionUsesCenterOfMassAndTotalCharge)\n+{\n+    BEGIN_HIDE_OUTPUT();\n+    command(\"units real\");\n+    command(\"atom_style charge\");\n+    command(\"region box block -5 5 -5 5 -5 5\");\n+    command(\"create_box 2 box\");\n+    command(\"create_atoms 1 single 0.0 0.0 0.0\");\n+    command(\"create_atoms 2 single 0.0 0.0 0.8\");\n+    command(\"create_atoms 2 single 0.0 0.0 -0.6\");\n+    command(\"mass 1 16.0\");\n+    command(\"mass 2 1.0\");\n+    command(\"set atom 1 charge -0.7\");\n+    command(\"set atom 2 charge 0.6\");\n+    command(\"set atom 3 charge 0.3\");\n+    command(\"pair_style reaxff NULL checkqeq no\");\n+    command(\"pair_coeff * * \" STRINGIFY(TEST_POTENTIALS_FOLDER) \"/ffield.reax.cho O H\");\n+    command(\"fix species all reaxff/species 1 1 1 reaxff_species.out position 1 \"\n+            \"reaxff_species_position.out\");\n+    command(\"run 1\");\n+    END_HIDE_OUTPUT();\n+\n+    std::ifstream input(\"reaxff_species_position.out\");\n+    ASSERT_TRUE(input.is_open());\n+    std::string line;\n+    std::getline(input, line);\n+    std::getline(input, line);\n+\n+    int id, atom_count;\n+    std::string type;\n+    double charge, x, y, z;\n+    ASSERT_TRUE(input >> id >> atom_count >> type >> charge >> x >> y >> z);\n+    EXPECT_EQ(atom_count, 3);\n+    EXPECT_NEAR(charge, 0.2, 1.0e-8);\n+    EXPECT_NEAR(z, 0.5011111111, 1.0e-8);\n+}\n+\n+} // namespace LAMMPS_NS\n+\n+int main(int argc, char **argv)\n+{\n+    MPI_Init(&argc, &argv);\n+    ::testing::InitGoogleMock(&argc, argv);\n+    int rv = RUN_ALL_TESTS();\n+    MPI_Finalize();\n+    return rv;\n+}\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "599d7c0f4c9d6925737e411a6c2ac547e7c4fa623d2c0f7b3af11c620cbf34c9",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/test_reaxff_species.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4443.jsonl",
+      "trajectory_sha256": "9c869899b4774ce5fa429512c18ed717aed2d419eba48ba0fb8ce984b160d190",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "9c869899b4774ce5fa429512c18ed717aed2d419eba48ba0fb8ce984b160d190",
+    "metrics": {
+      "input_tokens": 1039417,
+      "output_tokens": 6354,
+      "cache_read_input_tokens": 918272,
+      "total_tokens": 1045771,
+      "wall_time_seconds": 345.741929
+    }
+  },
+  "audit": {
+    "instance_id": "lammps__lammps-4443",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "unittest/commands/CMakeLists.txt",
+      "unittest/commands/test_reaxff_species.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/lammps__lammps-4443.jsonl",
+    "trajectory_sha256": "9c869899b4774ce5fa429512c18ed717aed2d419eba48ba0fb8ce984b160d190",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

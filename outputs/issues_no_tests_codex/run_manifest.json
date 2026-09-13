@@ -1,0 +1,29 @@
+{
+  "manifest_version": 1,
+  "model": "gpt-5.6-sol",
+  "timeout_seconds": 900,
+  "workers": 3,
+  "wave_size": 3,
+  "excel": {
+    "path": "Issues_No_Tests_split.xlsx",
+    "sha256": "a185e71a6a5032f9ab78d636692959bf3b8fffdee178b92a9096a90bfa717280"
+  },
+  "sources": [
+    {
+      "path": "outputs/issues_testgenwo_batch1/instances.jsonl",
+      "sha256": "f685721558cb16d2d3e3d293b2f2358d7580e6e8437debeb6b565866f748c470"
+    },
+    {
+      "path": "outputs/issues_testgenwo_batch2/instances.jsonl",
+      "sha256": "3cb0204cd2d76a3306115b15c9c51650887049a6339b5c7af4fb7463c1eab887"
+    }
+  ],
+  "import_run": "outputs/issues_no_tests_codex_pilot_001",
+  "prompt_hash": "87064fa32658281aa7a12e02730d6aacb4ca94e1208bb8d63c778f22905cdb96",
+  "instance_selection_hash": "5f99139d3539f797cf4a017acacd52b9f734d29d1f99b6bf24a016bc0f0e28ce",
+  "instance_count": 83,
+  "pilot_count": 3,
+  "review_seed": 20260803,
+  "abnormal_file_threshold": 3,
+  "fetch_max_attempts": 3
+}

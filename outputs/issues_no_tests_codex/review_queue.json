@@ -1,0 +1,87 @@
+{
+  "seed": 20260803,
+  "abnormal_file_threshold": 3,
+  "cases": [
+    {
+      "instance_id": "openmm__openmm-3326",
+      "reasons": [
+        "disallowed_patch_scope",
+        "empty_patch",
+        "scope_violation",
+        "abnormal_multi_file_patch"
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-2644",
+      "reasons": [
+        "codex_exit_1",
+        "empty_patch"
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-5219",
+      "reasons": [
+        "disallowed_patch_scope",
+        "empty_patch",
+        "scope_violation",
+        "abnormal_multi_file_patch"
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-5359",
+      "reasons": [
+        "fixed_stratified_clean_sample"
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-4119",
+      "reasons": [
+        "fixed_stratified_clean_sample"
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-4090",
+      "reasons": [
+        "fixed_stratified_clean_sample"
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-3574",
+      "reasons": [
+        "fixed_stratified_clean_sample"
+      ]
+    },
+    {
+      "instance_id": "rdkit__rdkit-8796",
+      "reasons": [
+        "fixed_stratified_clean_sample"
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-3240",
+      "reasons": [
+        "fixed_stratified_clean_sample"
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-2429",
+      "reasons": [
+        "fixed_stratified_clean_sample"
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-1957",
+      "reasons": [
+        "disallowed_patch_scope",
+        "empty_patch",
+        "scope_violation"
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-1682",
+      "reasons": [
+        "fixed_stratified_clean_sample"
+      ]
+    }
+  ]
+}

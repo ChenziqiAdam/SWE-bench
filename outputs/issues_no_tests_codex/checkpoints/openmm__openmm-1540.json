@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-1540",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-1540",
+    "model_patch": "diff --git a/platforms/cpu/tests/TestCpuCustomGBForce.cpp b/platforms/cpu/tests/TestCpuCustomGBForce.cpp\nindex 8d3b307..c3ae8a9 100644\n--- a/platforms/cpu/tests/TestCpuCustomGBForce.cpp\n+++ b/platforms/cpu/tests/TestCpuCustomGBForce.cpp\n@@ -31,6 +31,29 @@\n \n #include \"CpuTests.h\"\n #include \"TestCustomGBForce.h\"\n+#include <cmath>\n+\n+void testVeryCloseParticles() {\n+    System system;\n+    system.addParticle(1.0);\n+    system.addParticle(1.0);\n+    CustomGBForce* force = new CustomGBForce();\n+    force->addComputedValue(\"a\", \"1/r\", CustomGBForce::ParticlePairNoExclusions);\n+    force->addEnergyTerm(\"a\", CustomGBForce::SingleParticle);\n+    force->addParticle();\n+    force->addParticle();\n+    system.addForce(force);\n+\n+    VerletIntegrator integrator(0.001);\n+    Context context(system, integrator, platform);\n+    vector<Vec3> positions(2);\n+    positions[0] = Vec3(1, 0, 0);\n+    positions[1] = Vec3(1+1e-8, 0, 0);\n+    context.setPositions(positions);\n+    State state = context.getState(State::Energy);\n+    ASSERT(std::isfinite(state.getPotentialEnergy()));\n+}\n \n void runPlatformTests() {\n+    testVeryCloseParticles();\n }\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "09959c4b6cc091c97f72321cc79ef4c0879276979c5dd480c7b7f3a185d9c96d",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/cpu/tests/TestCpuCustomGBForce.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-1540.jsonl",
+      "trajectory_sha256": "75ed6f451df5f44922ae992f9b44ce90de221f3c410a400ae924ed2031cf31bd",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "75ed6f451df5f44922ae992f9b44ce90de221f3c410a400ae924ed2031cf31bd",
+    "metrics": {
+      "input_tokens": 832927,
+      "output_tokens": 4530,
+      "cache_read_input_tokens": 767744,
+      "total_tokens": 837457,
+      "wall_time_seconds": 193.653022
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-1540",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/cpu/tests/TestCpuCustomGBForce.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-1540.jsonl",
+    "trajectory_sha256": "75ed6f451df5f44922ae992f9b44ce90de221f3c410a400ae924ed2031cf31bd",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

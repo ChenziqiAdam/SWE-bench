@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-1250",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-1250",
+    "model_patch": "diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py\nindex 73eb412..5d26a4e 100644\n--- a/wrappers/python/tests/TestForceField.py\n+++ b/wrappers/python/tests/TestForceField.py\n@@ -192,6 +192,38 @@ class TestForceField(unittest.TestCase):\n         system2 = ff2.createSystem(modeller.topology)\n         self.assertEqual(XmlSerializer.serialize(system1), XmlSerializer.serialize(system2))\n \n+    def test_DuplicateBonds(self):\n+        \"\"\"Test that duplicate bonds in a Topology produce only one constraint.\"\"\"\n+        xml = \"\"\"\n+<ForceField>\n+ <AtomTypes>\n+  <Type name=\"O\" class=\"O\" element=\"O\" mass=\"16.0\"/>\n+  <Type name=\"H\" class=\"H\" element=\"H\" mass=\"1.0\"/>\n+ </AtomTypes>\n+ <Residues>\n+  <Residue name=\"OH\">\n+   <Atom name=\"O\" type=\"O\"/>\n+   <Atom name=\"H\" type=\"H\"/>\n+   <Bond from=\"0\" to=\"1\"/>\n+  </Residue>\n+ </Residues>\n+ <HarmonicBondForce>\n+  <Bond class1=\"O\" class2=\"H\" length=\"0.1\" k=\"1000\"/>\n+ </HarmonicBondForce>\n+</ForceField>\"\"\"\n+        ff = ForceField(StringIO(xml))\n+        topology = Topology()\n+        chain = topology.addChain()\n+        residue = topology.addResidue('OH', chain)\n+        oxygen = topology.addAtom('O', elem.oxygen, residue)\n+        hydrogen = topology.addAtom('H', elem.hydrogen, residue)\n+        topology.addBond(oxygen, hydrogen)\n+        topology.addBond(oxygen, hydrogen)\n+\n+        system = ff.createSystem(topology, constraints=HBonds,\n+                                 rigidWater=False)\n+        self.assertEqual(1, system.getNumConstraints())\n+\n     def test_PeriodicBoxVectors(self):\n         \"\"\"Test setting the periodic box vectors.\"\"\"\n \n@@ -337,4 +369,3 @@ class AmoebaTestForceField(unittest.TestCase):\n \n if __name__ == '__main__':\n     unittest.main()\n-\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "33b702c2380c6f04bf4466df082322e637188378fcc1653c7f03a32a1c3a55d2",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestForceField.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-1250.jsonl",
+      "trajectory_sha256": "92d782c1e9b4514fde2b77367436f767b61f68c8db4dbd89ece0a218fbebd894",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "92d782c1e9b4514fde2b77367436f767b61f68c8db4dbd89ece0a218fbebd894",
+    "metrics": {
+      "input_tokens": 361766,
+      "output_tokens": 3465,
+      "cache_read_input_tokens": 304640,
+      "total_tokens": 365231,
+      "wall_time_seconds": 110.511517
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-1250",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestForceField.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-1250.jsonl",
+    "trajectory_sha256": "92d782c1e9b4514fde2b77367436f767b61f68c8db4dbd89ece0a218fbebd894",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

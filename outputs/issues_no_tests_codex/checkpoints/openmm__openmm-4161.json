@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-4161",
+  "finalized": true,
+  "imported": true,
+  "prediction": {
+    "instance_id": "openmm__openmm-4161",
+    "model_patch": "diff --git a/wrappers/python/tests/TestPatches.py b/wrappers/python/tests/TestPatches.py\nindex 1a3db2e..5d00bad 100644\n--- a/wrappers/python/tests/TestPatches.py\n+++ b/wrappers/python/tests/TestPatches.py\n@@ -269,6 +269,53 @@ class TestPatches(unittest.TestCase):\n         for i in range(system.getNumParticles()):\n             self.assertEqual(expectedCharges[i], nb.getParticleParameters(i)[0].value_in_unit(elementary_charge))\n \n+    def testUncappedProteinFragment(self):\n+        \"\"\"Test patches that leave cut peptide backbones uncapped.\"\"\"\n+\n+        patches = \"\"\"\n+<ForceField>\n+ <Patches>\n+  <Patch name=\"NCUT\">\n+   <RemoveExternalBond atomName=\"N\"/>\n+   <ApplyToResidue name=\"ALA\"/>\n+  </Patch>\n+  <Patch name=\"CCUT\">\n+   <RemoveExternalBond atomName=\"C\"/>\n+   <ApplyToResidue name=\"ALA\"/>\n+  </Patch>\n+ </Patches>\n+</ForceField>\"\"\"\n+        ff = ForceField('amber14-all.xml', StringIO(patches))\n+\n+        topology = Topology()\n+        chain = topology.addChain()\n+        residues = [topology.addResidue('ALA', chain) for i in range(2)]\n+        atoms = []\n+        atomElements = {'N': element.nitrogen, 'H': element.hydrogen,\n+                        'CA': element.carbon, 'HA': element.hydrogen,\n+                        'CB': element.carbon, 'HB1': element.hydrogen,\n+                        'HB2': element.hydrogen, 'HB3': element.hydrogen,\n+                        'C': element.carbon, 'O': element.oxygen}\n+        internalBonds = [('N', 'H'), ('N', 'CA'), ('CA', 'HA'),\n+                         ('CA', 'CB'), ('CA', 'C'), ('CB', 'HB1'),\n+                         ('CB', 'HB2'), ('CB', 'HB3'), ('C', 'O')]\n+        for residue in residues:\n+            residueAtoms = {name: topology.addAtom(name, atomElements[name], residue)\n+                            for name in atomElements}\n+            atoms.append(residueAtoms)\n+            for name1, name2 in internalBonds:\n+                topology.addBond(residueAtoms[name1], residueAtoms[name2])\n+        topology.addBond(atoms[0]['C'], atoms[1]['N'])\n+\n+        system = ff.createSystem(topology)\n+        angleForce = next(force for force in system.getForces()\n+                          if isinstance(force, HarmonicAngleForce))\n+        firstAngle = tuple(atom.index for atom in\n+                           (atoms[0]['H'], atoms[0]['N'], atoms[0]['CA']))\n+        angles = [angleForce.getAngleParameters(i)[:3]\n+                  for i in range(angleForce.getNumAngles())]\n+        self.assertIn(firstAngle, angles)\n+\n     def testDisulfidePatch(self):\n         pdb = PDBFile(os.path.join('systems', 'bpti.pdb'))\n         ff = ForceField('amber99sb.xml')\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "283a81c1f4690b397140eb57ed5dd404690ce50c710be862e131556593afd34f",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestPatches.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-4161.jsonl",
+      "trajectory_sha256": "47a03e1ca55e93880fb6b6a5a1d08fb802bc2de8586124c174d7ef2f00702508",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "47a03e1ca55e93880fb6b6a5a1d08fb802bc2de8586124c174d7ef2f00702508",
+    "metrics": {
+      "input_tokens": 214874,
+      "output_tokens": 3944,
+      "cache_read_input_tokens": 182016,
+      "total_tokens": 218818,
+      "wall_time_seconds": 118.697647
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-4161",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestPatches.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-4161.jsonl",
+    "trajectory_sha256": "47a03e1ca55e93880fb6b6a5a1d08fb802bc2de8586124c174d7ef2f00702508",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

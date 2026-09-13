@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3041",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3041",
+    "model_patch": "diff --git a/wrappers/python/tests/TestAmberPrmtopFile.py b/wrappers/python/tests/TestAmberPrmtopFile.py\nindex fd7c162..b233462 100644\n--- a/wrappers/python/tests/TestAmberPrmtopFile.py\n+++ b/wrappers/python/tests/TestAmberPrmtopFile.py\n@@ -375,6 +375,20 @@ class TestAmberPrmtopFile(unittest.TestCase):\n             # Make sure it says something about chamber\n             self.assertTrue('chamber' in str(e).lower())\n \n+    def testCmap(self):\n+        \"\"\"Test that prmtops containing unsupported CMAP terms are rejected.\"\"\"\n+        with open('systems/alanine-dipeptide-implicit.prmtop') as input_file:\n+            contents = input_file.read()\n+        with tempfile.NamedTemporaryFile(mode='w', suffix='.prmtop', delete=False) as output_file:\n+            output_file.write(contents)\n+            output_file.write('%FLAG CMAP_COUNT\\n%FORMAT(2I8)\\n       1       1\\n')\n+            filename = output_file.name\n+        try:\n+            with self.assertRaisesRegex(TypeError, 'CMAP'):\n+                AmberPrmtopFile(filename)\n+        finally:\n+            os.remove(filename)\n+\n     def testGBneckRadii(self):\n         \"\"\" Tests that GBneck radii limits are correctly enforced \"\"\"\n         from openmm.app.internal.customgbforces import GBSAGBnForce\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "6c45279f4cf0e04f5bddf3404951e827cb1f3670946501eb5ba4747ea53e21d9",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestAmberPrmtopFile.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3041.jsonl",
+      "trajectory_sha256": "991f043219394a864c924a507b2fc25ad2fad265b0b450324128cd7f92197acf",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "991f043219394a864c924a507b2fc25ad2fad265b0b450324128cd7f92197acf",
+    "metrics": {
+      "input_tokens": 206749,
+      "output_tokens": 2493,
+      "cache_read_input_tokens": 185600,
+      "total_tokens": 209242,
+      "wall_time_seconds": 71.835255
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3041",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestAmberPrmtopFile.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3041.jsonl",
+    "trajectory_sha256": "991f043219394a864c924a507b2fc25ad2fad265b0b450324128cd7f92197acf",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

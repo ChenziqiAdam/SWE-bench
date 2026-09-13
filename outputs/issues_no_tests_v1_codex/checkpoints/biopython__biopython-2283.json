@@ -1,0 +1,47 @@
+{
+  "instance_id": "biopython__biopython-2283",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "biopython__biopython-2283",
+    "model_patch": "diff --git a/Tests/test_MeltingTemp.py b/Tests/test_MeltingTemp.py\nnew file mode 100644\nindex 0000000..c9d852e\n--- /dev/null\n+++ b/Tests/test_MeltingTemp.py\n@@ -0,0 +1,21 @@\n+\"\"\"Tests for Bio.SeqUtils.MeltingTemp.\"\"\"\n+\n+import unittest\n+\n+from Bio.SeqUtils import MeltingTemp as mt\n+\n+\n+class MeltingTempTests(unittest.TestCase):\n+\n+    def test_Tm_NN_terminal_mismatch_keys(self):\n+        \"\"\"Tm_NN should include all entries from the terminal mismatch table.\"\"\"\n+        normalized_tmm = {key.strip(): value\n+                          for key, value in mt.DNA_TMM1.items()}\n+        for seq, c_seq in ((\"AAAAAAGG\", \"TTTTTTCA\"),\n+                           (\"AAAAAACC\", \"TTTTTTGC\")):\n+            expected = mt.Tm_NN(seq, c_seq=c_seq, tmm_table=normalized_tmm)\n+            self.assertAlmostEqual(expected, mt.Tm_NN(seq, c_seq=c_seq))\n+\n+\n+if __name__ == \"__main__\":\n+    unittest.main()\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "cb66aacc49b245cb58a15110c40a86e06a65899cef86352cb6f03a5945138bca",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "Tests/test_MeltingTemp.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/biopython__biopython-2283.jsonl",
+      "trajectory_sha256": "fa07a51a4cf2d850d1395ce21e13a4c1c596462f6335cb256d6abcd12adc3036",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "fa07a51a4cf2d850d1395ce21e13a4c1c596462f6335cb256d6abcd12adc3036",
+    "metrics": {
+      "input_tokens": 229602,
+      "output_tokens": 2718,
+      "cache_read_input_tokens": 178432,
+      "total_tokens": 232320,
+      "wall_time_seconds": 88.357784
+    }
+  },
+  "audit": {
+    "instance_id": "biopython__biopython-2283",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "Tests/test_MeltingTemp.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/biopython__biopython-2283.jsonl",
+    "trajectory_sha256": "fa07a51a4cf2d850d1395ce21e13a4c1c596462f6335cb256d6abcd12adc3036",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

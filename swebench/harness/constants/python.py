@@ -1943,11 +1943,18 @@ SPECS_NILEARN = {pr: dict(_NILEARN_GEN_SPEC) for pr in ("2431", "2706")}
 #    pulls packaging/decorator/pooch/tqdm/jinja2; the touched viz code needs
 #    matplotlib.
 #  - 13123 (2025, mne 1.9, hatchling, py>=3.10): numpy>=1.25, lazy-loader.
+# mne's own pyproject.toml/setup.cfg addopts always pass
+# "--cov-report= --cov-branch" (its CI runs with coverage on), which pytest
+# rejects as an unrecognized argument unless pytest-cov is installed -
+# without it, pytest never runs a single test and just prints its own
+# usage banner. Both mne specs need pytest-cov in pip_packages for that
+# reason.
 _MNE_LEGACY_SPEC = {
     "python": "3.9",
     "install": "python -m pip install -e .",
     "pip_packages": [
         "pytest",
+        "pytest-cov",
         "numpy==1.22.4",
         "scipy==1.8.1",
         "matplotlib==3.5.3",
@@ -1966,7 +1973,7 @@ _MNE_LEGACY_SPEC = {
 _MNE_MODERN_SPEC = {
     "python": "3.12",
     "install": "python -m pip install -e . --config-settings editable_mode=compat",
-    "pip_packages": ["pytest", "numpy>=1.25,<3", "scipy>=1.11", "matplotlib", "scikit-learn", "pooch", "decorator", "packaging", "lazy-loader", "jinja2"],
+    "pip_packages": ["pytest", "pytest-cov", "numpy>=1.25,<3", "scipy>=1.11", "matplotlib", "scikit-learn", "pooch", "decorator", "packaging", "lazy-loader", "jinja2"],
     "validation_cmd": "python -c 'import mne'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",

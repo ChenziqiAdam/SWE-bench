@@ -1,0 +1,51 @@
+{
+  "instance_id": "openmm__openmm-4364",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-4364",
+    "model_patch": "diff --git a/platforms/cuda/tests/TestCudaMonteCarloBarostat.cpp b/platforms/cuda/tests/TestCudaMonteCarloBarostat.cpp\nindex 836d053..0a3f7f3 100644\n--- a/platforms/cuda/tests/TestCudaMonteCarloBarostat.cpp\n+++ b/platforms/cuda/tests/TestCudaMonteCarloBarostat.cpp\n@@ -33,5 +33,6 @@\n #include \"TestMonteCarloBarostat.h\"\n \n void runPlatformTests() {\n+    testRejectedMovePreservesVelocities();\n     testWater();\n }\ndiff --git a/platforms/opencl/tests/TestOpenCLMonteCarloBarostat.cpp b/platforms/opencl/tests/TestOpenCLMonteCarloBarostat.cpp\nindex d802559..129b8e4 100644\n--- a/platforms/opencl/tests/TestOpenCLMonteCarloBarostat.cpp\n+++ b/platforms/opencl/tests/TestOpenCLMonteCarloBarostat.cpp\n@@ -33,5 +33,6 @@\n #include \"TestMonteCarloBarostat.h\"\n \n void runPlatformTests() {\n+    testRejectedMovePreservesVelocities();\n     testWater();\n }\ndiff --git a/tests/TestMonteCarloBarostat.h b/tests/TestMonteCarloBarostat.h\nindex 9dde95d..e66b3f2 100644\n--- a/tests/TestMonteCarloBarostat.h\n+++ b/tests/TestMonteCarloBarostat.h\n@@ -36,6 +36,7 @@\n #include \"openmm/NonbondedForce.h\"\n #include \"openmm/System.h\"\n #include \"openmm/LangevinIntegrator.h\"\n+#include \"openmm/LangevinMiddleIntegrator.h\"\n #include \"openmm/VerletIntegrator.h\"\n #include \"sfmt/SFMT.h\"\n #include \"SimTKOpenMMRealType.h\"\n@@ -268,6 +269,46 @@ void testWater() {\n     ASSERT_USUALLY_EQUAL_TOL(1.0, density, 0.02);\n }\n \n+void testRejectedMovePreservesVelocities() {\n+    const int numMolecules = 64;\n+    System system;\n+    system.setDefaultPeriodicBoxVectors(Vec3(8, 0, 0), Vec3(0, 8, 0), Vec3(0, 0, 8));\n+    NonbondedForce* nonbonded = new NonbondedForce();\n+    nonbonded->setNonbondedMethod(NonbondedForce::CutoffPeriodic);\n+    nonbonded->setCutoffDistance(0.5);\n+    vector<Vec3> positions(2*numMolecules);\n+    vector<Vec3> velocities(2*numMolecules);\n+    for (int i = 0; i < numMolecules; i++) {\n+        int x = i%4;\n+        int y = (i/4)%4;\n+        int z = i/16;\n+        Vec3 position(1.0+2*x, 1.0+2*y, 1.0+2*z);\n+        Vec3 velocity(0.001*i, 0.002*i, -0.001*i);\n+        for (int j = 0; j < 2; j++) {\n+            system.addParticle(1.0);\n+            nonbonded->addParticle(0.0, 1.0, 0.0);\n+            positions[2*i+j] = position+Vec3(0.1*j, 0, 0);\n+            velocities[2*i+j] = velocity;\n+        }\n+        system.addConstraint(2*i, 2*i+1, 0.1);\n+    }\n+    system.addForce(nonbonded);\n+    MonteCarloBarostat* barostat = new MonteCarloBarostat(1e10, 0.0, 1);\n+    barostat->setRandomNumberSeed(5);\n+    system.addForce(barostat);\n+    LangevinMiddleIntegrator integrator(0.0, 0.0, 1e-8);\n+    Context context(system, integrator, platform);\n+    context.setPositions(positions);\n+    context.setVelocities(velocities);\n+\n+    // A rejected volume move must not associate velocities with different\n+    // molecules when the energy calculation reorders atoms on the device.\n+    integrator.step(1000);\n+    vector<Vec3> finalVelocities = context.getState(State::Velocities).getVelocities();\n+    for (int i = 0; i < finalVelocities.size(); i++)\n+        ASSERT_EQUAL_VEC(velocities[i], finalVelocities[i], 1e-5);\n+}\n+\n void runPlatformTests();\n \n int main(int argc, char* argv[]) {\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "6d466bd90bf408590e0a31aefb68863803da4549cdb00b3cd8aab3972e3e5501",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/cuda/tests/TestCudaMonteCarloBarostat.cpp",
+        "platforms/opencl/tests/TestOpenCLMonteCarloBarostat.cpp",
+        "tests/TestMonteCarloBarostat.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-4364.jsonl",
+      "trajectory_sha256": "9c0df1a0270a103afd428f1a45266ae5ffdd4b62f54f72b516dec2995b76366f",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "9c0df1a0270a103afd428f1a45266ae5ffdd4b62f54f72b516dec2995b76366f",
+    "metrics": {
+      "input_tokens": 331347,
+      "output_tokens": 5647,
+      "cache_read_input_tokens": 297728,
+      "total_tokens": 336994,
+      "wall_time_seconds": 167.608716
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-4364",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/cuda/tests/TestCudaMonteCarloBarostat.cpp",
+      "platforms/opencl/tests/TestOpenCLMonteCarloBarostat.cpp",
+      "tests/TestMonteCarloBarostat.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-4364.jsonl",
+    "trajectory_sha256": "9c0df1a0270a103afd428f1a45266ae5ffdd4b62f54f72b516dec2995b76366f",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-2781",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-2781",
+    "model_patch": "diff --git a/platforms/cpu/tests/TestCpuGBSAOBCForce.cpp b/platforms/cpu/tests/TestCpuGBSAOBCForce.cpp\nindex df121ce..46c03ca 100644\n--- a/platforms/cpu/tests/TestCpuGBSAOBCForce.cpp\n+++ b/platforms/cpu/tests/TestCpuGBSAOBCForce.cpp\n@@ -31,6 +31,35 @@\n \n #include \"CpuTests.h\"\n #include \"TestGBSAOBCForce.h\"\n+#include \"openmm/VerletIntegrator.h\"\n+\n+void testVectorizedForces() {\n+    System system;\n+    GBSAOBCForce* force = new GBSAOBCForce();\n+    vector<Vec3> positions;\n+    for (int i = 0; i < 8; i++) {\n+        system.addParticle(1.0);\n+        force->addParticle((i%2 == 0 ? -1.0 : 1.0)*(0.2+0.05*i),\n+                           0.12+0.005*i, 0.8+0.03*i);\n+        positions.push_back(Vec3(0.31*(i%3), 0.27*((2*i)%5), 0.23*((3*i)%7)));\n+    }\n+    system.addForce(force);\n+    VerletIntegrator cpuIntegrator(0.001);\n+    VerletIntegrator referenceIntegrator(0.001);\n+    Context cpuContext(system, cpuIntegrator, platform);\n+    ReferencePlatform referencePlatform;\n+    Context referenceContext(system, referenceIntegrator, referencePlatform);\n+    cpuContext.setPositions(positions);\n+    referenceContext.setPositions(positions);\n+    vector<Vec3> cpuForces = cpuContext.getState(State::Forces).getForces();\n+    vector<Vec3> referenceForces = referenceContext.getState(State::Forces).getForces();\n+\n+    // A compiler error in the PPC vector code caused large, particle-specific\n+    // errors in the CPU forces while leaving the calculation otherwise usable.\n+    for (int i = 0; i < 8; i++)\n+        ASSERT_EQUAL_VEC(referenceForces[i], cpuForces[i], 1e-3);\n+}\n \n void runPlatformTests() {\n+    testVectorizedForces();\n }\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "68e661a4954f3307d822001f11040c117f5ec66e4addd69e09dc60fe458163d9",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/cpu/tests/TestCpuGBSAOBCForce.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-2781.jsonl",
+      "trajectory_sha256": "6356048f7f58c402acebd5172c403f4b754f44cfcd6d51587fea3f721f40faf3",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "6356048f7f58c402acebd5172c403f4b754f44cfcd6d51587fea3f721f40faf3",
+    "metrics": {
+      "input_tokens": 634688,
+      "output_tokens": 4265,
+      "cache_read_input_tokens": 584448,
+      "total_tokens": 638953,
+      "wall_time_seconds": 125.127106
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-2781",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/cpu/tests/TestCpuGBSAOBCForce.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-2781.jsonl",
+    "trajectory_sha256": "6356048f7f58c402acebd5172c403f4b754f44cfcd6d51587fea3f721f40faf3",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "instance_id": "rdkit__rdkit-4793",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "rdkit__rdkit-4793",
+    "model_patch": "diff --git a/rdkit/Chem/Draw/UnitTestDraw.py b/rdkit/Chem/Draw/UnitTestDraw.py\nindex 5ae6668..a017881 100755\n--- a/rdkit/Chem/Draw/UnitTestDraw.py\n+++ b/rdkit/Chem/Draw/UnitTestDraw.py\n@@ -79,6 +79,13 @@ class TestCase(unittest.TestCase):\n     os.environ['RDKIT_CANVAS'] = 'sping'\n     self._testMolToFile()\n \n+  def testMolToSVGFileWithAromaticQuery(self):\n+    mol = Chem.MolFromSmarts('n1ccc(*)cc1')\n+    with tempfile.TemporaryDirectory() as tmpdir:\n+      filename = os.path.join(tmpdir, 'query.svg')\n+      Draw.MolToFile(mol, filename)\n+      self.assertGreater(os.path.getsize(filename), 0)\n+\n   def _testMolToImage(self, mol=None, kekulize=True, options=None, showImage=False, **kwargs):\n     mol = mol or self.mol\n     img = Draw.MolToImage(mol, size=(300, 300), kekulize=kekulize, options=options, **kwargs)\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "22e96909e8cc1e4fc41a55b3d1f4df9517c629ab99c4b24f098c0931a7f0bedf",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "rdkit/Chem/Draw/UnitTestDraw.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/rdkit__rdkit-4793.jsonl",
+      "trajectory_sha256": "71e7578b4732afb8cc42871f3aca9f3d7e622f60a2a09fcf28690a5fe8ded54b",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "71e7578b4732afb8cc42871f3aca9f3d7e622f60a2a09fcf28690a5fe8ded54b",
+    "metrics": {
+      "input_tokens": 106932,
+      "output_tokens": 1399,
+      "cache_read_input_tokens": 94464,
+      "total_tokens": 108331,
+      "wall_time_seconds": 49.976072
+    }
+  },
+  "audit": {
+    "instance_id": "rdkit__rdkit-4793",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "rdkit/Chem/Draw/UnitTestDraw.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/rdkit__rdkit-4793.jsonl",
+    "trajectory_sha256": "71e7578b4732afb8cc42871f3aca9f3d7e622f60a2a09fcf28690a5fe8ded54b",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

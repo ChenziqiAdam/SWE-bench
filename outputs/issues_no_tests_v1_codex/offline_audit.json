@@ -1,0 +1,563 @@
+{
+  "model": "gpt-5.6-sol",
+  "timeout_seconds": 900,
+  "tool_network": "disabled",
+  "cases": [
+    {
+      "instance_id": "lammps__lammps-5039",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/test_simple_commands.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-5039.jsonl",
+      "trajectory_sha256": "bee52ecca8cf6d9e738d30dfacc5705cb1402edcc48a211fca535fa84151fc71",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-5042",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/test_spin_dipole_energy.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-5042.jsonl",
+      "trajectory_sha256": "b7d903ce92c51469b80d69723b200fc8c418d16f8c94a20460847fc6fdaf507d",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4887",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/force-styles/test_pair_style.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4887.jsonl",
+      "trajectory_sha256": "2cf5a5c40eb7b2d3575af5f16cce7b55ac5b94f8401dc662135bb3288dacf9c4",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4590",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/CMakeLists.txt",
+        "unittest/in.srd_deform_velocity_profile"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4590.jsonl",
+      "trajectory_sha256": "e10a6669eea56a66fa268c7ed3823a17dee10874f7f726f912035c5330c6fdc9",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4861",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/test_simple_commands.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4861.jsonl",
+      "trajectory_sha256": "1604d01c6c93a542aeff9e40288473397dc2f56c9ca362b9d72f75390d0494f1",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4768",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/test_fix_langevin_kokkos.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4768.jsonl",
+      "trajectory_sha256": "21731bba7c2a01c6657e3fc1800ad5b3701c3622e0c7aebe85bbcb6dea289b7f",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4760",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/test_fix_shake.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4760.jsonl",
+      "trajectory_sha256": "b433a49f69e1962334748008b450f395bf016f57befb4e399d61a3d5a484d752",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4732",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/formats/test_molecule_file.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4732.jsonl",
+      "trajectory_sha256": "340678b5cac80198dd5038a3c58b0dcc48b3e1d8df4acec0ea61a6eceb34468d",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4019",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/test_hmc.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4019.jsonl",
+      "trajectory_sha256": "afe2e9c8713b19d81ebbe7e60300b0e87bee92ac10f6b7061bd4be765de84212",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4545",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/test_rheo_interface.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4545.jsonl",
+      "trajectory_sha256": "992a99fc9f2d70071cc7daf38518c9c5cae1f99e6e33c6f9317aa05a58a2f413",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4481",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/cplusplus/test_advanced_utils.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4481.jsonl",
+      "trajectory_sha256": "f1fe378e36e871567688ef9d8bc5fa08c087edec5ac58a56e41a0dc9b17ceadf",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-2026",
+      "status": "failed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "examples/ASPHERE/ellipsoid/data.gayberne-gpu-special",
+        "examples/ASPHERE/ellipsoid/in.gayberne-gpu-special"
+      ],
+      "disallowed_paths": [
+        "examples/ASPHERE/ellipsoid/data.gayberne-gpu-special",
+        "examples/ASPHERE/ellipsoid/in.gayberne-gpu-special"
+      ],
+      "trajectory_path": "trajectories/lammps__lammps-2026.jsonl",
+      "trajectory_sha256": "ab2dc8df45310ee2fe643763ff8caedc2e0b34aae98b1f8ce20c52a230b5d4b6",
+      "manual_review": "rejected",
+      "exit_code": 0,
+      "manual_review_notes": "Rejected: authored reproduction files are under examples/, not a registered regression-test location."
+    },
+    {
+      "instance_id": "lammps__lammps-2105",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/CMakeLists.txt",
+        "unittest/rigid_nve_small_inertia.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-2105.jsonl",
+      "trajectory_sha256": "bc74a2cdd25a502aed1c60a218fe113535c00608c1468bf10118294a0f3ecaae",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-2367",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/test_rigid_langevin.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-2367.jsonl",
+      "trajectory_sha256": "d375dd255b8fc00295a1e316896bd23d40bb17eab81b33fba1c09f2df2c562b2",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4443",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/test_reaxff_species.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4443.jsonl",
+      "trajectory_sha256": "9c869899b4774ce5fa429512c18ed717aed2d419eba48ba0fb8ce984b160d190",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4310",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/test_hbond_dreiding.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4310.jsonl",
+      "trajectory_sha256": "caad05b7b06738f0a2463a9b57093c14c943a89942cdacc864a790cbcf47f6a1",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4312",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/c-library/CMakeLists.txt",
+        "unittest/c-library/test_library_config.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4312.jsonl",
+      "trajectory_sha256": "7b54c606dbc29bed2ab047a6bd2ee3e34a4caa17ec69ef350aadabcb28aaeb89",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4346",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/force-styles/tests/atomic-pair-gran_hooke_history_virial.yaml",
+        "unittest/force-styles/tests/in.gran_hooke_history_virial"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4346.jsonl",
+      "trajectory_sha256": "c6848c8db127d75a8e455e60b17fcc20193a94047d24300ac58cef77100b8cbd",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4339",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/test_fix_pour.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4339.jsonl",
+      "trajectory_sha256": "a8c03c73e9b8bcb187f61b0c6a0f642b20ce3868a5c09b6b511ce2453913b71b",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4243",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/formats/CMakeLists.txt",
+        "unittest/formats/test_atom_style_sph_remap.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4243.jsonl",
+      "trajectory_sha256": "e14554dbde65552e6ba277c74101937afb4028a23cfa80e4d4f4a6e8d053f593",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4239",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/in.cna_loop",
+        "unittest/commands/test_compute_atom.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4239.jsonl",
+      "trajectory_sha256": "39e43a9df2bb332ca5564c569a960dba936e37b8e09454cd39e5b7cea0133481",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4202",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/formats/test_dump_custom.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4202.jsonl",
+      "trajectory_sha256": "5552735e870ff0110160ab0774e22ac925af8b23848c6a4310f3f53e9455e365",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4195",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/test_granular_commands.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4195.jsonl",
+      "trajectory_sha256": "39d070c7016dfbc6e6bf7c09c26c83f8672adf9bfabc049f0b924d9bc8be13f1",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4134",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/CMakeLists.txt",
+        "unittest/check_eam_density_docs.cmake"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4134.jsonl",
+      "trajectory_sha256": "76b72fec18c33d1efe65f4b2848e52f5d4a6f467f1a603be8973577c42c4f48b",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4123",
+      "status": "failed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "rigid-restart-repro.in",
+        "rigid-restart.restart"
+      ],
+      "disallowed_paths": [
+        "rigid-restart-repro.in",
+        "rigid-restart.restart"
+      ],
+      "trajectory_path": "trajectories/lammps__lammps-4123.jsonl",
+      "trajectory_sha256": "f2131aa8c178cba45cfdde2d68b6d2e84553ddc836f2e7ddcc20b8453b712678",
+      "manual_review": "rejected",
+      "exit_code": 1,
+      "manual_review_notes": "Rejected: authored root-level reproduction/restart artifacts are not registered regression tests."
+    },
+    {
+      "instance_id": "lammps__lammps-4120",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/test_pair_ylz.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4120.jsonl",
+      "trajectory_sha256": "526acb4df1a8dfcdd290fddd814052e8f1336f6c6a03da52ef49db86eb53a49c",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-3553",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/test_regions.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-3553.jsonl",
+      "trajectory_sha256": "85834a87c31115fda8b0291bb7f28221b8a88704ccf4fb30e6eda1b6a49e7457",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-3931",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/test_regions.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-3931.jsonl",
+      "trajectory_sha256": "2c1db012cf0b7a91180b20151919b0fe799111bb7b2c2a152cee536e49cb4e2a",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-3941",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/test_simple_commands.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-3941.jsonl",
+      "trajectory_sha256": "e119a260bc6f858be33fe2bc4529458195b8a9d59510aa487e11bbe20ee19fcd",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "lammps__lammps-4407",
+      "status": "failed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/test_simple_commands.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4407.jsonl",
+      "trajectory_sha256": "6c01e14c16ff4b7c3b0ee5b812bf4a2e6fa7324223fef5a5b5f84ae13093e26c",
+      "manual_review": "rejected",
+      "exit_code": 1,
+      "manual_review_notes": "Rejected: Codex exited nonzero and the fail-closed prediction is empty."
+    },
+    {
+      "instance_id": "lammps__lammps-3930",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/test_groups.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-3930.jsonl",
+      "trajectory_sha256": "3cdb18bd35dc8dfb9f059f453fdf6100ec6aafcb12a4fdd7b2f5ae0fd87e9450",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "biopython__biopython-4439",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "Tests/test_seq.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/biopython__biopython-4439.jsonl",
+      "trajectory_sha256": "4dacb67f0b6b0c8caa38e4b588926ec66f639d035c3aa28b68fa842a50d8a258",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "biopython__biopython-3846",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "Tests/test_MeltingTemp.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/biopython__biopython-3846.jsonl",
+      "trajectory_sha256": "6b3c2a6a605a182b0c377d082d8a3993cc787cbe73d2deaf7dfcf3c63fc181b3",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "biopython__biopython-3281",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "Tests/test_MeltingTemp.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/biopython__biopython-3281.jsonl",
+      "trajectory_sha256": "673bd142338ca7173824968bcfeccc7895aabba7956161edf514f5be2e287799",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    },
+    {
+      "instance_id": "biopython__biopython-2283",
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "Tests/test_MeltingTemp.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/biopython__biopython-2283.jsonl",
+      "trajectory_sha256": "fa07a51a4cf2d850d1395ce21e13a4c1c596462f6335cb256d6abcd12adc3036",
+      "manual_review": "approved",
+      "exit_code": 0,
+      "manual_review_notes": "Approved: trajectory and patch manually audited; patch is confined to regression tests, test data, or test-only registration."
+    }
+  ],
+  "finalized_count": 35,
+  "manually_reviewed_count": 35,
+  "manual_review_required": false
+}

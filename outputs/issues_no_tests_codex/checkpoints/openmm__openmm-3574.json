@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3574",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3574",
+    "model_patch": "diff --git a/tests/TestLangevinMiddleIntegrator.h b/tests/TestLangevinMiddleIntegrator.h\nindex e1a56e2..fd8b28d 100644\n--- a/tests/TestLangevinMiddleIntegrator.h\n+++ b/tests/TestLangevinMiddleIntegrator.h\n@@ -174,6 +174,25 @@ void testConstraints() {\n     }\n }\n \n+void testConstrainedKineticEnergy() {\n+    System system;\n+    system.addParticle(1.0);\n+    system.addParticle(1.0);\n+    system.addConstraint(0, 1, 1.0);\n+    LangevinMiddleIntegrator integrator(0.0, 0.0, 0.01);\n+    Context context(system, integrator, platform);\n+    vector<Vec3> positions(2);\n+    positions[1] = Vec3(1, 0, 0);\n+    vector<Vec3> velocities(2);\n+    velocities[0] = Vec3(1, 0, 0);\n+    context.setPositions(positions);\n+    context.setVelocities(velocities);\n+\n+    // The velocity constraint makes both particles move at 0.5 nm/ps.\n+    // Kinetic energy must be computed from those constrained velocities.\n+    ASSERT_EQUAL_TOL(0.25, context.getState(State::Energy).getKineticEnergy(), 1e-6);\n+}\n+\n void testConstrainedMasslessParticles() {\n     System system;\n     system.addParticle(0.0);\n@@ -323,6 +342,7 @@ int main(int argc, char* argv[]) {\n         testSingleBond();\n         testTemperature();\n         testConstraints();\n+        testConstrainedKineticEnergy();\n         testConstrainedMasslessParticles();\n         testRandomSeed();\n         testInitialTemperature();\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "80fad8db22914fcd101cd027ba176eb1daa58fdbd113f56ac62cf3ad0ac0fbc1",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestLangevinMiddleIntegrator.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3574.jsonl",
+      "trajectory_sha256": "a2b624449223076cf0beaf08f907aee1fd2554d69eef1dbb83d2534daeb7484c",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "a2b624449223076cf0beaf08f907aee1fd2554d69eef1dbb83d2534daeb7484c",
+    "metrics": {
+      "input_tokens": 319947,
+      "output_tokens": 2783,
+      "cache_read_input_tokens": 289792,
+      "total_tokens": 322730,
+      "wall_time_seconds": 81.090926
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3574",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestLangevinMiddleIntegrator.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3574.jsonl",
+    "trajectory_sha256": "a2b624449223076cf0beaf08f907aee1fd2554d69eef1dbb83d2534daeb7484c",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

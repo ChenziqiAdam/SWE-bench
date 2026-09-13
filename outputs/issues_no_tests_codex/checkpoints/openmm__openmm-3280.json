@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3280",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3280",
+    "model_patch": "diff --git a/tests/TestCustomNonbondedForce.h b/tests/TestCustomNonbondedForce.h\nindex 002813d..24459ed 100644\n--- a/tests/TestCustomNonbondedForce.h\n+++ b/tests/TestCustomNonbondedForce.h\n@@ -903,6 +903,37 @@ void testLongRangeCorrection() {\n     ASSERT_EQUAL_TOL(standardEnergy1-standardEnergy2, customEnergy1-customEnergy2, 1e-4);\n }\n \n+void testLongRangeCorrectionForDoubleExponential() {\n+    System system;\n+    system.addParticle(1.0);\n+    system.addParticle(1.0);\n+    system.setDefaultPeriodicBoxVectors(Vec3(3, 0, 0), Vec3(0, 3, 0), Vec3(0, 0, 3));\n+    CustomNonbondedForce* force = new CustomNonbondedForce(\n+            \"epsilon*(beta*exp(alpha)/(alpha-beta)*exp(-alpha*r/rmin)-alpha*exp(beta)/(alpha-beta)*exp(-beta*r/rmin));\"\n+            \"epsilon=sqrt(epsilon1*epsilon2); rmin=0.5*(rmin1+rmin2)\");\n+    force->addGlobalParameter(\"alpha\", 16.789);\n+    force->addGlobalParameter(\"beta\", 4.0);\n+    force->addPerParticleParameter(\"rmin\");\n+    force->addPerParticleParameter(\"epsilon\");\n+    vector<double> parameters(2);\n+    parameters[0] = 0.06; // 0.6 Angstrom\n+    parameters[1] = 1.232599966667e-05*4.184; // kcal/mol to kJ/mol\n+    force->addParticle(parameters);\n+    force->addParticle(parameters);\n+    force->setNonbondedMethod(CustomNonbondedForce::CutoffPeriodic);\n+    force->setCutoffDistance(1.0);\n+    force->setUseLongRangeCorrection(true);\n+    system.addForce(force);\n+\n+    VerletIntegrator integrator(0.01);\n+    Context context(system, integrator, platform);\n+    vector<Vec3> positions(2);\n+    positions[1] = Vec3(0.5, 0, 0);\n+    context.setPositions(positions);\n+    double energy = context.getState(State::Energy).getPotentialEnergy();\n+    ASSERT(isfinite(energy));\n+}\n+\n void testInteractionGroups() {\n     const int numParticles = 6;\n     System system;\n@@ -1453,6 +1484,7 @@ int main(int argc, char* argv[]) {\n         testCoulombLennardJones();\n         testSwitchingFunction();\n         testLongRangeCorrection();\n+        testLongRangeCorrectionForDoubleExponential();\n         testInteractionGroups();\n         testLargeInteractionGroup();\n         testInteractionGroupLongRangeCorrection();\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "08ca1ffc5bcf57159615eae513bc4792de004980d2beb4342b839845d6d23612",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestCustomNonbondedForce.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3280.jsonl",
+      "trajectory_sha256": "366e419ce506b41f87b1d8e675ef94920da6abe3facd94b24f699d5401b54f7a",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "366e419ce506b41f87b1d8e675ef94920da6abe3facd94b24f699d5401b54f7a",
+    "metrics": {
+      "input_tokens": 909064,
+      "output_tokens": 5230,
+      "cache_read_input_tokens": 857856,
+      "total_tokens": 914294,
+      "wall_time_seconds": 197.412054
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3280",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestCustomNonbondedForce.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3280.jsonl",
+    "trajectory_sha256": "366e419ce506b41f87b1d8e675ef94920da6abe3facd94b24f699d5401b54f7a",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

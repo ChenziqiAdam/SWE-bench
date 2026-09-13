@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-5302",
+  "finalized": true,
+  "imported": true,
+  "prediction": {
+    "instance_id": "openmm__openmm-5302",
+    "model_patch": "diff --git a/plugins/amoeba/platforms/cuda/tests/TestCudaAmoebaMultipoleForce.cpp b/plugins/amoeba/platforms/cuda/tests/TestCudaAmoebaMultipoleForce.cpp\nindex d392547..ae5e0f1 100644\n--- a/plugins/amoeba/platforms/cuda/tests/TestCudaAmoebaMultipoleForce.cpp\n+++ b/plugins/amoeba/platforms/cuda/tests/TestCudaAmoebaMultipoleForce.cpp\n@@ -29,8 +29,47 @@\n \n #include \"CudaAmoebaTests.h\"\n #include \"TestAmoebaMultipoleForce.h\"\n+#include \"openmm/VerletIntegrator.h\"\n+\n+void testCovalentMapAtomReordering() {\n+    const int numMolecules = 20;\n+    System system;\n+    AmoebaMultipoleForce* force = new AmoebaMultipoleForce();\n+    system.addForce(force);\n+    force->setPolarizationType(AmoebaMultipoleForce::Direct);\n+    vector<double> dipole(3, 0.0);\n+    vector<double> quadrupole(9, 0.0);\n+    for (int i = 0; i < 2*numMolecules; i++) {\n+        system.addParticle(1.0);\n+        force->addMultipole(0.1, dipole, quadrupole, AmoebaMultipoleForce::NoAxisType,\n+                -1, -1, -1, 0.0, 0.0, 0.0);\n+    }\n+    vector<Vec3> positions(2*numMolecules);\n+    for (int i = 0; i < numMolecules; i++) {\n+        // Put the two atoms of each molecule next to each other in space, but in\n+        // different 32 atom blocks in the original atom ordering.\n+        positions[i] = Vec3(0.4*i, 0, 0);\n+        positions[i+numMolecules] = Vec3(0.4*i+0.1, 0, 0);\n+        force->setCovalentMap(i, AmoebaMultipoleForce::Covalent12, vector<int>(1, i+numMolecules));\n+        force->setCovalentMap(i+numMolecules, AmoebaMultipoleForce::Covalent12, vector<int>(1, i));\n+    }\n+\n+    VerletIntegrator referenceIntegrator(0.001);\n+    Context referenceContext(system, referenceIntegrator, Platform::getPlatformByName(\"Reference\"));\n+    referenceContext.setPositions(positions);\n+    State referenceState = referenceContext.getState(State::Forces | State::Energy);\n+\n+    VerletIntegrator cudaIntegrator(0.001);\n+    Context cudaContext(system, cudaIntegrator, platform);\n+    cudaContext.setPositions(positions);\n+    State cudaState = cudaContext.getState(State::Forces | State::Energy);\n+    ASSERT_EQUAL_TOL(referenceState.getPotentialEnergy(), cudaState.getPotentialEnergy(), 1e-5);\n+    for (int i = 0; i < 2*numMolecules; i++)\n+        ASSERT_EQUAL_VEC(referenceState.getForces()[i], cudaState.getForces()[i], 1e-5);\n+}\n \n void runPlatformTests() {\n     testNoQuadrupoles(false);\n     testNoQuadrupoles(true);\n+    testCovalentMapAtomReordering();\n }\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "88c7dad0fa8e54e22b52fa4b03e58cea67f9d0d469eeffe310ae59080abd6e2d",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "plugins/amoeba/platforms/cuda/tests/TestCudaAmoebaMultipoleForce.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-5302.jsonl",
+      "trajectory_sha256": "e4b8c434a427ed93f067e322f35716875cbb87e4085ac2acd926d7676b05be39",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "e4b8c434a427ed93f067e322f35716875cbb87e4085ac2acd926d7676b05be39",
+    "metrics": {
+      "input_tokens": 493840,
+      "output_tokens": 5005,
+      "cache_read_input_tokens": 442880,
+      "total_tokens": 498845,
+      "wall_time_seconds": 183.531063
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-5302",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "plugins/amoeba/platforms/cuda/tests/TestCudaAmoebaMultipoleForce.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-5302.jsonl",
+    "trajectory_sha256": "e4b8c434a427ed93f067e322f35716875cbb87e4085ac2acd926d7676b05be39",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

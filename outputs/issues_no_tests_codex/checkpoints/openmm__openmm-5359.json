@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-5359",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-5359",
+    "model_patch": "diff --git a/wrappers/python/tests/TestReplicaExchangeSampler.py b/wrappers/python/tests/TestReplicaExchangeSampler.py\nindex 235ff55..3dac315 100644\n--- a/wrappers/python/tests/TestReplicaExchangeSampler.py\n+++ b/wrappers/python/tests/TestReplicaExchangeSampler.py\n@@ -8,6 +8,28 @@ import tempfile\n import unittest\n \n class TestReplicaExchangeSampler(unittest.TestCase):\n+    def testReporterRecordsGeneratingState(self):\n+        \"\"\"The reported state assignment corresponds to the propagated samples.\"\"\"\n+        system = System()\n+        system.addParticle(1.0)\n+        integrator = LangevinIntegrator(300*kelvin, 1/picosecond, 0.001*picosecond)\n+        simulation = Simulation(Topology(), system, integrator, Platform.getPlatform('Reference'))\n+        simulation.context.setPositions([Vec3(0, 0, 0)])\n+\n+        class AlwaysExchangeSampler(ReplicaExchangeSampler):\n+            def exchangeReplicas(self):\n+                self.replicaStateIndex[0], self.replicaStateIndex[1] = self.replicaStateIndex[1], self.replicaStateIndex[0]\n+\n+        sampler = AlwaysExchangeSampler([{'temperature': 300*kelvin}, {'temperature': 300*kelvin}], simulation, 1)\n+        with tempfile.TemporaryDirectory() as directory:\n+            sampler.reporters.append(ReplicaExchangeReporter(directory, 1, sampler))\n+            sampler.simulate(1)\n+\n+            with open(os.path.join(directory, 'log.csv')) as input:\n+                fields = [int(x) for x in input.readlines()[1].split(',')]\n+            self.assertEqual([0, 1], fields[2:])\n+            self.assertEqual([1, 0], sampler.replicaStateIndex)\n+\n     def testTemperature(self):\n         \"\"\"Test a set of replicas that differ in temperature.\"\"\"\n         system = System()\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "48514e52caa445a503aa7dc4552aa73e1b961c25478701e6e48c8681283b8d0c",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestReplicaExchangeSampler.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-5359.jsonl",
+      "trajectory_sha256": "2254d1b57eb2707fc3d487b73ef53706cbee86f71ecf685206cffd46e88485fc",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "2254d1b57eb2707fc3d487b73ef53706cbee86f71ecf685206cffd46e88485fc",
+    "metrics": {
+      "input_tokens": 138201,
+      "output_tokens": 2135,
+      "cache_read_input_tokens": 102656,
+      "total_tokens": 140336,
+      "wall_time_seconds": 64.616822
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-5359",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestReplicaExchangeSampler.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-5359.jsonl",
+    "trajectory_sha256": "2254d1b57eb2707fc3d487b73ef53706cbee86f71ecf685206cffd46e88485fc",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

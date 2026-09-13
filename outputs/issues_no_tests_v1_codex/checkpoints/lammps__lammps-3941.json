@@ -1,0 +1,47 @@
+{
+  "instance_id": "lammps__lammps-3941",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "lammps__lammps-3941",
+    "model_patch": "diff --git a/unittest/commands/test_simple_commands.cpp b/unittest/commands/test_simple_commands.cpp\nindex 1c99560..44354a4 100644\n--- a/unittest/commands/test_simple_commands.cpp\n+++ b/unittest/commands/test_simple_commands.cpp\n@@ -19,6 +19,7 @@\n #include \"info.h\"\n #include \"input.h\"\n #include \"output.h\"\n+#include \"thermo.h\"\n #include \"update.h\"\n #include \"utils.h\"\n #include \"variable.h\"\n@@ -44,6 +45,23 @@ using ::testing::StrEq;\n \n class SimpleCommandsTest : public LAMMPSTest {};\n \n+TEST_F(SimpleCommandsTest, MetalUnitsNormalizeEnergyByDefault)\n+{\n+    BEGIN_HIDE_OUTPUT();\n+    command(\"units metal\");\n+    command(\"region box block 0 2 0 2 0 2\");\n+    command(\"create_box 1 box\");\n+    command(\"create_atoms 1 single 0.5 0.5 0.5\");\n+    command(\"create_atoms 1 single 1.5 1.5 1.5\");\n+    command(\"mass 1 1.0\");\n+    command(\"pair_style zero 2.0\");\n+    command(\"pair_coeff * *\");\n+    command(\"run 0\");\n+    END_HIDE_OUTPUT();\n+\n+    EXPECT_EQ(lmp->output->thermo->normflag, 1);\n+}\n+\n TEST_F(SimpleCommandsTest, UnknownCommand)\n {\n     TEST_FAILURE(\".*ERROR: Unknown command.*\", command(\"XXX one two\"););\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "709472a92610f8b36bf77bcf0e98af2c3463f3d9fadee52a5590bdeba818b20c",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/test_simple_commands.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-3941.jsonl",
+      "trajectory_sha256": "e119a260bc6f858be33fe2bc4529458195b8a9d59510aa487e11bbe20ee19fcd",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "e119a260bc6f858be33fe2bc4529458195b8a9d59510aa487e11bbe20ee19fcd",
+    "metrics": {
+      "input_tokens": 620530,
+      "output_tokens": 4089,
+      "cache_read_input_tokens": 549632,
+      "total_tokens": 624619,
+      "wall_time_seconds": 149.479564
+    }
+  },
+  "audit": {
+    "instance_id": "lammps__lammps-3941",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "unittest/commands/test_simple_commands.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/lammps__lammps-3941.jsonl",
+    "trajectory_sha256": "e119a260bc6f858be33fe2bc4529458195b8a9d59510aa487e11bbe20ee19fcd",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

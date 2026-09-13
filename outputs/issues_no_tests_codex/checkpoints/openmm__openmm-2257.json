@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-2257",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-2257",
+    "model_patch": "diff --git a/tests/TestCustomIntegrator.h b/tests/TestCustomIntegrator.h\nindex abdb850..b4fe2cc 100644\n--- a/tests/TestCustomIntegrator.h\n+++ b/tests/TestCustomIntegrator.h\n@@ -790,6 +790,43 @@ void testChangingGlobal() {\n     }\n }\n \n+/**\n+ * Test accumulation of energy changes while particle parameters are updated.\n+ */\n+void testAccumulatingEnergyChanges() {\n+    System system;\n+    system.addParticle(1.0);\n+    system.addParticle(1.0);\n+    NonbondedForce* force = new NonbondedForce();\n+    force->addParticle(1.0, 1.0, 0.0);\n+    force->addParticle(-1.0, 1.0, 0.0);\n+    system.addForce(force);\n+    CustomIntegrator integrator(0.001);\n+    integrator.addGlobalVariable(\"initialEnergy\", 0.0);\n+    integrator.addGlobalVariable(\"work\", 0.0);\n+    integrator.addComputeGlobal(\"work\", \"work+energy-initialEnergy\");\n+    integrator.addComputeGlobal(\"initialEnergy\", \"energy\");\n+    Context context(system, integrator, platform);\n+    vector<Vec3> positions(2);\n+    positions[0] = Vec3(0, 0, 0);\n+    positions[1] = Vec3(1, 0, 0);\n+    context.setPositions(positions);\n+    integrator.setGlobalVariableByName(\"initialEnergy\", context.getState(State::Energy).getPotentialEnergy());\n+\n+    // Reverse both charges in many small increments.  The final energy is the\n+    // same as the initial energy, so the accumulated work should be zero.\n+\n+    const int numSteps = 10000;\n+    for (int i = 1; i <= numSteps; i++) {\n+        double scale = 1.0-2.0*i/numSteps;\n+        force->setParticleParameters(0, scale, 1.0, 0.0);\n+        force->setParticleParameters(1, -scale, 1.0, 0.0);\n+        force->updateParametersInContext(context);\n+        integrator.step(1);\n+    }\n+    ASSERT_EQUAL_TOL(0.0, integrator.getGlobalVariableByName(\"work\"), 1e-5);\n+}\n+\n /**\n  * Test steps that depend on derivatives of the energy with respect to parameters.\n  */\n@@ -1096,6 +1133,7 @@ int main(int argc, char* argv[]) {\n         testIfBlock();\n         testWhileBlock();\n         testChangingGlobal();\n+        testAccumulatingEnergyChanges();\n         testEnergyParameterDerivatives();\n         testChangeDT();\n         testTabulatedFunction();\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "67560e0a0d576a51fd9ff890c406d38ce6d52fe9ccb25c46aab0387da408ccde",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestCustomIntegrator.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-2257.jsonl",
+      "trajectory_sha256": "e96128b44ad0be85187f769c95240c9a5b94b37a774ac08f4573630952470301",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "e96128b44ad0be85187f769c95240c9a5b94b37a774ac08f4573630952470301",
+    "metrics": {
+      "input_tokens": 547079,
+      "output_tokens": 4247,
+      "cache_read_input_tokens": 488704,
+      "total_tokens": 551326,
+      "wall_time_seconds": 139.038099
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-2257",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestCustomIntegrator.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-2257.jsonl",
+    "trajectory_sha256": "e96128b44ad0be85187f769c95240c9a5b94b37a774ac08f4573630952470301",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

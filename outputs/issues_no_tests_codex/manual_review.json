@@ -1,0 +1,185 @@
+{
+  "pilot_reviews_imported": true,
+  "review_seed": 20260803,
+  "reviewed_at": "2026-08-03",
+  "reviewer": "codex_primary_agent",
+  "all_queued_cases_reviewed": true,
+  "cases": [
+    {
+      "instance_id": "openmm__openmm-4161",
+      "trajectory_review": "passed",
+      "network_attempt": false,
+      "patch_scope": "passed",
+      "generated_test_assessment": "not_bug_reproducing",
+      "notes": [
+        "Only wrappers/python/tests/TestPatches.py was modified.",
+        "The focused test could not run because OpenMM was not installed in the inference checkout.",
+        "The test exercises RemoveExternalBond but not the multi-residue virtual-site indexing changed by the golden patch; it is expected to pass on the base commit."
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-5302",
+      "trajectory_review": "passed",
+      "network_attempt": false,
+      "patch_scope": "passed",
+      "generated_test_assessment": "plausible_but_not_evaluable",
+      "notes": [
+        "Only the CUDA Amoeba multipole test was modified and C++ syntax checking passed after local include discovery.",
+        "The test compares Reference and CUDA behavior for covalently paired atoms across reorder blocks.",
+        "The benchmark specification excludes this instance without a supported GPU runtime; the planned OpenCL target was not modified."
+      ]
+    },
+    {
+      "instance_id": "rdkit__rdkit-7990",
+      "trajectory_review": "passed",
+      "network_attempt": false,
+      "patch_scope": "passed",
+      "generated_test_assessment": "correct_logic_wrong_eval_target",
+      "notes": [
+        "Only Code/GraphMol/Deprotect/Wrap/rough_test.py was modified.",
+        "The assertion correctly checks that the benzyl deprotection leaves a phenyl ether unchanged.",
+        "The test could not run because RDKit was not built, and the evaluator is registered for the C++ deprotectTest target rather than this Python wrapper test."
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-3326",
+      "trajectory_review": "passed",
+      "network_attempt": false,
+      "patch_scope": "failed",
+      "generated_test_assessment": "rejected_by_scope_audit",
+      "notes": [
+        "The agent created a build-regression tree containing 1642 tracked-by-intent build artifacts.",
+        "The automatic scope rejection and empty prediction are correct; no inference retry was performed."
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-2644",
+      "trajectory_review": "process_error_confirmed",
+      "network_attempt": false,
+      "patch_scope": "passed_no_changes",
+      "generated_test_assessment": "no_patch",
+      "notes": [
+        "Codex exited with status 1 and left no changed paths or patch.",
+        "The nonzero process result was finalized without resampling, as required."
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-5219",
+      "trajectory_review": "passed",
+      "network_attempt": false,
+      "patch_scope": "failed",
+      "generated_test_assessment": "rejected_by_scope_audit",
+      "notes": [
+        "The agent created a build-regression tree containing 2059 tracked-by-intent build artifacts.",
+        "The automatic scope rejection and empty prediction are correct; no inference retry was performed."
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-5359",
+      "trajectory_review": "passed",
+      "network_attempt": false,
+      "patch_scope": "passed",
+      "generated_test_assessment": "plausible_bug_reproducing",
+      "notes": [
+        "Only TestReplicaExchangeSampler.py was modified.",
+        "The deterministic exchange subclass checks that the reporter records the generating assignment while the sampler advances to the exchanged assignment.",
+        "Execution was blocked because OpenMM was not installed; git diff --check passed."
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-4119",
+      "trajectory_review": "passed",
+      "network_attempt": false,
+      "patch_scope": "passed",
+      "generated_test_assessment": "plausible_platform_dependent_reproduction",
+      "notes": [
+        "Only TestMonteCarloAnisotropicBarostat.h was modified and its OpenCL target compiled.",
+        "The test targets atom reordering after rejected anisotropic moves and checks invariant coordinates.",
+        "Runtime validation was unavailable because the host has no compatible OpenCL platform."
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-4090",
+      "trajectory_review": "passed",
+      "network_attempt": false,
+      "patch_scope": "passed",
+      "generated_test_assessment": "plausible_gpu_regression_reproduction",
+      "notes": [
+        "The shared RPMD test and CUDA/OpenCL registrations are all test-only changes.",
+        "The large 1000-particle, 60-copy zero-step test directly checks the reported position corruption condition.",
+        "CMake configuration could not complete locally, so the GPU test was not executed."
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-3574",
+      "trajectory_review": "passed",
+      "network_attempt": false,
+      "patch_scope": "passed",
+      "generated_test_assessment": "plausible_platform_regression_reproduction",
+      "notes": [
+        "Only TestLangevinMiddleIntegrator.h was modified.",
+        "The constrained two-particle kinetic-energy assertion is targeted at the CUDA/OpenCL versus CPU/Reference discrepancy.",
+        "CMake configuration could not complete locally; git diff --check passed."
+      ]
+    },
+    {
+      "instance_id": "rdkit__rdkit-8796",
+      "trajectory_review": "passed",
+      "network_attempt": false,
+      "patch_scope": "passed",
+      "generated_test_assessment": "plausible_bug_reproducing",
+      "notes": [
+        "Only UnitTestPandasTools.py was modified.",
+        "The XLSX archive assertion directly requires two molecule columns to produce two embedded images.",
+        "Execution was blocked because RDKit was not built in the checkout; the test skips when xlsxwriter is unavailable."
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-3240",
+      "trajectory_review": "passed",
+      "network_attempt": false,
+      "patch_scope": "passed",
+      "generated_test_assessment": "plausible_platform_dependent_reproduction",
+      "notes": [
+        "Only TestCustomExternalForce.h was modified and the OpenCL target compiled.",
+        "The test directly asserts finite zero energy and force for a particle at the origin in the spherical expression.",
+        "Runtime validation was unavailable because the host has no compatible OpenCL platform."
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-2429",
+      "trajectory_review": "passed",
+      "network_attempt": false,
+      "patch_scope": "failed_manual",
+      "generated_test_assessment": "invalid_generated_artifact_and_indirect_check",
+      "notes": [
+        "The source test checks positive Drude particle masses but does not run the reported crashing dynamics.",
+        "Running py_compile also added TestModeller.cpython-312.pyc to the patch; this generated binary artifact is not acceptable test data.",
+        "The automatic filename heuristic treated the pyc as test-ish, so manual review caught this additional scope failure."
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-1957",
+      "trajectory_review": "passed",
+      "network_attempt": false,
+      "patch_scope": "failed",
+      "generated_test_assessment": "rejected_by_scope_audit",
+      "notes": [
+        "The intended TestSetup.py edit was accompanied by wrappers/python/__pycache__/setup.cpython-312.pyc.",
+        "The automatic scope rejection and empty prediction are correct; no inference retry was performed."
+      ]
+    },
+    {
+      "instance_id": "openmm__openmm-1682",
+      "trajectory_review": "passed",
+      "network_attempt": false,
+      "patch_scope": "passed",
+      "generated_test_assessment": "not_bug_reproducing",
+      "notes": [
+        "Only TestSystem.cpp was modified.",
+        "The test checks rejection of explicitly NaN periodic box vectors, while the issue reports stochastic NaNs from valid triclinic simulations.",
+        "CMake configuration could not complete locally; the generated test does not exercise the reported failure path."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-2563",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-2563",
+    "model_patch": "diff --git a/wrappers/python/tests/TestSwigInputConfig.py b/wrappers/python/tests/TestSwigInputConfig.py\nnew file mode 100644\nindex 0000000..03a4f1f\n--- /dev/null\n+++ b/wrappers/python/tests/TestSwigInputConfig.py\n@@ -0,0 +1,20 @@\n+import os\n+import sys\n+import unittest\n+\n+\n+SWIG_SOURCE_DIR = os.path.join(os.path.dirname(__file__), '..', 'src',\n+                               'swig_doxygen')\n+sys.path.insert(0, SWIG_SOURCE_DIR)\n+import swigInputConfig\n+\n+\n+class TestSwigInputConfig(unittest.TestCase):\n+    def testThreadPoolIsNotWrapped(self):\n+        skippedClasses = [entry[0] for entry in swigInputConfig.SKIP_METHODS\n+                          if len(entry) == 1]\n+        self.assertIn('ThreadPool', skippedClasses)\n+\n+\n+if __name__ == '__main__':\n+    unittest.main()\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "dbb9fba1b6f9134f264f9ccbf3a7ca7c0eef3ec038e9e76c039a0d823362026f",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestSwigInputConfig.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-2563.jsonl",
+      "trajectory_sha256": "67396c57193749544c9eb73757bf81924cca29bd28495bc4bd5bdafc1c4e1200",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "67396c57193749544c9eb73757bf81924cca29bd28495bc4bd5bdafc1c4e1200",
+    "metrics": {
+      "input_tokens": 235539,
+      "output_tokens": 1795,
+      "cache_read_input_tokens": 202496,
+      "total_tokens": 237334,
+      "wall_time_seconds": 62.204955
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-2563",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestSwigInputConfig.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-2563.jsonl",
+    "trajectory_sha256": "67396c57193749544c9eb73757bf81924cca29bd28495bc4bd5bdafc1c4e1200",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

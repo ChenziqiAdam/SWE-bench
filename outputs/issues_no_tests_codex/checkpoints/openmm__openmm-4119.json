@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-4119",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-4119",
+    "model_patch": "diff --git a/tests/TestMonteCarloAnisotropicBarostat.h b/tests/TestMonteCarloAnisotropicBarostat.h\nindex 53d9373..9297736 100644\n--- a/tests/TestMonteCarloAnisotropicBarostat.h\n+++ b/tests/TestMonteCarloAnisotropicBarostat.h\n@@ -236,6 +236,45 @@ void testRandomSeed() {\n     }\n }\n \n+void testAtomOrderAfterRejectedMove() {\n+    // A force evaluation for a trial move can cause identical molecules to be\n+    // reordered internally.  If the move is rejected, restoring the saved\n+    // coordinates must account for that reordering.\n+    const int numParticles = 64;\n+    System system;\n+    system.setDefaultPeriodicBoxVectors(Vec3(8, 0, 0), Vec3(0, 8, 0), Vec3(0, 0, 80));\n+    NonbondedForce* force = new NonbondedForce();\n+    force->setNonbondedMethod(NonbondedForce::CutoffPeriodic);\n+    force->setCutoffDistance(1.0);\n+    vector<Vec3> positions(numParticles);\n+    for (int i = 0; i < numParticles; i++) {\n+        system.addParticle(1.0);\n+        force->addParticle(0.0, 1.0, 0.0);\n+        int index = (37*i)%numParticles;\n+        positions[i] = Vec3(0.25+(index%4)*1.8, 0.25+((index/4)%4)*1.8,\n+                            0.25+(index/16)*1.8);\n+    }\n+    system.addForce(force);\n+    MonteCarloAnisotropicBarostat* barostat = new MonteCarloAnisotropicBarostat(\n+            Vec3(1, 1, 1e8), 300, false, false, true, 1);\n+    barostat->setRandomNumberSeed(5);\n+    system.addForce(barostat);\n+    VerletIntegrator integrator(0.001);\n+    Context context(system, integrator, platform);\n+    context.setPositions(positions);\n+    context.setVelocities(vector<Vec3>(numParticles));\n+\n+    // This is long enough to cause several internal reorderings.  Since only\n+    // the z axis is scaled, every particle's x and y coordinates are invariant.\n+    integrator.step(1000);\n+    State state = context.getState(State::Positions);\n+    const vector<Vec3>& finalPositions = state.getPositions();\n+    for (int i = 0; i < numParticles; i++) {\n+        ASSERT_EQUAL_TOL(positions[i][0], finalPositions[i][0], 1e-5);\n+        ASSERT_EQUAL_TOL(positions[i][1], finalPositions[i][1], 1e-5);\n+    }\n+}\n+\n void testTriclinic() {\n     const int numParticles = 64;\n     const int frequency = 10;\n@@ -457,6 +496,7 @@ int main(int argc, char* argv[]) {\n         testIdealGasAxis(1);\n         testIdealGasAxis(2);\n         testRandomSeed();\n+        testAtomOrderAfterRejectedMove();\n         testTriclinic();\n         //testEinsteinCrystal();\n         runPlatformTests();\n@@ -468,4 +508,3 @@ int main(int argc, char* argv[]) {\n     cout << \"Done\" << endl;\n     return 0;\n }\n-\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "1b3580c4e87a219629a0a456b46fb9713d29a04a15470d0ebfdc83b14afbae42",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestMonteCarloAnisotropicBarostat.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-4119.jsonl",
+      "trajectory_sha256": "04d267cbb4c3cb08b3121bf32959eb52ef59a341089c34ba4454179217979e1f",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "04d267cbb4c3cb08b3121bf32959eb52ef59a341089c34ba4454179217979e1f",
+    "metrics": {
+      "input_tokens": 1385519,
+      "output_tokens": 6971,
+      "cache_read_input_tokens": 1316352,
+      "total_tokens": 1392490,
+      "wall_time_seconds": 291.807276
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-4119",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestMonteCarloAnisotropicBarostat.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-4119.jsonl",
+    "trajectory_sha256": "04d267cbb4c3cb08b3121bf32959eb52ef59a341089c34ba4454179217979e1f",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

@@ -363,6 +363,11 @@ def audit_patch_paths(
             continue
         testish = (
             "test" in filename
+            # rdkit (and other Catch2 C++ projects) keep unit tests in
+            # shared source files named catch_*.cpp rather than a separate
+            # tests/ directory; without this an on-convention edit like
+            # Code/GraphMol/catch_graphmol.cpp is wrongly flagged out of scope.
+            or filename.startswith("catch_")
             or any(part in {"test", "tests", "unittest", "unittests"} for part in parts)
             or any(part in {"testdata", "test_data", "fixtures"} for part in parts)
             or (filename in {"cmakelists.txt", "meson.build"} and any("test" in p for p in parts[:-1]))

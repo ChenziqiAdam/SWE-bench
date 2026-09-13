@@ -1,0 +1,47 @@
+{
+  "instance_id": "lammps__lammps-4732",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "lammps__lammps-4732",
+    "model_patch": "diff --git a/unittest/formats/test_molecule_file.cpp b/unittest/formats/test_molecule_file.cpp\nindex 2236413..834d095 100644\n--- a/unittest/formats/test_molecule_file.cpp\n+++ b/unittest/formats/test_molecule_file.cpp\n@@ -491,6 +491,42 @@ TEST_F(MoleculeFileTest, minjson)\n                                       \".*0 fragments.*\\n.*0 bodies.*\\n.*1 atoms.*\\n.*0 bonds.*\"));\n }\n \n+TEST_F(MoleculeFileTest, json_angle_topology_matches_native)\n+{\n+    run_mol_cmd(\"native_angles\", \"\",\n+                \"Equivalent angle molecule\\n\"\n+                \"4 atoms\\n\"\n+                \"2 angles\\n\\n\"\n+                \"Coords\\n\\n\"\n+                \"1 0.0 0.0 0.0\\n\"\n+                \"2 1.0 0.0 0.0\\n\"\n+                \"3 1.0 1.0 0.0\\n\"\n+                \"4 2.0 0.0 0.0\\n\\n\"\n+                \"Types\\n\\n\"\n+                \"1 1\\n2 1\\n3 1\\n4 1\\n\\n\"\n+                \"Angles\\n\\n\"\n+                \"1 1 1 2 3\\n\"\n+                \"2 1 4 2 3\\n\");\n+\n+    run_json_cmd(\n+        \"json_angles\", \"\",\n+        \"{\\\"application\\\":\\\"LAMMPS\\\",\\\"format\\\":\\\"molecule\\\",\\\"revision\\\":1,\"\n+        \"\\\"coords\\\":{\\\"format\\\":[\\\"atom-id\\\",\\\"x\\\",\\\"y\\\",\\\"z\\\"],\\\"data\\\":[\"\n+        \"[1,0.0,0.0,0.0],[2,1.0,0.0,0.0],[3,1.0,1.0,0.0],[4,2.0,0.0,0.0]]},\"\n+        \"\\\"types\\\":{\\\"format\\\":[\\\"atom-id\\\",\\\"type\\\"],\\\"data\\\":[\"\n+        \"[1,1],[2,1],[3,1],[4,1]]},\"\n+        \"\\\"angles\\\":{\\\"format\\\":[\\\"angle-type\\\",\\\"atom1\\\",\\\"atom2\\\",\\\"atom3\\\"],\"\n+        \"\\\"data\\\":[[1,1,2,3],[1,4,2,3]]}}\");\n+\n+    const auto native = lmp->atom->get_molecule_by_id(\"native_angles\");\n+    const auto json   = lmp->atom->get_molecule_by_id(\"json_angles\");\n+    ASSERT_EQ(native.size(), 1);\n+    ASSERT_EQ(json.size(), 1);\n+    EXPECT_EQ(json[0]->angle_per_atom, native[0]->angle_per_atom);\n+    for (int i = 0; i < native[0]->natoms; ++i)\n+        EXPECT_EQ(json[0]->num_angle[i], native[0]->num_angle[i]);\n+}\n+\n TEST_F(MoleculeFileTest, notype)\n {\n     BEGIN_CAPTURE_OUTPUT();\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "7f59fa87947d411743b3abc65ef9919aff5ee6e27b76dacfeb68a5d7442773f0",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/formats/test_molecule_file.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4732.jsonl",
+      "trajectory_sha256": "340678b5cac80198dd5038a3c58b0dcc48b3e1d8df4acec0ea61a6eceb34468d",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "340678b5cac80198dd5038a3c58b0dcc48b3e1d8df4acec0ea61a6eceb34468d",
+    "metrics": {
+      "input_tokens": 851850,
+      "output_tokens": 5220,
+      "cache_read_input_tokens": 792320,
+      "total_tokens": 857070,
+      "wall_time_seconds": 177.927481
+    }
+  },
+  "audit": {
+    "instance_id": "lammps__lammps-4732",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "unittest/formats/test_molecule_file.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/lammps__lammps-4732.jsonl",
+    "trajectory_sha256": "340678b5cac80198dd5038a3c58b0dcc48b3e1d8df4acec0ea61a6eceb34468d",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

@@ -141,6 +141,30 @@ def parse_log_django(log: str, test_spec: TestSpec) -> dict[str, str]:
     return test_status_map
 
 
+def _status_token_at_start(line: str, status: str) -> bool:
+    """True if `line` starts with `status` as a whole word.
+
+    A plain ``str.startswith`` lets unrelated banner lines like
+    ``"ERROR: usage: pytest ..."`` (pytest's own CLI-usage error, emitted
+    when e.g. a required plugin such as pytest-cov is missing) masquerade
+    as a per-test ``ERROR`` result, since "ERROR:" also starts with
+    "ERROR". Requiring the next character to be whitespace (or end of
+    line) rejects that case while still matching real ``-rA`` lines such
+    as ``"ERROR tests/test_foo.py::test_bar - Exception: ..."``.
+    """
+    return line.startswith(status) and (
+        len(line) == len(status) or line[len(status)].isspace()
+    )
+
+
+def _status_token_at_end(line: str, status: str) -> bool:
+    """Symmetric word-boundary guard for the trailing-status match below."""
+    if not line.endswith(status):
+        return False
+    prefix_len = len(line) - len(status)
+    return prefix_len == 0 or line[prefix_len - 1].isspace()
+
+
 def parse_log_pytest_v2(log: str, test_spec: TestSpec) -> dict[str, str]:
     """
     Parser for test logs generated with PyTest framework (Later Version)
@@ -156,14 +180,14 @@ def parse_log_pytest_v2(log: str, test_spec: TestSpec) -> dict[str, str]:
         line = re.sub(r"\[(\d+)m", "", line)
         translator = str.maketrans("", "", escapes)
         line = line.translate(translator)
-        if any([line.startswith(x.value) for x in TestStatus]):
+        if any([_status_token_at_start(line, x.value) for x in TestStatus]):
             if line.startswith(TestStatus.FAILED.value):
                 line = line.replace(" - ", " ")
             test_case = line.split()
             if len(test_case) >= 2:
                 test_status_map[test_case[1]] = test_case[0]
         # Support older pytest versions by checking if the line ends with the test status
-        elif any([line.endswith(x.value) for x in TestStatus]):
+        elif any([_status_token_at_end(line, x.value) for x in TestStatus]):
             test_case = line.split()
             if len(test_case) >= 2:
                 test_status_map[test_case[0]] = test_case[1]
@@ -297,4 +321,16 @@ MAP_REPO_TO_PARSER_PY = {
     "deepchem/deepchem": parse_log_pytest_v2,
     "qiskit/qiskit": parse_log_pytest_v2,
     "qutip/qutip": parse_log_pytest_v2,
+    # These repos' specs (swebench/harness/constants/python.py) all use the
+    # identical "pytest -rA --tb=long -p no:cacheprovider" test_cmd but were
+    # never registered here, so every test-generation run against them fell
+    # through to `no_parseable_test_status` regardless of the actual result.
+    "mne-tools/mne-python": parse_log_pytest_v2,
+    "nilearn/nilearn": parse_log_pytest_v2,
+    "obspy/obspy": parse_log_pytest_v2,
+    "psi4/psi4": parse_log_pytest_v2,
+    "pyscf/pyscf": parse_log_pytest_v2,
+    "scverse/scanpy": parse_log_pytest_v2,
+    "sunpy/sunpy": parse_log_pytest_v2,
+    "yt-project/yt": parse_log_pytest_v2,
 }

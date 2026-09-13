@@ -1,0 +1,17 @@
+{
+  "completed_count": 0,
+  "failure_counts": {
+    "execution": 1
+  },
+  "full_success_rate": null,
+  "mean_score": null,
+  "schema_version": 1,
+  "task_count": 1,
+  "total_agent_usage": {
+    "cost_usd": 1.9595440000000004,
+    "input_tokens": 62473,
+    "output_tokens": 33478,
+    "total_tokens": 95951,
+    "wall_time_seconds": 331.661923
+  }
+}

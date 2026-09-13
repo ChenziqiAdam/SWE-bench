@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-2575",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-2575",
+    "model_patch": "diff --git a/wrappers/python/tests/TestSwigInputBuilder.py b/wrappers/python/tests/TestSwigInputBuilder.py\nnew file mode 100644\nindex 0000000..20c3f14\n--- /dev/null\n+++ b/wrappers/python/tests/TestSwigInputBuilder.py\n@@ -0,0 +1,35 @@\n+import os\n+import sys\n+import tempfile\n+import unittest\n+\n+\n+SWIG_DOXYGEN_DIR = os.path.join(os.path.dirname(__file__), '..', 'src', 'swig_doxygen')\n+sys.path.insert(0, os.path.abspath(SWIG_DOXYGEN_DIR))\n+\n+from swigInputBuilder import SwigInputBuilder, getText\n+\n+\n+class TestSwigInputBuilder(unittest.TestCase):\n+    def testInternalHeadersAreSkipped(self):\n+        xml = '''<doxygen>\n+  <compounddef id=\"public\" kind=\"class\" prot=\"public\">\n+    <compoundname>OpenMM::PublicClass</compoundname>\n+    <location file=\"/project/include/openmm/PublicClass.h\"/>\n+  </compounddef>\n+  <compounddef id=\"internal\" kind=\"class\" prot=\"public\">\n+    <compoundname>OpenMM::InternalClass</compoundname>\n+    <location file=\"/project/include/openmm/internal/InternalClass.h\"/>\n+  </compounddef>\n+</doxygen>'''\n+        with tempfile.TemporaryDirectory() as directory:\n+            with open(os.path.join(directory, 'classes.xml'), 'w') as output:\n+                output.write(xml)\n+            builder = SwigInputBuilder(directory, 'swigInputConfig.py')\n+\n+        classNames = [getText('compoundname', node) for node in builder._orderedClassNodes]\n+        self.assertEqual(['OpenMM::PublicClass'], classNames)\n+\n+\n+if __name__ == '__main__':\n+    unittest.main()\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "687574fe6befbb60e82aa3aad15c9c2e155a39336de30721ce9690c1baa5cec1",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestSwigInputBuilder.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-2575.jsonl",
+      "trajectory_sha256": "196aba8d71cd67d01f860df459342baa3066b07cc1bf36463fac3c214f8ce24d",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "196aba8d71cd67d01f860df459342baa3066b07cc1bf36463fac3c214f8ce24d",
+    "metrics": {
+      "input_tokens": 415023,
+      "output_tokens": 3956,
+      "cache_read_input_tokens": 379136,
+      "total_tokens": 418979,
+      "wall_time_seconds": 113.746345
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-2575",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestSwigInputBuilder.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-2575.jsonl",
+    "trajectory_sha256": "196aba8d71cd67d01f860df459342baa3066b07cc1bf36463fac3c214f8ce24d",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

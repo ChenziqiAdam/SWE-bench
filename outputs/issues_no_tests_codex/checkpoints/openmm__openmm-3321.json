@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3321",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3321",
+    "model_patch": "diff --git a/tests/TestNonbondedForce.h b/tests/TestNonbondedForce.h\nindex 31c0440..30dc4fb 100644\n--- a/tests/TestNonbondedForce.h\n+++ b/tests/TestNonbondedForce.h\n@@ -893,6 +893,20 @@ void testParameterOffsets() {\n     ASSERT_EQUAL_TOL(energy, context.getState(State::Energy).getPotentialEnergy(), 1e-5);\n }\n \n+void testNegativeParameterOffsetScales() {\n+    System system;\n+    system.addParticle(1.0);\n+    system.addParticle(1.0);\n+    NonbondedForce* force = new NonbondedForce();\n+    force->addParticle(0.0, 1.0, 1.0);\n+    force->addParticle(0.0, 1.0, 1.0);\n+    force->addGlobalParameter(\"offset\", 0.5);\n+    force->addParticleParameterOffset(\"offset\", 0, 0.0, -0.2, -0.2);\n+    system.addForce(force);\n+    VerletIntegrator integrator(0.001);\n+    Context context(system, integrator, platform);\n+}\n+\n void testEwaldExceptions() {\n     // Create a minimal system using LJPME.\n \n@@ -997,6 +1011,7 @@ int main(int argc, char* argv[]) {\n         testSwitchingFunction(NonbondedForce::PME);\n         testTwoForces();\n         testParameterOffsets();\n+        testNegativeParameterOffsetScales();\n         testEwaldExceptions();\n         testDirectAndReciprocal();\n         runPlatformTests();\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "8b62d61053508b96dc135e71136b82482b37a2a5807a1487f6f57ae03e9c7150",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestNonbondedForce.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3321.jsonl",
+      "trajectory_sha256": "e30eaed3e370edf0619d1d10547947dead5ce633986956c273db90276f9e30c0",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "e30eaed3e370edf0619d1d10547947dead5ce633986956c273db90276f9e30c0",
+    "metrics": {
+      "input_tokens": 711554,
+      "output_tokens": 3334,
+      "cache_read_input_tokens": 653824,
+      "total_tokens": 714888,
+      "wall_time_seconds": 173.163668
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3321",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestNonbondedForce.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3321.jsonl",
+    "trajectory_sha256": "e30eaed3e370edf0619d1d10547947dead5ce633986956c273db90276f9e30c0",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

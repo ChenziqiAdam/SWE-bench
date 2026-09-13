@@ -1,0 +1,62 @@
+{
+  "cases": {
+    "hidden": [
+      {
+        "case_id": "case_01",
+        "exit_code": 0,
+        "output_dir": "execution_report_case_outputs/hidden/case_01",
+        "output_sha256": "4c8f0da66b12b3603d1cdd375c47fe1bd69995a640e32ffa457f8e7762511741",
+        "timed_out": false,
+        "wall_seconds": 0.3937664348632097
+      },
+      {
+        "case_id": "case_02",
+        "exit_code": 0,
+        "output_dir": "execution_report_case_outputs/hidden/case_02",
+        "output_sha256": "d8a706b46b8798fb478ba4940074752d242c393bbe79cb2d86999b09a1773b31",
+        "timed_out": false,
+        "wall_seconds": 0.39610576815903187
+      },
+      {
+        "case_id": "case_03",
+        "exit_code": 0,
+        "output_dir": "execution_report_case_outputs/hidden/case_03",
+        "output_sha256": "83aab397115a903b6365992a60205fe71c22f6b2fc1d6bff759ece1fa0dc96c0",
+        "timed_out": false,
+        "wall_seconds": 0.39651937782764435
+      },
+      {
+        "case_id": "case_04",
+        "exit_code": 0,
+        "output_dir": "execution_report_case_outputs/hidden/case_04",
+        "output_sha256": "01c6a06619192307c26ec368722c0d725a6f45dfe434fa8d9250ebafc73b43fa",
+        "timed_out": false,
+        "wall_seconds": 0.3967314474284649
+      },
+      {
+        "case_id": "case_05",
+        "exit_code": 0,
+        "output_dir": "execution_report_case_outputs/hidden/case_05",
+        "output_sha256": "3fa3537a0ba6bc9b4d2bfcb7564d3f79bfd239dce36a868e7aa73d0e909737f3",
+        "timed_out": false,
+        "wall_seconds": 0.39636982046067715
+      }
+    ],
+    "public": [
+      {
+        "case_id": "case_01",
+        "exit_code": 0,
+        "output_dir": "execution_report_case_outputs/public/case_01",
+        "output_sha256": "e591dc13387f5f8e82f9a99276bbda46d90f8e171613f061c48fe4dd587adb06",
+        "timed_out": false,
+        "wall_seconds": 0.32343175262212753
+      }
+    ]
+  },
+  "entrypoint": [
+    "python",
+    "solution.py"
+  ],
+  "schema_version": 4,
+  "task_id": "scibench_replication_0009"
+}

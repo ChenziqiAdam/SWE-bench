@@ -1,0 +1,177 @@
+{
+  "lammps__lammps-5039": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "f0fa157f7579749f"
+  },
+  "lammps__lammps-5042": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "28bd08fa9985331f"
+  },
+  "lammps__lammps-4887": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "595b240178731fba"
+  },
+  "lammps__lammps-4590": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "f88b4668c3c12788"
+  },
+  "lammps__lammps-4861": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "01f086fe02dccb25"
+  },
+  "lammps__lammps-4768": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "8ac0a4e1d47c3b31"
+  },
+  "lammps__lammps-4760": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "eb97eed724b1a366"
+  },
+  "lammps__lammps-4732": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "4b72d5a37d718b22"
+  },
+  "lammps__lammps-4019": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "8288e3424e94efbb"
+  },
+  "lammps__lammps-4545": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "0df266cde33fa94b"
+  },
+  "lammps__lammps-4481": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "ddec30d36a1429b5"
+  },
+  "lammps__lammps-2026": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "a4cef9b96f5216e1"
+  },
+  "lammps__lammps-2105": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "8bd34c5cb7b2776c"
+  },
+  "lammps__lammps-2367": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "4796ce5214cd0cab"
+  },
+  "lammps__lammps-4443": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "019be68f0ed23434"
+  },
+  "lammps__lammps-4310": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "c8657c42251c9d0c"
+  },
+  "lammps__lammps-4312": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "1e6e2e9a2d27be81"
+  },
+  "lammps__lammps-4346": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "40860a098bf77a22"
+  },
+  "lammps__lammps-4339": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "37c61352a1bcdd43"
+  },
+  "lammps__lammps-4243": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "a27a930d49d8b65b"
+  },
+  "lammps__lammps-4239": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "0ad88b9c8b0f70dc"
+  },
+  "lammps__lammps-4202": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "f9a5c30fb0cd15dc"
+  },
+  "lammps__lammps-4195": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "bdd3c977d4eb3f33"
+  },
+  "lammps__lammps-4134": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "9b79fb71e4826a83"
+  },
+  "lammps__lammps-4123": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "44ea21a2027e768b"
+  },
+  "lammps__lammps-4120": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "6596b03bd9f9e4c2"
+  },
+  "lammps__lammps-3553": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "27f18d406fc37e59"
+  },
+  "lammps__lammps-3931": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "bd102babd7504513"
+  },
+  "lammps__lammps-3941": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "14d15c9c0e68e6cd"
+  },
+  "lammps__lammps-4407": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "5c06dd9b4c0d5945"
+  },
+  "lammps__lammps-3930": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "221579c192557a3f"
+  },
+  "biopython__biopython-4439": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "bc2e0e25ec693862"
+  },
+  "biopython__biopython-3846": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "51b31927d26d1fd3"
+  },
+  "biopython__biopython-3281": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "b5a2a3c286b3001d"
+  },
+  "biopython__biopython-2283": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "0b896d3168a796d2"
+  }
+}

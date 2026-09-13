@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-2819",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-2819",
+    "model_patch": "diff --git a/platforms/opencl/tests/TestOpenCLLangevinIntegrator.cpp b/platforms/opencl/tests/TestOpenCLLangevinIntegrator.cpp\nindex ddbe4ef..e5c3959 100644\n--- a/platforms/opencl/tests/TestOpenCLLangevinIntegrator.cpp\n+++ b/platforms/opencl/tests/TestOpenCLLangevinIntegrator.cpp\n@@ -31,6 +31,62 @@\n \n #include \"OpenCLTests.h\"\n #include \"TestLangevinIntegrator.h\"\n+#include <cmath>\n+\n+using namespace OpenMM;\n+using namespace std;\n+\n+void testConstrainedPMESimulationDoesNotProduceNaNs() {\n+    System system;\n+    NonbondedForce* nonbonded = new NonbondedForce();\n+    nonbonded->setNonbondedMethod(NonbondedForce::PME);\n+    nonbonded->setCutoffDistance(0.8);\n+    system.addForce(nonbonded);\n+\n+    vector<Vec3> positions;\n+    const double spacing = 0.5;\n+    for (int x = 0; x < 5; x++) {\n+        for (int y = 0; y < 5; y++) {\n+            for (int z = 0; z < 5; z++) {\n+                int oxygen = system.addParticle(15.999);\n+                int hydrogen1 = system.addParticle(1.008);\n+                int hydrogen2 = system.addParticle(1.008);\n+                nonbonded->addParticle(-0.834, 0.315, 0.636);\n+                nonbonded->addParticle(0.417, 1.0, 0.0);\n+                nonbonded->addParticle(0.417, 1.0, 0.0);\n+                nonbonded->addException(oxygen, hydrogen1, 0.0, 1.0, 0.0);\n+                nonbonded->addException(oxygen, hydrogen2, 0.0, 1.0, 0.0);\n+                nonbonded->addException(hydrogen1, hydrogen2, 0.0, 1.0, 0.0);\n+                system.addConstraint(oxygen, hydrogen1, 0.09572);\n+                system.addConstraint(oxygen, hydrogen2, 0.09572);\n+                system.addConstraint(hydrogen1, hydrogen2, 0.15139);\n+                Vec3 origin(spacing*x, spacing*y, spacing*z);\n+                positions.push_back(origin);\n+                positions.push_back(origin+Vec3(0.09572, 0, 0));\n+                positions.push_back(origin+Vec3(-0.02399872, 0.09266272, 0));\n+            }\n+        }\n+    }\n+    system.setDefaultPeriodicBoxVectors(Vec3(2.5, 0, 0), Vec3(0, 2.5, 0), Vec3(0, 0, 2.5));\n+\n+    LangevinIntegrator integrator(300.0, 1.0, 0.002);\n+    integrator.setRandomNumberSeed(1);\n+    Context context(system, integrator, platform);\n+    context.setPositions(positions);\n+    context.setVelocitiesToTemperature(300.0, 1);\n+\n+    // The Radeon failure was reproducible when coordinates were downloaded at\n+    // the Folding@Home checkpoint steps.\n+    int completedSteps = 0;\n+    for (int checkpoint : vector<int>{250, 501}) {\n+        integrator.step(checkpoint-completedSteps);\n+        completedSteps = checkpoint;\n+        const vector<Vec3>& current = context.getState(State::Positions).getPositions();\n+        for (const Vec3& position : current)\n+            ASSERT(std::isfinite(position[0]) && std::isfinite(position[1]) && std::isfinite(position[2]));\n+    }\n+}\n \n void runPlatformTests() {\n+    testConstrainedPMESimulationDoesNotProduceNaNs();\n }\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "9445f197fc5eee7c6f83040d3d7ac6361b97cc0e94f4b27d78eca1a9cf897167",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/opencl/tests/TestOpenCLLangevinIntegrator.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-2819.jsonl",
+      "trajectory_sha256": "16c61670238c91cb6c1d97b527b63c05585b70c0ce3a8123e02cd428312dd56c",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "16c61670238c91cb6c1d97b527b63c05585b70c0ce3a8123e02cd428312dd56c",
+    "metrics": {
+      "input_tokens": 307554,
+      "output_tokens": 4024,
+      "cache_read_input_tokens": 275712,
+      "total_tokens": 311578,
+      "wall_time_seconds": 124.796144
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-2819",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/opencl/tests/TestOpenCLLangevinIntegrator.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-2819.jsonl",
+    "trajectory_sha256": "16c61670238c91cb6c1d97b527b63c05585b70c0ce3a8123e02cd428312dd56c",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

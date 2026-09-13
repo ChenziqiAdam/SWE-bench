@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3240",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3240",
+    "model_patch": "diff --git a/tests/TestCustomExternalForce.h b/tests/TestCustomExternalForce.h\nindex 331ae56..3f91179 100644\n--- a/tests/TestCustomExternalForce.h\n+++ b/tests/TestCustomExternalForce.h\n@@ -231,6 +231,24 @@ void testAtan2() {\n     ASSERT_EQUAL_TOL(atan2(positions[0][0], positions[0][1]), state.getPotentialEnergy(), 1e-5);\n }\n \n+void testSphericalContainerAtOrigin() {\n+    System system;\n+    system.addParticle(1.0);\n+    CustomExternalForce* force = new CustomExternalForce(\"k*max(0, r-radius)^2; r=sqrt(x*x+y*y+z*z)\");\n+    force->addGlobalParameter(\"k\", 1.0);\n+    force->addGlobalParameter(\"radius\", 5.0);\n+    force->addParticle(0);\n+    system.addForce(force);\n+    VerletIntegrator integrator(0.01);\n+    Context context(system, integrator, platform);\n+    vector<Vec3> positions(1, Vec3(0, 0, 0));\n+    context.setPositions(positions);\n+\n+    State state = context.getState(State::Forces | State::Energy);\n+    ASSERT_EQUAL_TOL(0.0, state.getPotentialEnergy(), TOL);\n+    ASSERT_EQUAL_VEC(Vec3(0, 0, 0), state.getForces()[0], TOL);\n+}\n+\n void runPlatformTests();\n \n int main(int argc, char* argv[]) {\n@@ -242,6 +260,7 @@ int main(int argc, char* argv[]) {\n         testZeroPeriodicDistance();\n         testIllegalVariable();\n         testAtan2();\n+        testSphericalContainerAtOrigin();\n         runPlatformTests();\n     }\n     catch(const exception& e) {\n@@ -252,4 +271,3 @@ int main(int argc, char* argv[]) {\n     return 0;\n }\n \n-\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "a78b8dfa099856ee6aecde7a2e331c3d3c835d7591407692de0013c911c8a085",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestCustomExternalForce.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3240.jsonl",
+      "trajectory_sha256": "a5cab7e4133e52857adbc09976187ed7291ebff21b11121c0f5d606853560ce4",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "a5cab7e4133e52857adbc09976187ed7291ebff21b11121c0f5d606853560ce4",
+    "metrics": {
+      "input_tokens": 1112705,
+      "output_tokens": 4974,
+      "cache_read_input_tokens": 1054720,
+      "total_tokens": 1117679,
+      "wall_time_seconds": 247.666752
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3240",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestCustomExternalForce.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3240.jsonl",
+    "trajectory_sha256": "a5cab7e4133e52857adbc09976187ed7291ebff21b11121c0f5d606853560ce4",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

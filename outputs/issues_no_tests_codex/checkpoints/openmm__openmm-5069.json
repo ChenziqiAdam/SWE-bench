@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-5069",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-5069",
+    "model_patch": "diff --git a/platforms/cuda/tests/TestCudaNonbondedForce.cpp b/platforms/cuda/tests/TestCudaNonbondedForce.cpp\nindex ac24a6a..f904b6b 100644\n--- a/platforms/cuda/tests/TestCudaNonbondedForce.cpp\n+++ b/platforms/cuda/tests/TestCudaNonbondedForce.cpp\n@@ -68,6 +68,39 @@ void testDeterministicForces() {\n     }\n }\n \n+void testZeroParticleParameterOffsets() {\n+    System system;\n+    system.setDefaultPeriodicBoxVectors(Vec3(3, 0, 0), Vec3(0, 3, 0), Vec3(0, 0, 3));\n+    NonbondedForce* nonbonded = new NonbondedForce();\n+    nonbonded->setNonbondedMethod(NonbondedForce::PME);\n+    nonbonded->setCutoffDistance(1.0);\n+    nonbonded->setEwaldErrorTolerance(0.0005);\n+    system.addForce(nonbonded);\n+    vector<Vec3> positions;\n+    for (int i = 0; i < 9; i++)\n+        for (int j = 0; j < 9; j++)\n+            for (int k = 0; k < 9; k++) {\n+                system.addParticle(1.0);\n+                nonbonded->addParticle((i+j+k)%2 == 0 ? -0.24 : 0.06, 0.25, 0.12552);\n+                positions.push_back(Vec3(i, j, k)/3.0);\n+            }\n+\n+    VerletIntegrator integrator1(0.001);\n+    Context context1(system, integrator1, platform);\n+    context1.setPositions(positions);\n+    double energyWithoutOffsets = context1.getState(State::Energy).getPotentialEnergy();\n+\n+    nonbonded->addGlobalParameter(\"lambda\", 0.0);\n+    for (int i = 0; i < 5; i++)\n+        nonbonded->addParticleParameterOffset(\"lambda\", i, 0.0, 0.0, 0.0);\n+    VerletIntegrator integrator2(0.001);\n+    Context context2(system, integrator2, platform);\n+    context2.setPositions(positions);\n+    double energyWithOffsets = context2.getState(State::Energy).getPotentialEnergy();\n+\n+    ASSERT_EQUAL_TOL(energyWithoutOffsets, energyWithOffsets, 0.01);\n+}\n+\n bool canRunHugeTest() {\n     // Create a minimal context just to see which device is being used.\n \n@@ -96,6 +129,7 @@ void runPlatformTests() {\n     testParallelComputation(NonbondedForce::LJPME);\n     testReordering();\n     testDeterministicForces();\n+    testZeroParticleParameterOffsets();\n     if (canRunHugeTest())\n         testHugeSystem();\n }\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "177de38680a48ec400dabdc8e518879d4a50b8e399cd94210aa4331dba126dd5",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/cuda/tests/TestCudaNonbondedForce.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-5069.jsonl",
+      "trajectory_sha256": "085a6ea8fed9deded0ee0afa66cbb9c159f9f10163a94714a94f069d8bbfade1",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "085a6ea8fed9deded0ee0afa66cbb9c159f9f10163a94714a94f069d8bbfade1",
+    "metrics": {
+      "input_tokens": 409612,
+      "output_tokens": 4796,
+      "cache_read_input_tokens": 371456,
+      "total_tokens": 414408,
+      "wall_time_seconds": 149.017993
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-5069",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/cuda/tests/TestCudaNonbondedForce.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-5069.jsonl",
+    "trajectory_sha256": "085a6ea8fed9deded0ee0afa66cbb9c159f9f10163a94714a94f069d8bbfade1",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

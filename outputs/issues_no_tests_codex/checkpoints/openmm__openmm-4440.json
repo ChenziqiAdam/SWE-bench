@@ -1,0 +1,49 @@
+{
+  "instance_id": "openmm__openmm-4440",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-4440",
+    "model_patch": "diff --git a/tests/TestLangevinIntegrator.h b/tests/TestLangevinIntegrator.h\nindex cea8c4f..77ec2b3 100644\n--- a/tests/TestLangevinIntegrator.h\n+++ b/tests/TestLangevinIntegrator.h\n@@ -312,6 +312,24 @@ void testForceGroups() {\n     ASSERT(pos[2] == 0);\n }\n \n+void testLFMiddleDiscretization() {\n+    System system;\n+    system.addParticle(1.0);\n+    const double friction = 1.0;\n+    const double stepSize = 0.1;\n+    LangevinIntegrator integrator(0.0, friction, stepSize);\n+    Context context(system, integrator, platform);\n+    context.setPositions(vector<Vec3>(1));\n+    context.setVelocities(vector<Vec3>(1, Vec3(1.0, 0.0, 0.0)));\n+\n+    integrator.step(1);\n+\n+    const double finalVelocity = exp(-friction*stepSize);\n+    State state = context.getState(State::Positions | State::Velocities);\n+    ASSERT_EQUAL_TOL(0.5*stepSize*(1.0+finalVelocity), state.getPositions()[0][0], 1e-6);\n+    ASSERT_EQUAL_TOL(finalVelocity, state.getVelocities()[0][0], 1e-6);\n+}\n+\n void runPlatformTests();\n \n int main(int argc, char* argv[]) {\n@@ -324,6 +342,7 @@ int main(int argc, char* argv[]) {\n         testRandomSeed();\n         testInitialTemperature();\n         testForceGroups();\n+        testLFMiddleDiscretization();\n         runPlatformTests();\n     }\n     catch(const exception& e) {\ndiff --git a/tests/TestVariableLangevinIntegrator.h b/tests/TestVariableLangevinIntegrator.h\nindex d1153f8..6f5912b 100644\n--- a/tests/TestVariableLangevinIntegrator.h\n+++ b/tests/TestVariableLangevinIntegrator.h\n@@ -384,6 +384,25 @@ void testForceGroups() {\n     ASSERT(pos[2] == 0);\n }\n \n+void testLFMiddleDiscretization() {\n+    System system;\n+    system.addParticle(1.0);\n+    const double friction = 1.0;\n+    const double stepSize = 0.1;\n+    VariableLangevinIntegrator integrator(0.0, friction, 1e-5);\n+    integrator.setMaximumStepSize(stepSize);\n+    Context context(system, integrator, platform);\n+    context.setPositions(vector<Vec3>(1));\n+    context.setVelocities(vector<Vec3>(1, Vec3(1.0, 0.0, 0.0)));\n+\n+    integrator.step(1);\n+\n+    const double finalVelocity = exp(-friction*stepSize);\n+    State state = context.getState(State::Positions | State::Velocities);\n+    ASSERT_EQUAL_TOL(0.5*stepSize*(1.0+finalVelocity), state.getPositions()[0][0], 1e-6);\n+    ASSERT_EQUAL_TOL(finalVelocity, state.getVelocities()[0][0], 1e-6);\n+}\n+\n void runPlatformTests();\n \n int main(int argc, char* argv[]) {\n@@ -397,6 +416,7 @@ int main(int argc, char* argv[]) {\n         testArgonBox();\n         testInitialTemperature();\n         testForceGroups();\n+        testLFMiddleDiscretization();\n         runPlatformTests();\n     }\n     catch(const exception& e) {\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "8e179541a760dd616e10e0d1165fd5af4d3e0a546756544ee37709de209569a1",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestLangevinIntegrator.h",
+        "tests/TestVariableLangevinIntegrator.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-4440.jsonl",
+      "trajectory_sha256": "8ef2e240eebc0761df8ae6a25d8d7a2cf832d6060aeb0562ac4b33c325830b48",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "8ef2e240eebc0761df8ae6a25d8d7a2cf832d6060aeb0562ac4b33c325830b48",
+    "metrics": {
+      "input_tokens": 362621,
+      "output_tokens": 3909,
+      "cache_read_input_tokens": 319744,
+      "total_tokens": 366530,
+      "wall_time_seconds": 138.750229
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-4440",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestLangevinIntegrator.h",
+      "tests/TestVariableLangevinIntegrator.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-4440.jsonl",
+    "trajectory_sha256": "8ef2e240eebc0761df8ae6a25d8d7a2cf832d6060aeb0562ac4b33c325830b48",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

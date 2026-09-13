@@ -1,0 +1,47 @@
+{
+  "instance_id": "rdkit__rdkit-5261",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "rdkit__rdkit-5261",
+    "model_patch": "diff --git a/rdkit/Chem/Draw/UnitTestDraw.py b/rdkit/Chem/Draw/UnitTestDraw.py\nindex f93e564..359f7ce 100755\n--- a/rdkit/Chem/Draw/UnitTestDraw.py\n+++ b/rdkit/Chem/Draw/UnitTestDraw.py\n@@ -241,6 +241,14 @@ class TestCase(unittest.TestCase):\n       self.assertIn(b'PNG', png)\n       self.assertIsNone(Chem.MolFromPNGString(png))\n \n+  def testDrawMorganBitWithNoBonds(self):\n+    mol = Chem.MolFromSmiles('N.N.OC(O)=O')\n+    bitInfo = {}\n+    rdMolDescriptors.GetMorganFingerprint(mol, radius=2, bitInfo=bitInfo)\n+\n+    svg = Draw.DrawMorganBit(mol, 847950754, bitInfo)\n+    self.assertIn(\"class='atom-0'\", svg)\n+\n   def testDrawRDKit(self):\n     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')\n     bi = {}\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "8d7f295cab464fcfa5458deb3f99a009ffc76cc1476065bba04fdbf103dcdf1f",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "rdkit/Chem/Draw/UnitTestDraw.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/rdkit__rdkit-5261.jsonl",
+      "trajectory_sha256": "625ce3f9faad78a2bcc8aa57798cb41056d7b865abe8a7f38e0b87fad0d55035",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "625ce3f9faad78a2bcc8aa57798cb41056d7b865abe8a7f38e0b87fad0d55035",
+    "metrics": {
+      "input_tokens": 194745,
+      "output_tokens": 2161,
+      "cache_read_input_tokens": 166400,
+      "total_tokens": 196906,
+      "wall_time_seconds": 65.382422
+    }
+  },
+  "audit": {
+    "instance_id": "rdkit__rdkit-5261",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "rdkit/Chem/Draw/UnitTestDraw.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/rdkit__rdkit-5261.jsonl",
+    "trajectory_sha256": "625ce3f9faad78a2bcc8aa57798cb41056d7b865abe8a7f38e0b87fad0d55035",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

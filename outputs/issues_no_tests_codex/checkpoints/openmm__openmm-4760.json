@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-4760",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-4760",
+    "model_patch": "diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py\nindex 3914fd6..417007f 100644\n--- a/wrappers/python/tests/TestForceField.py\n+++ b/wrappers/python/tests/TestForceField.py\n@@ -50,6 +50,40 @@ class TestForceField(unittest.TestCase):\n                                 f.getNonbondedMethod()==methodMap[method]\n                                 for f in forces))\n \n+    def test_AbsinthCTerminalCarbonylBond(self):\n+        \"\"\"Test that ABSINTH assigns a bond term to a C-terminal C-O bond.\"\"\"\n+        topology = Topology()\n+        chain = topology.addChain()\n+        residues = [topology.addResidue('GLY', chain) for i in range(2)]\n+        atomNames = [('N', 'H', 'H2', 'H3', 'CA', 'HA2', 'HA3', 'C', 'O'),\n+                     ('N', 'H', 'CA', 'HA2', 'HA3', 'C', 'O', 'OXT')]\n+        atoms = []\n+        for residue, names in zip(residues, atomNames):\n+            residueAtoms = {}\n+            for name in names:\n+                element = elem.hydrogen if name.startswith('H') else elem.get_by_symbol(name[0])\n+                residueAtoms[name] = topology.addAtom(name, element, residue)\n+            atoms.append(residueAtoms)\n+        for residueAtoms in atoms:\n+            topology.addBond(residueAtoms['N'], residueAtoms['CA'])\n+            topology.addBond(residueAtoms['CA'], residueAtoms['C'])\n+            topology.addBond(residueAtoms['C'], residueAtoms['O'])\n+            for name in residueAtoms:\n+                if name.startswith('H'):\n+                    topology.addBond(residueAtoms['N' if name in ('H', 'H1', 'H2', 'H3') else 'CA'],\n+                                     residueAtoms[name])\n+        topology.addBond(atoms[0]['C'], atoms[1]['N'])\n+        topology.addBond(atoms[1]['C'], atoms[1]['OXT'])\n+\n+        system = ForceField('absinth.xml').createSystem(topology)\n+        carbon = atoms[1]['C'].index\n+        oxygen = atoms[1]['O'].index\n+        bondForce = next(force for force in system.getForces()\n+                         if isinstance(force, HarmonicBondForce))\n+        bondedPairs = [{bondForce.getBondParameters(i)[0], bondForce.getBondParameters(i)[1]}\n+                       for i in range(bondForce.getNumBonds())]\n+        self.assertIn({carbon, oxygen}, bondedPairs)\n+\n     def test_DispersionCorrection(self):\n         \"\"\"Test to make sure that the dispersion/long-range correction is set properly.\"\"\"\n         top = Topology()\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "302c155f375dc3d1d5d2a6685f4acc363c3a325ef53daefd727fd840aa7fcb4d",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestForceField.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-4760.jsonl",
+      "trajectory_sha256": "e8bcbd7a633a77266b3a55ba468ac169032a6bf134fa934e47c97faeff5cafc1",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "e8bcbd7a633a77266b3a55ba468ac169032a6bf134fa934e47c97faeff5cafc1",
+    "metrics": {
+      "input_tokens": 222686,
+      "output_tokens": 3556,
+      "cache_read_input_tokens": 192000,
+      "total_tokens": 226242,
+      "wall_time_seconds": 90.758118
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-4760",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestForceField.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-4760.jsonl",
+    "trajectory_sha256": "e8bcbd7a633a77266b3a55ba468ac169032a6bf134fa934e47c97faeff5cafc1",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

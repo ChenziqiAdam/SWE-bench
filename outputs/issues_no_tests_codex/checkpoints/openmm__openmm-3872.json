@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3872",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3872",
+    "model_patch": "diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py\nindex 767c779..4d8ef66 100644\n--- a/wrappers/python/tests/TestForceField.py\n+++ b/wrappers/python/tests/TestForceField.py\n@@ -1428,6 +1428,23 @@ class AmoebaTestForceField(unittest.TestCase):\n             diff = norm(f1-f2)\n             self.assertTrue(diff < 0.1 or diff/norm(f1) < 1e-3)\n \n+    def test_IamoebaMinimization(self):\n+        \"\"\"Test that direct-polarization iAMOEBA water can be minimized.\"\"\"\n+        dataDir = os.path.join(os.path.dirname(forcefield.__file__), 'data')\n+        pdb = PDBFile(os.path.join(dataDir, 'tip3p.pdb'))\n+        system = ForceField('iamoeba.xml').createSystem(\n+            pdb.topology, nonbondedMethod=PME, nonbondedCutoff=0.9*nanometers,\n+            polarization='direct')\n+        integrator = VerletIntegrator(0.001*picoseconds)\n+        context = Context(system, integrator, Platform.getPlatformByName('Reference'))\n+        context.setPositions(pdb.positions)\n+\n+        LocalEnergyMinimizer.minimize(context, maxIterations=10)\n+        positions = context.getState(getPositions=True).getPositions()\n+        for position in positions:\n+            for coordinate in position.value_in_unit(nanometers):\n+                self.assertTrue(math.isfinite(coordinate))\n+\n     def computeAmoeba18Energies(self, filename):\n         pdb = PDBFile(filename)\n         forcefield = ForceField('amoeba2018.xml')\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "a5f82c846f16f983417c61991c7c1df2db304d8722f8c9bc818c77e79e727072",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestForceField.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3872.jsonl",
+      "trajectory_sha256": "8406e22acd6f1b49d5a2b1e50e7e7743741ae14a75952d6f74b05c85f5762da0",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "8406e22acd6f1b49d5a2b1e50e7e7743741ae14a75952d6f74b05c85f5762da0",
+    "metrics": {
+      "input_tokens": 409837,
+      "output_tokens": 3831,
+      "cache_read_input_tokens": 358400,
+      "total_tokens": 413668,
+      "wall_time_seconds": 113.038697
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3872",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestForceField.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3872.jsonl",
+    "trajectory_sha256": "8406e22acd6f1b49d5a2b1e50e7e7743741ae14a75952d6f74b05c85f5762da0",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

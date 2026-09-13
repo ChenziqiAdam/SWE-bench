@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3630",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3630",
+    "model_patch": "diff --git a/tests/TestVirtualSites.h b/tests/TestVirtualSites.h\nindex 97c0f1b..e9a33e3 100644\n--- a/tests/TestVirtualSites.h\n+++ b/tests/TestVirtualSites.h\n@@ -158,6 +158,34 @@ void testThreeParticleAverage() {\n     }\n }\n \n+/**\n+ * Test that setting positions immediately updates virtual sites before an\n+ * energy is evaluated.\n+ */\n+void testSetPositionsComputesVirtualSites() {\n+    System system;\n+    system.addParticle(1.0);\n+    system.addParticle(1.0);\n+    system.addParticle(1.0);\n+    system.addParticle(0.0);\n+    system.setVirtualSite(3, new ThreeParticleAverageSite(0, 1, 2, 0.2, 0.3, 0.5));\n+    CustomExternalForce* force = new CustomExternalForce(\"x*x+y*y+z*z\");\n+    force->addParticle(3);\n+    system.addForce(force);\n+    VerletIntegrator integrator(0.001);\n+    Context context(system, integrator, platform);\n+    vector<Vec3> positions(4);\n+    positions[0] = Vec3(0, 0, 0);\n+    positions[1] = Vec3(1, 0, 0);\n+    positions[2] = Vec3(0, 1, 0);\n+    positions[3] = Vec3(10, 10, 10);\n+    context.setPositions(positions);\n+\n+    State state = context.getState(State::Positions | State::Energy);\n+    ASSERT_EQUAL_VEC(Vec3(0.3, 0.5, 0), state.getPositions()[3], 1e-6);\n+    ASSERT_EQUAL_TOL(0.34, state.getPotentialEnergy(), 1e-6);\n+}\n+\n /**\n  * Test an OutOfPlaneSite virtual site.\n  */\n@@ -490,6 +518,7 @@ int main(int argc, char* argv[]) {\n         testMasslessParticle();\n         testTwoParticleAverage();\n         testThreeParticleAverage();\n+        testSetPositionsComputesVirtualSites();\n         testOutOfPlane();\n         testLocalCoordinates(2);\n         testLocalCoordinates(3);\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "6169952d8e462d939d2c6d774931e861aa5fb8cb03a2086cb76ff96700c775e7",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestVirtualSites.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3630.jsonl",
+      "trajectory_sha256": "df4073ef44a2401728f780a6139c4c888e23c245af58e502e54755c6bd73f82f",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "df4073ef44a2401728f780a6139c4c888e23c245af58e502e54755c6bd73f82f",
+    "metrics": {
+      "input_tokens": 912955,
+      "output_tokens": 5456,
+      "cache_read_input_tokens": 850944,
+      "total_tokens": 918411,
+      "wall_time_seconds": 239.916887
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3630",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestVirtualSites.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3630.jsonl",
+    "trajectory_sha256": "df4073ef44a2401728f780a6139c4c888e23c245af58e502e54755c6bd73f82f",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

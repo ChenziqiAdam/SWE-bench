@@ -1,0 +1,49 @@
+{
+  "instance_id": "lammps__lammps-2105",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "lammps__lammps-2105",
+    "model_patch": "diff --git a/unittest/CMakeLists.txt b/unittest/CMakeLists.txt\nindex 2fb6500..170f14b 100644\n--- a/unittest/CMakeLists.txt\n+++ b/unittest/CMakeLists.txt\n@@ -1,3 +1,8 @@\n include(GTest)\n \n+add_executable(rigid_nve_small_inertia rigid_nve_small_inertia.cpp\n+  ${LAMMPS_SOURCE_DIR}/math_extra.cpp)\n+target_include_directories(rigid_nve_small_inertia PRIVATE ${LAMMPS_SOURCE_DIR})\n+add_test(NAME RigidNVE:SmallInertiaRotation COMMAND rigid_nve_small_inertia)\n+\n add_subdirectory(force-styles)\ndiff --git a/unittest/rigid_nve_small_inertia.cpp b/unittest/rigid_nve_small_inertia.cpp\nnew file mode 100644\nindex 0000000..75796b9\n--- /dev/null\n+++ b/unittest/rigid_nve_small_inertia.cpp\n@@ -0,0 +1,29 @@\n+/* Regression test for rotation of small granular bodies with fix rigid/nve. */\n+\n+#include \"math_extra.h\"\n+\n+#include <cmath>\n+#include <cstdio>\n+\n+int main()\n+{\n+  // A small rigid body's principal moments can legitimately be below 1.0e-6.\n+  // no_squish_rotate() is the rotational update used by fix rigid/nve.\n+  const double moment = 5.0e-7;\n+  const double dt = 0.1;\n+  double inertia[3] = {moment, moment, moment};\n+  double quat[4] = {1.0, 0.0, 0.0, 0.0};\n+  double conjugate_momentum[4] = {0.0, 0.0, 0.0, 4.0 * moment};\n+\n+  MathExtra::no_squish_rotate(3, conjugate_momentum, quat, inertia, dt);\n+\n+  const double tolerance = 1.0e-14;\n+  if (std::fabs(quat[0] - std::cos(dt)) > tolerance ||\n+      std::fabs(quat[3] - std::sin(dt)) > tolerance) {\n+    std::fprintf(stderr,\n+                 \"small rigid body did not rotate: quaternion = %.17g %.17g %.17g %.17g\\n\",\n+                 quat[0], quat[1], quat[2], quat[3]);\n+    return 1;\n+  }\n+  return 0;\n+}\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "87d6a0832763ba682bd8dac0475913119b45a0b3d970571058d40d3a2726fd99",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/CMakeLists.txt",
+        "unittest/rigid_nve_small_inertia.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-2105.jsonl",
+      "trajectory_sha256": "bc74a2cdd25a502aed1c60a218fe113535c00608c1468bf10118294a0f3ecaae",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "bc74a2cdd25a502aed1c60a218fe113535c00608c1468bf10118294a0f3ecaae",
+    "metrics": {
+      "input_tokens": 563229,
+      "output_tokens": 5420,
+      "cache_read_input_tokens": 494848,
+      "total_tokens": 568649,
+      "wall_time_seconds": 226.575915
+    }
+  },
+  "audit": {
+    "instance_id": "lammps__lammps-2105",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "unittest/CMakeLists.txt",
+      "unittest/rigid_nve_small_inertia.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/lammps__lammps-2105.jsonl",
+    "trajectory_sha256": "bc74a2cdd25a502aed1c60a218fe113535c00608c1468bf10118294a0f3ecaae",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

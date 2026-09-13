@@ -1,0 +1,49 @@
+{
+  "instance_id": "lammps__lammps-4346",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "lammps__lammps-4346",
+    "model_patch": "diff --git a/unittest/force-styles/tests/atomic-pair-gran_hooke_history_virial.yaml b/unittest/force-styles/tests/atomic-pair-gran_hooke_history_virial.yaml\nnew file mode 100644\nindex 0000000..677d6bf\n--- /dev/null\n+++ b/unittest/force-styles/tests/atomic-pair-gran_hooke_history_virial.yaml\n@@ -0,0 +1,58 @@\n+---\n+lammps_version: 17 Apr 2024\n+date_generated: Fri Jun 14 00:00:00 2024\n+epsilon: 1e-12\n+skip_tests: gpu intel opt omp\n+prerequisites: ! |\n+  pair gran/hooke/history\n+pre_commands: ! \"\"\n+post_commands: ! \"\"\n+input_file: in.gran_hooke_history_virial\n+pair_style: gran/hooke/history 1000.0 0.0 0.0 0.0 0.0 0\n+pair_coeff: ! |\n+  * *\n+extract: ! \"\"\n+natoms: 32\n+init_vdwl: 0\n+init_coul: 0\n+init_stress: ! |-\n+  4.751284194720756e+03 4.751284194720756e+03 4.751284194720756e+03 0 0 0\n+init_forces: &zero_forces ! |\n+   1 0 0 0\n+   2 0 0 0\n+   3 0 0 0\n+   4 0 0 0\n+   5 0 0 0\n+   6 0 0 0\n+   7 0 0 0\n+   8 0 0 0\n+   9 0 0 0\n+  10 0 0 0\n+  11 0 0 0\n+  12 0 0 0\n+  13 0 0 0\n+  14 0 0 0\n+  15 0 0 0\n+  16 0 0 0\n+  17 0 0 0\n+  18 0 0 0\n+  19 0 0 0\n+  20 0 0 0\n+  21 0 0 0\n+  22 0 0 0\n+  23 0 0 0\n+  24 0 0 0\n+  25 0 0 0\n+  26 0 0 0\n+  27 0 0 0\n+  28 0 0 0\n+  29 0 0 0\n+  30 0 0 0\n+  31 0 0 0\n+  32 0 0 0\n+run_vdwl: 0\n+run_coul: 0\n+run_stress: ! |-\n+  4.751284194720756e+03 4.751284194720756e+03 4.751284194720756e+03 0 0 0\n+run_forces: *zero_forces\n+...\ndiff --git a/unittest/force-styles/tests/in.gran_hooke_history_virial b/unittest/force-styles/tests/in.gran_hooke_history_virial\nnew file mode 100644\nindex 0000000..aa69891\n--- /dev/null\n+++ b/unittest/force-styles/tests/in.gran_hooke_history_virial\n@@ -0,0 +1,18 @@\n+units           si\n+atom_style      sphere\n+boundary        p p p\n+# The Kokkos history list exchanges correctly only with newton pair off.\n+newton          off\n+\n+lattice         custom 1.3 &\n+                a1 1 0 0 a2 0 1 0 a3 0 0 1 &\n+                basis 0 0 0 basis 0 .5 .5 basis .5 0 .5 basis .5 .5 0\n+region          box block 0 2 0 2 0 2\n+create_box      1 box\n+create_atoms    1 box\n+set             type 1 diameter 1.0 density 1.0\n+velocity        all set 0.0 0.0 0.0\n+\n+neighbor        0.2 bin\n+neigh_modify    delay 0 every 1 check no\n+comm_modify     vel yes\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "3effb21cfa85877e191603587f384e573a477aff3c45dd7116273c115fb7de1e",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/force-styles/tests/atomic-pair-gran_hooke_history_virial.yaml",
+        "unittest/force-styles/tests/in.gran_hooke_history_virial"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4346.jsonl",
+      "trajectory_sha256": "c6848c8db127d75a8e455e60b17fcc20193a94047d24300ac58cef77100b8cbd",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "c6848c8db127d75a8e455e60b17fcc20193a94047d24300ac58cef77100b8cbd",
+    "metrics": {
+      "input_tokens": 2408467,
+      "output_tokens": 10737,
+      "cache_read_input_tokens": 2293760,
+      "total_tokens": 2419204,
+      "wall_time_seconds": 651.051615
+    }
+  },
+  "audit": {
+    "instance_id": "lammps__lammps-4346",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "unittest/force-styles/tests/atomic-pair-gran_hooke_history_virial.yaml",
+      "unittest/force-styles/tests/in.gran_hooke_history_virial"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/lammps__lammps-4346.jsonl",
+    "trajectory_sha256": "c6848c8db127d75a8e455e60b17fcc20193a94047d24300ac58cef77100b8cbd",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

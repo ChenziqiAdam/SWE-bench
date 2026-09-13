@@ -1,0 +1,47 @@
+{
+  "instance_id": "biopython__biopython-3846",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "biopython__biopython-3846",
+    "model_patch": "diff --git a/Tests/test_MeltingTemp.py b/Tests/test_MeltingTemp.py\nnew file mode 100644\nindex 0000000..e17198d\n--- /dev/null\n+++ b/Tests/test_MeltingTemp.py\n@@ -0,0 +1,27 @@\n+\"\"\"Tests for Bio.SeqUtils.MeltingTemp.\"\"\"\n+import unittest\n+\n+from Bio.SeqUtils import MeltingTemp as mt\n+\n+\n+class MeltingTempTests(unittest.TestCase):\n+    def test_Tm_GC_valueset_salt_corrections(self):\n+        \"\"\"Tm_GC valuesets should use the salt correction in their formula.\"\"\"\n+        seq = \"ACGTACGTACGTACGTACGT\"\n+        valuesets = {\n+            3: ((81.5, 0.41, 675, 1), 1),\n+            4: ((81.5, 0.41, 500, 1), 2),\n+            5: ((78.0, 0.7, 500, 1), 2),\n+            6: ((67.0, 0.8, 500, 1), 2),\n+            7: ((81.5, 0.41, 600, 1), 1),\n+        }\n+        for valueset, (userset, saltcorr) in valuesets.items():\n+            with self.subTest(valueset=valueset):\n+                expected = mt.Tm_GC(seq, userset=userset, saltcorr=saltcorr)\n+                self.assertAlmostEqual(\n+                    mt.Tm_GC(seq, valueset=valueset), expected, places=7\n+                )\n+\n+\n+if __name__ == \"__main__\":\n+    unittest.main()\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "77ab5db22a90c2830ee0f817a20fa2904e2a137203577b0f2dd38dbeb120cbfb",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "Tests/test_MeltingTemp.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/biopython__biopython-3846.jsonl",
+      "trajectory_sha256": "6b3c2a6a605a182b0c377d082d8a3993cc787cbe73d2deaf7dfcf3c63fc181b3",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "6b3c2a6a605a182b0c377d082d8a3993cc787cbe73d2deaf7dfcf3c63fc181b3",
+    "metrics": {
+      "input_tokens": 265637,
+      "output_tokens": 3317,
+      "cache_read_input_tokens": 219648,
+      "total_tokens": 268954,
+      "wall_time_seconds": 89.514187
+    }
+  },
+  "audit": {
+    "instance_id": "biopython__biopython-3846",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "Tests/test_MeltingTemp.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/biopython__biopython-3846.jsonl",
+    "trajectory_sha256": "6b3c2a6a605a182b0c377d082d8a3993cc787cbe73d2deaf7dfcf3c63fc181b3",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

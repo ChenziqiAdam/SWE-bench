@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-1924",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-1924",
+    "model_patch": "diff --git a/platforms/cuda/tests/TestCudaLangevinIntegrator.cpp b/platforms/cuda/tests/TestCudaLangevinIntegrator.cpp\nindex 6e0eb66..30a7a8d 100644\n--- a/platforms/cuda/tests/TestCudaLangevinIntegrator.cpp\n+++ b/platforms/cuda/tests/TestCudaLangevinIntegrator.cpp\n@@ -31,6 +31,47 @@\n \n #include \"CudaTests.h\"\n #include \"TestLangevinIntegrator.h\"\n+#include <limits>\n+\n+void testRecoverFromNaN() {\n+    System system;\n+    system.addParticle(1.0);\n+    system.addParticle(1.0);\n+    NonbondedForce* force = new NonbondedForce();\n+    force->setNonbondedMethod(NonbondedForce::CutoffPeriodic);\n+    force->setCutoffDistance(1.0);\n+    force->addParticle(1.0, 0.2, 0.1);\n+    force->addParticle(-1.0, 0.2, 0.1);\n+    system.addForce(force);\n+    LangevinIntegrator integrator(300.0, 1.0, 0.001);\n+    Context context(system, integrator, platform);\n+    context.setPeriodicBoxVectors(Vec3(3, 0, 0), Vec3(0, 3, 0), Vec3(0, 0, 3));\n+    vector<Vec3> positions(2);\n+    positions[0] = Vec3(0, 0, 0);\n+    positions[1] = Vec3(0.5, 0, 0);\n+    context.setPositions(positions);\n+    context.setVelocities(vector<Vec3>(2));\n+\n+    // Make an integration produce a NaN, then restore the last valid state.\n+    vector<Vec3> badPositions = positions;\n+    badPositions[0][0] = std::numeric_limits<double>::quiet_NaN();\n+    context.setPositions(badPositions);\n+    try {\n+        integrator.step(1);\n+    }\n+    catch (const exception&) {\n+        // Some precision modes detect the invalid coordinate immediately.\n+    }\n+    context.setPositions(positions);\n+    context.setVelocities(vector<Vec3>(2));\n+    integrator.step(1);\n+    State state = context.getState(State::Positions | State::Energy);\n+    ASSERT(state.getPotentialEnergy() == state.getPotentialEnergy());\n+    for (int i = 0; i < 2; i++)\n+        for (int j = 0; j < 3; j++)\n+            ASSERT(state.getPositions()[i][j] == state.getPositions()[i][j]);\n+}\n \n void runPlatformTests() {\n+    testRecoverFromNaN();\n }\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "20fba3320da4f1580d5fecd6de9961328d3abb3a3941712b564a40587997e308",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/cuda/tests/TestCudaLangevinIntegrator.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-1924.jsonl",
+      "trajectory_sha256": "650e2dc4735491c41a5251677172a77117e854c3811811b5e00987530a41b2a5",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "650e2dc4735491c41a5251677172a77117e854c3811811b5e00987530a41b2a5",
+    "metrics": {
+      "input_tokens": 391374,
+      "output_tokens": 4960,
+      "cache_read_input_tokens": 348672,
+      "total_tokens": 396334,
+      "wall_time_seconds": 171.990851
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-1924",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/cuda/tests/TestCudaLangevinIntegrator.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-1924.jsonl",
+    "trajectory_sha256": "650e2dc4735491c41a5251677172a77117e854c3811811b5e00987530a41b2a5",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

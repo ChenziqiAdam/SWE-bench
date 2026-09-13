@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3771",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3771",
+    "model_patch": "diff --git a/platforms/cuda/tests/TestCudaNonbondedForce.cpp b/platforms/cuda/tests/TestCudaNonbondedForce.cpp\nindex 0c623e8..1b92b27 100644\n--- a/platforms/cuda/tests/TestCudaNonbondedForce.cpp\n+++ b/platforms/cuda/tests/TestCudaNonbondedForce.cpp\n@@ -126,6 +126,42 @@ void testReordering() {\n     }\n }\n \n+void testReinitializePreservesStateAfterForceReplacement() {\n+    System system;\n+    System referenceSystem;\n+    for (int i = 0; i < 2; i++) {\n+        system.addParticle(1.0);\n+        referenceSystem.addParticle(1.0);\n+    }\n+    NonbondedForce* oldForce = new NonbondedForce();\n+    for (int i = 0; i < 2; i++)\n+        oldForce->addParticle(0.0, 1.0, 0.0);\n+    system.addForce(oldForce);\n+\n+    VerletIntegrator integrator(0.001);\n+    Context context(system, integrator, platform);\n+    vector<Vec3> positions = {Vec3(0, 0, 0), Vec3(1, 0, 0)};\n+    context.setPositions(positions);\n+\n+    system.removeForce(0);\n+    NonbondedForce* newForce = new NonbondedForce();\n+    NonbondedForce* referenceForce = new NonbondedForce();\n+    for (double charge : {1.0, -1.0}) {\n+        newForce->addParticle(charge, 1.0, 0.0);\n+        referenceForce->addParticle(charge, 1.0, 0.0);\n+    }\n+    system.addForce(newForce);\n+    referenceSystem.addForce(referenceForce);\n+    context.reinitialize(true);\n+\n+    VerletIntegrator referenceIntegrator(0.001);\n+    Context referenceContext(referenceSystem, referenceIntegrator, platform);\n+    referenceContext.setPositions(positions);\n+    double energy = context.getState(State::Energy).getPotentialEnergy();\n+    double referenceEnergy = referenceContext.getState(State::Energy).getPotentialEnergy();\n+    ASSERT_EQUAL_TOL(referenceEnergy, energy, 1e-5);\n+}\n+\n void testDeterministicForces() {\n     // Check that the CudaDeterministicForces property works correctly.\n     \n@@ -187,6 +223,7 @@ void runPlatformTests() {\n     testParallelComputation(NonbondedForce::PME);\n     testParallelComputation(NonbondedForce::LJPME);\n     testReordering();\n+    testReinitializePreservesStateAfterForceReplacement();\n     testDeterministicForces();\n     if (canRunHugeTest())\n         testHugeSystem();\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "02f49c5bdcdd2c4b186f6227a5ceba2cc55da93128e0ee0f146a731a61a6a199",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/cuda/tests/TestCudaNonbondedForce.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3771.jsonl",
+      "trajectory_sha256": "3473783fe6a8c123f0f3fd6aa26974cd41aa90f8e74aa1d9fe3c7cf1767a4001",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "3473783fe6a8c123f0f3fd6aa26974cd41aa90f8e74aa1d9fe3c7cf1767a4001",
+    "metrics": {
+      "input_tokens": 560529,
+      "output_tokens": 5403,
+      "cache_read_input_tokens": 521216,
+      "total_tokens": 565932,
+      "wall_time_seconds": 189.55603
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3771",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/cuda/tests/TestCudaNonbondedForce.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3771.jsonl",
+    "trajectory_sha256": "3473783fe6a8c123f0f3fd6aa26974cd41aa90f8e74aa1d9fe3c7cf1767a4001",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

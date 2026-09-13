@@ -1,0 +1,47 @@
+{
+  "instance_id": "lammps__lammps-3553",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "lammps__lammps-3553",
+    "model_patch": "diff --git a/unittest/commands/test_regions.cpp b/unittest/commands/test_regions.cpp\nindex 8d51345..0915f71 100644\n--- a/unittest/commands/test_regions.cpp\n+++ b/unittest/commands/test_regions.cpp\n@@ -278,6 +278,26 @@ TEST_F(RegionTest, Counts)\n     EXPECT_EQ(count9, count5);\n     EXPECT_EQ(count10, count1);\n }\n+\n+TEST_F(RegionTest, EllipsoidContactDisplacement)\n+{\n+    BEGIN_HIDE_OUTPUT();\n+    command(\"region inside ellipsoid 1 2 3 4 3 2 units box\");\n+    command(\"region outside ellipsoid 1 2 3 4 3 2 units box side out\");\n+    END_HIDE_OUTPUT();\n+\n+    auto inside = domain->get_region_by_id(\"inside\");\n+    ASSERT_EQ(inside->surface(4.0, 2.0, 3.0, 2.0), 1);\n+    EXPECT_DOUBLE_EQ(inside->contact[0].delx, -1.0);\n+    EXPECT_DOUBLE_EQ(inside->contact[0].dely, 0.0);\n+    EXPECT_DOUBLE_EQ(inside->contact[0].delz, 0.0);\n+\n+    auto outside = domain->get_region_by_id(\"outside\");\n+    ASSERT_EQ(outside->surface(6.0, 2.0, 3.0, 2.0), 1);\n+    EXPECT_DOUBLE_EQ(outside->contact[0].delx, 1.0);\n+    EXPECT_DOUBLE_EQ(outside->contact[0].dely, 0.0);\n+    EXPECT_DOUBLE_EQ(outside->contact[0].delz, 0.0);\n+}\n } // namespace LAMMPS_NS\n \n int main(int argc, char **argv)\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "c77f3f3c5ffc21745d520c1181a348f17b15b044fd9f54d4fa22b9248ffa59db",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/test_regions.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-3553.jsonl",
+      "trajectory_sha256": "85834a87c31115fda8b0291bb7f28221b8a88704ccf4fb30e6eda1b6a49e7457",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "85834a87c31115fda8b0291bb7f28221b8a88704ccf4fb30e6eda1b6a49e7457",
+    "metrics": {
+      "input_tokens": 1095213,
+      "output_tokens": 4607,
+      "cache_read_input_tokens": 996608,
+      "total_tokens": 1099820,
+      "wall_time_seconds": 396.479811
+    }
+  },
+  "audit": {
+    "instance_id": "lammps__lammps-3553",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "unittest/commands/test_regions.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/lammps__lammps-3553.jsonl",
+    "trajectory_sha256": "85834a87c31115fda8b0291bb7f28221b8a88704ccf4fb30e6eda1b6a49e7457",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

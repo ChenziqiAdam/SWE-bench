@@ -131,6 +131,49 @@ def remove_image(client, image_id, logger=None):
         log_error(f"Failed to remove image {image_id}: {e}\n{traceback.format_exc()}")
 
 
+_TRANSIENT_IMAGE_REMOVE_MARKERS = (
+    "cannot be removed without force",
+    "is in an invalid state",
+)
+
+
+def remove_image_with_retry(
+    client, image_id, *, attempts: int = 3, backoff_seconds: float = 2.0
+):
+    """Force-remove an image, retrying past a podman cleanup race.
+
+    A container that just finished under ``containers.run(..., remove=True)``
+    is not always fully torn down by the time a follow-up
+    ``images.remove(..., force=True)`` runs: podman's Docker-API shim can
+    reject it with a 409 ("container ... cannot be removed without force:
+    container state improper") even though ``force=True`` was passed and the
+    container is already exiting. That container finishes tearing itself down
+    within a couple seconds, so a short retry clears it without leaking the
+    image (which would otherwise get silently reused with a stale
+    environment on the next build/eval of the same instance).
+
+    Raises ``docker.errors.NotFound`` if the image is already gone, and
+    re-raises the last error if every attempt hits a non-transient failure.
+    """
+    last_exc: Exception | None = None
+    for attempt in range(attempts):
+        try:
+            client.images.remove(image_id, force=True)
+            return
+        except docker.errors.NotFound:
+            raise
+        except Exception as exc:
+            last_exc = exc
+            if attempt < attempts - 1 and any(
+                marker in str(exc).lower() for marker in _TRANSIENT_IMAGE_REMOVE_MARKERS
+            ):
+                time.sleep(backoff_seconds)
+                continue
+            raise
+    if last_exc:
+        raise last_exc
+
+
 def cleanup_container(client, container, logger):
     """
     Stop and remove a Docker container.

@@ -1,0 +1,227 @@
+{
+  "openmm__openmm-4832": [],
+  "openmm__openmm-3260": [],
+  "openmm__openmm-4536": [],
+  "openmm__openmm-4989": [],
+  "rdkit__rdkit-7166": [],
+  "rdkit__rdkit-6972": [],
+  "rdkit__rdkit-2651": [],
+  "rdkit__rdkit-3507": [],
+  "rdkit__rdkit-1654": [],
+  "rdkit__rdkit-2646": [],
+  "rdkit__rdkit-5425": [],
+  "rdkit__rdkit-986": [],
+  "rdkit__rdkit-2255": [],
+  "rdkit__rdkit-3900": [
+    {
+      "url": "https://user-images.githubusercontent.com/2280724/110005800-e28ac680-7ce6-11eb-9981-b85e9580c9c6.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/2280724/110005800-e28ac680-7ce6-11eb-9981-b85e9580c9c6.png"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/2280724/110005806-e3235d00-7ce6-11eb-8465-ab1ae5d4edfb.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/2280724/110005806-e3235d00-7ce6-11eb-8465-ab1ae5d4edfb.png"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/2280724/110005810-e4548a00-7ce6-11eb-905b-003a5273c213.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/2280724/110005810-e4548a00-7ce6-11eb-905b-003a5273c213.png"
+    }
+  ],
+  "rdkit__rdkit-3170": [
+    {
+      "url": "https://user-images.githubusercontent.com/540511/82190097-ca30f300-98f0-11ea-8187-a66fd6cd6079.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/540511/82190097-ca30f300-98f0-11ea-8187-a66fd6cd6079.png"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/540511/82190125-d321c480-98f0-11ea-8b18-2fbf25c9c75b.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/540511/82190125-d321c480-98f0-11ea-8b18-2fbf25c9c75b.png"
+    }
+  ],
+  "rdkit__rdkit-1521": [],
+  "rdkit__rdkit-8266": [
+    {
+      "url": "https://github.com/user-attachments/assets/f77fc970-7e97-4e98-b1ee-76f34feab6f3",
+      "path": "/home/ziqichen1/SWE-bench/outputs/issues_testgen_002/issue_media/rdkit__rdkit-8266/b329782091a45ce3.png",
+      "filename": "b329782091a45ce3.png",
+      "content_type": "image/png",
+      "bytes": 19563,
+      "ok": true,
+      "verified": true,
+      "format": "PNG",
+      "width": 960,
+      "height": 449,
+      "sha256": "2131b0d3d15e84282b30e7922d8c896014be598ef3132aea8b6648e66b864091"
+    },
+    {
+      "url": "https://github.com/user-attachments/assets/08646a1e-414d-4d38-a977-a8ce13507d87",
+      "path": "/home/ziqichen1/SWE-bench/outputs/issues_testgen_002/issue_media/rdkit__rdkit-8266/05b92d37bf760892.png",
+      "filename": "05b92d37bf760892.png",
+      "content_type": "image/png",
+      "bytes": 34899,
+      "ok": true,
+      "verified": true,
+      "format": "PNG",
+      "width": 1179,
+      "height": 491,
+      "sha256": "549157262b1b448ef03955c0da36b7883aaa5c95b4291463631c049d48d31ff7"
+    }
+  ],
+  "rdkit__rdkit-3237": [
+    {
+      "url": "https://user-images.githubusercontent.com/5889522/82549822-71ae5f80-9b55-11ea-9a3a-86bbeaafd0a3.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/5889522/82549822-71ae5f80-9b55-11ea-9a3a-86bbeaafd0a3.png"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/5889522/82549770-5e9b8f80-9b55-11ea-8166-e69933034d8c.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/5889522/82549770-5e9b8f80-9b55-11ea-8166-e69933034d8c.png"
+    }
+  ],
+  "rdkit__rdkit-8173": [
+    {
+      "url": "https://github.com/user-attachments/assets/8886577b-b758-4f54-b602-d28ba520629c",
+      "path": "/home/ziqichen1/SWE-bench/outputs/issues_testgen_002/issue_media/rdkit__rdkit-8173/1950e0c25d10edbd.png",
+      "filename": "1950e0c25d10edbd.png",
+      "content_type": "image/png",
+      "bytes": 56024,
+      "ok": true,
+      "verified": true,
+      "format": "PNG",
+      "width": 1250,
+      "height": 706,
+      "sha256": "e640a2f02949472348e8653dcbedb6e94ca7c328cb7392be2b162f10838ceb3f"
+    }
+  ],
+  "rdkit__rdkit-7419": [
+    {
+      "url": "https://user-images.githubusercontent.com/6198768/169496194-4e0d7c8d-8615-4e77-94c5-1b947fa512e0.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/6198768/169496194-4e0d7c8d-8615-4e77-94c5-1b947fa512e0.png"
+    }
+  ],
+  "rdkit__rdkit-6646": [
+    {
+      "url": "https://user-images.githubusercontent.com/69871498/177876941-5bfa3d0c-8d4d-4518-a39d-e700047766a3.svg",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/69871498/177876941-5bfa3d0c-8d4d-4518-a39d-e700047766a3.svg"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/69871498/177876956-01e08750-af2a-4e9e-a6ea-15bc774fff4d.svg",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/69871498/177876956-01e08750-af2a-4e9e-a6ea-15bc774fff4d.svg"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/69871498/180038738-f09063a2-ed18-41d1-b2ef-b9fb6debeb5b.svg",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/69871498/180038738-f09063a2-ed18-41d1-b2ef-b9fb6debeb5b.svg"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/69871498/180038848-843b1daa-6d7c-404a-a66f-1f5400c37dbc.svg",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/69871498/180038848-843b1daa-6d7c-404a-a66f-1f5400c37dbc.svg"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/69871498/180038907-b66c75da-8dd2-40b5-b928-9661ea941801.svg",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/69871498/180038907-b66c75da-8dd2-40b5-b928-9661ea941801.svg"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/69871498/180039044-5b9bc4ca-95b5-46e6-9476-ceb2df75a3ad.svg",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/69871498/180039044-5b9bc4ca-95b5-46e6-9476-ceb2df75a3ad.svg"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/69871498/180803812-2a8e54a9-7e38-4643-9b60-0ac1a6bf16d8.svg",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/69871498/180803812-2a8e54a9-7e38-4643-9b60-0ac1a6bf16d8.svg"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/69871498/180803903-a3af7fe6-da09-46d2-b9ef-8aacdfc4454e.svg",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/69871498/180803903-a3af7fe6-da09-46d2-b9ef-8aacdfc4454e.svg"
+    }
+  ],
+  "rdkit__rdkit-6247": [
+    {
+      "url": "https://user-images.githubusercontent.com/24233741/222020086-efe36b97-8540-467d-b3de-62f0c9f7b750.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/24233741/222020086-efe36b97-8540-467d-b3de-62f0c9f7b750.png"
+    }
+  ],
+  "rdkit__rdkit-5775": [
+    {
+      "url": "https://user-images.githubusercontent.com/1122541/202022164-28fdd3e7-ae0a-47cf-b2ce-867f98e7f618.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/1122541/202022164-28fdd3e7-ae0a-47cf-b2ce-867f98e7f618.png"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/1122541/202022496-b3b71903-2597-46fd-b6da-7d5a6b620c9b.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/1122541/202022496-b3b71903-2597-46fd-b6da-7d5a6b620c9b.png"
+    }
+  ],
+  "rdkit__rdkit-5776": [
+    {
+      "url": "https://user-images.githubusercontent.com/1122541/202041418-639a7fc3-2384-44e2-8ede-abf1e9ee31f3.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/1122541/202041418-639a7fc3-2384-44e2-8ede-abf1e9ee31f3.png"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/1122541/202041613-bc2c93b3-a099-4b23-8fc4-27b72392d6d7.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/1122541/202041613-bc2c93b3-a099-4b23-8fc4-27b72392d6d7.png"
+    }
+  ],
+  "rdkit__rdkit-5735": [
+    {
+      "url": "https://user-images.githubusercontent.com/24233741/193469019-6646cdd7-70b0-4a9b-baa4-c93eb8336972.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/24233741/193469019-6646cdd7-70b0-4a9b-baa4-c93eb8336972.png"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/24233741/197821924-98bae79c-7992-43f0-a784-7cb99f5a8e16.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/24233741/197821924-98bae79c-7992-43f0-a784-7cb99f5a8e16.png"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/24233741/193469237-346c0fef-a808-431d-a88d-4d83cc909c82.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/24233741/193469237-346c0fef-a808-431d-a88d-4d83cc909c82.png"
+    }
+  ],
+  "rdkit__rdkit-6897": [],
+  "rdkit__rdkit-1473": [],
+  "qgis__QGIS-66353": [
+    {
+      "url": "https://user-images.githubusercontent.com/80275860/155227754-a9e37b9c-7111-4863-8ea0-3e562316750a.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/80275860/155227754-a9e37b9c-7111-4863-8ea0-3e562316750a.png"
+    },
+    {
+      "url": "https://user-images.githubusercontent.com/80275860/155227737-f851bdcb-6411-4013-8f40-d78f83066883.png",
+      "ok": false,
+      "error": "400 Client Error: Bad Request for url: https://user-images.githubusercontent.com/80275860/155227737-f851bdcb-6411-4013-8f40-d78f83066883.png"
+    }
+  ],
+  "qgis__QGIS-40837": [],
+  "qgis__QGIS-63639": [
+    {
+      "url": "https://github.com/user-attachments/assets/fb050cca-153c-45af-b4f7-327435e6236e",
+      "path": "/home/ziqichen1/SWE-bench/outputs/issues_testgen_002/issue_media/qgis__QGIS-63639/3b6ed339854f456a.png",
+      "filename": "3b6ed339854f456a.png",
+      "content_type": "image/png",
+      "bytes": 15948,
+      "ok": true,
+      "verified": true,
+      "format": "PNG",
+      "width": 893,
+      "height": 495,
+      "sha256": "b1810016a4ba9876447b0313b15b4f4669ea13a7613622cc8b8fcddb294f9e81"
+    }
+  ]
+}

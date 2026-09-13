@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-1640",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-1640",
+    "model_patch": "diff --git a/plugins/amoeba/platforms/cuda/tests/TestCudaAmoebaMutualPolarizationPerformance.py b/plugins/amoeba/platforms/cuda/tests/TestCudaAmoebaMutualPolarizationPerformance.py\nnew file mode 100644\nindex 0000000..87ce363\n--- /dev/null\n+++ b/plugins/amoeba/platforms/cuda/tests/TestCudaAmoebaMutualPolarizationPerformance.py\n@@ -0,0 +1,24 @@\n+import pathlib\n+import re\n+import unittest\n+\n+\n+class TestMutualPolarizationPerformance(unittest.TestCase):\n+    def test_diis_matrix_is_not_copied_to_the_host_each_iteration(self):\n+        \"\"\"The mutual-polarization DIIS solve must remain on the GPU.\"\"\"\n+        source = (pathlib.Path(__file__).parents[1] / \"src\" /\n+                  \"AmoebaCudaKernels.cpp\").read_text()\n+        match = re.search(\n+            r\"bool CudaCalcAmoebaMultipoleForceKernel::iterateDipolesByDIIS\"\n+            r\"\\(int iteration\\)\\s*\\{(.*?)\\n\\}\", source, re.DOTALL)\n+        self.assertIsNotNone(match)\n+        iteration = match.group(1)\n+\n+        # Reading the convergence error is unavoidable, but downloading the\n+        # DIIS matrix serializes every PME iteration and leaves the GPU idle\n+        # while the small linear system is solved by the host.\n+        self.assertNotRegex(iteration, r\"diisMatrix->download\\s*\\(\")\n+\n+\n+if __name__ == \"__main__\":\n+    unittest.main()\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "2f9c99f806cbd2cbcde56963c5554cdad6c6f62e2e1757f030afea01ad5e2fa8",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "plugins/amoeba/platforms/cuda/tests/TestCudaAmoebaMutualPolarizationPerformance.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-1640.jsonl",
+      "trajectory_sha256": "78089f5156dc09597521f55eee1a522552548f64b8294097825f3d583f0025dc",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "78089f5156dc09597521f55eee1a522552548f64b8294097825f3d583f0025dc",
+    "metrics": {
+      "input_tokens": 279263,
+      "output_tokens": 2435,
+      "cache_read_input_tokens": 237568,
+      "total_tokens": 281698,
+      "wall_time_seconds": 88.42681
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-1640",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "plugins/amoeba/platforms/cuda/tests/TestCudaAmoebaMutualPolarizationPerformance.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-1640.jsonl",
+    "trajectory_sha256": "78089f5156dc09597521f55eee1a522552548f64b8294097825f3d583f0025dc",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

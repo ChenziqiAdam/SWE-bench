@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-1682",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-1682",
+    "model_patch": "diff --git a/tests/TestSystem.cpp b/tests/TestSystem.cpp\nindex 471ac15..b17e36a 100644\n--- a/tests/TestSystem.cpp\n+++ b/tests/TestSystem.cpp\n@@ -32,9 +32,12 @@\n #include \"openmm/internal/AssertionUtilities.h\"\n #include \"openmm/HarmonicAngleForce.h\"\n #include \"openmm/HarmonicBondForce.h\"\n+#include \"openmm/Context.h\"\n #include \"openmm/System.h\"\n+#include \"openmm/VerletIntegrator.h\"\n #include \"openmm/VirtualSite.h\"\n #include <iostream>\n+#include <limits>\n \n using namespace OpenMM;\n using namespace std;\n@@ -111,9 +114,35 @@ void testCreateSystem() {\n     }\n }\n \n+void testNaNPeriodicBoxVectors() {\n+    const double nan = std::numeric_limits<double>::quiet_NaN();\n+    System system;\n+    bool threw = false;\n+    try {\n+        system.setDefaultPeriodicBoxVectors(Vec3(3, 0, 0), Vec3(0, 3, 0), Vec3(nan, 0, 3));\n+    }\n+    catch (const OpenMMException&) {\n+        threw = true;\n+    }\n+    ASSERT(threw);\n+\n+    system.addParticle(1.0);\n+    VerletIntegrator integrator(0.001);\n+    Context context(system, integrator);\n+    threw = false;\n+    try {\n+        context.setPeriodicBoxVectors(Vec3(3, 0, 0), Vec3(0, 3, 0), Vec3(nan, 0, 3));\n+    }\n+    catch (const OpenMMException&) {\n+        threw = true;\n+    }\n+    ASSERT(threw);\n+}\n+\n int main() {\n     try {\n         testCreateSystem();\n+        testNaNPeriodicBoxVectors();\n     }\n     catch(const exception& e) {\n         cout << \"exception: \" << e.what() << endl;\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "279b55d55cf04c0b60b4144b38bbd7d73afccd03be3da9840fc42e6405a7f510",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestSystem.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-1682.jsonl",
+      "trajectory_sha256": "6702f95cf767ad1f0b7a67d3c7b919679858838c251409984c935a66a33efe4f",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "6702f95cf767ad1f0b7a67d3c7b919679858838c251409984c935a66a33efe4f",
+    "metrics": {
+      "input_tokens": 606235,
+      "output_tokens": 5141,
+      "cache_read_input_tokens": 555520,
+      "total_tokens": 611376,
+      "wall_time_seconds": 162.773744
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-1682",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestSystem.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-1682.jsonl",
+    "trajectory_sha256": "6702f95cf767ad1f0b7a67d3c7b919679858838c251409984c935a66a33efe4f",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}
