@@ -1,6 +1,6 @@
 # SciBench paper-replication functional tests (v4)
 
-> Curation status: the active catalog contains seven validated functional tasks
+> Curation status: the active catalog contains eight validated functional tasks
 > (`task_registry.py`). Each is backed by pinned official reproduction (or, for
 > the one port-oracle task, a pinned Python transcription under a recorded G8
 > waiver) and an independent scientific audit; task-specific provenance records
@@ -13,6 +13,11 @@
 > is a pinned Python port (paper Eq. 19 `(n+1)!` Taylor bound), promoted under a
 > recorded `G8_oracle_validity` waiver and cross-checked against an independently
 > written Python implementation plus the SIR closed form.
+> Task 0024 replicates the periodic 1D/2D Fourier Series Loader using canonical
+> uniformly controlled rotations, zero-padding, and inverse QFT. It is promoted
+> under an explicit `G7_blind_implementation` waiver: the second fresh Codex
+> attempt passed 3/3 public and 7/8 hidden cases, failing only the sparse-mode
+> UCR convention after numerically premature sample normalization.
 
 The 2026-08-15 fixed-sparsity and a posteriori TSA pilots were deferred before
 ID assignment: their full official-plus-independent workflows exceeded the proposed

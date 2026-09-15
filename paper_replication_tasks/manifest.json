@@ -244,6 +244,41 @@
         "task.md": "ece4e0053b1c683eff94ac0fadeacd92748da603286a0105b2870eb77b63e459"
       },
       "task_id": "scibench_replication_0023_core"
+    },
+    {
+      "hidden_files": {
+        "cases/case_01/input.json": "f266587264be1bfabe2ed7830b2077127ba0fb54e31293cc355f2899895865fd",
+        "cases/case_01/output.json": "a4d16bb10c7f5ed8f76e539dcbc8cdd9ad2232cd95715cc16ff9cd7fb767ac00",
+        "cases/case_02/input.json": "aa48f22dba21e0e7aab3710e4354faaeb2383f80abb4489bc360f23825945a88",
+        "cases/case_02/output.json": "56b7babd28705d6075c9be200f3d17b76f649a046599bc73c6c8cf838fa2f572",
+        "cases/case_03/input.json": "7ca28e1586b3bcffb78bdc85c97c67ffa64a52c2126a49ee1e2577fcf1ccf322",
+        "cases/case_03/output.json": "1b477b12897160211fe59ba824452ff3204143e7539471fe2fb949da3438c4a7",
+        "cases/case_04/input.json": "a86710c8591a302502e9077f64960a14a541ff68001410365d6078f13e61c560",
+        "cases/case_04/output.json": "4d98b46535ab6aad96976b2dc7df88fdd1564f841a3be8feac2fb5e95b83afe8",
+        "cases/case_05/input.json": "9dc9a8fb1a6179b642eec3c523719c5ba7e7806d404b53deff6d3bd8ecf55ea0",
+        "cases/case_05/output.json": "67870524ea3ac83a1112dc68a2e6cc7a2205cbb4e2d4a7e2046ffbd3a2f81679",
+        "cases/case_06/input.json": "46c4192e4e6e3523de383a4a1f8a612dd9b18a48c30ef72c6ce4ed601aa8125d",
+        "cases/case_06/output.json": "95f989e8099d71af1708c8cf5d381987d62d66eeb83acd01d848ff44f91d6d97",
+        "cases/case_07/input.json": "f23eb3e6e9b645ae158a239da6e4146a32ae1121e8f4204e485daf11bdc75585",
+        "cases/case_07/output.json": "e6b951ca734d0820c0ad2d1a9f3bfbaeb05f588cebfcef0d1e9b93fd746d2dfb",
+        "cases/case_08/input.json": "8e89536160eaf22bae6dc0ebe4a92cd0964e588289e9586b801ede3b87480153",
+        "cases/case_08/output.json": "f3a817a3587353777e452b2033ef07b91ae6968d9ead43fbda772bb10694b604",
+        "provenance.json": "4d96ead63cf824342bcdce0e304d4be4fd9c9ae3bc542d7d62ba331c0929f2a8",
+        "tolerances.json": "f46df0f53fae00dec9962cbdcaa2ae5b2621f3697485130cb8b6d104ff8d2063"
+      },
+      "lifecycle": "validated",
+      "public_files": {
+        "cases/case_01/input.json": "d2a3bc9548608b145f5b6d9e5c26c5c099289330e0ad4ac8875233006e13eae8",
+        "cases/case_01/output.json": "fc88bd973867de0e62b0ac57b044f6a35da97ecdac21a153f9744df14d320556",
+        "cases/case_02/input.json": "23fe64b78f584d62be63d0c71be8ed52bd90029947f4f973e1a682b8a384fee9",
+        "cases/case_02/output.json": "ef415f84bdcb6e51f94ed68bf5d972504d8ac334ea750334f7e4ca89e9b9ba55",
+        "cases/case_03/input.json": "cf093bd34b93d515ea371ab2906ca91482fb294b1480acb440d8caa833b8ef0a",
+        "cases/case_03/output.json": "43c48dfc09c28c06bd654a7e699a4562aacc95c6e819992e59eaf8369ef06e4a",
+        "interface.schema.json": "285a51cda8621fb346a9b4fe2bc9a93bbd9dc421401898d2a8d958fa560d4f9d",
+        "paper.pdf": "14426852be964c2820f7fe6c631191ab886bca215aa7eac4055289e39116e02f",
+        "task.md": "ece4e0053b1c683eff94ac0fadeacd92748da603286a0105b2870eb77b63e459"
+      },
+      "task_id": "scibench_replication_0024_core"
     }
   ]
 }

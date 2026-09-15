@@ -132,6 +132,7 @@ def solve(value_path: Path, checkout: Path) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--task", choices=("0024_core",))
     parser.add_argument("--checkout", type=Path, required=True)
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)

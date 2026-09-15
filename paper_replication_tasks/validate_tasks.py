@@ -16,8 +16,8 @@ from task_registry import TASK_REGISTRY, active_task_ids, validated_task_ids
 
 ROOT = Path(__file__).resolve().parent
 LEGACY = {"masked_paper.pdf", "submission_schema.json", "gold_output.json", "evaluator.py", "results.json", ".DS_Store"}
-PUBLIC_COUNTS = {"scibench_replication_0011_core": 3, "scibench_replication_0017_core": 3, "scibench_replication_0015_core": 3, "scibench_replication_0018_core": 3, "scibench_replication_0021_core": 3, "scibench_replication_0022_core": 3, "scibench_replication_0023_core": 3}
-HIDDEN_COUNTS = {task_id: (8 if task_id in {"scibench_replication_0011_core", "scibench_replication_0015_core", "scibench_replication_0018_core", "scibench_replication_0021_core", "scibench_replication_0022_core", "scibench_replication_0023_core"} else 5) for task_id in PUBLIC_COUNTS}
+PUBLIC_COUNTS = {"scibench_replication_0011_core": 3, "scibench_replication_0017_core": 3, "scibench_replication_0015_core": 3, "scibench_replication_0018_core": 3, "scibench_replication_0021_core": 3, "scibench_replication_0022_core": 3, "scibench_replication_0023_core": 3, "scibench_replication_0024_core": 3}
+HIDDEN_COUNTS = {task_id: (8 if task_id in {"scibench_replication_0011_core", "scibench_replication_0015_core", "scibench_replication_0018_core", "scibench_replication_0021_core", "scibench_replication_0022_core", "scibench_replication_0023_core", "scibench_replication_0024_core"} else 5) for task_id in PUBLIC_COUNTS}
 # Tasks whose oracle is a pinned Python port of the official (non-Python) code,
 # executed under a recorded G8 waiver rather than a live official checkout.
 PORT_ORACLE_TASKS = {"scibench_replication_0023_core"}
@@ -234,6 +234,15 @@ def validate_bundle() -> tuple[int, int]:
             require(reproduction.get("dependency_artifact_sha256") == expected_artifact, f"dependency artifact reproduction mismatch: {task_id}")
             independent = provenance.get("independent_audit")
             require(isinstance(independent, dict) and independent.get("status") == "passed", f"independent audit missing: {task_id}")
+            if task_id == "scibench_replication_0024_core":
+                require(registry.get("validation_waivers") == ["G7_blind_implementation"], f"registry G7 waiver missing: {task_id}")
+                require(provenance.get("validation_waivers") == ["G7_blind_implementation"], f"G7 waiver missing: {task_id}")
+                require(provenance.get("known_failures") == ["G7_blind_implementation"], f"G7 failure not retained: {task_id}")
+                g7_audit = provenance.get("g7_audit", {})
+                require(g7_audit.get("status") == "fail" and g7_audit.get("waived") is True, f"G7 negative evidence missing: {task_id}")
+                require(g7_audit.get("public_hidden_score") == [1.0, 0.875], f"G7 score changed: {task_id}")
+                require(g7_audit.get("submission_sha256") == provenance.get("blind_submission_sha256"), f"G7 hash mismatch: {task_id}")
+                require(provenance.get("g8_audit", {}).get("status") == "pass", f"G8 evidence missing: {task_id}")
             if task_id == "scibench_replication_0018":
                 # This task has no fast independent reimplementation of the full MILP output
                 # (solving the energy-system optimization requires a real Calliope/CBC run, not
@@ -265,7 +274,7 @@ def validate_bundle() -> tuple[int, int]:
             require(isinstance(bundle_hashes, list) and len(bundle_hashes) == 2 and bundle_hashes[0] == bundle_hashes[1], f"clean official run hashes differ: {task_id}")
             require(independent.get("derived_tolerances") == read_json(hidden / "tolerances.json"), f"derived tolerance mismatch: {task_id}")
             evidence_root = ROOT / reproduction["raw_and_normalized_outputs"]
-            if task_id in {"scibench_replication_0011_core", "scibench_replication_0022_core"}:
+            if task_id in {"scibench_replication_0011_core", "scibench_replication_0022_core", "scibench_replication_0024_core"}:
                 for record in case_records.values():
                     stem = f"{record['split']}_{record['case_id']}"
                     for run_number in (1, 2):

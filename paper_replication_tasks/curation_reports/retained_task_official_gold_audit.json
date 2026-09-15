@@ -15,9 +15,13 @@
     {
       "path": "curation_tools/fixed_sparsity_core_adapter.py",
       "sha256": "e32327b10c2e8037cf349aba77251fb8c95e1858c52e6b1a800b0c8bb51afc74"
+    },
+    {
+      "path": "curation_tools/fsl_official_adapter.py",
+      "sha256": "c137c488bd711bf48eec28e50526f851f4b5b7c487fc7f3a3d73022019a9f717"
     }
   ],
-  "audit_date": "2026-08-18",
+  "audit_date": "2026-09-11",
   "conclusion": "The retained official-adapter task satisfies the official-gold promotion gate.",
   "tasks": {
     "scibench_replication_0011": {
@@ -48,6 +52,12 @@
       "fractional_fem_res_pol_provenance": "FEM2D_factional_demo.m ships hardcoded res/pol literal arrays for s in {0.25 (active), 0.5 (commented), 0.75 (commented)} rather than calling REIM.m live; directly tested and confirmed these arrays are NOT reproducible from a live REIM(M,1e-8,1,'power') call at M=39 or M=40 (max relative diff ~0.87), consistent with the paper's own Section 5.1 statement that its dictionary/candidate-set tuning was done ad hoc per experiment. The graded-mesh hidden case (case_04 hidden, s=0.75) pins the repository's own literal res/pol as fixed input data; the uniform-mesh public case (case_02 public, s=0.5) instead uses a live REIM(30,1e-6,1,'power') call, which IS reproducible for that interval/family combination -- both are valid gold-source patterns for this case type, documented distinctly in provenance.json.",
       "hidden_case_design": "Redesigned 2026-08-20 from an initial coverage-only draft (which only picked case_type/parameter combinations near the paper's own sampled boundaries, without measuring whether they triggered a harder code path than the public cases -- flagged by user audit as coverage design rather than difficulty design, the same lesson task 0019 already learned). Each of the 5 hidden cases now isolates one directly-measured numerical hazard: rational_approx(M=40,s=0.05) combines near-double-precision-limit rEIM Gram-matrix conditioning (measured cond(G)~2.6e13 at M=40, vs ~2.0e5 at M=10) with the empirically worst-observed s value (measured Linf_error ~7x larger than at s=0.5, non-obvious since s=0.05 is naively 'less singular'); exp_family_approx(tau=0.002) at the paper's own lower sampled tau bound (kept from the original draft, already a genuine boundary case); precon_family_approx(K=1e-6,M=40) at the paper's own lower sampled K bound plus max conditioning (measured Linf_error ~120x larger than at K=1); fractional_fem(s=0.75,graded,literal res/pol) unchanged from the draft (a genuinely distinct input-handling regime, not a decorative parameter choice); bdf2_fractional_heat(tol=1e-6,tau0=0.05) replaces the original s=1.0 case -- forces an immediate rejected step and rapid step-size collapse to the tau0<=1e-4 early-termination floor (measured: trajectory terminates at T~0.051, far short of tend=1.0), a qualitatively different trajectory shape than every case that reaches tend normally. Regenerated gold from two fresh independent clean checkouts after the redesign: byte-identical normalized bundles, independent-audit status unchanged (passed, max_abs=3.33e-6, max_relative=1.53e-4). verify_reim_task.py re-passed all 22 gates.",
       "redaction": "Algorithm 2.1 (rEIM, page 3) and Algorithm 2.2 (ROGA, page 7) are formal pseudocode blocks stating the exact greedy recurrence; both were redacted (blacked out with a placeholder pointing to task.md) from the shipped public/paper.pdf using PyMuPDF's apply_redactions (verified the underlying text is actually removed, not merely covered). task.md independently describes the same recurrence in prose/equations. All other paper content (24 pages total) ships unredacted; confirmed no other embedded code/pseudocode requiring redaction.",
+      "status": "validated"
+    },
+    "scibench_replication_0024_core": {
+      "commit": "006852b348a48a20a9a0e584cf73f08c8964ef98",
+      "environment_file_sha256": "2a1cd6cc8b54126d2da4eab6629e4beaee3cce90ff19ee19bf29d23b31b7f742",
+      "finding": "All 11 cases reproduced byte-identically from two clean official checkouts and matched an independent NumPy implementation within 8.89e-16; promoted under an explicit G7 waiver (retry score 0.925).",
       "status": "validated"
     }
   }

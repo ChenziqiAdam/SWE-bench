@@ -233,6 +233,62 @@ triggers" and away from "state the invariant that matters". Resist it:
   quality. The bank's quality is the set of laws it states and whether each is
   a genuine domain invariant written without foreknowledge of a bug.
 
+### 5.8 A re-call sanitizer needs an error model, not a guessed constant
+
+A sanitizer that re-calls the API on a transformed input (SANITIZER.md 5.2,
+"stronger" pattern) is running a **controlled experiment**: hold everything
+fixed, change one variable, assert the law. Four things must be derived from a
+numerical-error model of the API under test -- never from the magnitudes in the
+author's one example. Every false positive found in the pilot bank across four
+adversarial audits (2026-09-08 .. 2026-09-10) was one of these four:
+
+- **T -- Tolerance.** The alarm compares two floats; the slack must be
+  `C * (dtype epsilon) * (problem size) * (magnitude or conditioning)` with
+  each factor justified in a comment. A bare `1e-6` is only valid when the
+  compared quantities are provably `O(1)`. Get the *direction* right: the slack
+  must not grow faster than the quantity when that would let a real violation
+  pass. Pin it to the dtype actually used (a float32 C routine rounds at
+  ~1e-6; float64 accumulation at ~1e-15 relative).
+  *Seen:* fixed `1e-6` on melting temperatures / molecular weights / patristic
+  distances / branch lengths / RMSDs -- all fire once the input is scaled up.
+
+- **X -- Transform neutrality.** The transform producing the "one changed
+  variable" input (rigid motion, reversal, permutation, matrix transpose) must
+  introduce error no larger than the API's own rounding, *across the entire
+  input-scale and conditioning range the API accepts*. A fixed translation or
+  rotation is suspect -- check it at `1e-8` and `1e12`, and on a
+  near-rank-deficient input. An exact operation (string reversal, complement)
+  is fine; a floating-point "rigid" motion perturbs pairwise distances by ~1
+  ULP, which a large condition number amplifies without bound.
+  *Seen:* `_rigid_transform` used as exact ground truth for a zero-RMSD
+  assertion on an ill-conditioned point set.
+
+- **P -- Precondition = the input class where the law holds.** Fence not just
+  the obvious qualitative cases (symmetric scheme, additive matrix) but the
+  quantitative ones: dynamic range (a 17-decade score scheme loses the answer
+  below one ULP of the DP intermediates), conditioning, and whether the input
+  is still a meaningful instance of the model at all (a PSSM entry of `1e30` is
+  not a log-odds value). If the law only holds for `max/min < 1e10`, say so.
+  *Seen:* `_scores_above_epsilon` bounded the smallest score term but not the
+  largest.
+
+- **N -- Probe coverage.** The set of re-call probes must actually exercise the
+  failure mode the law is about. Scale-preserving probes (rigid motion, swap,
+  permutation) cannot see a scale-dependent bug: all re-runs return the same
+  wrong value and the invariant holds *on the broken result*. If the API has an
+  absolute internal tolerance, add a probe that changes the coordinate scale --
+  unless doing so hits the same weakness on correct inputs, in which case
+  record the gap as a known limitation rather than shipping a probe that
+  false-fires.
+  *Seen:* QCP returns RMSD 0 for different point sets at coordinate scale
+  `1e-6`; the rigid + swap probes miss it.
+
+After **every** bank revision, re-check T/X/P/N for every re-call sanitizer,
+not only the ones a finding named: grep every numeric tolerance literal, every
+transform helper, and every precondition bound in the module. Then run a fresh
+adversarial audit (SANITIZER.md 8, 10) before reporting trigger counts -- these
+four classes are invisible to curator review and to the witness verifier.
+
 ## 6. Scientific Scenarios to Inspect
 
 Manual code scanning should consider more than long-range variable flow.
@@ -395,6 +451,55 @@ The outcomes should be described precisely:
 Observed untriggered must not be reported as permanently unreachable. The task
 allows meaningful sanitizers that happen not to trigger on the current version.
 
+### Checker verification is not natural triggering
+
+Three different properties must be kept separate during curation:
+
+- **Observation reachability:** at least one valid call through the normal
+  public API executes the checker at its intended program point and evaluates
+  its predicate. The predicate may remain satisfied, so no alarm is required.
+- **Isolated checker sensitivity:** given a synthetic observed state that
+  violates the invariant, the checker predicate records the expected alarm.
+  This is a curator-side unit test of the instrumentation. It may call an
+  extracted predicate directly or use fault injection; it does not require the
+  real implementation to produce the bad state.
+- **Natural triggerability:** a valid public-API input makes the unmodified
+  repository produce an observed state that violates the invariant. This is
+  useful audit evidence, but it is not required for a checker to be valid.
+
+Isolated sensitivity tests are never benchmark witnesses, never contribute to
+the trigger score, and do not show that the repository contains a bug. A
+correct implementation may naturally trigger none of its checkers. Their only
+purpose is to catch instrumentation defects such as a reversed predicate, the
+wrong observed variable, a dead hook, or an exception silently swallowed inside
+the checker. If the predicate cannot be tested separately, use a small
+curator-side mutation/fault-injection test or document an equivalent code
+review.
+
+### 8.1 From a natural trigger to a real bug report
+
+A natural trigger is only a candidate bug: it may mean the repository
+genuinely violates the invariant, or it may mean the checker itself is
+unsound at this input (bad tolerance, invalid precondition, a transform that
+isn't actually neutral -- see 5.8's T/X/P/N). Before filing anything
+upstream, the curator must rule out the second explanation by reading the
+source and confirming a genuine root cause, not just a discrepancy.
+
+Once that is done, the GitHub issue itself must be written as an ordinary
+user bug report, not as sanitizer output. It must not mention the sanitizer,
+the checker, the instrumentation, or this benchmark project in any way. Write
+it the way a real user who stumbled onto the bug would: a minimal plain-API
+reproduction, the wrong value observed, the expected value and why, and
+ideally the root cause in the source. Compare
+`scientific_bug_finding/biopython_pilot/issues/ISSUE_1_molecular_weight_empty.md`,
+which reads as a normal issue and never mentions how the bug was found,
+against
+`scientific_bug_finding/astropy_pilot/codex_eval_issue_drafts/01_convolve_fft_nan_interpolation_signed_kernel.md`,
+which cites the checker by ID ("found via ... checker `AP-CONV-003`, which
+asserts ... to `50*eps64`") and leaves the root cause unresolved. Neither is
+acceptable in a filed issue: strip all sanitizer references, and do not file
+until the actual faulty line has been identified.
+
 ## 9. Evaluation Pipeline
 
 The recommended evaluation flow is:
@@ -494,4 +599,3 @@ This task does not require:
 
 The task evaluates whether an agent can understand public scientific runtime
 conditions and construct valid tests that reach meaningful violations.
-

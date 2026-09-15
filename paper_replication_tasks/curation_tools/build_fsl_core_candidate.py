@@ -49,21 +49,57 @@ def _two_dimensional(n: int, m: int, terms: dict[tuple[int, int], complex]) -> d
     return {"dimension": 2, "n": n, "m": m, "samples": _pairs(np.fft.fft2(coefficients))}
 
 
+def _dense_1d(m: int, overrides: dict[int, complex], real: bool = False) -> dict[int, complex]:
+    width = 2**m
+    terms: dict[int, complex] = {0: 0.37}
+    for frequency in range(1, width):
+        value = complex(0.08 + 0.013 * frequency, -0.035 + 0.009 * frequency)
+        terms[frequency] = value
+        terms[-frequency] = value.conjugate() if real else complex(-0.041 - 0.007 * frequency, 0.052 + 0.011 * frequency)
+    terms.update(overrides)
+    if real:
+        for frequency in range(1, width):
+            terms[-frequency] = terms[frequency].conjugate()
+        terms[0] = complex(terms[0].real)
+    return terms
+
+
+def _dense_2d(m: int, overrides: dict[tuple[int, int], complex]) -> dict[tuple[int, int], complex]:
+    width = 2**m
+    terms = {}
+    for first in range(-width + 1, width):
+        for second in range(-width + 1, width):
+            terms[first, second] = complex(0.025 + 0.004 * (first + width) + 0.003 * (second + width), 0.017 + 0.002 * first - 0.005 * second)
+    terms.update(overrides)
+    return terms
+
+
+def _exact_sparse_case() -> dict:
+    # c[0]=1 and c[2]=1/2; fft(c)[j] = 1 + (1/2)(-i)^j, so every
+    # sample is exactly representable and the other retained coefficients
+    # remain exact zeros under radix-2 FFTs.
+    cycle = [1.5 + 0j, 1 - 0.5j, 0.5 + 0j, 1 + 0.5j]
+    return {"dimension": 1, "n": 3, "m": 2, "samples": _pairs(cycle * 2)}
+
+
 def cases() -> tuple[list[dict], list[dict], list[dict]]:
     public = [
-        _one_dimensional(5, 2, {0: 1.4, 1: 0.55 - 0.2j, -1: 0.55 + 0.2j, 3: -0.18j, -3: 0.18j}),
-        _one_dimensional(6, 3, {0: 0.3 + 0.4j, 1: -0.8 + 0.15j, -2: 0.45 - 0.7j, 5: -0.2 - 0.35j, -7: 0.12 + 0.5j}),
-        _two_dimensional(3, 1, {(0, 0): 0.8 + 0.1j, (1, 0): 0.3 - 0.5j, (0, -1): -0.4 + 0.2j, (-1, 1): 0.65 + 0.35j}),
+        _one_dimensional(5, 2, _dense_1d(2, {0: 1.4, 1: 0.55 - 0.2j, 3: -0.18j}, real=True)),
+        _one_dimensional(6, 3, _dense_1d(3, {0: 0.3 + 0.4j, 1: -0.8 + 0.15j, -2: 0.45 - 0.7j, 5: -0.2 - 0.35j, -7: 0.12 + 0.5j})),
+        _two_dimensional(3, 1, _dense_2d(1, {(0, 0): 0.8 + 0.1j, (1, 0): 0.3 - 0.5j, (0, -1): -0.4 + 0.2j, (-1, 1): 0.65 + 0.35j})),
     ]
     hidden_specs = [
-        ("DC and sparse support", _one_dimensional(4, 2, {0: -0.7 + 0.9j, 2: 0.25 - 0.4j})),
-        ("negative-frequency indexing", _one_dimensional(5, 2, {0: 0.2, -1: 0.75 + 0.1j, -3: -0.6 + 0.45j})),
-        ("highest retained frequency", _one_dimensional(6, 3, {0: -0.1j, 7: 0.9 - 0.2j, -7: -0.35 - 0.65j})),
-        ("phase branch cut", _one_dimensional(5, 2, {0: np.exp(1j * (np.pi - 1e-9)), 1: 0.8 * np.exp(-1j * (np.pi - 2e-9)), -1: 0.45j, 3: -0.2 + 0.1j})),
-        ("n equals m plus one", _one_dimensional(4, 3, {0: 0.25 + 0.3j, 2: -0.4j, -3: 0.55 + 0.1j, 7: -0.2 + 0.7j})),
+        ("DC and sparse support", _exact_sparse_case()),
+        # -4 is immediately outside the retained [-3, 3] band.  Keeping it
+        # nonzero distinguishes the required central zero slot from the common
+        # but incorrect [0:K] + [-K:] selection.
+        ("negative-frequency indexing and zero-slot exclusion", _one_dimensional(5, 2, _dense_1d(2, {0: 0.2, -1: 0.75 + 0.1j, -3: -0.6 + 0.45j, -4: 0.63 - 0.27j}))),
+        ("highest retained frequency", _one_dimensional(6, 3, _dense_1d(3, {0: -0.1j, 7: 0.9 - 0.2j, -7: -0.35 - 0.65j}))),
+        ("phase branch cut", _one_dimensional(5, 2, _dense_1d(2, {0: np.exp(1j * (np.pi - 1e-9)), 1: 0.8 * np.exp(-1j * (np.pi - 2e-9)), -1: 0.45j, 3: -0.2 + 0.1j}))),
+        ("n equals m plus one", _one_dimensional(4, 3, _dense_1d(3, {0: 0.25 + 0.3j, 2: -0.4j, -3: 0.55 + 0.1j, 7: -0.2 + 0.7j}))),
         ("large zero-padding gap", _one_dimensional(9, 1, {0: 0.9 - 0.2j, 1: -0.35 + 0.5j, -1: 0.15 - 0.45j})),
-        ("two-dimensional quadrant ordering", _two_dimensional(4, 2, {(0, 0): 0.2, (3, 3): 0.4 + 0.1j, (3, -3): -0.7j, (-3, 3): -0.35 + 0.6j, (-3, -3): 0.8 - 0.2j})),
-        ("two-dimensional axis and endian asymmetry", _two_dimensional(5, 2, {(0, 0): -0.1 + 0.2j, (1, -2): 0.9 + 0.3j, (-3, 2): -0.5 + 0.65j, (3, 0): 0.25j, (0, -1): -0.7 + 0.1j})),
+        ("two-dimensional quadrant ordering", _two_dimensional(4, 2, _dense_2d(2, {(0, 0): 0.2, (3, 3): 0.4 + 0.1j, (3, -3): -0.7j, (-3, 3): -0.35 + 0.6j, (-3, -3): 0.8 - 0.2j}))),
+        ("two-dimensional axis and endian asymmetry", _two_dimensional(5, 2, _dense_2d(2, {(0, 0): -0.1 + 0.2j, (1, -2): 0.9 + 0.3j, (-3, 2): -0.5 + 0.65j, (3, 0): 0.25j, (0, -1): -0.7 + 0.1j}))),
     ]
     return public, [case for _, case in hidden_specs], [
         {"case_id": f"case_{index:02d}", "hazard": name}
@@ -152,12 +188,29 @@ def main() -> None:
         _write(staged_task / "hidden/provenance.json", {
             "schema_version": 4, "lifecycle": "candidate", "candidate_name": "fsl_core_candidate",
             "repository": "https://github.com/mcmahon-lab/Fourier-Series-Loader", "commit": COMMIT,
-            "paper_version": "arXiv:2302.03888v3 (journal-complete author manuscript)", "paper_sha256": _sha(public_root / "paper.pdf"),
+            "paper_version": "arXiv:2302.03888v2 (journal-complete author manuscript)", "paper_sha256": _sha(public_root / "paper.pdf"),
             "gold_source": "pinned_official_checkout", "cases": records, "hazards": hazards,
             "official_reproduction": {"two_clean_runs_byte_identical": True, "adapter_sha256": _sha(adapter), "raw_and_normalized_outputs": "curation_reports/official_runs/fsl_core_candidate"},
             "independent_audit": {"status": "passed", "maximum_absolute_discrepancy": max(maxima.values()), "field_maximum_absolute_discrepancy": maxima, "derived_tolerances": tolerance},
             "independent_implementation_sha256": _sha(ROOT / "curation_tools/fsl_core_scientific.py"),
             "environment_lock_sha256": _sha(ROOT / "curation_tools/environments/fsl-candidate-environment.yml"),
+            "g6_audit": {
+                "status": "pass_with_protocol_deviation",
+                "path": "core_algorithm_audits/fsl_core_candidate_blind.json",
+                "configured_model": "Codex subagent (user-authorized substitution)",
+                "pass_count": 3,
+                "independent_contexts": 3,
+            },
+            "g7_audit": {
+                "status": "fail",
+                "path": "curation_reports/fsl_core_candidate_g7_retry.json",
+                "attempt": 2,
+                "public_score": 1.0,
+                "hidden_score": 7 / 8,
+                "score": 0.925,
+                "submission_sha256": "5775e082d0fdeeb9e0deebf2b8f97d60771f04c3389564f8c519dea10d1346f8",
+                "previous_attempt": "curation_reports/fsl_core_candidate_g7.json",
+            },
         })
         CANDIDATE.parent.mkdir(parents=True, exist_ok=True)
         EVIDENCE.parent.mkdir(parents=True, exist_ok=True)

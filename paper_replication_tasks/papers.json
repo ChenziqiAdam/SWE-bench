@@ -99,12 +99,11 @@
       "task_id": "scibench_replication_0023_core"
     },
     {
-      "build_status": "collected_candidate",
+      "build_status": "validated",
       "github_url": "https://github.com/mcmahon-lab/Fourier-Series-Loader",
-      "note": "Candidate core algorithm: Fourier Series Loader (FSL) construction of a linear-depth quantum circuit preparing a state encoding a truncated (multi-dimensional) Fourier series. G1/G2/G3 strong. Executable closure: target function / Fourier coefficients + qubit count -> gate sequence (or resulting statevector). Zenodo 8331675 reproduces all figures. Needs full audit + blind identification; care that target is the circuit construction, not downstream QSP/readout.",
       "paper_title": "Linear-depth quantum circuits for loading Fourier approximations of arbitrary functions",
       "paper_url": "https://doi.org/10.1088/2058-9565/acfc62",
-      "task_id": null
+      "task_id": "scibench_replication_0024_core"
     },
     {
       "build_status": "collected_candidate",
@@ -126,5 +125,5 @@
     "scoped_pilot": "Selected for a scoped feasibility pilot.",
     "validated": "Formal v4 task validated with official gold and an independent scientific audit."
   },
-  "updated_at": "2026-09-10"
+  "updated_at": "2026-09-11"
 }
