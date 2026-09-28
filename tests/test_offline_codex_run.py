@@ -1,4 +1,5 @@
 import hashlib
+import csv
 import json
 import subprocess
 from collections import Counter
@@ -11,6 +12,18 @@ from swebench.issue_pipeline.offline_codex_pilot import build_pilot_prompt
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_final_selection_maps_88_rows_to_84_unique_instances():
+    instances = full.select_full_instances(
+        ROOT / "Issues_No_Tests_final.xlsx",
+        [ROOT / "outputs/issues_no_tests_final_codex/instances.jsonl"],
+    )
+    selection = full._workbook_selection(ROOT / "Issues_No_Tests_final.xlsx")
+    assert selection["row_count"] == 88
+    assert selection["unique_instance_count"] == 84
+    assert [item["instance_id"] for item in instances] == selection["ordered_instance_ids"]
+    assert Counter(item["repo"] for item in instances) == full.DATASET_PROFILES["final"]["repos"]
 
 
 def test_real_v1_selection_maps_37_rows_to_35_unique_instances():
@@ -264,6 +277,10 @@ def test_checkpoint_is_atomic_ordered_and_final_errors_are_not_pending(tmp_path)
     assert "b" not in [item for item in ordered if item not in loaded]
     for checkpoint in loaded.values():
         full._verify_trajectory(tmp_path, checkpoint)
+    with (tmp_path / "inference_metrics.csv").open(newline="") as handle:
+        metrics_rows = list(csv.DictReader(handle))
+    assert [row["instance_id"] for row in metrics_rows] == ordered
+    assert metrics_rows[1]["error"] == "timeout"
 
 
 def test_resume_requires_an_exact_manifest(tmp_path, monkeypatch):

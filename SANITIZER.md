@@ -331,6 +331,41 @@ in the domain and API context of the selected code.
 
 ## 6. Construction Workflow
 
+### Step 0: Select and qualify a repository
+
+Before selecting a subsystem within a repository, qualify the repository
+itself. This step governs scale-up across repositories, not construction
+within one.
+
+**Domain coverage.** Selection is primarily driven by scientific domain, not
+by repository count. Prefer a repository in a domain the bank does not yet
+cover (chemistry, physics, materials science, and so on beyond biology and
+astronomy). A second repository in an already-covered domain is acceptable
+only when it exposes subsystems or invariant families the existing bank in
+that domain does not — never merely to inflate repository count.
+
+**Engineering gate.** A candidate repository must satisfy all of the
+following:
+
+- an executable test/CI environment that can be pinned to a commit and run
+  locally without disproportionate setup cost;
+- non-trivial scientific invariants or conservation laws in its own code —
+  not a thin wrapper whose logic is mostly I/O, plumbing, or calls into an
+  external numerical library (SANITIZER.md 5.6);
+- popular and mature: meaningful community adoption and a stable public API,
+  not an early-stage or frequently-refactored project where sanitizers would
+  need constant rework.
+
+**Audit-depth baseline.** Do not fix the number of independent adversarial
+audit rounds in advance. Continue rounds until two consecutive rounds surface
+no new checker-side false positive. Effort should track the repository's
+actual defect density, not a preset budget.
+
+**Bank-size baseline.** Target at least 20 sanitizers per repository, but
+quality takes priority over count: never relax review standards (SANITIZER.md
+Step 5) to reach the number. Falling short of 20 is a signal to scan more
+subsystems (Step 1), not to lower the bar for accepting a candidate.
+
 ### Step 1: Select a scientific subsystem
 
 Choose a bounded module or API with identifiable scientific quantities and an
@@ -418,6 +453,7 @@ Each sanitizer should have machine-readable metadata similar to:
 ```json
 {
   "id": "BP-SEQ-005",
+  "category": "scientific",
   "family": "cai_degenerate_sequence",
   "source": "Bio/SeqUtils/__init__.py",
   "symbol": "CodonAdaptationIndex.calculate",
@@ -429,6 +465,10 @@ Each sanitizer should have machine-readable metadata similar to:
   "rationale": "a valid scientific metric should produce a numerical result"
 }
 ```
+
+The `category` field distinguishes this bank from the traditional SWE
+reference-group bank described in section 12. Every sanitizer must carry one
+of `"scientific"` or `"traditional"`.
 
 Witnesses and reachability labels are not required during sanitizer design.
 They may be added to evaluator-side audit artifacts later.
@@ -491,14 +531,22 @@ the checker, the instrumentation, or this benchmark project in any way. Write
 it the way a real user who stumbled onto the bug would: a minimal plain-API
 reproduction, the wrong value observed, the expected value and why, and
 ideally the root cause in the source. Compare
-`scientific_bug_finding/biopython_pilot/issues/ISSUE_1_molecular_weight_empty.md`,
-which reads as a normal issue and never mentions how the bug was found,
-against
-`scientific_bug_finding/astropy_pilot/codex_eval_issue_drafts/01_convolve_fft_nan_interpolation_signed_kernel.md`,
-which cites the checker by ID ("found via ... checker `AP-CONV-003`, which
-asserts ... to `50*eps64`") and leaves the root cause unresolved. Neither is
-acceptable in a filed issue: strip all sanitizer references, and do not file
-until the actual faulty line has been identified.
+`scientific_bug_finding/biopython_pilot/issues/ISSUE_1_molecular_weight_empty.md`
+against the revised drafts in
+`scientific_bug_finding/astropy_pilot/codex_eval_issue_drafts/` -- both read
+as normal issues and never mention how the bug was found. An earlier draft
+of `01_convolve_fft_nan_interpolation_signed_kernel.md` cited the checker by
+ID ("found via ... checker `AP-CONV-003`, which asserts ... to `50*eps64`")
+and left the root cause unresolved; that phrasing is not acceptable in a
+filed issue and was rewritten before this bank's drafts were finalized. Do
+not file until the actual faulty line has been identified.
+
+Before drafting the report, search the upstream tracker (open and closed
+issues, and merged PRs) for the affected function or symptom. A trigger the
+maintainers already know about is not a new finding: if an existing issue
+covers the same root cause, link it in the draft instead of writing a
+duplicate, and do not file. Do this search again immediately before
+actually filing, since time may have passed since the draft was written.
 
 ## 9. Evaluation Pipeline
 
@@ -569,6 +617,12 @@ Because some meaningful sanitizers may be unreachable, raw counts should be
 reported directly. A reachability-normalized score should only be reported when
 the reachable set has been established separately and reliably.
 
+When a repository also has a traditional SWE sanitizer bank (section 12), the
+two banks are never scored together. An agent is evaluated against each bank
+in its own separate run, over the same subsystem and API surface, and the two
+sets of metrics above are reported side by side, never summed or merged into
+one score.
+
 ## 10. Pilot Protocol
 
 A minimal pilot should:
@@ -599,3 +653,166 @@ This task does not require:
 
 The task evaluates whether an agent can understand public scientific runtime
 conditions and construct valid tests that reach meaningful violations.
+
+## 12. Traditional SWE Sanitizers (Reference Group)
+
+### 12.1 Purpose
+
+The primary bank (sections 3-11) measures whether an agent can trigger
+*scientific* invariant violations. On its own, a high or low trigger count
+does not show whether scientific sanitizers add anything beyond what a
+generic software-correctness checker would already catch on the same code.
+
+The traditional SWE sanitizer bank is a **reference group**, built on the
+same subsystems already instrumented with scientific sanitizers, using
+generic software-correctness properties instead of domain laws. It exists
+to answer one research question:
+
+```text
+On the same subsystem, do scientific sanitizers expose failures that
+traditional SWE sanitizers miss, and vice versa?
+```
+
+It is not a replacement for the scientific bank, not a superset, and not
+merged into it. Every result is reported as two separate numbers (9.3).
+
+### 12.2 What Is a Traditional SWE Sanitizer?
+
+A traditional SWE sanitizer has the same four-part structure as section 3
+(precondition, invariant, observation, alarm) and follows the same
+instrumentation discipline (non-disruptive, logs an alarm, inactive unless
+evaluation enables it). The difference is entirely in what the invariant is
+allowed to appeal to:
+
+- A **scientific** sanitizer's invariant must cite a domain law (5.6): a
+  physical, chemical, geometric, or thermodynamic property.
+- A **traditional** sanitizer's invariant must **not** cite any domain law.
+  It asserts a property that a competent software engineer would check
+  without knowing anything about the scientific meaning of the data:
+  finiteness, shape/type consistency, index and bounds validity, exception
+  and resource discipline, or an arithmetic identity that holds by
+  construction.
+
+Concretely, section 5.6's "out of scope" list for the scientific bank is
+the traditional bank's core material:
+
+- `NaN` / `Inf` / overflow / underflow with no independent cross-check of
+  correctness (e.g., division producing a non-finite result);
+- division by a denominator that is not independently guaranteed nonzero;
+- array/tensor shape or dtype mismatches, off-by-one and out-of-bounds
+  indexing, empty-container access;
+- pure arithmetic identities that hold by construction under ordinary types
+  (a sum of parts equaling a declared total, a running total matching a
+  final accumulator);
+- round trips through a fixed lookup table or bijection;
+- uncaught exceptions escaping a documented-safe call path, or a resource
+  (file handle, buffer) not released on an error path.
+
+These are legitimate software bugs, but they carry no scientific
+interpretation — a violation would be equally meaningful in a non-scientific
+codebase.
+
+### 12.3 Construction
+
+Reuse the section 6 workflow with three changes:
+
+1. **Step 0-1 (repository and subsystem selection) are not repeated.** A
+   traditional bank is only built for a repository/subsystem that already
+   has a scientific sanitizer bank, so the two are comparable on the same
+   code and API surface. The observation points do not need to coincide —
+   a scientific and a traditional sanitizer may sit at different lines
+   entirely, as long as both instrument the same subsystem's functions.
+   Requiring identical observation points would be over-constraining: the
+   two categories are looking for different properties and naturally
+   attach to different points in the data flow.
+2. **Sections 5.7-5.8 (law-without-foreknowledge discipline, T/X/P/N
+   numerical-error-model requirements) do not apply.** Traditional
+   invariants are typically exact (a `NaN` check, a bounds check, an
+   integer identity) rather than tolerance-based, so there is usually no
+   floating-point slack to justify. Where a traditional sanitizer does
+   compare floats (e.g., a running-sum identity), still state the tolerance
+   and its justification, but a full T/X/P/N pass is not required.
+3. **Bank size should be the same order of magnitude as the subsystem's
+   scientific bank** (e.g., a 35-sanitizer scientific bank should not be
+   paired with a 4-sanitizer traditional bank). A large size mismatch makes
+   any difference in trigger counts (12.5) confounded with sample size
+   rather than informative about what each category can expose. As with
+   the scientific bank's own size baseline (Step 0), quality still takes
+   priority: do not pad the traditional bank with weak or duplicate
+   candidates just to match a number.
+
+All other discipline still applies unchanged: state the precondition before
+implementing (5.7, Step 3), do not reverse-engineer from a known failure
+(5.7.1), do not optimize for triggerability during design (5.4, 5.7.2), and
+apply the Step 5 review checklist and Step 6 root-cause grouping.
+
+Do not cross-reference the scientific bank while designing the traditional
+bank, or vice versa. Picking a traditional sanitizer's location because a
+scientific sanitizer already sits nearby — or because you suspect the same
+underlying defect could trip both — is the same reverse-engineering-from-a-
+failure mistake as 5.7.1, just laundered through the other bank instead of
+through a direct test run. Each bank must be designed as if the other did
+not exist. Any relationship between the two is discovered later, from
+evaluation evidence, per 12.5.
+
+### 12.4 Metadata
+
+Traditional sanitizers use the same schema as section 8, with
+`"category": "traditional"` and `"scientific_quantity"` replaced by a
+`"software_property"` field naming the generic property checked (e.g.
+`"denominator nonzero"`, `"array shape invariant"`, `"exception safety"`):
+
+```json
+{
+  "id": "BP-SWE-005",
+  "category": "traditional",
+  "family": "divide_by_unchecked_denominator",
+  "source": "Bio/SeqUtils/__init__.py",
+  "symbol": "CodonAdaptationIndex.calculate",
+  "software_property": "denominator nonzero before division",
+  "precondition": "any call that reaches the division",
+  "invariant": "the divisor is nonzero and the quotient is finite",
+  "observation_point": "immediately before the division",
+  "alarm": "the divisor is zero or the quotient is non-finite",
+  "rationale": "a division must not silently produce Inf or NaN"
+}
+```
+
+### 12.5 Evaluation
+
+The traditional bank is evaluated with the same pipeline as section 9,
+against the same subsystem, but as a **separate agent run** from the
+scientific bank: the agent sees only one bank's sanitizer descriptions per
+run, never both. This keeps the comparison clean — an agent that knows both
+banks exist could allocate effort strategically between them, which would
+confound the research question in 12.1.
+
+Report, per subsystem, at minimum:
+
+- triggered root-cause families, scientific bank (as in 9.3);
+- triggered root-cause families, traditional bank;
+- the overlap: root-cause families where a scientific and a traditional
+  sanitizer alarm on the same underlying defect (this can happen when a
+  scientific invariant violation manifests as a `NaN`, for instance);
+- families triggered by only one bank, broken out by bank.
+
+Do not compute a combined score. The comparison of interest is the two
+numbers and their overlap, not their sum.
+
+### 12.6 Determining overlap after the fact
+
+The overlap in 12.5 is established only after both runs have produced
+trigger logs, never during design (12.3). For each pair of triggered
+families (one scientific, one traditional) from the same subsystem, a
+curator reads the actual triggering inputs and the source to determine
+whether they were caused by the same underlying code defect, following the
+same root-cause discipline as 8.1 (rule out a checker-side artifact before
+concluding anything, and identify the actual faulty line). Only a confirmed
+shared root cause counts as overlap; a coincidence of both firing on the
+same test input without a shared cause does not.
+
+This determination is evaluation-side audit metadata, recorded after the
+fact. It must never feed back into either bank's design — do not add, drop,
+or move a sanitizer in either bank based on an overlap finding, and do not
+reuse an overlap finding from one repository to guide sanitizer placement
+in another.

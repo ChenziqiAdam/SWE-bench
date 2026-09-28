@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
+import io
 import json
 import os
 import re
@@ -31,6 +33,25 @@ from swebench.issue_pipeline.offline_codex_pilot import (
 
 
 DATASET_PROFILES = {
+    "final": {
+        "workbook_rows": 88,
+        "instances": 84,
+        "repos": {
+            "lammps/lammps": 31,
+            "openmm/openmm": 45,
+            "rdkit/rdkit": 1,
+            "biopython/biopython": 1,
+            "qgis/QGIS": 1,
+            "astropy/astropy": 1,
+            "qutip/qutip": 2,
+            "deepchem/deepchem": 2,
+        },
+        "duplicate_mappings": {
+            "lammps__lammps-4339": [4216, 4337, 4338],
+            "lammps__lammps-4443": [4373, 4398],
+            "lammps__lammps-4481": [4487, 4491],
+        },
+    },
     "v1": {
         "workbook_rows": 37,
         "instances": 35,
@@ -333,6 +354,27 @@ def _rebuild_outputs(
             "manual_review_required": True,
         },
     )
+    columns = (
+        "instance_id", "error", "wall_time_seconds", "turns",
+        "model_response_steps_observed", "api_calls_exact_available",
+        "tool_calls", "input_tokens", "output_tokens",
+        "reasoning_output_tokens", "cache_read_input_tokens",
+        "cache_creation_input_tokens", "total_tokens", "usage_incomplete",
+        "trajectory_sha256",
+    )
+    stream = io.StringIO()
+    writer = csv.DictWriter(stream, fieldnames=columns)
+    writer.writeheader()
+    for checkpoint in ordered:
+        prediction = checkpoint["prediction"]
+        metrics = prediction.get("metrics") or {}
+        writer.writerow({
+            **{key: metrics.get(key, "") for key in columns},
+            "instance_id": prediction["instance_id"],
+            "error": prediction.get("error", ""),
+            "trajectory_sha256": prediction.get("trajectory_sha256", ""),
+        })
+    _atomic_write(output_dir / "inference_metrics.csv", stream.getvalue())
 
 
 def _save_checkpoint(
@@ -745,8 +787,8 @@ def make_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = make_parser().parse_args(argv)
-    if args.model != MODEL:
-        raise SystemExit(f"formal run requires --model {MODEL}")
+    if args.model not in {MODEL, "gpt-6-sol"}:
+        raise SystemExit(f"formal run requires --model {MODEL} or gpt-6-sol")
     if args.timeout <= 0 or args.timeout > TIMEOUT:
         raise SystemExit(f"timeout must be in 1..{TIMEOUT}")
     if args.workers < 1 or args.workers > 3:

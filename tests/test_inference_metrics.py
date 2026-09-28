@@ -57,6 +57,29 @@ def test_metrics_from_codex_turn_event_aliases():
     assert metrics["cache_read_input_tokens"] == 8
 
 
+def test_codex_raw_stream_preserves_usage_and_counts_observable_steps():
+    stream = "\n".join(json.dumps(event) for event in [
+        {"type": "thread.started", "thread_id": "example"},
+        {"type": "item.started", "item": {"id": "tool-1", "type": "command_execution"}},
+        {"type": "item.completed", "item": {"id": "tool-1", "type": "command_execution"}},
+        {"type": "item.completed", "item": {"id": "message-1", "type": "agent_message"}},
+        {"type": "turn.completed", "usage": {
+            "input_tokens": 100, "cached_input_tokens": 60,
+            "cache_write_input_tokens": 4, "output_tokens": 20,
+            "reasoning_output_tokens": 7,
+        }},
+    ])
+    metrics = metrics_from_stream_json(stream)
+    assert metrics["input_tokens"] == 100
+    assert metrics["output_tokens"] == 20
+    assert metrics["cache_read_input_tokens"] == 60
+    assert metrics["cache_creation_input_tokens"] == 4
+    assert metrics["reasoning_output_tokens"] == 7
+    assert metrics["tool_calls"] == 1
+    assert metrics["model_response_steps_observed"] == 2
+    assert metrics["api_calls_exact_available"] is False
+
+
 def test_metrics_recovers_observed_claude_usage_without_terminal_event():
     stream = "\n".join([
         json.dumps({

@@ -25,6 +25,7 @@ def _usage_metrics(usage: dict) -> dict:
         "cache_creation_input_tokens": (
             "cache_creation_input_tokens",
             "cacheCreationInputTokens",
+            "cache_write_input_tokens",
         ),
     }
     metrics = {}
@@ -96,6 +97,9 @@ def metrics_from_stream_json(text: str) -> dict:
     stats = obj.get("stats") if isinstance(obj.get("stats"), dict) else {}
     usage = obj.get("usage") if isinstance(obj.get("usage"), dict) else stats
     metrics = _usage_metrics(usage)
+    reasoning_tokens = _number(usage.get("reasoning_output_tokens"))
+    if reasoning_tokens is not None:
+        metrics["reasoning_output_tokens"] = int(reasoning_tokens)
     # Gemini CLI's compact stream result reports aggregate usage directly in
     # ``result.stats``. Its detailed schema instead reports per-model token
     # objects, which must be summed once at the terminal event.
@@ -149,6 +153,18 @@ def metrics_from_stream_json(text: str) -> dict:
     if tool_calls is not None:
         metrics["tool_calls"] = int(tool_calls)
     elif objects:
+        codex_tools = {
+            event.get("item", {}).get("id")
+            for event in objects
+            if event.get("type") in {"item.started", "item.completed"}
+            and isinstance(event.get("item"), dict)
+            and event["item"].get("type") in {
+                "command_execution", "file_change", "mcp_tool_call", "web_search"
+            }
+            and event["item"].get("id")
+        }
+        if codex_tools:
+            metrics["tool_calls"] = len(codex_tools)
         steps = {
             (
                 event.get("step_update", {}).get("conversation_id"),
@@ -159,8 +175,24 @@ def metrics_from_stream_json(text: str) -> dict:
             and isinstance(event.get("step_update"), dict)
             and event["step_update"].get("step_type") == "tool"
         }
-        if steps:
+        if steps and "tool_calls" not in metrics:
             metrics["tool_calls"] = len(steps)
+    # Codex JSONL has one turn.completed per exec, even when the model makes
+    # several requests within that turn. Count visible response items as a
+    # proxy; keep the field distinct from exact API request counts.
+    if any(obj.get("type") == "thread.started" for obj in objects):
+        response_ids = {
+            event["item"].get("id")
+            for event in objects
+            if event.get("type") == "item.completed"
+            and isinstance(event.get("item"), dict)
+            and event["item"].get("type") in {
+                "agent_message", "command_execution", "file_change", "mcp_tool_call", "web_search"
+            }
+            and event["item"].get("id")
+        }
+        metrics["model_response_steps_observed"] = len(response_ids)
+        metrics["api_calls_exact_available"] = False
     return metrics
 
 
