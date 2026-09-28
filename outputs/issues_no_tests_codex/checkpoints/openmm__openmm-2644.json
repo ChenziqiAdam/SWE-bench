@@ -1,0 +1,40 @@
+{
+  "instance_id": "openmm__openmm-2644",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-2644",
+    "model_patch": "",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "5f417393ce3ece6b3ad247bc52b3db8dbfa79b7abe8b25f65cea54d2f40a94bb",
+    "offline_audit": {
+      "status": "failed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-2644.jsonl",
+      "trajectory_sha256": "a9d9899d48e5128feca67db53fe0fc0218f0c7f7fe2486ce71ca96cdaa9e3ecf",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "a9d9899d48e5128feca67db53fe0fc0218f0c7f7fe2486ce71ca96cdaa9e3ecf",
+    "metrics": {
+      "wall_time_seconds": 23.295757
+    },
+    "error": "codex_exit_1"
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-2644",
+    "status": "failed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-2644.jsonl",
+    "trajectory_sha256": "a9d9899d48e5128feca67db53fe0fc0218f0c7f7fe2486ce71ca96cdaa9e3ecf",
+    "manual_review": "pending",
+    "exit_code": 1
+  }
+}

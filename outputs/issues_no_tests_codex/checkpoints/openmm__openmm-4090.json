@@ -1,0 +1,51 @@
+{
+  "instance_id": "openmm__openmm-4090",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-4090",
+    "model_patch": "diff --git a/plugins/rpmd/platforms/cuda/tests/TestCudaRpmd.cpp b/plugins/rpmd/platforms/cuda/tests/TestCudaRpmd.cpp\nindex a63dfe6..db68251 100644\n--- a/plugins/rpmd/platforms/cuda/tests/TestCudaRpmd.cpp\n+++ b/plugins/rpmd/platforms/cuda/tests/TestCudaRpmd.cpp\n@@ -37,6 +37,7 @@ extern \"C\" void registerRPMDCudaKernelFactories();\n using namespace OpenMM;\n \n void runPlatformTests() {\n+    testZeroStepSize();\n     testParaHydrogen();\n }\n \ndiff --git a/plugins/rpmd/platforms/opencl/tests/TestOpenCLRpmd.cpp b/plugins/rpmd/platforms/opencl/tests/TestOpenCLRpmd.cpp\nindex dc0eb1f..a5da0da 100644\n--- a/plugins/rpmd/platforms/opencl/tests/TestOpenCLRpmd.cpp\n+++ b/plugins/rpmd/platforms/opencl/tests/TestOpenCLRpmd.cpp\n@@ -37,6 +37,7 @@ extern \"C\" void registerRPMDOpenCLKernelFactories();\n using namespace OpenMM;\n \n void runPlatformTests() {\n+    testZeroStepSize();\n     testParaHydrogen();\n }\n \ndiff --git a/plugins/rpmd/tests/TestRpmd.h b/plugins/rpmd/tests/TestRpmd.h\nindex 37a8c8c..23ac4a0 100644\n--- a/plugins/rpmd/tests/TestRpmd.h\n+++ b/plugins/rpmd/tests/TestRpmd.h\n@@ -108,6 +108,30 @@ void testFreeParticles() {\n     ASSERT_USUALLY_EQUAL_TOL(expectedRg, sqrt(meanRg2), 1e-3);\n }\n \n+void testZeroStepSize() {\n+    const int numParticles = 1000;\n+    const int numCopies = 60;\n+    System system;\n+    for (int i = 0; i < numParticles; i++)\n+        system.addParticle(1.0);\n+    RPMDIntegrator integ(numCopies, 300.0, 1.0, 0.0);\n+    Context context(system, integ, platform);\n+    vector<vector<Vec3> > initialPositions(numCopies, vector<Vec3>(numParticles));\n+    for (int copy = 0; copy < numCopies; copy++) {\n+        for (int particle = 0; particle < numParticles; particle++)\n+            initialPositions[copy][particle] = Vec3(0.001*particle, 0.001*copy, 0.0001*(particle+copy));\n+        integ.setPositions(copy, initialPositions[copy]);\n+    }\n+\n+    integ.step(100);\n+    for (int copy = 0; copy < numCopies; copy++) {\n+        State state = integ.getState(copy, State::Positions);\n+        const vector<Vec3>& positions = state.getPositions();\n+        for (int particle = 0; particle < numParticles; particle++)\n+            ASSERT_EQUAL_VEC(initialPositions[copy][particle], positions[particle], 1e-5);\n+    }\n+}\n+\n void testParaHydrogen() {\n     const int numParticles = 32;\n     const int numCopies = 12;\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "2efe33658f29b30a1a6c897bf6e846cfda736132a64e9f8560c818124770cf57",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "plugins/rpmd/platforms/cuda/tests/TestCudaRpmd.cpp",
+        "plugins/rpmd/platforms/opencl/tests/TestOpenCLRpmd.cpp",
+        "plugins/rpmd/tests/TestRpmd.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-4090.jsonl",
+      "trajectory_sha256": "09a08cd3ed665b4ceb95e315128d8e53f5e8bbfe0befb9354ed633200945b8b8",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "09a08cd3ed665b4ceb95e315128d8e53f5e8bbfe0befb9354ed633200945b8b8",
+    "metrics": {
+      "input_tokens": 302595,
+      "output_tokens": 3681,
+      "cache_read_input_tokens": 243712,
+      "total_tokens": 306276,
+      "wall_time_seconds": 125.319812
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-4090",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "plugins/rpmd/platforms/cuda/tests/TestCudaRpmd.cpp",
+      "plugins/rpmd/platforms/opencl/tests/TestOpenCLRpmd.cpp",
+      "plugins/rpmd/tests/TestRpmd.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-4090.jsonl",
+    "trajectory_sha256": "09a08cd3ed665b4ceb95e315128d8e53f5e8bbfe0befb9354ed633200945b8b8",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

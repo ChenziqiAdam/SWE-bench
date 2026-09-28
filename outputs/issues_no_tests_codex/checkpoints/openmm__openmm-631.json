@@ -1,0 +1,49 @@
+{
+  "instance_id": "openmm__openmm-631",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-631",
+    "model_patch": "diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py\nindex 4aff230..e63430e 100644\n--- a/wrappers/python/tests/TestForceField.py\n+++ b/wrappers/python/tests/TestForceField.py\n@@ -1,3 +1,4 @@\n+import math\n import unittest\n from validateConstraints import *\n from simtk.openmm.app import *\n@@ -97,6 +98,21 @@ class TestForceField(unittest.TestCase):\n         forces = system.getForces()\n         self.assertTrue(any(isinstance(f, GBSAOBCForce) for f in forces))\n \n+    def test_CpuImplicitSolventDynamics(self):\n+        \"\"\"Test that OBC dynamics on the CPU platform does not produce NaNs.\"\"\"\n+        pdb = PDBFile('systems/ala_ala_ala.pdb')\n+        forcefield = ForceField('amber99sb.xml', 'amber99_obc.xml')\n+        system = forcefield.createSystem(pdb.topology, nonbondedMethod=NoCutoff,\n+                                         constraints=HBonds)\n+        integrator = LangevinIntegrator(300*kelvin, 1/picosecond,\n+                                        0.002*picoseconds)\n+        context = Context(system, integrator, Platform.getPlatformByName('CPU'))\n+        context.setPositions(pdb.positions)\n+        context.setVelocitiesToTemperature(300*kelvin, 1)\n+        integrator.step(100)\n+        energy = context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(kilojoules_per_mole)\n+        self.assertFalse(math.isnan(energy))\n+\n     def test_ImplicitSolventParameters(self):\n         \"\"\"Test that solventDielectric and soluteDielectric are passed correctly \n         for the different types of implicit solvent.\n@@ -244,4 +260,3 @@ class AmoebaTestForceField(unittest.TestCase):\n \n if __name__ == '__main__':\n     unittest.main()\n-\ndiff --git a/wrappers/python/tests/__pycache__/validateConstraints.cpython-312.pyc b/wrappers/python/tests/__pycache__/validateConstraints.cpython-312.pyc\nnew file mode 100644\nindex 0000000000000000000000000000000000000000..c701e4bf75abc66f65685c2ff5cd599636b210bb\nGIT binary patch\nliteral 8131\n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\n\nliteral 0\nHcmV?d00001\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "69c05208fa39bfbfa35a2275ccccd01ca035873aad8580711434593a341948f3",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestForceField.py",
+        "wrappers/python/tests/__pycache__/validateConstraints.cpython-312.pyc"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-631.jsonl",
+      "trajectory_sha256": "ff94618a366d8e5f0f8a046ba83438c58248727e54695b837cf775b4efebee0f",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "ff94618a366d8e5f0f8a046ba83438c58248727e54695b837cf775b4efebee0f",
+    "metrics": {
+      "input_tokens": 408069,
+      "output_tokens": 3393,
+      "cache_read_input_tokens": 357888,
+      "total_tokens": 411462,
+      "wall_time_seconds": 116.714676
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-631",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestForceField.py",
+      "wrappers/python/tests/__pycache__/validateConstraints.cpython-312.pyc"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-631.jsonl",
+    "trajectory_sha256": "ff94618a366d8e5f0f8a046ba83438c58248727e54695b837cf775b4efebee0f",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "1",
+  "subject": "Derive and verify physics formulas",
+  "description": "Verify quantum (Eq 31) and classical (Eq 32) expectation value formulas against all 23 visible cases.",
+  "status": "completed",
+  "blocks": [],
+  "blockedBy": []
+}

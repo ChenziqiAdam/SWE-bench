@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-2544",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-2544",
+    "model_patch": "diff --git a/platforms/cpu/tests/TestCpuCustomNonbondedForce.cpp b/platforms/cpu/tests/TestCpuCustomNonbondedForce.cpp\nindex 0c82130..54bde98 100644\n--- a/platforms/cpu/tests/TestCpuCustomNonbondedForce.cpp\n+++ b/platforms/cpu/tests/TestCpuCustomNonbondedForce.cpp\n@@ -32,5 +32,53 @@\n #include \"CpuTests.h\"\n #include \"TestCustomNonbondedForce.h\"\n \n+double computeNonbondedEnergy(bool includeCustom) {\n+    System system;\n+    NonbondedForce* standard = new NonbondedForce();\n+    standard->setNonbondedMethod(NonbondedForce::PME);\n+    standard->setCutoffDistance(0.5);\n+    standard->setForceGroup(2);\n+    CustomNonbondedForce* custom = NULL;\n+    if (includeCustom) {\n+        custom = new CustomNonbondedForce(\"lambda*4*epsilon*(1-x)/x^2; x=(r/sigma)^6+0.5*(1-lambda); epsilon=sqrt(epsilon1*epsilon2); sigma=0.5*(sigma1+sigma2)\");\n+        custom->addGlobalParameter(\"lambda\", 1.0);\n+        custom->addPerParticleParameter(\"sigma\");\n+        custom->addPerParticleParameter(\"epsilon\");\n+        custom->addEnergyParameterDerivative(\"lambda\");\n+        custom->setForceGroup(1);\n+    }\n+    for (int i = 0; i < 13; i++) {\n+        system.addParticle(1.0);\n+        standard->addParticle(0.0, 0.3, 0.5);\n+        if (includeCustom)\n+            custom->addParticle(vector<double> {0.3, 0.5});\n+    }\n+    system.addForce(standard);\n+    if (includeCustom) {\n+        set<int> set1, set2;\n+        set1.insert(0);\n+        set2.insert(12);\n+        custom->addInteractionGroup(set1, set2);\n+        system.addForce(custom);\n+    }\n+    system.setDefaultPeriodicBoxVectors(Vec3(2, 0, 0), Vec3(0, 2, 0), Vec3(0, 0, 2));\n+    VerletIntegrator integrator(0.001);\n+    Context context(system, integrator, platform);\n+    vector<Vec3> positions(13);\n+    for (int i = 0; i < 13; i++)\n+        positions[i] = Vec3(0.2+(i%3)*0.45, 0.2+((i/3)%3)*0.45, 0.2+(i/9)*0.45);\n+    context.setPositions(positions);\n+    if (includeCustom)\n+        context.getState(State::ParameterDerivatives, false, 1<<1);\n+    return context.getState(State::Energy, false, 1<<2).getPotentialEnergy();\n+}\n+\n+void testEnergyDerivativeDoesNotChangeNonbondedEnergy() {\n+    double energyWithoutCustom = computeNonbondedEnergy(false);\n+    double energyWithCustom = computeNonbondedEnergy(true);\n+    ASSERT_EQUAL_TOL(energyWithoutCustom, energyWithCustom, 1e-5);\n+}\n+\n void runPlatformTests() {\n+    testEnergyDerivativeDoesNotChangeNonbondedEnergy();\n }\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "3747f6f8847c66f84ec47bb1abe084ff51c49f214d5e1eedd94c81ff849c024d",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/cpu/tests/TestCpuCustomNonbondedForce.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-2544.jsonl",
+      "trajectory_sha256": "b76003de4c03d11903a5c8284eb3d005c1405a5715999dcd41dcbb7102cc6e7e",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "b76003de4c03d11903a5c8284eb3d005c1405a5715999dcd41dcbb7102cc6e7e",
+    "metrics": {
+      "input_tokens": 1104317,
+      "output_tokens": 7518,
+      "cache_read_input_tokens": 1045760,
+      "total_tokens": 1111835,
+      "wall_time_seconds": 278.493219
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-2544",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/cpu/tests/TestCpuCustomNonbondedForce.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-2544.jsonl",
+    "trajectory_sha256": "b76003de4c03d11903a5c8284eb3d005c1405a5715999dcd41dcbb7102cc6e7e",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

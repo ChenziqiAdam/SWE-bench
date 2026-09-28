@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-5221",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-5221",
+    "model_patch": "diff --git a/wrappers/python/tests/TestModeller.py b/wrappers/python/tests/TestModeller.py\nindex d05f32f..1832911 100644\n--- a/wrappers/python/tests/TestModeller.py\n+++ b/wrappers/python/tests/TestModeller.py\n@@ -594,5 +594,27 @@ class TestModeller(unittest.TestCase):\n \n         validate_equivalence(self, topology_start, topology_after)\n \n+    def test_addHydrogensSelectsHIEForHydrogenBond(self):\n+        \"\"\"A hydrogen bond at NE2 causes the HIE variant to be selected.\"\"\"\n+        topology = Topology()\n+        chain = topology.addChain()\n+        his = topology.addResidue('HIS', chain)\n+        atoms = {\n+            name: topology.addAtom(name, Element.getBySymbol('N' if name.startswith('N') else 'C'), his)\n+            for name in ('CG', 'ND1', 'CE1', 'NE2', 'CD2')\n+        }\n+        for atom1, atom2 in (('CG', 'ND1'), ('ND1', 'CE1'), ('CE1', 'NE2'),\n+                             ('NE2', 'CD2'), ('CD2', 'CG')):\n+            topology.addBond(atoms[atom1], atoms[atom2])\n+        water = topology.addResidue('HOH', chain)\n+        topology.addAtom('O', Element.getBySymbol('O'), water)\n+        positions = [Vec3(-0.23, -0.08, 0), Vec3(-0.23, 0.06, 0),\n+                     Vec3(-0.10, 0.10, 0), Vec3(0, 0, 0),\n+                     Vec3(-0.10, -0.12, 0), Vec3(0.25, 0, 0)]*nanometer\n+\n+        variants = Modeller(topology, positions).addHydrogens(pH=7.0)\n+\n+        self.assertEqual('HIE', variants[his.index])\n+\n     def test_addHydrogensPdb3(self):\n         \"\"\" Test the addHydrogens() method on the metallothionein pdb file. \"\"\"\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "de58e691033874b5672c1f0a098a5e48f177113eb60ef651e7a27afba36fe211",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestModeller.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-5221.jsonl",
+      "trajectory_sha256": "c088b5157e69a2bd4f64ceee514b60457c94ec55968835825649a6ad56c85545",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "c088b5157e69a2bd4f64ceee514b60457c94ec55968835825649a6ad56c85545",
+    "metrics": {
+      "input_tokens": 188687,
+      "output_tokens": 2476,
+      "cache_read_input_tokens": 157952,
+      "total_tokens": 191163,
+      "wall_time_seconds": 68.431918
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-5221",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestModeller.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-5221.jsonl",
+    "trajectory_sha256": "c088b5157e69a2bd4f64ceee514b60457c94ec55968835825649a6ad56c85545",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

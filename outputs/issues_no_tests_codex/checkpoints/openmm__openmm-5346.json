@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-5346",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-5346",
+    "model_patch": "diff --git a/platforms/cuda/tests/TestCudaCustomCVForce.cpp b/platforms/cuda/tests/TestCudaCustomCVForce.cpp\nindex 39450dd..779e391 100644\n--- a/platforms/cuda/tests/TestCudaCustomCVForce.cpp\n+++ b/platforms/cuda/tests/TestCudaCustomCVForce.cpp\n@@ -29,6 +29,45 @@\n \n #include \"CudaTests.h\"\n #include \"TestCustomCVForce.h\"\n+#include \"openmm/NonbondedForce.h\"\n+#include \"openmm/RMSDForce.h\"\n+\n+void testPmeWithCustomCVForce() {\n+    const int gridSize = 16;\n+    const int numParticles = gridSize*gridSize*gridSize;\n+    System system;\n+    system.setDefaultPeriodicBoxVectors(Vec3(8, 0, 0), Vec3(0, 8, 0), Vec3(0, 0, 8));\n+    NonbondedForce* nonbonded = new NonbondedForce();\n+    nonbonded->setNonbondedMethod(NonbondedForce::PME);\n+    nonbonded->setCutoffDistance(1.0);\n+    system.addForce(nonbonded);\n+    vector<Vec3> positions;\n+    for (int z = 0; z < gridSize; z++)\n+        for (int y = 0; y < gridSize; y++)\n+            for (int x = 0; x < gridSize; x++) {\n+                int index = positions.size();\n+                system.addParticle(1.0);\n+                nonbonded->addParticle((index%2 == 0 ? 1.0 : -1.0), 0.3, 0.0);\n+                positions.push_back(Vec3(x+0.1*(y%2), y+0.1*(z%2), z)*0.5);\n+            }\n+    CustomCVForce* cv = new CustomCVForce(\"rmsd\");\n+    cv->addCollectiveVariable(\"rmsd\", new RMSDForce(positions));\n+    system.addForce(cv);\n+\n+    VerletIntegrator integrator(0.001);\n+    map<string, string> properties;\n+    properties[CudaPlatform::CudaPrecision()] = \"double\";\n+    Context context(system, integrator, platform, properties);\n+    context.setPositions(positions);\n+    State expected = context.getState(State::Energy | State::Forces);\n+    for (int iteration = 0; iteration < 20; iteration++) {\n+        State actual = context.getState(State::Energy | State::Forces);\n+        ASSERT_EQUAL_TOL(expected.getPotentialEnergy(), actual.getPotentialEnergy(), 1e-6);\n+        for (int i = 0; i < numParticles; i++)\n+            ASSERT_EQUAL_VEC(expected.getForces()[i], actual.getForces()[i], 1e-6);\n+    }\n+}\n \n void runPlatformTests() {\n+    testPmeWithCustomCVForce();\n }\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "d6780f3a8d83d884be34287b73ecaac91e26bc0065cb1a2792b24ad12d7455df",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/cuda/tests/TestCudaCustomCVForce.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-5346.jsonl",
+      "trajectory_sha256": "ddb14a83e6172fe865a5580848340b401096af78af08a94d7204bb35c0c30215",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "ddb14a83e6172fe865a5580848340b401096af78af08a94d7204bb35c0c30215",
+    "metrics": {
+      "input_tokens": 682328,
+      "output_tokens": 5170,
+      "cache_read_input_tokens": 630528,
+      "total_tokens": 687498,
+      "wall_time_seconds": 162.273025
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-5346",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/cuda/tests/TestCudaCustomCVForce.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-5346.jsonl",
+    "trajectory_sha256": "ddb14a83e6172fe865a5580848340b401096af78af08a94d7204bb35c0c30215",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

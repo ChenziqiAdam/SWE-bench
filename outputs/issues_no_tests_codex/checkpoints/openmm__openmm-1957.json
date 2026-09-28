@@ -1,0 +1,54 @@
+{
+  "instance_id": "openmm__openmm-1957",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-1957",
+    "model_patch": "",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "5e80b421ea698e7f2f6774be755ac8e5dc630de9a335810723d0c295db56ba33",
+    "offline_audit": {
+      "status": "failed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/__pycache__/setup.cpython-312.pyc",
+        "wrappers/python/tests/TestSetup.py"
+      ],
+      "disallowed_paths": [
+        "wrappers/python/__pycache__/setup.cpython-312.pyc"
+      ],
+      "trajectory_path": "trajectories/openmm__openmm-1957.jsonl",
+      "trajectory_sha256": "33e661e69af97091f1284aafcf4d5d03498c462c42e6636f9787d9e7d08c1c64",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "33e661e69af97091f1284aafcf4d5d03498c462c42e6636f9787d9e7d08c1c64",
+    "metrics": {
+      "input_tokens": 181738,
+      "output_tokens": 3178,
+      "cache_read_input_tokens": 153600,
+      "total_tokens": 184916,
+      "wall_time_seconds": 100.707634
+    },
+    "error": "disallowed_patch_scope"
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-1957",
+    "status": "failed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/__pycache__/setup.cpython-312.pyc",
+      "wrappers/python/tests/TestSetup.py"
+    ],
+    "disallowed_paths": [
+      "wrappers/python/__pycache__/setup.cpython-312.pyc"
+    ],
+    "trajectory_path": "trajectories/openmm__openmm-1957.jsonl",
+    "trajectory_sha256": "33e661e69af97091f1284aafcf4d5d03498c462c42e6636f9787d9e7d08c1c64",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

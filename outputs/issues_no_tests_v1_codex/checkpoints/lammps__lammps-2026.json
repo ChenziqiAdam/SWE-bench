@@ -1,0 +1,56 @@
+{
+  "instance_id": "lammps__lammps-2026",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "lammps__lammps-2026",
+    "model_patch": "",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "5749aed6ca75da53bf0cf5b7db0c95c8da770e9744ba541a93c42da55e143281",
+    "offline_audit": {
+      "status": "failed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "examples/ASPHERE/ellipsoid/data.gayberne-gpu-special",
+        "examples/ASPHERE/ellipsoid/in.gayberne-gpu-special"
+      ],
+      "disallowed_paths": [
+        "examples/ASPHERE/ellipsoid/data.gayberne-gpu-special",
+        "examples/ASPHERE/ellipsoid/in.gayberne-gpu-special"
+      ],
+      "trajectory_path": "trajectories/lammps__lammps-2026.jsonl",
+      "trajectory_sha256": "ab2dc8df45310ee2fe643763ff8caedc2e0b34aae98b1f8ce20c52a230b5d4b6",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "ab2dc8df45310ee2fe643763ff8caedc2e0b34aae98b1f8ce20c52a230b5d4b6",
+    "metrics": {
+      "input_tokens": 1373979,
+      "output_tokens": 7274,
+      "cache_read_input_tokens": 1264384,
+      "total_tokens": 1381253,
+      "wall_time_seconds": 464.673287
+    },
+    "error": "disallowed_patch_scope"
+  },
+  "audit": {
+    "instance_id": "lammps__lammps-2026",
+    "status": "failed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "examples/ASPHERE/ellipsoid/data.gayberne-gpu-special",
+      "examples/ASPHERE/ellipsoid/in.gayberne-gpu-special"
+    ],
+    "disallowed_paths": [
+      "examples/ASPHERE/ellipsoid/data.gayberne-gpu-special",
+      "examples/ASPHERE/ellipsoid/in.gayberne-gpu-special"
+    ],
+    "trajectory_path": "trajectories/lammps__lammps-2026.jsonl",
+    "trajectory_sha256": "ab2dc8df45310ee2fe643763ff8caedc2e0b34aae98b1f8ce20c52a230b5d4b6",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "instance_id": "lammps__lammps-4590",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "lammps__lammps-4590",
+    "model_patch": "diff --git a/unittest/CMakeLists.txt b/unittest/CMakeLists.txt\nindex fe84bda..bf3c246 100644\n--- a/unittest/CMakeLists.txt\n+++ b/unittest/CMakeLists.txt\n@@ -102,6 +102,12 @@ add_subdirectory(fortran)\n add_subdirectory(python)\n add_subdirectory(force-styles)\n \n+if(PKG_SRD)\n+  add_test(NAME FixSRDDeformVelocityProfile\n+           COMMAND $<TARGET_FILE:lmp> -log none -in\n+                   ${CMAKE_CURRENT_SOURCE_DIR}/in.srd_deform_velocity_profile)\n+endif()\n+\n # clang-format support for test sources\n \n find_package(ClangFormat 8.0)\ndiff --git a/unittest/in.srd_deform_velocity_profile b/unittest/in.srd_deform_velocity_profile\nnew file mode 100644\nindex 0000000..ab6a22c\n--- /dev/null\n+++ b/unittest/in.srd_deform_velocity_profile\n@@ -0,0 +1,44 @@\n+# A shifted SRD collision cell that crosses the y periodic boundary must use\n+# velocities in the same shear-flow image as its particles.\n+units           lj\n+dimension       2\n+atom_style      atomic\n+boundary        p p p\n+region          box block -5 5 -5 5 -0.5 0.5\n+create_box      1 box\n+lattice         sq 50.0\n+create_atoms    1 box\n+mass            1 0.01\n+change_box      all triclinic\n+\n+group           solvent type 1\n+group           big empty\n+pair_style      zero 1.0\n+pair_coeff      * *\n+comm_modify     vel yes\n+neigh_modify    exclude group solvent solvent\n+velocity        solvent create 0.01 928381 loop geom\n+timestep        0.01\n+\n+fix             integrate solvent nve\n+fix             collide solvent srd 1 big 1.0 1.0 527991 shift yes 819193 tstat yes collision slip\n+fix             shear all deform 1 xy erate 0.1 remap v units box\n+run             10\n+\n+# The imposed streaming velocity is vx = 0.1*y.  Check the two boundary\n+# layers independently so opposite kinks cannot cancel in the reduction.\n+variable        upper atom (y>4.0)*(vx-0.1*y)\n+variable        lower atom (y<(-4.0))*(vx-0.1*y)\n+variable        is_upper atom y>4.0\n+variable        is_lower atom y<(-4.0)\n+compute         upper_sum all reduce sum v_upper\n+compute         lower_sum all reduce sum v_lower\n+compute         upper_count all reduce sum v_is_upper\n+compute         lower_count all reduce sum v_is_lower\n+variable        upper_error equal abs(c_upper_sum/c_upper_count)\n+variable        lower_error equal abs(c_lower_sum/c_lower_count)\n+run             0\n+\n+print           \"SRD boundary errors: ${upper_error} ${lower_error}\"\n+if \"${upper_error} > 0.1\" then \"quit 1\"\n+if \"${lower_error} > 0.1\" then \"quit 1\"\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "34d7040222e73df1f520004650aac81c0e190359a9c336bdb1601f83e648716a",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/CMakeLists.txt",
+        "unittest/in.srd_deform_velocity_profile"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4590.jsonl",
+      "trajectory_sha256": "e10a6669eea56a66fa268c7ed3823a17dee10874f7f726f912035c5330c6fdc9",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "e10a6669eea56a66fa268c7ed3823a17dee10874f7f726f912035c5330c6fdc9",
+    "metrics": {
+      "input_tokens": 1674680,
+      "output_tokens": 7063,
+      "cache_read_input_tokens": 1555712,
+      "total_tokens": 1681743,
+      "wall_time_seconds": 335.853273
+    }
+  },
+  "audit": {
+    "instance_id": "lammps__lammps-4590",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "unittest/CMakeLists.txt",
+      "unittest/in.srd_deform_velocity_profile"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/lammps__lammps-4590.jsonl",
+    "trajectory_sha256": "e10a6669eea56a66fa268c7ed3823a17dee10874f7f726f912035c5330c6fdc9",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

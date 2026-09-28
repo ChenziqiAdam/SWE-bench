@@ -1,0 +1,47 @@
+{
+  "instance_id": "rdkit__rdkit-7814",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "rdkit__rdkit-7814",
+    "model_patch": "diff --git a/Code/ForceField/Wrap/testConstraints.py b/Code/ForceField/Wrap/testConstraints.py\nindex 55b796c..9189b10 100755\n--- a/Code/ForceField/Wrap/testConstraints.py\n+++ b/Code/ForceField/Wrap/testConstraints.py\n@@ -1,3 +1,4 @@\n+import math\n import os\n import sys\n import unittest\n@@ -308,6 +309,17 @@ M  END\"\"\"\n     q = conf.GetAtomPosition(1)\n     self.assertTrue((p - q).Length() < 0.3)\n \n+  def testMMFFZeroDisplacementPositionConstraints(self):\n+    m = Chem.RemoveHs(Chem.MolFromMolBlock(self.molB, True, False))\n+    mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)\n+    ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)\n+    self.assertTrue(ff)\n+    for atom_idx in range(m.GetNumAtoms()):\n+      ff.MMFFAddPositionConstraint(atom_idx, 0.0, 1.0e4)\n+    ff.Minimize(maxIts=1000)\n+    self.assertTrue(math.isfinite(ff.CalcEnergy()))\n+    self.assertTrue(all(math.isfinite(value) for value in ff.CalcGrad()))\n+\n   def testMMFFFixedAtoms(self):\n     m = Chem.MolFromMolBlock(self.molB, True, False)\n     mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "9d3264132d5d4aea66853e42d1b1a4f621cad3c34e1a2f5e9300d00f5e2b26d0",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "Code/ForceField/Wrap/testConstraints.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/rdkit__rdkit-7814.jsonl",
+      "trajectory_sha256": "9d2a855f070ce3ed2d8a7a0239b2dd52a065195da54e097c143d1b7d1f296ae0",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "9d2a855f070ce3ed2d8a7a0239b2dd52a065195da54e097c143d1b7d1f296ae0",
+    "metrics": {
+      "input_tokens": 376585,
+      "output_tokens": 3907,
+      "cache_read_input_tokens": 335616,
+      "total_tokens": 380492,
+      "wall_time_seconds": 161.535188
+    }
+  },
+  "audit": {
+    "instance_id": "rdkit__rdkit-7814",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "Code/ForceField/Wrap/testConstraints.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/rdkit__rdkit-7814.jsonl",
+    "trajectory_sha256": "9d2a855f070ce3ed2d8a7a0239b2dd52a065195da54e097c143d1b7d1f296ae0",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

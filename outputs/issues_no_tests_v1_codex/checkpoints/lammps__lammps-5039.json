@@ -1,0 +1,47 @@
+{
+  "instance_id": "lammps__lammps-5039",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "lammps__lammps-5039",
+    "model_patch": "diff --git a/unittest/commands/test_simple_commands.cpp b/unittest/commands/test_simple_commands.cpp\nindex 6a369be..9d2b827 100644\n--- a/unittest/commands/test_simple_commands.cpp\n+++ b/unittest/commands/test_simple_commands.cpp\n@@ -51,6 +51,12 @@ TEST_F(SimpleCommandsTest, UnknownCommand)\n     TEST_FAILURE(\".*ERROR: Unknown command.*\", command(\"XXX one two\"););\n }\n \n+TEST_F(SimpleCommandsTest, DoubleBandEAMStyle)\n+{\n+    Info info(lmp);\n+    EXPECT_TRUE(info.has_style(\"pair\", \"eam/fs/2band\"));\n+}\n+\n TEST_F(SimpleCommandsTest, Echo)\n {\n     ASSERT_EQ(lmp->input->echo_screen, 1);\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "0e9d4365890aa3f71c79e13e7429d0124cb4a04604ddf72a235adc1a32d9712e",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/test_simple_commands.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-5039.jsonl",
+      "trajectory_sha256": "bee52ecca8cf6d9e738d30dfacc5705cb1402edcc48a211fca535fa84151fc71",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "bee52ecca8cf6d9e738d30dfacc5705cb1402edcc48a211fca535fa84151fc71",
+    "metrics": {
+      "input_tokens": 1821387,
+      "output_tokens": 4564,
+      "cache_read_input_tokens": 1746432,
+      "total_tokens": 1825951,
+      "wall_time_seconds": 373.781471
+    }
+  },
+  "audit": {
+    "instance_id": "lammps__lammps-5039",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "unittest/commands/test_simple_commands.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/lammps__lammps-5039.jsonl",
+    "trajectory_sha256": "bee52ecca8cf6d9e738d30dfacc5705cb1402edcc48a211fca535fa84151fc71",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

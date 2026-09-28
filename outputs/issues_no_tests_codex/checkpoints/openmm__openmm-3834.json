@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3834",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3834",
+    "model_patch": "diff --git a/platforms/cuda/tests/TestCudaMultipleForces.cpp b/platforms/cuda/tests/TestCudaMultipleForces.cpp\nindex e1fdf61..a92aadc 100644\n--- a/platforms/cuda/tests/TestCudaMultipleForces.cpp\n+++ b/platforms/cuda/tests/TestCudaMultipleForces.cpp\n@@ -36,6 +36,8 @@\n \n #include \"openmm/internal/AssertionUtilities.h\"\n #include \"openmm/Context.h\"\n+#include \"openmm/CustomBondForce.h\"\n+#include \"openmm/CustomNonbondedForce.h\"\n #include \"CudaPlatform.h\"\n #include \"ReferencePlatform.h\"\n #include \"openmm/HarmonicAngleForce.h\"\n@@ -98,11 +100,37 @@ void testForces() {\n     ASSERT_EQUAL_TOL(state1.getPotentialEnergy(), state2.getPotentialEnergy(), TOL);\n }\n \n+void testCustomForcesForCoincidentParticles() {\n+    System system;\n+    system.addParticle(1.0);\n+    system.addParticle(1.0);\n+    CustomBondForce* bond = new CustomBondForce(\"r^2\");\n+    bond->addBond(0, 1);\n+    bond->setForceGroup(0);\n+    system.addForce(bond);\n+    CustomNonbondedForce* nonbonded = new CustomNonbondedForce(\"r^2\");\n+    nonbonded->addParticle();\n+    nonbonded->addParticle();\n+    nonbonded->setForceGroup(1);\n+    system.addForce(nonbonded);\n+\n+    VerletIntegrator integrator(0.01);\n+    Context context(system, integrator, platform);\n+    context.setPositions(vector<Vec3>(2, Vec3(0, 0, 0)));\n+    for (int group = 0; group < 2; group++) {\n+        State state = context.getState(State::Forces | State::Energy, false, 1<<group);\n+        ASSERT_EQUAL_TOL(0.0, state.getPotentialEnergy(), TOL);\n+        ASSERT_EQUAL_VEC(Vec3(0, 0, 0), state.getForces()[0], TOL);\n+        ASSERT_EQUAL_VEC(Vec3(0, 0, 0), state.getForces()[1], TOL);\n+    }\n+}\n+\n int main(int argc, char* argv[]) {\n     try {\n         if (argc > 1)\n             platform.setPropertyDefaultValue(\"CudaPrecision\", string(argv[1]));\n         testForces();\n+        testCustomForcesForCoincidentParticles();\n     }\n     catch(const exception& e) {\n         cout << \"exception: \" << e.what() << endl;\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "6dd37646cb8fc3328c151542bab6f9528ea6338c93b7a73973563621e542a30b",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/cuda/tests/TestCudaMultipleForces.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3834.jsonl",
+      "trajectory_sha256": "1cb059f9add3f5ee7ed2c92fb70e46307c8799192320cfde3f4e14e795393247",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "1cb059f9add3f5ee7ed2c92fb70e46307c8799192320cfde3f4e14e795393247",
+    "metrics": {
+      "input_tokens": 577959,
+      "output_tokens": 4956,
+      "cache_read_input_tokens": 531456,
+      "total_tokens": 582915,
+      "wall_time_seconds": 170.467703
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3834",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/cuda/tests/TestCudaMultipleForces.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3834.jsonl",
+    "trajectory_sha256": "1cb059f9add3f5ee7ed2c92fb70e46307c8799192320cfde3f4e14e795393247",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

@@ -1,0 +1,221 @@
+{
+  "abnormal_file_threshold": 3,
+  "review_all": true,
+  "cases": [
+    {
+      "instance_id": "lammps__lammps-5039",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-5042",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4887",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4590",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4861",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4768",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4760",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4732",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4019",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4545",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4481",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-2026",
+      "reasons": [
+        "disallowed_patch_scope",
+        "empty_patch",
+        "scope_violation"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-2105",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-2367",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4443",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4310",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4312",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4346",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4339",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4243",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4239",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4202",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4195",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4134",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4123",
+      "reasons": [
+        "disallowed_patch_scope",
+        "empty_patch",
+        "scope_violation"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4120",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-3553",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-3931",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-3941",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-4407",
+      "reasons": [
+        "codex_exit_1",
+        "empty_patch"
+      ]
+    },
+    {
+      "instance_id": "lammps__lammps-3930",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "biopython__biopython-4439",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "biopython__biopython-3846",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "biopython__biopython-3281",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    },
+    {
+      "instance_id": "biopython__biopython-2283",
+      "reasons": [
+        "full_manual_audit"
+      ]
+    }
+  ]
+}

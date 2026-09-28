@@ -1,0 +1,49 @@
+{
+  "instance_id": "openmm__openmm-3198",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3198",
+    "model_patch": "diff --git a/wrappers/python/tests/TestGromacsTopFile.py b/wrappers/python/tests/TestGromacsTopFile.py\nindex 2f35ab1..fb27ef5 100644\n--- a/wrappers/python/tests/TestGromacsTopFile.py\n+++ b/wrappers/python/tests/TestGromacsTopFile.py\n@@ -8,6 +8,17 @@ import openmm.app.element as elem\n \n GROMACS_INCLUDE = _defaultGromacsIncludeDir()\n \n+class TestGromacsTopFileExclusions(unittest.TestCase):\n+\n+    def test_ReversedExplicitExclusion(self):\n+        \"\"\"An explicit exclusion is independent of the order of its atoms.\"\"\"\n+        system = GromacsTopFile('systems/reversed-exclusion.top').createSystem()\n+        custom = next(force for force in system.getForces()\n+                      if isinstance(force, CustomNonbondedForce))\n+        exclusions = {tuple(sorted(custom.getExclusionParticles(i)))\n+                      for i in range(custom.getNumExclusions())}\n+        self.assertIn((0, 1), exclusions)\n+\n @unittest.skipIf(not os.path.exists(GROMACS_INCLUDE), 'GROMACS is not installed')\n class TestGromacsTopFile(unittest.TestCase):\n \ndiff --git a/wrappers/python/tests/systems/reversed-exclusion.top b/wrappers/python/tests/systems/reversed-exclusion.top\nnew file mode 100644\nindex 0000000..95ff7fe\n--- /dev/null\n+++ b/wrappers/python/tests/systems/reversed-exclusion.top\n@@ -0,0 +1,29 @@\n+[ defaults ]\n+; nbfunc  comb-rule  gen-pairs  fudgeLJ  fudgeQQ\n+1         2          yes        1.0      1.0\n+\n+[ atomtypes ]\n+; name  at.num  mass    charge  ptype  sigma  epsilon\n+C       6       12.011  0.0     A      0.34   0.1\n+\n+[ moleculetype ]\n+; name  nrexcl\n+MOL     0\n+\n+[ atoms ]\n+; nr  type  resnr  residue  atom  cgnr  charge  mass\n+1     C     1      MOL      C1    1     0.0     12.011\n+2     C     1      MOL      C2    2     0.0     12.011\n+\n+[ pairs ]\n+; ai  aj  funct\n+2     1   1\n+\n+[ exclusions ]\n+2 1\n+\n+[ system ]\n+Reversed explicit exclusion\n+\n+[ molecules ]\n+MOL 1\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "3854924c8c0add207db1645b4720c810f3bc3318ab853e91a2e1d1456b699158",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestGromacsTopFile.py",
+        "wrappers/python/tests/systems/reversed-exclusion.top"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3198.jsonl",
+      "trajectory_sha256": "c62b7128238d792e1e95277329950ef1ca9872005dcdf242e96afb9a1891d1fc",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "c62b7128238d792e1e95277329950ef1ca9872005dcdf242e96afb9a1891d1fc",
+    "metrics": {
+      "input_tokens": 246895,
+      "output_tokens": 3084,
+      "cache_read_input_tokens": 223488,
+      "total_tokens": 249979,
+      "wall_time_seconds": 98.119387
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3198",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestGromacsTopFile.py",
+      "wrappers/python/tests/systems/reversed-exclusion.top"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3198.jsonl",
+    "trajectory_sha256": "c62b7128238d792e1e95277329950ef1ca9872005dcdf242e96afb9a1891d1fc",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

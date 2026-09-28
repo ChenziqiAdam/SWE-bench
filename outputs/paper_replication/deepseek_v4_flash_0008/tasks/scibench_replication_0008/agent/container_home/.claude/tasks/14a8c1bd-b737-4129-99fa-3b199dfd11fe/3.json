@@ -1,0 +1,8 @@
+{
+  "id": "3",
+  "subject": "Validate against all cases and write submission.json",
+  "description": "Run solution against every public case, confirm exact match, write submission.json.",
+  "status": "completed",
+  "blocks": [],
+  "blockedBy": []
+}

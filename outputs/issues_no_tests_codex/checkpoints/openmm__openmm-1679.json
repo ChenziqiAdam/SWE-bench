@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-1679",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-1679",
+    "model_patch": "diff --git a/platforms/opencl/tests/TestOpenCLCustomIntegrator.cpp b/platforms/opencl/tests/TestOpenCLCustomIntegrator.cpp\nindex 4d3381b..2d54feb 100644\n--- a/platforms/opencl/tests/TestOpenCLCustomIntegrator.cpp\n+++ b/platforms/opencl/tests/TestOpenCLCustomIntegrator.cpp\n@@ -31,6 +31,7 @@\n \n #include \"OpenCLTests.h\"\n #include \"TestCustomIntegrator.h\"\n+#include \"openmm/CustomExternalForce.h\"\n \n /**\n  * Make sure random numbers are computed correctly when steps get merged.\n@@ -98,6 +99,70 @@ void testMergedRandoms() {\n     }\n }\n \n+/**\n+ * Verify that algebraically equivalent constrained velocity updates have the\n+ * same numerical behavior.  This is particularly important in mixed\n+ * precision, where the position correction is much smaller than the position.\n+ */\n+void testConstrainedVelocityUpdatePrecision() {\n+    if (platform.getPropertyDefaultValue(\"Precision\") != \"mixed\")\n+        return;\n+    System system1, system2;\n+    CustomExternalForce* force1 = new CustomExternalForce(\"0.5*x*x\");\n+    CustomExternalForce* force2 = new CustomExternalForce(\"0.5*x*x\");\n+    for (int i = 0; i < 2; i++) {\n+        system1.addParticle(1.0);\n+        system2.addParticle(1.0);\n+        force1->addParticle(i);\n+        force2->addParticle(i);\n+    }\n+    system1.addConstraint(0, 1, 1.0);\n+    system2.addConstraint(0, 1, 1.0);\n+    system1.addForce(force1);\n+    system2.addForce(force2);\n+\n+    CustomIntegrator integrator1(0.001);\n+    integrator1.addPerDofVariable(\"x1\", 0);\n+    integrator1.addComputePerDof(\"v\", \"v+0.5*dt*f/m\");\n+    integrator1.addComputePerDof(\"x\", \"x+dt*v\");\n+    integrator1.addComputePerDof(\"x1\", \"x\");\n+    integrator1.addConstrainPositions();\n+    integrator1.addComputePerDof(\"v\", \"v+(x-x1)/dt+0.5*dt*f/m\");\n+    integrator1.addConstrainVelocities();\n+    CustomIntegrator integrator2(0.001);\n+    integrator2.addPerDofVariable(\"x1\", 0);\n+    integrator2.addComputePerDof(\"v\", \"v+0.5*dt*f/m\");\n+    integrator2.addComputePerDof(\"x\", \"x+dt*v\");\n+    integrator2.addComputePerDof(\"x1\", \"x\");\n+    integrator2.addConstrainPositions();\n+    integrator2.addComputePerDof(\"v\", \"v+(x-x1)/dt\");\n+    integrator2.addComputePerDof(\"v\", \"v+0.5*dt*f/m\");\n+    integrator2.addConstrainVelocities();\n+\n+    Context context1(system1, integrator1, platform);\n+    Context context2(system2, integrator2, platform);\n+    vector<Vec3> positions(2), velocities(2);\n+    positions[0] = Vec3(10.0, 0.0, 0.0);\n+    positions[1] = Vec3(11.0, 0.0, 0.0);\n+    velocities[0] = Vec3(1.0, 1.0, 0.0);\n+    velocities[1] = Vec3(-1.0, -1.0, 0.0);\n+    context1.setPositions(positions);\n+    context2.setPositions(positions);\n+    context1.setVelocities(velocities);\n+    context2.setVelocities(velocities);\n+    for (int i = 0; i < 100; i++) {\n+        integrator1.step(1);\n+        integrator2.step(1);\n+    }\n+    State state1 = context1.getState(State::Positions | State::Velocities);\n+    State state2 = context2.getState(State::Positions | State::Velocities);\n+    for (int i = 0; i < 2; i++) {\n+        ASSERT_EQUAL_VEC(state1.getPositions()[i], state2.getPositions()[i], 1e-8);\n+        ASSERT_EQUAL_VEC(state1.getVelocities()[i], state2.getVelocities()[i], 1e-8);\n+    }\n+}\n+\n void runPlatformTests() {\n     testMergedRandoms();\n+    testConstrainedVelocityUpdatePrecision();\n }\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "e6fba19abd2e889af57258f08425aa7b24ec5769c54d1aa6ca76ad4906aad6a0",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/opencl/tests/TestOpenCLCustomIntegrator.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-1679.jsonl",
+      "trajectory_sha256": "a6e78482049116cb7fe422bd8889165ad423c2490071030db3dc164d6a744897",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "a6e78482049116cb7fe422bd8889165ad423c2490071030db3dc164d6a744897",
+    "metrics": {
+      "input_tokens": 657743,
+      "output_tokens": 5825,
+      "cache_read_input_tokens": 601600,
+      "total_tokens": 663568,
+      "wall_time_seconds": 160.962428
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-1679",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/opencl/tests/TestOpenCLCustomIntegrator.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-1679.jsonl",
+    "trajectory_sha256": "a6e78482049116cb7fe422bd8889165ad423c2490071030db3dc164d6a744897",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

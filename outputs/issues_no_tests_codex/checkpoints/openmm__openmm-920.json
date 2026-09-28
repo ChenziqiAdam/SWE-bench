@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-920",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-920",
+    "model_patch": "diff --git a/platforms/cpu/tests/TestCpuNonbondedForce.cpp b/platforms/cpu/tests/TestCpuNonbondedForce.cpp\nindex 65dc0dd..693116c 100644\n--- a/platforms/cpu/tests/TestCpuNonbondedForce.cpp\n+++ b/platforms/cpu/tests/TestCpuNonbondedForce.cpp\n@@ -498,6 +498,42 @@ void testLargeSystem() {\n     ASSERT_EQUAL_TOL(cpuState.getPotentialEnergy(), referenceState.getPotentialEnergy(), tol);\n }\n \n+void testLargeSystemEnergy() {\n+    // Energy errors caused by loss of precision in the SIMD reduction are most\n+    // visible in a large, nearly neutral system, where many large Coulomb terms\n+    // cancel.  A relative tolerance would hide a substantial absolute error.\n+    const int gridSize = 12;\n+    const int numParticles = gridSize*gridSize*gridSize;\n+    const double spacing = 0.25;\n+    const double boxSize = gridSize*spacing;\n+    System system;\n+    NonbondedForce* nonbonded = new NonbondedForce();\n+    vector<Vec3> positions(numParticles);\n+    int index = 0;\n+    for (int x = 0; x < gridSize; x++)\n+        for (int y = 0; y < gridSize; y++)\n+            for (int z = 0; z < gridSize; z++) {\n+                system.addParticle(1.0);\n+                nonbonded->addParticle((x+y+z)%2 == 0 ? 1.0 : -1.0, 0.1, 0.0);\n+                positions[index++] = Vec3(x*spacing, y*spacing, z*spacing);\n+            }\n+    nonbonded->setNonbondedMethod(NonbondedForce::CutoffPeriodic);\n+    nonbonded->setCutoffDistance(1.4);\n+    system.setDefaultPeriodicBoxVectors(Vec3(boxSize, 0, 0), Vec3(0, boxSize, 0), Vec3(0, 0, boxSize));\n+    system.addForce(nonbonded);\n+\n+    ReferencePlatform reference;\n+    VerletIntegrator cpuIntegrator(0.01);\n+    VerletIntegrator referenceIntegrator(0.01);\n+    Context cpuContext(system, cpuIntegrator, platform);\n+    Context referenceContext(system, referenceIntegrator, reference);\n+    cpuContext.setPositions(positions);\n+    referenceContext.setPositions(positions);\n+    double cpuEnergy = cpuContext.getState(State::Energy).getPotentialEnergy();\n+    double referenceEnergy = referenceContext.getState(State::Energy).getPotentialEnergy();\n+    ASSERT(fabs(cpuEnergy-referenceEnergy) < 0.06);\n+}\n+\n void testDispersionCorrection() {\n     // Create a box full of identical particles.\n \n@@ -698,6 +734,7 @@ int main(int argc, char* argv[]) {\n         testPeriodic();\n         testTriclinic();\n         testLargeSystem();\n+        testLargeSystemEnergy();\n         testDispersionCorrection();\n         testChangingParameters();\n         testSwitchingFunction(NonbondedForce::CutoffNonPeriodic);\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "98adcc470cc15d8355398c69469f69b3ad732a84d72ad9da50b951b5e945b2f6",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/cpu/tests/TestCpuNonbondedForce.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-920.jsonl",
+      "trajectory_sha256": "99e635eb00bb0d860f862fe1f69944f9a1901673b9f9c3d296547d3a75cf8e9c",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "99e635eb00bb0d860f862fe1f69944f9a1901673b9f9c3d296547d3a75cf8e9c",
+    "metrics": {
+      "input_tokens": 1060529,
+      "output_tokens": 4404,
+      "cache_read_input_tokens": 993280,
+      "total_tokens": 1064933,
+      "wall_time_seconds": 196.638869
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-920",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/cpu/tests/TestCpuNonbondedForce.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-920.jsonl",
+    "trajectory_sha256": "99e635eb00bb0d860f862fe1f69944f9a1901673b9f9c3d296547d3a75cf8e9c",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

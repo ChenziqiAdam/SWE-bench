@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-4748",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-4748",
+    "model_patch": "diff --git a/wrappers/python/tests/TestModeller.py b/wrappers/python/tests/TestModeller.py\nindex 33d085a..783aa6b 100644\n--- a/wrappers/python/tests/TestModeller.py\n+++ b/wrappers/python/tests/TestModeller.py\n@@ -197,5 +197,17 @@ class TestModeller(unittest.TestCase):\n         # validate that the final topology has the correct number of items\n         validate_deltas(self, topology_before, topology_after, chain_delta, residue_delta, atom_delta)\n \n+    def test_addPreservesFormalCharge(self):\n+        \"\"\"Test that adding a metal ion preserves its formal charge.\"\"\"\n+        zinc = PDBFile(StringIO(\n+            'HETATM 2985 ZN    ZN A 401      19.284 -18.126  -2.875  1.00 11.44          ZN2+\\n'\n+            'END\\n'))\n+        modeller = Modeller(Topology(), []*nanometer)\n+        modeller.add(zinc.topology, zinc.positions)\n+\n+        output = StringIO()\n+        PDBFile.writeFile(modeller.topology, modeller.positions, output, keepIds=True)\n+        self.assertEqual('2+', output.getvalue().splitlines()[0][78:80])\n+\n     def test_convertWater(self):\n         \"\"\" Test the convertWater() method. \"\"\"\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "3b5bcf55c7a60bb18d138636e27fa0c4de39f312984a3154b651b9b8b9d06a5b",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestModeller.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-4748.jsonl",
+      "trajectory_sha256": "77b5db0dcbea7152693e2f44ed621ec92fce7c94584925df668148039adcced2",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "77b5db0dcbea7152693e2f44ed621ec92fce7c94584925df668148039adcced2",
+    "metrics": {
+      "input_tokens": 369228,
+      "output_tokens": 3161,
+      "cache_read_input_tokens": 339456,
+      "total_tokens": 372389,
+      "wall_time_seconds": 109.703279
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-4748",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestModeller.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-4748.jsonl",
+    "trajectory_sha256": "77b5db0dcbea7152693e2f44ed621ec92fce7c94584925df668148039adcced2",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

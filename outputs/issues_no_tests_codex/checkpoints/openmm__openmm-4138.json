@@ -1,0 +1,49 @@
+{
+  "instance_id": "openmm__openmm-4138",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-4138",
+    "model_patch": "diff --git a/tests/CMakeLists.txt b/tests/CMakeLists.txt\nindex ed3e51c..8778061 100644\n--- a/tests/CMakeLists.txt\n+++ b/tests/CMakeLists.txt\n@@ -31,3 +31,5 @@ FOREACH(TEST_PROG ${TEST_PROGS})\n     ADD_TEST(${TEST_ROOT} ${EXECUTABLE_OUTPUT_PATH}/${TEST_ROOT})\n ENDFOREACH(TEST_PROG ${TEST_PROGS})\n \n+TARGET_COMPILE_DEFINITIONS(TestLangevinIntegratorDocumentation PRIVATE\n+    OPENMM_SOURCE_DIR=\"${CMAKE_SOURCE_DIR}\")\ndiff --git a/tests/TestLangevinIntegratorDocumentation.cpp b/tests/TestLangevinIntegratorDocumentation.cpp\nnew file mode 100644\nindex 0000000..13f09aa\n--- /dev/null\n+++ b/tests/TestLangevinIntegratorDocumentation.cpp\n@@ -0,0 +1,47 @@\n+#include <fstream>\n+#include <iostream>\n+#include <sstream>\n+#include <stdexcept>\n+#include <string>\n+\n+using namespace std;\n+\n+static void require(bool condition, const string& message) {\n+    if (!condition)\n+        throw runtime_error(message);\n+}\n+\n+void testLangevinLeapfrogFormula() {\n+    ifstream input(OPENMM_SOURCE_DIR \"/docs-source/usersguide/theory/04_integrators.rst\");\n+    if (!input)\n+        throw runtime_error(\"Unable to open the integrator theory documentation\");\n+    stringstream buffer;\n+    buffer << input.rdbuf();\n+    string text = buffer.str();\n+\n+    // Ignore presentation whitespace so this checks the mathematical notation,\n+    // rather than how the reStructuredText source happens to be wrapped.\n+    string compact;\n+    for (char c : text)\n+        if (c != ' ' && c != '\\n' && c != '\\r' && c != '\\t')\n+            compact += c;\n+\n+    require(compact.find(\"unitvariance\") != string::npos,\n+            \"The Langevin random variable must have unit variance\");\n+    require(compact.find(\"\\\\mathbf{f}_{i}(t)(1-\\\\alpha)/(\\\\gammam_i)\") != string::npos,\n+            \"The force term must divide by both friction and particle mass\");\n+    require(compact.find(\"\\\\sqrt{k_BT(1-\\\\alpha^2)/m_i}\") != string::npos,\n+            \"The noise amplitude must contain k_B T and the particle mass\");\n+}\n+\n+int main() {\n+    try {\n+        testLangevinLeapfrogFormula();\n+    }\n+    catch (const exception& e) {\n+        cout << \"exception: \" << e.what() << endl;\n+        return 1;\n+    }\n+    cout << \"Done\" << endl;\n+    return 0;\n+}\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "7d25574bfeb414db4c10ca63e64a5b4df3ea39cdf1ec7ff16422585b0bd7f4a6",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/CMakeLists.txt",
+        "tests/TestLangevinIntegratorDocumentation.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-4138.jsonl",
+      "trajectory_sha256": "17cdd7e68e0b1d9f1c048df431441e1bd7db950bdc76d23b1314928d8fe01b0f",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "17cdd7e68e0b1d9f1c048df431441e1bd7db950bdc76d23b1314928d8fe01b0f",
+    "metrics": {
+      "input_tokens": 225968,
+      "output_tokens": 3605,
+      "cache_read_input_tokens": 193280,
+      "total_tokens": 229573,
+      "wall_time_seconds": 103.490043
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-4138",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/CMakeLists.txt",
+      "tests/TestLangevinIntegratorDocumentation.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-4138.jsonl",
+    "trajectory_sha256": "17cdd7e68e0b1d9f1c048df431441e1bd7db950bdc76d23b1314928d8fe01b0f",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

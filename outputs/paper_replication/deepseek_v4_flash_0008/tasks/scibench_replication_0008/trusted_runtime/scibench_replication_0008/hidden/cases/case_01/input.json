@@ -1,0 +1,15 @@
+{
+  "approximations": [
+    "quantum",
+    "classical"
+  ],
+  "field_scale_kelvin": 1.2,
+  "spin": 0.5,
+  "temperature_grid": [
+    0.35,
+    0.7,
+    1.4,
+    2.8,
+    5.6
+  ]
+}

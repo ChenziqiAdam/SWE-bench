@@ -1,0 +1,182 @@
+{
+  "openmm__openmm-4138": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "ba2462413c04b109"
+  },
+  "openmm__openmm-4618": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "6d2d8acf5bff1069"
+  },
+  "openmm__openmm-5219": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "e3e8241e89466353"
+  },
+  "openmm__openmm-4440": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "6f98d67a0677e5e0"
+  },
+  "openmm__openmm-1100": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "b548ef92c0b7b8c5"
+  },
+  "openmm__openmm-3151": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "514086f97fe98a1c"
+  },
+  "openmm__openmm-5302": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "285a31c59cc46d9a"
+  },
+  "openmm__openmm-4760": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "63d910658f6e9ed3"
+  },
+  "openmm__openmm-4161": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "0762e74ed92ebd59"
+  },
+  "openmm__openmm-3311": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "06fa2e8a4e2b6134"
+  },
+  "openmm__openmm-3210": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "809483ccd3013362"
+  },
+  "openmm__openmm-2897": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "1dffd167787789b1"
+  },
+  "openmm__openmm-3872": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "a70955ec17db115f"
+  },
+  "openmm__openmm-3659": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "f6989a28bed0aab6"
+  },
+  "rdkit__rdkit-9141": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "62b8bbf6a6b1f263"
+  },
+  "rdkit__rdkit-7183": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "ee9ac56643f4a480"
+  },
+  "rdkit__rdkit-8904": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "b9cae86a1a1a4e1a"
+  },
+  "rdkit__rdkit-8957": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "1c4b864a55a95936"
+  },
+  "rdkit__rdkit-8736": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "be0b874004bc5710"
+  },
+  "rdkit__rdkit-8247": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "0682e3cf08e4486b"
+  },
+  "rdkit__rdkit-8301": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "a5dd8f37822fe0b7"
+  },
+  "rdkit__rdkit-8257": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "569b819c4332825b"
+  },
+  "rdkit__rdkit-3018": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "c825a684c1a00a69"
+  },
+  "rdkit__rdkit-7990": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "0e85df61fd3991bc"
+  },
+  "rdkit__rdkit-7347": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "15c61b44ed76f48b"
+  },
+  "rdkit__rdkit-5560": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "c64daccda005786b"
+  },
+  "rdkit__rdkit-6240": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "cb32c05b1aa43013"
+  },
+  "rdkit__rdkit-6892": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "702ba8ad28d61c95"
+  },
+  "rdkit__rdkit-5407": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "dd151557cd6ff902"
+  },
+  "qgis__QGIS-35852": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "848951ec66dc0bf9"
+  },
+  "openmm__openmm-2318": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "9a95b12690bc63cd"
+  },
+  "openmm__openmm-2322": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "04d942d68df63a14"
+  },
+  "openmm__openmm-2257": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "72e653397fe366c9"
+  },
+  "openmm__openmm-3851": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "5834ce1fb3d2bd5e"
+  },
+  "rdkit__rdkit-4806": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "e9ebba3a1450c9cc"
+  },
+  "qgis__QGIS-60631": {
+    "buildable": false,
+    "error": "2026-07-23 12:04:53,010 - ERROR - docker.errors.BuildError during sweb.eval.x86_64.qgis__qgis-60631:latest: building at STEP \"RUN /bin/bash /root/setup_repo.sh\": while running runtime: exit status 1",
+    "spec_hash": "1b6f3e20eaf11ad0"
+  }
+}

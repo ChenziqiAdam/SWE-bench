@@ -466,6 +466,10 @@ def audit_patch_paths(
                 filename in {"cmakelists.txt", "meson.build"}
                 and any("test" in part for part in parts[:-1])
             )
+            # rdkit (and other Catch2 C++ projects) keep unit tests in
+            # shared source files named catch_*.cpp rather than a separate
+            # tests/ directory (e.g. Code/GraphMol/catch_graphmol.cpp).
+            or (filename.startswith("catch_") and len(parts) > 1)
         )
         if not testish:
             disallowed.append(path)

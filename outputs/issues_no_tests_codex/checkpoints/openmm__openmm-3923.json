@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3923",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3923",
+    "model_patch": "diff --git a/plugins/amoeba/tests/TestAmoebaVdwForce.h b/plugins/amoeba/tests/TestAmoebaVdwForce.h\nindex 3500eae..a30dfba 100644\n--- a/plugins/amoeba/tests/TestAmoebaVdwForce.h\n+++ b/plugins/amoeba/tests/TestAmoebaVdwForce.h\n@@ -2183,6 +2183,24 @@ void testParticleTypes() {\n     ASSERT_EQUAL_TOL(expectedEnergy, state.getPotentialEnergy(), 1e-5);\n }\n \n+void testParticleParametersWithTypes() {\n+    AmoebaVdwForce force;\n+    force.addParticleType(0.3, 1.1);\n+    force.addParticle(0, 0, 0.8);\n+\n+    int parent, type;\n+    double sigma, epsilon, reduction;\n+    bool isAlchemical;\n+    force.getParticleParameters(0, parent, sigma, epsilon, reduction, isAlchemical, type);\n+    ASSERT_EQUAL_TOL(0.3, sigma, 1e-10);\n+    ASSERT_EQUAL_TOL(1.1, epsilon, 1e-10);\n+\n+    force.setParticleParameters(0, parent, 0.4, 1.2, reduction, isAlchemical, type);\n+    force.getParticleParameters(0, parent, sigma, epsilon, reduction, isAlchemical, type);\n+    ASSERT_EQUAL_TOL(0.4, sigma, 1e-10);\n+    ASSERT_EQUAL_TOL(1.2, epsilon, 1e-10);\n+}\n+\n void setupKernels(int argc, char* argv[]);\n void runPlatformTests();\n \n@@ -2247,6 +2265,7 @@ int main(int argc, char* argv[]) {\n         // Test specifying parameters by particle type.\n         \n         testParticleTypes();\n+        testParticleParametersWithTypes();\n \n         // Set lambda and the softcore power (n) to any values, while softcore alpha set to 0. \n         // The energy and forces are equal to scaling those from testVdwAmmoniaCubicMeanHhg by lambda^n;\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "0af6ffe1c431c9d28ad806d4276acf74351dbfad5b40ac295b3cb9ab1cbd8046",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "plugins/amoeba/tests/TestAmoebaVdwForce.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3923.jsonl",
+      "trajectory_sha256": "e90eebcea3b866a639923c6dc58f0e2d209b02e4a7274803ea01e0c14b990e65",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "e90eebcea3b866a639923c6dc58f0e2d209b02e4a7274803ea01e0c14b990e65",
+    "metrics": {
+      "input_tokens": 1327279,
+      "output_tokens": 5786,
+      "cache_read_input_tokens": 1263616,
+      "total_tokens": 1333065,
+      "wall_time_seconds": 294.313175
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3923",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "plugins/amoeba/tests/TestAmoebaVdwForce.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3923.jsonl",
+    "trajectory_sha256": "e90eebcea3b866a639923c6dc58f0e2d209b02e4a7274803ea01e0c14b990e65",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

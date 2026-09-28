@@ -1,0 +1,218 @@
+{
+  "agent": {
+    "attempt_count": 1,
+    "attempts": [
+      {
+        "attempt": 1,
+        "command": [
+          "claude",
+          "-p",
+          "--output-format",
+          "stream-json",
+          "--verbose",
+          "--permission-mode",
+          "acceptEdits",
+          "--allowedTools",
+          "Bash,Edit,Write,Read",
+          "--model",
+          "deepseek-v4-flash",
+          "<prompt>"
+        ],
+        "exit_code": 0,
+        "metrics": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 1603328,
+          "cost_usd": 1.9595440000000004,
+          "input_tokens": 62473,
+          "output_tokens": 33478,
+          "provider_api_duration_seconds": 321.669,
+          "provider_duration_seconds": 328.885,
+          "time_to_first_token_seconds": 1.722,
+          "total_tokens": 95951,
+          "turns": 33,
+          "wall_time_seconds": 331.661923
+        },
+        "timed_out": false
+      }
+    ],
+    "backend": "claude_code",
+    "container_image": {
+      "digest": "localhost/scibench-paper-agent@sha256:a49bf3c22d6af4575298c2de2cddd4c624b1c9628e31b72d712093fe1a98b58b",
+      "id": "sha256:3a8692ec554cb159ed25b60a64043f1d1cfe51fd5c447bbeb707406d3a88e96f",
+      "name": "scibench-paper-agent:py310"
+    },
+    "error": null,
+    "exit_code": 0,
+    "model": "deepseek-v4-flash",
+    "timed_out": false,
+    "usage": {
+      "cost_usd": 1.9595440000000004,
+      "input_tokens": 62473,
+      "output_tokens": 33478,
+      "total_tokens": 95951,
+      "turns": 33,
+      "wall_time_seconds": 331.661923
+    }
+  },
+  "backend": "claude_code",
+  "container_image_digest": "localhost/scibench-paper-agent@sha256:a49bf3c22d6af4575298c2de2cddd4c624b1c9628e31b72d712093fe1a98b58b",
+  "ended_at": "2026-08-05T21:03:58.502745Z",
+  "error": "trusted execution did not produce a valid fresh submission",
+  "evaluator": {
+    "container_id": "bf871275798b2ce23f730e708160918190797b21402ca1e1482b1e2a928c0932",
+    "exit_code": 0,
+    "report": {
+      "checks": [
+        {
+          "critical": true,
+          "diagnostics": {
+            "error": "invalid JSON /runner/execution_report_case_outputs/public/case_01/output.json: [Errno 2] No such file or directory: '/runner/execution_report_case_outputs/public/case_01/output.json'"
+          },
+          "id": "public:case_01",
+          "passed": false,
+          "split": "public"
+        },
+        {
+          "critical": true,
+          "diagnostics": {
+            "error": "invalid JSON /runner/execution_report_case_outputs/hidden/case_01/output.json: [Errno 2] No such file or directory: '/runner/execution_report_case_outputs/hidden/case_01/output.json'"
+          },
+          "id": "hidden:case_01",
+          "passed": false,
+          "split": "hidden"
+        },
+        {
+          "critical": true,
+          "diagnostics": {
+            "error": "invalid JSON /runner/execution_report_case_outputs/hidden/case_02/output.json: [Errno 2] No such file or directory: '/runner/execution_report_case_outputs/hidden/case_02/output.json'"
+          },
+          "id": "hidden:case_02",
+          "passed": false,
+          "split": "hidden"
+        },
+        {
+          "critical": true,
+          "diagnostics": {
+            "error": "invalid JSON /runner/execution_report_case_outputs/hidden/case_03/output.json: [Errno 2] No such file or directory: '/runner/execution_report_case_outputs/hidden/case_03/output.json'"
+          },
+          "id": "hidden:case_03",
+          "passed": false,
+          "split": "hidden"
+        },
+        {
+          "critical": true,
+          "diagnostics": {
+            "error": "invalid JSON /runner/execution_report_case_outputs/hidden/case_04/output.json: [Errno 2] No such file or directory: '/runner/execution_report_case_outputs/hidden/case_04/output.json'"
+          },
+          "id": "hidden:case_04",
+          "passed": false,
+          "split": "hidden"
+        },
+        {
+          "critical": true,
+          "diagnostics": {
+            "error": "invalid JSON /runner/execution_report_case_outputs/hidden/case_05/output.json: [Errno 2] No such file or directory: '/runner/execution_report_case_outputs/hidden/case_05/output.json'"
+          },
+          "id": "hidden:case_05",
+          "passed": false,
+          "split": "hidden"
+        }
+      ],
+      "full_success": false,
+      "hidden_score": 0.0,
+      "public_score": 0.0,
+      "schema_version": 4,
+      "score": 0.0,
+      "task_id": "scibench_replication_0009",
+      "valid_execution": false
+    },
+    "stderr": "",
+    "timed_out": false
+  },
+  "execution": {
+    "container_id": "7d23b7fdc3e5e7974a97d1b622460b16d3762ef7040bfe2b4d73890599f47f08",
+    "report": {
+      "cases": {
+        "hidden": [
+          {
+            "case_id": "case_01",
+            "exit_code": 0,
+            "output_dir": "execution_report_case_outputs/hidden/case_01",
+            "output_sha256": "4c8f0da66b12b3603d1cdd375c47fe1bd69995a640e32ffa457f8e7762511741",
+            "timed_out": false,
+            "wall_seconds": 0.3937664348632097
+          },
+          {
+            "case_id": "case_02",
+            "exit_code": 0,
+            "output_dir": "execution_report_case_outputs/hidden/case_02",
+            "output_sha256": "d8a706b46b8798fb478ba4940074752d242c393bbe79cb2d86999b09a1773b31",
+            "timed_out": false,
+            "wall_seconds": 0.39610576815903187
+          },
+          {
+            "case_id": "case_03",
+            "exit_code": 0,
+            "output_dir": "execution_report_case_outputs/hidden/case_03",
+            "output_sha256": "83aab397115a903b6365992a60205fe71c22f6b2fc1d6bff759ece1fa0dc96c0",
+            "timed_out": false,
+            "wall_seconds": 0.39651937782764435
+          },
+          {
+            "case_id": "case_04",
+            "exit_code": 0,
+            "output_dir": "execution_report_case_outputs/hidden/case_04",
+            "output_sha256": "01c6a06619192307c26ec368722c0d725a6f45dfe434fa8d9250ebafc73b43fa",
+            "timed_out": false,
+            "wall_seconds": 0.3967314474284649
+          },
+          {
+            "case_id": "case_05",
+            "exit_code": 0,
+            "output_dir": "execution_report_case_outputs/hidden/case_05",
+            "output_sha256": "3fa3537a0ba6bc9b4d2bfcb7564d3f79bfd239dce36a868e7aa73d0e909737f3",
+            "timed_out": false,
+            "wall_seconds": 0.39636982046067715
+          }
+        ],
+        "public": [
+          {
+            "case_id": "case_01",
+            "exit_code": 0,
+            "output_dir": "execution_report_case_outputs/public/case_01",
+            "output_sha256": "e591dc13387f5f8e82f9a99276bbda46d90f8e171613f061c48fe4dd587adb06",
+            "timed_out": false,
+            "wall_seconds": 0.32343175262212753
+          }
+        ]
+      },
+      "entrypoint": [
+        "python",
+        "solution.py"
+      ],
+      "schema_version": 4,
+      "task_id": "scibench_replication_0009"
+    },
+    "runner_exit_code": 0,
+    "stderr": "",
+    "timed_out": false
+  },
+  "failure_type": "execution",
+  "full_success": false,
+  "model": "deepseek-v4-flash",
+  "public_bundle": {
+    "cases/case_01/input.json": "d6e1942fd16855437855f01ad853e8750d1974a4cd04b55ea2feed9dacd44b2a",
+    "cases/case_01/output.json": "a81cacfead82839a82ad0e9bf2e32718568f6480b628a715ffc8f97f50dcdb44",
+    "interface.schema.json": "5b553380d35ce30ad68f00bc94eaac26852c68b53462a0f7639e8b264848cc13",
+    "paper.pdf": "75a13a90b1353936299fa7aae3c9830787711738258d2a574f402fdb2b2b9e2d",
+    "task.md": "6d9482449e323172ec09e969b1eaf880283d9f2eee3e446c72bd14f72a2c5814"
+  },
+  "public_bundle_fingerprint": "dd5e43d9d284245ddb27bac81798a3767ba836d229fa58a8f6a0eb2755afe8ae",
+  "schema_version": 1,
+  "score": 0.0,
+  "stage": "evaluated",
+  "started_at": "2026-08-05T20:58:19.654858Z",
+  "status": "infrastructure_failure",
+  "task_id": "scibench_replication_0009",
+  "valid_execution": false
+}

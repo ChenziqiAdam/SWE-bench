@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-4079",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-4079",
+    "model_patch": "diff --git a/plugins/rpmd/tests/TestRpmd.h b/plugins/rpmd/tests/TestRpmd.h\nindex 37a8c8c..d0f979a 100644\n--- a/plugins/rpmd/tests/TestRpmd.h\n+++ b/plugins/rpmd/tests/TestRpmd.h\n@@ -468,6 +468,29 @@ void testWithoutThermostat() {\n     }\n }\n \n+void testMixedPrecisionEnergyConservation() {\n+    if (platform.getName() != \"CUDA\" && platform.getName() != \"OpenCL\")\n+        return;\n+    if (platform.getPropertyDefaultValue(\"Precision\") != \"mixed\")\n+        return;\n+    const int numCopies = 30;\n+    System system;\n+    system.addParticle(1.0);\n+    RPMDIntegrator integ(numCopies, 300.0, 1.0, 0.0);\n+    integ.setApplyThermostat(false);\n+    Context context(system, integ, platform);\n+    for (int copy = 0; copy < numCopies; copy++) {\n+        vector<Vec3> positions(1, Vec3(0.01*copy, 0.02*copy, -0.03*copy));\n+        vector<Vec3> velocities(1, Vec3(1.0+0.01*copy, -2.0+0.02*copy, 3.0-0.03*copy));\n+        integ.setPositions(copy, positions);\n+        integ.setVelocities(copy, velocities);\n+    }\n+\n+    double initialEnergy = integ.getTotalEnergy();\n+    integ.step(100);\n+    ASSERT_EQUAL_TOL(initialEnergy, integ.getTotalEnergy(), 1e-12);\n+}\n+\n void testWithBarostat() {\n     const int gridSize = 3;\n     const int numMolecules = gridSize*gridSize*gridSize;\n@@ -552,6 +575,7 @@ int main(int argc, char* argv[]) {\n         testVirtualSites();\n         testContractions();\n         testWithoutThermostat();\n+        testMixedPrecisionEnergyConservation();\n         testWithBarostat();\n         runPlatformTests();\n     }\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "09b3b99b5f825211ef113d6c44e10f5d1e1af514edcb24cdc4d494327ef4e47f",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "plugins/rpmd/tests/TestRpmd.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-4079.jsonl",
+      "trajectory_sha256": "dd040af47badc74ab56873790f35e661a8e4ac9ed0aed0b17125ecddabe9d32a",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "dd040af47badc74ab56873790f35e661a8e4ac9ed0aed0b17125ecddabe9d32a",
+    "metrics": {
+      "input_tokens": 558834,
+      "output_tokens": 4683,
+      "cache_read_input_tokens": 512000,
+      "total_tokens": 563517,
+      "wall_time_seconds": 146.00456
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-4079",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "plugins/rpmd/tests/TestRpmd.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-4079.jsonl",
+    "trajectory_sha256": "dd040af47badc74ab56873790f35e661a8e4ac9ed0aed0b17125ecddabe9d32a",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

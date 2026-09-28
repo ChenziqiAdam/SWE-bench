@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-5117",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-5117",
+    "model_patch": "diff --git a/tests/TestCustomBondForce.h b/tests/TestCustomBondForce.h\nindex b04f2ef..1629378 100644\n--- a/tests/TestCustomBondForce.h\n+++ b/tests/TestCustomBondForce.h\n@@ -95,6 +95,21 @@ void testBonds() {\n     }\n }\n \n+void testEmptyForce() {\n+    System system;\n+    system.addParticle(1.0);\n+    CustomBondForce* force = new CustomBondForce(\"lambda*r\");\n+    force->addGlobalParameter(\"lambda\", 1.0);\n+    force->setForceGroup(5);\n+    system.addForce(force);\n+    VerletIntegrator integrator(0.01);\n+    Context context(system, integrator, platform);\n+    context.setPositions(vector<Vec3>(1, Vec3(1, 2, 3)));\n+\n+    State state = context.getState(State::Energy, false, 1<<5);\n+    ASSERT_EQUAL(0.0, state.getPotentialEnergy());\n+}\n+\n void testManyParameters() {\n     System system;\n     system.addParticle(1.0);\n@@ -284,6 +299,7 @@ int main(int argc, char* argv[]) {\n     try {\n         initializeTests(argc, argv);\n         testBonds();\n+        testEmptyForce();\n         testManyParameters();\n         testIllegalVariable();\n         testInconsistentParameters();\n@@ -298,4 +314,3 @@ int main(int argc, char* argv[]) {\n     cout << \"Done\" << endl;\n     return 0;\n }\n-\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "d40c8758eaa2020e867ef0ac6637a28be23a2b4a903901f4a160658060fb8310",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestCustomBondForce.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-5117.jsonl",
+      "trajectory_sha256": "9b7a395973727b26a6ee3b7a8192e4023b35ca33c0be553f17e2ed97a042dfe5",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "9b7a395973727b26a6ee3b7a8192e4023b35ca33c0be553f17e2ed97a042dfe5",
+    "metrics": {
+      "input_tokens": 990759,
+      "output_tokens": 4405,
+      "cache_read_input_tokens": 929280,
+      "total_tokens": 995164,
+      "wall_time_seconds": 239.271452
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-5117",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestCustomBondForce.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-5117.jsonl",
+    "trajectory_sha256": "9b7a395973727b26a6ee3b7a8192e4023b35ca33c0be553f17e2ed97a042dfe5",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

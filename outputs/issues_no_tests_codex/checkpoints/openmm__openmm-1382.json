@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-1382",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-1382",
+    "model_patch": "diff --git a/platforms/opencl/tests/TestOpenCLCustomExternalForce.cpp b/platforms/opencl/tests/TestOpenCLCustomExternalForce.cpp\nindex d544018..210fc6e 100644\n--- a/platforms/opencl/tests/TestOpenCLCustomExternalForce.cpp\n+++ b/platforms/opencl/tests/TestOpenCLCustomExternalForce.cpp\n@@ -64,6 +64,26 @@ void testParallelComputation() {\n         ASSERT_EQUAL_VEC(state1.getForces()[i], state2.getForces()[i], 1e-5);\n }\n \n+/**\n+ * Test a fractional power whose base is stored in a single precision\n+ * temporary.  In double precision mode the exponent must have the same type\n+ * as the base, since some OpenCL compilers otherwise consider pow() ambiguous.\n+ */\n+void testFractionalPower() {\n+    System system;\n+    system.addParticle(1.0);\n+    CustomExternalForce* force = new CustomExternalForce(\"x^(1.0/6.0)\");\n+    force->addParticle(0, vector<double>());\n+    system.addForce(force);\n+    VerletIntegrator integrator(0.01);\n+    Context context(system, integrator, platform);\n+    context.setPositions(vector<Vec3>(1, Vec3(64.0, 0.0, 0.0)));\n+    State state = context.getState(State::Forces | State::Energy);\n+    ASSERT_EQUAL_TOL(2.0, state.getPotentialEnergy(), 1e-5);\n+    ASSERT_EQUAL_TOL(-1.0/192.0, state.getForces()[0][0], 1e-5);\n+}\n+\n void runPlatformTests() {\n     testParallelComputation();\n+    testFractionalPower();\n }\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "91c139ddf3eb83fc83f24273be8875caa94dbcd7df6f00772efe9c3221cdc345",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/opencl/tests/TestOpenCLCustomExternalForce.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-1382.jsonl",
+      "trajectory_sha256": "83a1c1dc322f87b4bc92a11a4c2114af65e8448737afd217c88fa4cfb3d7bc46",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "83a1c1dc322f87b4bc92a11a4c2114af65e8448737afd217c88fa4cfb3d7bc46",
+    "metrics": {
+      "input_tokens": 412103,
+      "output_tokens": 3058,
+      "cache_read_input_tokens": 366592,
+      "total_tokens": 415161,
+      "wall_time_seconds": 118.093444
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-1382",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/opencl/tests/TestOpenCLCustomExternalForce.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-1382.jsonl",
+    "trajectory_sha256": "83a1c1dc322f87b4bc92a11a4c2114af65e8448737afd217c88fa4cfb3d7bc46",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "instance_id": "lammps__lammps-4768",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "lammps__lammps-4768",
+    "model_patch": "diff --git a/unittest/commands/CMakeLists.txt b/unittest/commands/CMakeLists.txt\nindex cf7fde5..0cadf94 100644\n--- a/unittest/commands/CMakeLists.txt\n+++ b/unittest/commands/CMakeLists.txt\n@@ -25,6 +25,13 @@ else()\n                        ENVIRONMENT \"LAMMPS_PLUGIN_DIR=${LAMMPS_PLUGIN_BIN_DIR}\")\n endif()\n \n+if(PKG_KOKKOS)\n+  add_executable(test_fix_langevin_kokkos test_fix_langevin_kokkos.cpp)\n+  target_link_libraries(test_fix_langevin_kokkos PRIVATE lammps GTest::GMock Kokkos::kokkos)\n+  add_test(NAME FixLangevinKokkos COMMAND test_fix_langevin_kokkos)\n+  set_tests_properties(FixLangevinKokkos PROPERTIES LABELS \"kokkos;commands\")\n+endif()\n+\n add_executable(test_lattice_region test_lattice_region.cpp)\n target_link_libraries(test_lattice_region PRIVATE lammps GTest::GMock)\n add_test(NAME LatticeRegion COMMAND test_lattice_region)\ndiff --git a/unittest/commands/test_fix_langevin_kokkos.cpp b/unittest/commands/test_fix_langevin_kokkos.cpp\nnew file mode 100644\nindex 0000000..0c4870a\n--- /dev/null\n+++ b/unittest/commands/test_fix_langevin_kokkos.cpp\n@@ -0,0 +1,78 @@\n+/* ----------------------------------------------------------------------\n+   LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator\n+   https://www.lammps.org/, Sandia National Laboratories\n+   LAMMPS Development team: developers@lammps.org\n+\n+   Copyright (2003) Sandia Corporation.  Under the terms of Contract\n+   DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains\n+   certain rights in this software.  This software is distributed under\n+   the GNU General Public License.\n+------------------------------------------------------------------------- */\n+\n+#include \"input.h\"\n+#include \"lammps.h\"\n+#include \"utils.h\"\n+\n+#include \"../testing/core.h\"\n+#include \"gmock/gmock.h\"\n+#include \"gtest/gtest.h\"\n+\n+#include <cstring>\n+#include <mpi.h>\n+\n+bool verbose = false;\n+\n+namespace LAMMPS_NS {\n+\n+class FixLangevinKokkosTest : public LAMMPSTest {\n+protected:\n+    void SetUp() override\n+    {\n+        args = {\"-log\", \"none\", \"-echo\", \"screen\", \"-nocite\", \"-k\", \"on\", \"-sf\", \"kk\"};\n+        LAMMPSTest::SetUp();\n+    }\n+};\n+\n+TEST_F(FixLangevinKokkosTest, TempComPreservesLangevinForce)\n+{\n+    BEGIN_HIDE_OUTPUT();\n+    command(\"units lj\");\n+    command(\"atom_style atomic\");\n+    command(\"region box block 0 4 0 4 0 4\");\n+    command(\"create_box 1 box\");\n+    command(\"create_atoms 1 random 10 12345 box\");\n+    command(\"mass 1 1.0\");\n+    command(\"pair_style zero 2.0\");\n+    command(\"pair_coeff * *\");\n+    command(\"velocity all create 1.0 9400 mom yes rot no dist gaussian\");\n+    command(\"fix integrate all nve\");\n+    command(\"fix thermostat all langevin/kk 1.0 1.0 0.1 3972 zero yes\");\n+    command(\"compute temperature all temp/com\");\n+    command(\"fix_modify thermostat temp temperature\");\n+    command(\"compute force all reduce sum fx fy fz\");\n+    command(\"thermo_style custom step c_force[1] c_force[2] c_force[3]\");\n+    command(\"thermo 1\");\n+    command(\"run 1\");\n+    command(\"variable fsumx equal c_force[1]\");\n+    command(\"variable fsumy equal c_force[2]\");\n+    command(\"variable fsumz equal c_force[3]\");\n+    END_HIDE_OUTPUT();\n+\n+    EXPECT_NEAR(get_variable_value(\"fsumx\"), 0.0, 1.0e-12);\n+    EXPECT_NEAR(get_variable_value(\"fsumy\"), 0.0, 1.0e-12);\n+    EXPECT_NEAR(get_variable_value(\"fsumz\"), 0.0, 1.0e-12);\n+}\n+\n+} // namespace LAMMPS_NS\n+\n+int main(int argc, char **argv)\n+{\n+    MPI_Init(&argc, &argv);\n+    ::testing::InitGoogleMock(&argc, argv);\n+\n+    if ((argc > 1) && (strcmp(argv[1], \"-v\") == 0)) verbose = true;\n+\n+    int rv = RUN_ALL_TESTS();\n+    MPI_Finalize();\n+    return rv;\n+}\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "e301dd95cb21584013771f10f79533b49265c73f7d0f11e1d6c72486aaeb18e8",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "unittest/commands/CMakeLists.txt",
+        "unittest/commands/test_fix_langevin_kokkos.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/lammps__lammps-4768.jsonl",
+      "trajectory_sha256": "21731bba7c2a01c6657e3fc1800ad5b3701c3622e0c7aebe85bbcb6dea289b7f",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "21731bba7c2a01c6657e3fc1800ad5b3701c3622e0c7aebe85bbcb6dea289b7f",
+    "metrics": {
+      "input_tokens": 1925693,
+      "output_tokens": 7911,
+      "cache_read_input_tokens": 1824256,
+      "total_tokens": 1933604,
+      "wall_time_seconds": 456.483831
+    }
+  },
+  "audit": {
+    "instance_id": "lammps__lammps-4768",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "unittest/commands/CMakeLists.txt",
+      "unittest/commands/test_fix_langevin_kokkos.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/lammps__lammps-4768.jsonl",
+    "trajectory_sha256": "21731bba7c2a01c6657e3fc1800ad5b3701c3622e0c7aebe85bbcb6dea289b7f",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

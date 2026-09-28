@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3428",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3428",
+    "model_patch": "diff --git a/platforms/cuda/tests/TestCudaNonbondedForce.cpp b/platforms/cuda/tests/TestCudaNonbondedForce.cpp\nindex 0c623e8..c759af2 100644\n--- a/platforms/cuda/tests/TestCudaNonbondedForce.cpp\n+++ b/platforms/cuda/tests/TestCudaNonbondedForce.cpp\n@@ -32,6 +32,7 @@\n #include \"CudaTests.h\"\n #include \"TestNonbondedForce.h\"\n #include <cuda.h>\n+#include <limits>\n #include <string>\n \n void testParallelComputation(NonbondedForce::NonbondedMethod method) {\n@@ -160,6 +161,27 @@ void testDeterministicForces() {\n     }\n }\n \n+void testNanCoordinate() {\n+    System system;\n+    system.addParticle(1.0);\n+    NonbondedForce* force = new NonbondedForce();\n+    force->addParticle(0.0, 1.0, 1.0);\n+    force->setNonbondedMethod(NonbondedForce::CutoffPeriodic);\n+    system.addForce(force);\n+    system.setDefaultPeriodicBoxVectors(Vec3(3, 0, 0), Vec3(0, 3, 0), Vec3(0, 0, 3));\n+    VerletIntegrator integrator(0.001);\n+    Context context(system, integrator, platform);\n+    vector<Vec3> positions(1, Vec3(0, numeric_limits<double>::quiet_NaN(), 0));\n+    context.setPositions(positions);\n+    try {\n+        context.getState(State::Energy);\n+        throw OpenMMException(\"Expected an exception for a NaN coordinate\");\n+    }\n+    catch (const OpenMMException& e) {\n+        ASSERT_EQUAL(string(\"Particle coordinate is nan\"), string(e.what()));\n+    }\n+}\n+\n bool canRunHugeTest() {\n     // Create a minimal context just to see which device is being used.\n \n@@ -188,6 +210,7 @@ void runPlatformTests() {\n     testParallelComputation(NonbondedForce::LJPME);\n     testReordering();\n     testDeterministicForces();\n+    testNanCoordinate();\n     if (canRunHugeTest())\n         testHugeSystem();\n }\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "4e9e4ae1638b6dcafd0aad176569cab79b1ec2ce6e380be3fc1e9f5ba4bae891",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/cuda/tests/TestCudaNonbondedForce.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3428.jsonl",
+      "trajectory_sha256": "973dff4d5f5e8cc8fa6651aa02c9a821523ceba6bb1000745bca5755f2c8c355",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "973dff4d5f5e8cc8fa6651aa02c9a821523ceba6bb1000745bca5755f2c8c355",
+    "metrics": {
+      "input_tokens": 595758,
+      "output_tokens": 3859,
+      "cache_read_input_tokens": 546816,
+      "total_tokens": 599617,
+      "wall_time_seconds": 147.523989
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3428",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/cuda/tests/TestCudaNonbondedForce.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3428.jsonl",
+    "trajectory_sha256": "973dff4d5f5e8cc8fa6651aa02c9a821523ceba6bb1000745bca5755f2c8c355",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

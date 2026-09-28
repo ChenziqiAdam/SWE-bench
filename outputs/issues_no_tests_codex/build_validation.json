@@ -1,0 +1,417 @@
+{
+  "openmm__openmm-4138": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "5054e5a81b31abe2"
+  },
+  "openmm__openmm-2819": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "dfb69b0293d6f2c3"
+  },
+  "openmm__openmm-4294": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "7c9278ef02be1e59"
+  },
+  "openmm__openmm-4618": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "44b8128d1e2bfba0"
+  },
+  "openmm__openmm-4079": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "10235d501b86045b"
+  },
+  "openmm__openmm-3326": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "deb1af606a060012"
+  },
+  "openmm__openmm-3923": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "2acf7cf293ad067b"
+  },
+  "openmm__openmm-2318": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "def6e448466c15a6"
+  },
+  "openmm__openmm-1679": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "e6fbc433e6dab6a8"
+  },
+  "openmm__openmm-2781": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "a55070780fe88446"
+  },
+  "openmm__openmm-2644": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "d0864289e02a4a7e"
+  },
+  "openmm__openmm-1592": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "074d221aa23b7b9c"
+  },
+  "openmm__openmm-3280": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "8f6dc00465cd4732"
+  },
+  "openmm__openmm-1382": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "e34236854d1d9ba7"
+  },
+  "openmm__openmm-5242": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "d2591c5947242338"
+  },
+  "openmm__openmm-920": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "e2f70be5a1deac4c"
+  },
+  "openmm__openmm-5117": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "bd9e921c88125abf"
+  },
+  "openmm__openmm-5219": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "d01336c5f255f58f"
+  },
+  "openmm__openmm-3460": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "6f33cd5ce558c8b2"
+  },
+  "openmm__openmm-2829": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "e0651deaa406a368"
+  },
+  "openmm__openmm-2322": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "f391a8e1be0efc24"
+  },
+  "openmm__openmm-2257": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "e15e1e15dd19786a"
+  },
+  "openmm__openmm-4440": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "a2518966480dcb12"
+  },
+  "openmm__openmm-4249": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "d2b12bb0ed0fa668"
+  },
+  "openmm__openmm-4148": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "405ec0eb9e257d99"
+  },
+  "openmm__openmm-4119": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "6eb37cdb5159d3b2"
+  },
+  "openmm__openmm-4090": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "c89aac01cc920cd0"
+  },
+  "openmm__openmm-3872": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "c4cf6dc9cd7dc423"
+  },
+  "openmm__openmm-3574": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "98e8a6444ad614af"
+  },
+  "rdkit__rdkit-8166": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "0cdc7ca556d75ef1"
+  },
+  "rdkit__rdkit-7990": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "e31340108aa8b049"
+  },
+  "rdkit__rdkit-7814": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "3012a6145cb0de58"
+  },
+  "rdkit__rdkit-5261": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "934118e7880ae627"
+  },
+  "rdkit__rdkit-5103": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "5a0129c510842221"
+  },
+  "openmm__openmm-3321": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "42abc10e71ce8d73"
+  },
+  "openmm__openmm-3240": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "e0389508ff904c7b"
+  },
+  "openmm__openmm-2544": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "ccabe6cace317496"
+  },
+  "openmm__openmm-2328": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "c287a9c09edafe46"
+  },
+  "openmm__openmm-1100": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "1f261aa57a23a153"
+  },
+  "openmm__openmm-1682": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "d858e808a30f9c7a"
+  },
+  "openmm__openmm-631": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "17cb4cdb70019191"
+  },
+  "openmm__openmm-2255": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "2c586d2fff5e0c6d"
+  },
+  "openmm__openmm-5069": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "54e192134b1c106e"
+  },
+  "openmm__openmm-1640": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "c10c9848e7154f29"
+  },
+  "openmm__openmm-1540": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "28ef4db3747f7831"
+  },
+  "openmm__openmm-1932": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "0350af62464e14be"
+  },
+  "openmm__openmm-5346": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "93b544a4b7b9d104"
+  },
+  "openmm__openmm-4748": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "9d0c01a802021310"
+  },
+  "openmm__openmm-3630": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "071efd04ba0e28e8"
+  },
+  "openmm__openmm-3428": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "fc8dbfbb6a159d91"
+  },
+  "openmm__openmm-1924": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "67df484787846305"
+  },
+  "openmm__openmm-2152": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "1b294e6d3fe31a97"
+  },
+  "openmm__openmm-5302": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "08356e5072e13489"
+  },
+  "openmm__openmm-5359": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "3c55236a54188463"
+  },
+  "openmm__openmm-5213": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "8d4f169851b8f9d9"
+  },
+  "openmm__openmm-5221": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "54fdf93ccf0ecfac"
+  },
+  "openmm__openmm-4760": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "f7e9339f0bd74df0"
+  },
+  "openmm__openmm-4364": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "be42be2b608eece0"
+  },
+  "openmm__openmm-4293": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "9bf835244233b8ab"
+  },
+  "openmm__openmm-5149": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "8359b3077728c723"
+  },
+  "openmm__openmm-4986": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "9a98e1882c41578c"
+  },
+  "openmm__openmm-4279": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "fb87fd3e90a85f62"
+  },
+  "openmm__openmm-4161": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "4067acbad954bd30"
+  },
+  "openmm__openmm-4104": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "89578a3d01e6f49a"
+  },
+  "openmm__openmm-3834": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "50a6608022465478"
+  },
+  "openmm__openmm-3771": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "508e221c85b10191"
+  },
+  "rdkit__rdkit-8796": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "6d8c32aa411a6c5e"
+  },
+  "rdkit__rdkit-4793": {
+    "buildable": false,
+    "error": "2026-08-09 22:38:03,487 - ERROR - docker.errors.BuildError during sweb.eval.x86_64.rdkit__rdkit-4793:latest: building at STEP \"RUN /bin/bash /root/setup_repo.sh\": while running runtime: exit status 2",
+    "spec_hash": "86796e871edfa010"
+  },
+  "openmm__openmm-3442": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "a6ee654280e30047"
+  },
+  "openmm__openmm-3311": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "6f0e557169b51a4d"
+  },
+  "openmm__openmm-3241": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "3840e42351348489"
+  },
+  "openmm__openmm-3198": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "6172e33d1e2bb3bc"
+  },
+  "openmm__openmm-3151": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "46920d66d7907be2"
+  },
+  "openmm__openmm-3057": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "0df5417010d597da"
+  },
+  "openmm__openmm-3041": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "c865cd4e487cf70b"
+  },
+  "openmm__openmm-2639": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "f172115d10f64233"
+  },
+  "openmm__openmm-2575": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "7e72f974a7db5d95"
+  },
+  "openmm__openmm-2563": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "26c12a0e2b425bec"
+  },
+  "openmm__openmm-2363": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "8f828543c0f35e39"
+  },
+  "openmm__openmm-2429": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "89fbf6d7f96a3f1f"
+  },
+  "openmm__openmm-1957": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "57755254592e4597"
+  },
+  "openmm__openmm-1363": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "c8a6cf39da5f3c71"
+  },
+  "openmm__openmm-1250": {
+    "buildable": true,
+    "error": "",
+    "spec_hash": "58d8d7d1f148d0fa"
+  }
+}

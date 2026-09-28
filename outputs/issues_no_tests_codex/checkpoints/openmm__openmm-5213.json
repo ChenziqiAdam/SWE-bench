@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-5213",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-5213",
+    "model_patch": "diff --git a/wrappers/python/tests/TestPdbFile.py b/wrappers/python/tests/TestPdbFile.py\nindex 430ce3b..4b955af 100644\n--- a/wrappers/python/tests/TestPdbFile.py\n+++ b/wrappers/python/tests/TestPdbFile.py\n@@ -105,6 +105,15 @@ class TestPdbFile(unittest.TestCase):\n             self.assertEqual(19, len(pdb.positions))\n             self.assertEqual('ILE', list(pdb.topology.residues())[0].name)\n \n+    def test_MaestroWaterResidueNames(self):\n+        \"\"\"Test that Maestro water residue names are normalized to HOH.\"\"\"\n+        pdb = PDBFile(StringIO(\"\"\"\\\n+HETATM    1  O   SPC A   1       0.000   0.000   0.000  1.00  0.00           O\n+HETATM    2  O   T4P A   2       3.000   0.000   0.000  1.00  0.00           O\n+END\n+\"\"\"))\n+        self.assertEqual(['HOH', 'HOH'], [residue.name for residue in pdb.topology.residues()])\n+\n     def test_FormalCharges(self):\n         \"\"\"Test reading, and writing and re-reading of a file containing formal charges.\"\"\"\n         pdb = PDBFile('systems/formal-charges.pdb')\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "9b4ccf582976431f4d77e1d68e2e83fa2e33ddd3e937c22fb3d92a0d42448a39",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestPdbFile.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-5213.jsonl",
+      "trajectory_sha256": "8c8e09468002bda41d5c7649436c61e250096264642c4f1b261f164db028ac6a",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "8c8e09468002bda41d5c7649436c61e250096264642c4f1b261f164db028ac6a",
+    "metrics": {
+      "input_tokens": 303787,
+      "output_tokens": 2461,
+      "cache_read_input_tokens": 258048,
+      "total_tokens": 306248,
+      "wall_time_seconds": 71.238406
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-5213",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestPdbFile.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-5213.jsonl",
+    "trajectory_sha256": "8c8e09468002bda41d5c7649436c61e250096264642c4f1b261f164db028ac6a",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

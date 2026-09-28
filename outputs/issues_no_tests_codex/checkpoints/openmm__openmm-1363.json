@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-1363",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-1363",
+    "model_patch": "diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py\nindex a33879f..d2c4a6d 100644\n--- a/wrappers/python/tests/TestForceField.py\n+++ b/wrappers/python/tests/TestForceField.py\n@@ -573,5 +573,49 @@ class AmoebaTestForceField(unittest.TestCase):\n         self.assertEqual(len(ff._forces[0].proper), 1)\n         self.assertEqual(len(ff._forces[0].improper), 1)\n \n+    def test_ImproperOrderIndependent(self):\n+        \"\"\"Test that a wildcard improper does not mask a specific improper.\"\"\"\n+\n+        wildcard = '  <Improper class1=\"X\" class2=\"\" class3=\"\" class4=\"\" periodicity1=\"2\" phase1=\"0\" k1=\"1\"/>'\n+        specific = '  <Improper class1=\"X\" class2=\"A\" class3=\"B\" class4=\"C\" periodicity1=\"2\" phase1=\"0\" k1=\"2\"/>'\n+        xml = \"\"\"\n+<ForceField>\n+ <AtomTypes>\n+  <Type name=\"X\" class=\"X\" element=\"C\" mass=\"12\"/>\n+  <Type name=\"A\" class=\"A\" element=\"C\" mass=\"12\"/>\n+  <Type name=\"B\" class=\"B\" element=\"C\" mass=\"12\"/>\n+  <Type name=\"C\" class=\"C\" element=\"C\" mass=\"12\"/>\n+ </AtomTypes>\n+ <Residues>\n+  <Residue name=\"MOL\">\n+   <Atom name=\"X\" type=\"X\"/>\n+   <Atom name=\"A\" type=\"A\"/>\n+   <Atom name=\"B\" type=\"B\"/>\n+   <Atom name=\"C\" type=\"C\"/>\n+   <Bond atomName1=\"X\" atomName2=\"A\"/>\n+   <Bond atomName1=\"X\" atomName2=\"B\"/>\n+   <Bond atomName1=\"X\" atomName2=\"C\"/>\n+  </Residue>\n+ </Residues>\n+ <PeriodicTorsionForce>\n+%s\n+%s\n+ </PeriodicTorsionForce>\n+</ForceField>\"\"\"\n+\n+        topology = Topology()\n+        chain = topology.addChain()\n+        residue = topology.addResidue('MOL', chain)\n+        atoms = [topology.addAtom(name, elem.carbon, residue) for name in ('X', 'A', 'B', 'C')]\n+        for atom in atoms[1:]:\n+            topology.addBond(atoms[0], atom)\n+\n+        parameters = []\n+        for impropers in ((wildcard, specific), (specific, wildcard)):\n+            system = ForceField(StringIO(xml % impropers)).createSystem(topology)\n+            force = next(f for f in system.getForces() if isinstance(f, PeriodicTorsionForce))\n+            parameters.append(force.getTorsionParameters(0))\n+        self.assertEqual(parameters[0], parameters[1])\n+\n if __name__ == '__main__':\n     unittest.main()\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "018f949b1249ff2ca93f84560b1fa18df5b46d7bd9f3742c59138afc7c1aedac",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestForceField.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-1363.jsonl",
+      "trajectory_sha256": "65bd22bc2f8f811f24b43bd984cbdac98302bdabf42e648187f9ae42c1b689cc",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "65bd22bc2f8f811f24b43bd984cbdac98302bdabf42e648187f9ae42c1b689cc",
+    "metrics": {
+      "input_tokens": 282540,
+      "output_tokens": 3475,
+      "cache_read_input_tokens": 254464,
+      "total_tokens": 286015,
+      "wall_time_seconds": 102.198106
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-1363",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestForceField.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-1363.jsonl",
+    "trajectory_sha256": "65bd22bc2f8f811f24b43bd984cbdac98302bdabf42e648187f9ae42c1b689cc",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

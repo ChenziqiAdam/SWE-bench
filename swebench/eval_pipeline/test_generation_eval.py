@@ -30,6 +30,7 @@ from swebench.harness.docker_utils import (
     cleanup_container,
     copy_to_container,
     exec_run_with_timeout,
+    remove_image_with_retry,
 )
 from swebench.harness.log_parsers import MAP_REPO_TO_PARSER
 from swebench.harness.test_spec.python import get_test_directives
@@ -1711,17 +1712,57 @@ def _run_script(container, script_text: str, log_dir: Path, name: str, timeout: 
     return output, timed_out
 
 
+_PYTEST_AGGREGATE_LINE_RE = re.compile(r"\d+\s+(?:failed|passed|error|errors|skipped)")
+_PYTEST_AGGREGATE_COUNT_RE = re.compile(
+    r"(?P<count>\d+)\s+(?P<outcome>failed|passed|error|errors|skipped)\b"
+)
+_GENERATED_TEST_SUMMARY_ID = "generated_test_summary"
+
+
+def _parse_pytest_aggregate_summary(output: str) -> dict[str, str] | None:
+    """Fallback for pytest builds old enough to never emit per-test
+    PASSED/FAILED lines (even with -rA) and only print a final aggregate
+    line, e.g. "2 failed, 17 passed, 3 skipped in 0.41 seconds". Without
+    this, a test that ran and produced a real result is misreported as a
+    harness error ("no_parseable_test_status") instead of being scored.
+    Synthesizes a single stable test id so base/gold comparison still works.
+    """
+    summary_line = None
+    for line in reversed(output.splitlines()):
+        stripped = line.strip(" =\t")
+        if re.search(r"\bin [\d.]+\s*seconds?\b", stripped) and _PYTEST_AGGREGATE_LINE_RE.search(
+            stripped
+        ):
+            summary_line = stripped
+            break
+    if summary_line is None:
+        return None
+    counts = {
+        outcome: int(count)
+        for count, outcome in _PYTEST_AGGREGATE_COUNT_RE.findall(summary_line)
+    }
+    if not counts:
+        return None
+    failed = counts.get("failed", 0) + counts.get("error", 0) + counts.get("errors", 0)
+    status = TestStatus.FAILED.value if failed else TestStatus.PASSED.value
+    return {_GENERATED_TEST_SUMMARY_ID: status}
+
+
 def _parse_status(output: str, instance: dict) -> dict[str, str]:
     parser = MAP_REPO_TO_PARSER.get(instance["repo"])
     if parser is None:
         return {}
     parse_spec = make_test_spec({**instance, "FAIL_TO_PASS": [], "PASS_TO_PASS": []})
+    test_output = output
     if START_TEST_OUTPUT in output and END_TEST_OUTPUT in output:
         test_output = output.split(START_TEST_OUTPUT, 1)[1].split(END_TEST_OUTPUT, 1)[0]
         parsed = parser(test_output, parse_spec)
         if parsed:
             return parsed
-    return parser(output, parse_spec)
+    parsed = parser(output, parse_spec)
+    if parsed:
+        return parsed
+    return _parse_pytest_aggregate_summary(test_output) or {}
 
 
 def _prediction_map(predictions_path: str | Path) -> dict[str, dict]:
@@ -1757,7 +1798,7 @@ def _write_report_and_cleanup_instance_image(
         return
 
     try:
-        client.images.remove(image_name, force=True)
+        remove_image_with_retry(client, image_name)
         logger.info(
             "Report saved for %s; removed instance image %s",
             instance_id,

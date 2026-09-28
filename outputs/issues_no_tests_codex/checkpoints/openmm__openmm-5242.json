@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-5242",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-5242",
+    "model_patch": "diff --git a/tests/TestLocalEnergyMinimizer.h b/tests/TestLocalEnergyMinimizer.h\nindex 6d339f7..4438f35 100644\n--- a/tests/TestLocalEnergyMinimizer.h\n+++ b/tests/TestLocalEnergyMinimizer.h\n@@ -342,6 +342,37 @@ void testReporter() {\n     ASSERT_EQUAL_TOL(state.getPotentialEnergy(), reporter.lastEnergy, 1e-5);\n }\n \n+void testLargeEnergyWithConstraints() {\n+    const int numParticles = 30;\n+    System system;\n+    CustomExternalForce* force = new CustomExternalForce(\"1e8+sin(5*x)+cos(2*y)*(sin(3*z)+1.5)\");\n+    system.addForce(force);\n+    vector<Vec3> positions;\n+    for (int i = 0; i < numParticles; i++) {\n+        system.addParticle(1.0);\n+        force->addParticle(i);\n+        positions.push_back(Vec3(0.5*i, 0.3*sin(i), 0.2*cos(i)));\n+        if (i > 0)\n+            system.addConstraint(i-1, i, 1.0);\n+    }\n+    VerletIntegrator integrator(0.01);\n+    Context context(system, integrator, platform);\n+    context.setPositions(positions);\n+    context.applyConstraints(1e-5);\n+    positions = context.getState(State::Positions).getPositions();\n+\n+    // In single precision, the constant term makes changes in the energy too\n+    // small to represent as a float.  The line search must still make progress.\n+    LocalEnergyMinimizer::minimize(context, 1.0, 100);\n+    vector<Vec3> finalPositions = context.getState(State::Positions).getPositions();\n+    double displacement = 0.0;\n+    for (int i = 0; i < numParticles; i++) {\n+        Vec3 delta = finalPositions[i]-positions[i];\n+        displacement += delta.dot(delta);\n+    }\n+    ASSERT(displacement > 0.01);\n+}\n+\n void runPlatformTests();\n \n int main(int argc, char* argv[]) {\n@@ -354,6 +385,7 @@ int main(int argc, char* argv[]) {\n         testForceGroups();\n         testMasslessParticles();\n         testReporter();\n+        testLargeEnergyWithConstraints();\n         runPlatformTests();\n     }\n     catch(const exception& e) {\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "f8150bde61f920273b8b96083330f5a7d317f2dd26b3f7e9b2968239b4cf2b51",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestLocalEnergyMinimizer.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-5242.jsonl",
+      "trajectory_sha256": "f6eb4c8d97e2c7ff63112ca3c256b29695b02f7f0e4e53b25032c425de2e0a91",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "f6eb4c8d97e2c7ff63112ca3c256b29695b02f7f0e4e53b25032c425de2e0a91",
+    "metrics": {
+      "input_tokens": 583821,
+      "output_tokens": 5021,
+      "cache_read_input_tokens": 517888,
+      "total_tokens": 588842,
+      "wall_time_seconds": 204.463296
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-5242",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestLocalEnergyMinimizer.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-5242.jsonl",
+    "trajectory_sha256": "f6eb4c8d97e2c7ff63112ca3c256b29695b02f7f0e4e53b25032c425de2e0a91",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

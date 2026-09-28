@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-1100",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-1100",
+    "model_patch": "diff --git a/platforms/reference/tests/TestReferenceSettle.cpp b/platforms/reference/tests/TestReferenceSettle.cpp\nindex e63892b..95f3e28 100644\n--- a/platforms/reference/tests/TestReferenceSettle.cpp\n+++ b/platforms/reference/tests/TestReferenceSettle.cpp\n@@ -104,9 +104,36 @@ void testConstraints() {\n     }\n }\n \n+void testScaleneConstraintTriangle() {\n+    System system;\n+    for (int i = 0; i < 3; i++)\n+        system.addParticle(1.0);\n+    system.addConstraint(0, 1, 1.0);\n+    system.addConstraint(0, 2, 1.1);\n+    system.addConstraint(1, 2, 1.2);\n+    LangevinIntegrator integrator(300.0, 1.0, 0.001);\n+    Context context(system, integrator, platform);\n+    vector<Vec3> positions(3);\n+    positions[0] = Vec3(0.0, 0.0, 0.0);\n+    positions[1] = Vec3(0.9, 0.0, 0.0);\n+    positions[2] = Vec3(0.1, 1.0, 0.0);\n+    context.setPositions(positions);\n+    context.applyConstraints(1e-5);\n+\n+    positions = context.getState(State::Positions).getPositions();\n+    for (int i = 0; i < system.getNumConstraints(); i++) {\n+        int particle1, particle2;\n+        double distance;\n+        system.getConstraintParameters(i, particle1, particle2, distance);\n+        Vec3 delta = positions[particle1]-positions[particle2];\n+        ASSERT_EQUAL_TOL(distance, sqrt(delta.dot(delta)), 1e-5);\n+    }\n+}\n+\n int main(int argc, char* argv[]) {\n     try {\n         testConstraints();\n+        testScaleneConstraintTriangle();\n     }\n     catch(const exception& e) {\n         cout << \"exception: \" << e.what() << endl;\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "4e9d987b889b34721b8685f7fb0293d19d933e24136fec8001daabddc1d9dcdd",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/reference/tests/TestReferenceSettle.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-1100.jsonl",
+      "trajectory_sha256": "d0c26f8b9e461089708c4d6297531ef6d9b92c324d91a8584b31e0931c150d93",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "d0c26f8b9e461089708c4d6297531ef6d9b92c324d91a8584b31e0931c150d93",
+    "metrics": {
+      "input_tokens": 622423,
+      "output_tokens": 4566,
+      "cache_read_input_tokens": 572416,
+      "total_tokens": 626989,
+      "wall_time_seconds": 193.201377
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-1100",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/reference/tests/TestReferenceSettle.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-1100.jsonl",
+    "trajectory_sha256": "d0c26f8b9e461089708c4d6297531ef6d9b92c324d91a8584b31e0931c150d93",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

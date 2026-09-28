@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3057",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3057",
+    "model_patch": "diff --git a/platforms/cuda/tests/TestCudaNonbondedForce.cpp b/platforms/cuda/tests/TestCudaNonbondedForce.cpp\nindex 7ee3707..ea2251e 100644\n--- a/platforms/cuda/tests/TestCudaNonbondedForce.cpp\n+++ b/platforms/cuda/tests/TestCudaNonbondedForce.cpp\n@@ -32,6 +32,7 @@\n #include \"CudaTests.h\"\n #include \"TestNonbondedForce.h\"\n #include <cuda.h>\n+#include <cmath>\n #include <string>\n \n void testParallelComputation(NonbondedForce::NonbondedMethod method) {\n@@ -120,6 +121,51 @@ void testReordering() {\n     }\n }\n \n+void testRepeatedSetPositions() {\n+    // Repeatedly replacing all the coordinates can cause the neighbor list to\n+    // be reused even when the displacement since its last construction is very\n+    // large.  In that case excluded, nearly coincident atoms can be evaluated\n+    // as ordinary nonbonded pairs, producing an infinite energy.\n+    const int numMolecules = 125;\n+    System system;\n+    system.setDefaultPeriodicBoxVectors(Vec3(5, 0, 0), Vec3(0, 5, 0), Vec3(0, 0, 5));\n+    NonbondedForce* nonbonded = new NonbondedForce();\n+    nonbonded->setNonbondedMethod(NonbondedForce::PME);\n+    nonbonded->setCutoffDistance(1.0);\n+    system.addForce(nonbonded);\n+    for (int i = 0; i < numMolecules; i++) {\n+        system.addParticle(16.0);\n+        system.addParticle(1.0);\n+        system.addParticle(1.0);\n+        nonbonded->addParticle(-1.0, 0.3, 0.2);\n+        nonbonded->addParticle(0.5, 0.1, 0.0);\n+        nonbonded->addParticle(0.5, 0.1, 0.0);\n+        nonbonded->addException(3*i, 3*i+1, 0.0, 0.1, 0.0);\n+        nonbonded->addException(3*i, 3*i+2, 0.0, 0.1, 0.0);\n+        nonbonded->addException(3*i+1, 3*i+2, 0.0, 0.1, 0.0);\n+    }\n+    VerletIntegrator integrator(0.001);\n+    Context context(system, integrator, platform);\n+    vector<Vec3> positions(3*numMolecules);\n+    double expectedEnergy = 0.0;\n+    for (int frame = 0; frame < 300; frame++) {\n+        for (int i = 0; i < numMolecules; i++) {\n+            int site = (i+37*frame) % numMolecules;\n+            Vec3 center(0.5+(site%5), 0.5+((site/5)%5), 0.5+(site/25));\n+            positions[3*i] = center;\n+            positions[3*i+1] = center+Vec3(0.01, 0, 0);\n+            positions[3*i+2] = center+Vec3(0, 0.01, 0);\n+        }\n+        context.setPositions(positions);\n+        double energy = context.getState(State::Energy).getPotentialEnergy();\n+        ASSERT(std::isfinite(energy));\n+        if (frame == 0)\n+            expectedEnergy = energy;\n+        else\n+            ASSERT_EQUAL_TOL(expectedEnergy, energy, 1e-5);\n+    }\n+}\n+\n void testDeterministicForces() {\n     // Check that the CudaDeterministicForces property works correctly.\n     \n@@ -180,6 +226,7 @@ void runPlatformTests() {\n     testParallelComputation(NonbondedForce::Ewald);\n     testParallelComputation(NonbondedForce::PME);\n     testReordering();\n+    testRepeatedSetPositions();\n     testDeterministicForces();\n     if (canRunHugeTest())\n         testHugeSystem();\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "57235c79ec8ab325728d10e8345116de4f98d4e41c3742cbb61802679055093c",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/cuda/tests/TestCudaNonbondedForce.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3057.jsonl",
+      "trajectory_sha256": "f322c3acefcdfeb328cb55746d72767bd6ee6a223acc9b28296cff846e0d7940",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "f322c3acefcdfeb328cb55746d72767bd6ee6a223acc9b28296cff846e0d7940",
+    "metrics": {
+      "input_tokens": 195623,
+      "output_tokens": 4518,
+      "cache_read_input_tokens": 169728,
+      "total_tokens": 200141,
+      "wall_time_seconds": 136.211391
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3057",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/cuda/tests/TestCudaNonbondedForce.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3057.jsonl",
+    "trajectory_sha256": "f322c3acefcdfeb328cb55746d72767bd6ee6a223acc9b28296cff846e0d7940",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

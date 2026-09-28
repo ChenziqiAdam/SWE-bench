@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-4618",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-4618",
+    "model_patch": "diff --git a/tests/TestMonteCarloFlexibleBarostat.h b/tests/TestMonteCarloFlexibleBarostat.h\nindex a8af6ad..f3d7ee1 100644\n--- a/tests/TestMonteCarloFlexibleBarostat.h\n+++ b/tests/TestMonteCarloFlexibleBarostat.h\n@@ -230,6 +230,42 @@ void testRandomSeed() {\n     }\n }\n \n+void testEnergyAfterRejection() {\n+    System system;\n+    system.setDefaultPeriodicBoxVectors(Vec3(3, 0, 0), Vec3(0, 3, 0), Vec3(0, 0, 3));\n+    system.addParticle(1.0);\n+    system.addParticle(1.0);\n+    HarmonicBondForce* bond = new HarmonicBondForce();\n+    bond->addBond(0, 1, 1.0, 1e10);\n+    system.addForce(bond);\n+    NonbondedForce* nonbonded = new NonbondedForce();\n+    nonbonded->setNonbondedMethod(NonbondedForce::CutoffPeriodic);\n+    nonbonded->setCutoffDistance(0.5);\n+    nonbonded->addParticle(0.0, 1.0, 0.0);\n+    nonbonded->addParticle(0.0, 1.0, 0.0);\n+    system.addForce(nonbonded);\n+    MonteCarloFlexibleBarostat* barostat = new MonteCarloFlexibleBarostat(1.0, 300.0, 1, false);\n+    barostat->setRandomNumberSeed(1);\n+    system.addForce(barostat);\n+\n+    CustomIntegrator integrator(1.0);\n+    integrator.addUpdateContextState();\n+    Context context(system, integrator, platform);\n+    context.setPositions({Vec3(1, 1, 1), Vec3(2, 1, 1)});\n+\n+    // A trial move stretches the very stiff bond and is rejected.  Reapplying\n+    // the restored state forces the energy to be evaluated independently.\n+    integrator.step(1);\n+    State state = context.getState(State::Positions | State::Energy);\n+    Vec3 box[3];\n+    state.getPeriodicBoxVectors(box[0], box[1], box[2]);\n+    context.setPositions(state.getPositions());\n+    context.setPeriodicBoxVectors(box[0], box[1], box[2]);\n+    double recomputedEnergy = context.getState(State::Energy).getPotentialEnergy();\n+    ASSERT_EQUAL_TOL(0.0, recomputedEnergy, 1e-5);\n+    ASSERT_EQUAL_TOL(recomputedEnergy, state.getPotentialEnergy(), 1e-5);\n+}\n+\n void runPlatformTests();\n \n int main(int argc, char* argv[]) {\n@@ -239,6 +275,7 @@ int main(int argc, char* argv[]) {\n         testMoleculeScaling(true);\n         testMoleculeScaling(false);\n         testRandomSeed();\n+        testEnergyAfterRejection();\n         runPlatformTests();\n     }\n     catch(const exception& e) {\n@@ -248,4 +285,3 @@ int main(int argc, char* argv[]) {\n     cout << \"Done\" << endl;\n     return 0;\n }\n-\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "a123cb24c991f437a43ef44774d4afbe7b1aa688a071c0765f6b20b5b81a9180",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestMonteCarloFlexibleBarostat.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-4618.jsonl",
+      "trajectory_sha256": "8903cb9ab63ba169de808b82b06f7fcb763f6e11f1e147d3d6e2c70961d21e29",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "8903cb9ab63ba169de808b82b06f7fcb763f6e11f1e147d3d6e2c70961d21e29",
+    "metrics": {
+      "input_tokens": 1130181,
+      "output_tokens": 6793,
+      "cache_read_input_tokens": 1065984,
+      "total_tokens": 1136974,
+      "wall_time_seconds": 274.819307
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-4618",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestMonteCarloFlexibleBarostat.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-4618.jsonl",
+    "trajectory_sha256": "8903cb9ab63ba169de808b82b06f7fcb763f6e11f1e147d3d6e2c70961d21e29",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

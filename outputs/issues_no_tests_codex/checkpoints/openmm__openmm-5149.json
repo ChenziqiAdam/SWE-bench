@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-5149",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-5149",
+    "model_patch": "diff --git a/wrappers/python/tests/TestPdbxFile.py b/wrappers/python/tests/TestPdbxFile.py\nindex 7ba276f..2e321bf 100644\n--- a/wrappers/python/tests/TestPdbxFile.py\n+++ b/wrappers/python/tests/TestPdbxFile.py\n@@ -55,6 +55,31 @@ class TestPdbxFile(unittest.TestCase):\n                 self.assertEqual('Na', atom.name)\n                 self.assertEqual('Na', atom.residue.name)\n \n+    def testCaseInsensitiveNames(self):\n+        \"\"\"Test that data category and item names are case insensitive.\"\"\"\n+        cif = \"\"\"data_test\n+loop_\n+_atom_site.id\n+_atom_site.type_symbol\n+_atom_site.label_atom_id\n+_atom_site.label_alt_id\n+_atom_site.label_comp_id\n+_atom_site.label_asym_id\n+_atom_site.label_seq_id\n+_atom_site.Cartn_x\n+_atom_site.Cartn_y\n+_atom_site.Cartn_z\n+_atom_site.pdbx_PDB_model_num\n+1 C CA . ALA A 1 12.3 23.4 34.5 1\n+\"\"\"\n+        variants = (cif.replace('Cartn_', 'cartn_'),\n+                    cif.replace('_atom_site.', '_ATOM_SITE.'))\n+        expected = Vec3(1.23, 2.34, 3.45)*nanometers\n+        for contents in variants:\n+            with self.subTest(contents=contents):\n+                pdbx = PDBxFile(StringIO(contents))\n+                self.assertVecAlmostEqual(expected, pdbx.getPositions()[0])\n+\n     def assertVecAlmostEqual(self, p1, p2, tol=1e-7):\n         unit = p1.unit\n         p1 = p1.value_in_unit(unit)\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "87fa1181ec37e4fb315c6d3fecb8fe1b60c5397dcb1e37b56eed8a435e13e43b",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestPdbxFile.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-5149.jsonl",
+      "trajectory_sha256": "1314856e32132d10b551105e2753de99c5f819e616046d06ea9c76777af49fa0",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "1314856e32132d10b551105e2753de99c5f819e616046d06ea9c76777af49fa0",
+    "metrics": {
+      "input_tokens": 200760,
+      "output_tokens": 2331,
+      "cache_read_input_tokens": 177920,
+      "total_tokens": 203091,
+      "wall_time_seconds": 85.091199
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-5149",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestPdbxFile.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-5149.jsonl",
+    "trajectory_sha256": "1314856e32132d10b551105e2753de99c5f819e616046d06ea9c76777af49fa0",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

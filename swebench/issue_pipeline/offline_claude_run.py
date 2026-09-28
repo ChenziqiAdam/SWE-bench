@@ -651,6 +651,10 @@ def _recover_checkpoint(
             or "unittests" in lowered[:-1]
             or any(part in {"testdata", "test_data", "fixtures"} for part in lowered[:-1])
             or (("test" in filename or "tests" in filename) and len(lowered) > 1)
+            # rdkit (and other Catch2 C++ projects) keep unit tests in
+            # shared source files named catch_*.cpp rather than a separate
+            # tests/ directory (e.g. Code/GraphMol/catch_graphmol.cpp).
+            or (filename.startswith("catch_") and len(lowered) > 1)
         )
         if not testish:
             raise ValueError(f"recovered diff path is outside test scope: {path}")

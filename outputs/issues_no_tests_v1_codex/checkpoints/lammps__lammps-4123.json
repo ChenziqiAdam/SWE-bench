@@ -1,0 +1,52 @@
+{
+  "instance_id": "lammps__lammps-4123",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "lammps__lammps-4123",
+    "model_patch": "",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "020b5792f2ab91bb330e7b0cc7bbd23b2597415c15f72c65ce02371e5ceb48c9",
+    "offline_audit": {
+      "status": "failed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "rigid-restart-repro.in",
+        "rigid-restart.restart"
+      ],
+      "disallowed_paths": [
+        "rigid-restart-repro.in",
+        "rigid-restart.restart"
+      ],
+      "trajectory_path": "trajectories/lammps__lammps-4123.jsonl",
+      "trajectory_sha256": "f2131aa8c178cba45cfdde2d68b6d2e84553ddc836f2e7ddcc20b8453b712678",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "f2131aa8c178cba45cfdde2d68b6d2e84553ddc836f2e7ddcc20b8453b712678",
+    "metrics": {
+      "wall_time_seconds": 408.418703
+    },
+    "error": "disallowed_patch_scope"
+  },
+  "audit": {
+    "instance_id": "lammps__lammps-4123",
+    "status": "failed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "rigid-restart-repro.in",
+      "rigid-restart.restart"
+    ],
+    "disallowed_paths": [
+      "rigid-restart-repro.in",
+      "rigid-restart.restart"
+    ],
+    "trajectory_path": "trajectories/lammps__lammps-4123.jsonl",
+    "trajectory_sha256": "f2131aa8c178cba45cfdde2d68b6d2e84553ddc836f2e7ddcc20b8453b712678",
+    "manual_review": "pending",
+    "exit_code": 1
+  }
+}

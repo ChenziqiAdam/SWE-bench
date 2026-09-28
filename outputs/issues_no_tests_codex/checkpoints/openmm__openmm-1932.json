@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-1932",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-1932",
+    "model_patch": "diff --git a/wrappers/python/tests/TestPdbFile.py b/wrappers/python/tests/TestPdbFile.py\nindex ff87a8c..f9ee0e8 100644\n--- a/wrappers/python/tests/TestPdbFile.py\n+++ b/wrappers/python/tests/TestPdbFile.py\n@@ -84,6 +84,27 @@ class TestPdbFile(unittest.TestCase):\n             if atom.index > 2:\n                 self.assertEqual(None, atom.element)\n \n+    def test_WriteFileWithNonconsecutiveResidueAtoms(self):\n+        \"\"\"Positions are indexed by atom index, even when residues are not contiguous.\"\"\"\n+        topology = Topology()\n+        chain = topology.addChain()\n+        residue1 = topology.addResidue('HOH', chain)\n+        residue2 = topology.addResidue('HOH', chain)\n+        topology.addAtom('O1', elem.oxygen, residue1)\n+        topology.addAtom('O2', elem.oxygen, residue2)\n+        topology.addAtom('M', None, residue1)\n+        positions = [Vec3(0, 0, 0), Vec3(1, 0, 0), Vec3(2, 0, 0)]*nanometers\n+\n+        output = StringIO()\n+        PDBFile.writeFile(topology, positions, output)\n+        pdb = PDBFile(StringIO(output.getvalue()))\n+        positionsByName = dict((atom.name, pdb.positions[atom.index])\n+                               for atom in pdb.topology.atoms())\n+\n+        self.assertVecAlmostEqual(Vec3(0, 0, 0)*nanometers, positionsByName['O1'])\n+        self.assertVecAlmostEqual(Vec3(1, 0, 0)*nanometers, positionsByName['O2'])\n+        self.assertVecAlmostEqual(Vec3(2, 0, 0)*nanometers, positionsByName['M'])\n+\n \n     def assertVecAlmostEqual(self, p1, p2, tol=1e-7):\n         unit = p1.unit\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "36e9b9304698956592991e063b15e31ead5af3098bd7b4b2e835abacccc6c1e6",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestPdbFile.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-1932.jsonl",
+      "trajectory_sha256": "c9487c2e40092299b6fdc141bfcd01e2143a54efd33f006dd0175d3e64fd10cb",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "c9487c2e40092299b6fdc141bfcd01e2143a54efd33f006dd0175d3e64fd10cb",
+    "metrics": {
+      "input_tokens": 185475,
+      "output_tokens": 2576,
+      "cache_read_input_tokens": 157440,
+      "total_tokens": 188051,
+      "wall_time_seconds": 72.615881
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-1932",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestPdbFile.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-1932.jsonl",
+    "trajectory_sha256": "c9487c2e40092299b6fdc141bfcd01e2143a54efd33f006dd0175d3e64fd10cb",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "instance_id": "rdkit__rdkit-7990",
+  "finalized": true,
+  "imported": true,
+  "prediction": {
+    "instance_id": "rdkit__rdkit-7990",
+    "model_patch": "diff --git a/Code/GraphMol/Deprotect/Wrap/rough_test.py b/Code/GraphMol/Deprotect/Wrap/rough_test.py\nindex 76125d8..48f3521 100644\n--- a/Code/GraphMol/Deprotect/Wrap/rough_test.py\n+++ b/Code/GraphMol/Deprotect/Wrap/rough_test.py\n@@ -40,6 +40,13 @@ class TestCase(unittest.TestCase):\n     self.assertEqual(list(m2.GetPropsAsDict()[\"DEPROTECTIONS\"]), [\"Boc\", \"Boc\"])\n     self.assertEqual(m2.GetPropsAsDict()[\"DEPROTECTION_COUNT\"], 2)\n \n+  def testBenzylDeprotectionDoesNotMatchPhenylEther(self):\n+    mol = Chem.MolFromSmiles(\"Nc1ccccc1Oc1ccccc1\")\n+    benzyl = next(data for data in rd.GetDeprotections()\n+                  if data.full_name == \"benzyl\")\n+    deprotected = rd.Deprotect(mol, [benzyl])\n+    self.assertEqual(Chem.MolToSmiles(deprotected), Chem.MolToSmiles(mol))\n+\n   def test_examples(self):\n     count = 0\n     for data in rd.GetDeprotections():\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "4303e163b8ee9bb7562d0eb291c1a9930c30a3001bbc3e938a6c21c54b35f49c",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "Code/GraphMol/Deprotect/Wrap/rough_test.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/rdkit__rdkit-7990.jsonl",
+      "trajectory_sha256": "d7b56c535e4282b2fbc0dadc37b0473042d9419d690391011c5fe357388ed28a",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "d7b56c535e4282b2fbc0dadc37b0473042d9419d690391011c5fe357388ed28a",
+    "metrics": {
+      "input_tokens": 191110,
+      "output_tokens": 2230,
+      "cache_read_input_tokens": 146176,
+      "total_tokens": 193340,
+      "wall_time_seconds": 68.66807
+    }
+  },
+  "audit": {
+    "instance_id": "rdkit__rdkit-7990",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "Code/GraphMol/Deprotect/Wrap/rough_test.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/rdkit__rdkit-7990.jsonl",
+    "trajectory_sha256": "d7b56c535e4282b2fbc0dadc37b0473042d9419d690391011c5fe357388ed28a",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

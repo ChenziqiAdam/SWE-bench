@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-1592",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-1592",
+    "model_patch": "diff --git a/tests/TestGBSAOBCForce.h b/tests/TestGBSAOBCForce.h\nindex 0d20ea8..3620588 100644\n--- a/tests/TestGBSAOBCForce.h\n+++ b/tests/TestGBSAOBCForce.h\n@@ -39,6 +39,7 @@\n #include \"SimTKOpenMMRealType.h\"\n #include \"sfmt/SFMT.h\"\n #include <iostream>\n+#include <cmath>\n #include <vector>\n \n using namespace OpenMM;\n@@ -178,6 +179,25 @@ void testCutoffAndPeriodic() {\n     ASSERT_EQUAL_VEC(state3.getForces()[1], Vec3(0, 0, 0), 0.01);\n }\n \n+void testOverlappingParticles() {\n+    System system;\n+    system.addParticle(1.0);\n+    system.addParticle(1.0);\n+    GBSAOBCForce* gbsa = new GBSAOBCForce();\n+    gbsa->addParticle(1.0, 0.15, 1.0);\n+    gbsa->addParticle(-1.0, 0.15, 1.0);\n+    system.addForce(gbsa);\n+    LangevinIntegrator integrator(0, 0.1, 0.01);\n+    Context context(system, integrator, platform);\n+    vector<Vec3> positions(2, Vec3(0, 0, 0));\n+    context.setPositions(positions);\n+    State state = context.getState(State::Forces | State::Energy);\n+    ASSERT(std::isfinite(state.getPotentialEnergy()));\n+    for (int i = 0; i < 2; i++)\n+        for (int j = 0; j < 3; j++)\n+            ASSERT(std::isfinite(state.getForces()[i][j]));\n+}\n+\n void testForce(int numParticles, NonbondedForce::NonbondedMethod method, GBSAOBCForce::NonbondedMethod method2) {\n     ReferencePlatform reference;\n     System system;\n@@ -267,6 +287,7 @@ int main(int argc, char* argv[]) {\n         testSingleParticle();\n         testGlobalSettings();\n         testCutoffAndPeriodic();\n+        testOverlappingParticles();\n         for (int i = 5; i < 11; i++) {\n             testForce(i*i*i, NonbondedForce::NoCutoff, GBSAOBCForce::NoCutoff);\n             testForce(i*i*i, NonbondedForce::CutoffNonPeriodic, GBSAOBCForce::CutoffNonPeriodic);\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "f130bc66aa3f9eecbdd26ef17986a2cd42467c42cf955e8c0ca7891886c45aac",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestGBSAOBCForce.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-1592.jsonl",
+      "trajectory_sha256": "ef3600678c2baf7891a1f2ac27f66bfcc07ba5a1820d1df2f150fe4382862301",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "ef3600678c2baf7891a1f2ac27f66bfcc07ba5a1820d1df2f150fe4382862301",
+    "metrics": {
+      "input_tokens": 859065,
+      "output_tokens": 4520,
+      "cache_read_input_tokens": 782848,
+      "total_tokens": 863585,
+      "wall_time_seconds": 228.433173
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-1592",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestGBSAOBCForce.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-1592.jsonl",
+    "trajectory_sha256": "ef3600678c2baf7891a1f2ac27f66bfcc07ba5a1820d1df2f150fe4382862301",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-4986",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-4986",
+    "model_patch": "diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py\nindex fe32e92..a512c8b 100644\n--- a/wrappers/python/tests/TestForceField.py\n+++ b/wrappers/python/tests/TestForceField.py\n@@ -1538,6 +1538,39 @@ self.scriptExecuted = True\n         energy2 = context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(kilojoules_per_mole)\n         self.assertAlmostEqual(energy1, energy2)\n \n+    def test_CustomManyParticleGeneratorTabulatedFunction(self):\n+        \"\"\"Test a tabulated function in a CustomManyParticleForce.\"\"\"\n+        xml = \"\"\"\n+<ForceField>\n+ <AtomTypes>\n+  <Type name=\"H\" class=\"H\" element=\"H\" mass=\"1\"/>\n+ </AtomTypes>\n+ <Residues>\n+  <Residue name=\"HATOM\">\n+   <Atom name=\"H\" type=\"H\"/>\n+  </Residue>\n+ </Residues>\n+ <CustomManyParticleForce particlesPerSet=\"3\" permutationMode=\"UniqueCentralParticle\" bondCutoff=\"0\" energy=\"table_fn(distance(p1,p2)+table_fn(distance(p1,p3)))\">\n+  <Atom type=\"H\" filterType=\"0\"/>\n+  <Function name=\"table_fn\" type=\"Discrete1D\">0 1 2 3 4 5</Function>\n+ </CustomManyParticleForce>\n+</ForceField>\"\"\"\n+        topology = Topology()\n+        for i in range(3):\n+            chain = topology.addChain()\n+            residue = topology.addResidue('HATOM', chain)\n+            topology.addAtom('H', elem.hydrogen, residue)\n+\n+        system = ForceField(StringIO(xml)).createSystem(topology)\n+        force = next(f for f in system.getForces() if isinstance(f, CustomManyParticleForce))\n+        self.assertEqual(1, force.getNumTabulatedFunctions())\n+        self.assertEqual('table_fn', force.getTabulatedFunctionName(0))\n+\n+        context = Context(system, VerletIntegrator(0.001), Platform.getPlatform('Reference'))\n+        context.setPositions([Vec3(1, 0, 0), Vec3(2, 0, 0), Vec3(3, 0, 0)])\n+        energy = context.getState(getEnergy=True).getPotentialEnergy()\n+        self.assertEqual(8*kilojoules_per_mole, energy)\n+\n     def test_OpcEnergy(self):\n         pdb = PDBFile('systems/opcbox.pdb')\n         topology, positions = pdb.topology, pdb.positions\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "34c139d84ff95213314cbfd203aabc99c7f93f2a7c1c66ab00ccc6dd431d717f",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestForceField.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-4986.jsonl",
+      "trajectory_sha256": "70d10454c993b5faad3a92ab4682a05f0e70d6c94794f6d190d2d9a1bd7e6763",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "70d10454c993b5faad3a92ab4682a05f0e70d6c94794f6d190d2d9a1bd7e6763",
+    "metrics": {
+      "input_tokens": 229003,
+      "output_tokens": 3025,
+      "cache_read_input_tokens": 196608,
+      "total_tokens": 232028,
+      "wall_time_seconds": 87.019659
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-4986",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestForceField.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-4986.jsonl",
+    "trajectory_sha256": "70d10454c993b5faad3a92ab4682a05f0e70d6c94794f6d190d2d9a1bd7e6763",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

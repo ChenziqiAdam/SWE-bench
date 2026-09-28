@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-3442",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-3442",
+    "model_patch": "diff --git a/wrappers/python/tests/TestForceField.py b/wrappers/python/tests/TestForceField.py\nindex f78445a..7a2b841 100644\n--- a/wrappers/python/tests/TestForceField.py\n+++ b/wrappers/python/tests/TestForceField.py\n@@ -1291,5 +1291,47 @@ class AmoebaTestForceField(unittest.TestCase):\n             self.assertTrue(any(isinstance(f, AmoebaMultipoleForce) and\n                                 f.getNonbondedMethod()==methodMap[method]\n                                 for f in forces))\n+\n+    def test_AngleAndStretchBendWithoutOutOfPlaneBend(self):\n+        \"\"\"AMOEBA angle forces do not require an out-of-plane bend section.\"\"\"\n+        xml = \"\"\"\n+<ForceField>\n+ <AtomTypes>\n+  <Type name=\"O\" class=\"O\" element=\"O\" mass=\"15.999\"/>\n+  <Type name=\"H\" class=\"H\" element=\"H\" mass=\"1.008\"/>\n+ </AtomTypes>\n+ <Residues>\n+  <Residue name=\"HOH\">\n+   <Atom name=\"O\" type=\"O\"/>\n+   <Atom name=\"H1\" type=\"H\"/>\n+   <Atom name=\"H2\" type=\"H\"/>\n+   <Bond from=\"0\" to=\"1\"/>\n+   <Bond from=\"0\" to=\"2\"/>\n+  </Residue>\n+ </Residues>\n+ <AmoebaBondForce bond-cubic=\"-25.5\" bond-quartic=\"379.3125\">\n+  <Bond class1=\"O\" class2=\"H\" length=\"0.09572\" k=\"1000\"/>\n+ </AmoebaBondForce>\n+ <AmoebaAngleForce angle-cubic=\"-0.014\" angle-quartic=\"5.6e-05\" angle-pentic=\"-7e-07\" angle-sextic=\"2.2e-08\">\n+  <Angle class1=\"H\" class2=\"O\" class3=\"H\" k=\"0.05\" angle1=\"108.5\"/>\n+ </AmoebaAngleForce>\n+ <AmoebaStretchBendForce stretchBendUnit=\"1.0\">\n+  <StretchBend class1=\"H\" class2=\"O\" class3=\"H\" k1=\"5.0\" k2=\"5.0\"/>\n+ </AmoebaStretchBendForce>\n+</ForceField>\n+\"\"\"\n+        topology = Topology()\n+        residue = topology.addResidue('HOH', topology.addChain())\n+        oxygen = topology.addAtom('O', elem.oxygen, residue)\n+        hydrogen1 = topology.addAtom('H1', elem.hydrogen, residue)\n+        hydrogen2 = topology.addAtom('H2', elem.hydrogen, residue)\n+        topology.addBond(oxygen, hydrogen1)\n+        topology.addBond(oxygen, hydrogen2)\n+\n+        system = ForceField(StringIO(xml)).createSystem(topology)\n+        forces = {force.getName(): force for force in system.getForces()}\n+        self.assertEqual(1, forces['AmoebaAngle'].getNumAngles())\n+        self.assertEqual(1, forces['AmoebaStretchBend'].getNumBonds())\n+\n     def test_Cutoff(self):\n         \"\"\"Test to make sure the nonbondedCutoff parameter is passed correctly.\"\"\"\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "1601b89b50ee5bc14564adf29722fdfee12ef406ebb0f2e58f996546e03ffed7",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestForceField.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-3442.jsonl",
+      "trajectory_sha256": "cfbd0ea82bf6b94b61f9a0f227235c98b74d947feb06fa082f8e461537c7b57b",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "cfbd0ea82bf6b94b61f9a0f227235c98b74d947feb06fa082f8e461537c7b57b",
+    "metrics": {
+      "input_tokens": 296486,
+      "output_tokens": 4135,
+      "cache_read_input_tokens": 270080,
+      "total_tokens": 300621,
+      "wall_time_seconds": 119.999592
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-3442",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestForceField.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-3442.jsonl",
+    "trajectory_sha256": "cfbd0ea82bf6b94b61f9a0f227235c98b74d947feb06fa082f8e461537c7b57b",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

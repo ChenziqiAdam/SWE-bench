@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-2829",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-2829",
+    "model_patch": "diff --git a/tests/TestNonbondedForce.h b/tests/TestNonbondedForce.h\nindex d14de47..6621eb5 100644\n--- a/tests/TestNonbondedForce.h\n+++ b/tests/TestNonbondedForce.h\n@@ -590,5 +590,9 @@ void testHugeSystem() {\n     State state2 = context.getState(State::Energy);\n     context.setPositions(positions3);\n     State state3 = context.getState(State::Energy);\n+    // Moving along the force must lower the energy.  This is a focused check\n+    // for corruption of the OpenCL neighbor list in systems with more than\n+    // 2^21 particles on AMD GPUs.\n+    ASSERT(state3.getPotentialEnergy() < state2.getPotentialEnergy());\n     ASSERT_EQUAL_TOL(state2.getPotentialEnergy(), state3.getPotentialEnergy()+norm*delta, 1e-5)\n }\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "e3e75e9d25850e4f91630c909e6152738782c9aa6e06b05a5b500c2dc1dc3dad",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestNonbondedForce.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-2829.jsonl",
+      "trajectory_sha256": "1d98824bbdea8a1cf358f6b53a7a55b1ad29e7c7c4c41426fbcb3110b9cefb0d",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "1d98824bbdea8a1cf358f6b53a7a55b1ad29e7c7c4c41426fbcb3110b9cefb0d",
+    "metrics": {
+      "input_tokens": 426877,
+      "output_tokens": 3220,
+      "cache_read_input_tokens": 378112,
+      "total_tokens": 430097,
+      "wall_time_seconds": 150.261383
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-2829",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestNonbondedForce.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-2829.jsonl",
+    "trajectory_sha256": "1d98824bbdea8a1cf358f6b53a7a55b1ad29e7c7c4c41426fbcb3110b9cefb0d",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

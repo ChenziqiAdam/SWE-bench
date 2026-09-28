@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-4293",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-4293",
+    "model_patch": "diff --git a/wrappers/python/tests/TestModeller.py b/wrappers/python/tests/TestModeller.py\nindex 1f29bc9..71a1e7f 100644\n--- a/wrappers/python/tests/TestModeller.py\n+++ b/wrappers/python/tests/TestModeller.py\n@@ -1087,6 +1087,55 @@ class TestModeller(unittest.TestCase):\n             self.assertVecAlmostEqual(p1.value_in_unit(nanometers), p2.value_in_unit(nanometers), 1e-6)\n \n \n+    def test_addLocalCoordinatesSiteWithFourParticles(self):\n+        \"\"\"Test adding a local coordinates site defined by four particles.\"\"\"\n+        xml = \"\"\"\n+            <ForceField>\n+             <AtomTypes>\n+              <Type name=\"C\" class=\"C\" element=\"C\" mass=\"12\"/>\n+              <Type name=\"N\" class=\"N\" element=\"N\" mass=\"14\"/>\n+              <Type name=\"O\" class=\"O\" element=\"O\" mass=\"16\"/>\n+              <Type name=\"H\" class=\"H\" element=\"H\" mass=\"1\"/>\n+              <Type name=\"V\" class=\"V\" mass=\"0\"/>\n+             </AtomTypes>\n+             <Residues>\n+              <Residue name=\"Test\">\n+               <Atom name=\"C\" type=\"C\"/>\n+               <Atom name=\"N\" type=\"N\"/>\n+               <Atom name=\"O\" type=\"O\"/>\n+               <Atom name=\"H\" type=\"H\"/>\n+               <Atom name=\"V\" type=\"V\"/>\n+               <VirtualSite type=\"localCoords\" index=\"4\"\n+                 atom1=\"0\" atom2=\"1\" atom3=\"2\" atom4=\"3\"\n+                 wo1=\"0\" wo2=\"0\" wo3=\"0\" wo4=\"1\"\n+                 wx1=\"1\" wx2=\"-1\" wx3=\"0\" wx4=\"0\"\n+                 wy1=\"1\" wy2=\"0\" wy3=\"-1\" wy4=\"0\"\n+                 p1=\"0\" p2=\"0\" p3=\"0\"/>\n+              </Residue>\n+             </Residues>\n+            </ForceField>\"\"\"\n+        ff = ForceField(StringIO(xml))\n+        topology = Topology()\n+        chain = topology.addChain()\n+        residue = topology.addResidue('Test', chain)\n+        topology.addAtom('C', element.carbon, residue)\n+        topology.addAtom('N', element.nitrogen, residue)\n+        topology.addAtom('O', element.oxygen, residue)\n+        topology.addAtom('H', element.hydrogen, residue)\n+        positions = [Vec3(0, 0, 0), Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 1)]*nanometers\n+\n+        modeller = Modeller(topology, positions)\n+        modeller.addExtraParticles(ff)\n+\n+        system = ff.createSystem(modeller.topology)\n+        context = Context(system, VerletIntegrator(1.0))\n+        context.setPositions(modeller.positions)\n+        context.computeVirtualSites()\n+        computed = context.getState(getPositions=True).getPositions()\n+        self.assertVecAlmostEqual(modeller.positions[4].value_in_unit(nanometers),\n+                                  computed[4].value_in_unit(nanometers), 1e-6)\n+\n+\n     def test_multiSiteIon(self):\n         \"\"\"Test adding extra particles whose positions are determined based on bonds.\"\"\"\n         xml = \"\"\"\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "6fb8e43554f56d707888470f462abd7389dbde91d5575a330760a22507b02b08",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "wrappers/python/tests/TestModeller.py"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-4293.jsonl",
+      "trajectory_sha256": "e0efd328de8684524e83bc45c2e8f45c74ff9c3f1c6c4bc187479457e01162d8",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "e0efd328de8684524e83bc45c2e8f45c74ff9c3f1c6c4bc187479457e01162d8",
+    "metrics": {
+      "input_tokens": 116050,
+      "output_tokens": 2956,
+      "cache_read_input_tokens": 75264,
+      "total_tokens": 119006,
+      "wall_time_seconds": 76.78331
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-4293",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "wrappers/python/tests/TestModeller.py"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-4293.jsonl",
+    "trajectory_sha256": "e0efd328de8684524e83bc45c2e8f45c74ff9c3f1c6c4bc187479457e01162d8",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

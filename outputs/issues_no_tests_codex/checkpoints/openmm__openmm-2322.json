@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-2322",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-2322",
+    "model_patch": "diff --git a/tests/TestCustomCentroidBondForce.h b/tests/TestCustomCentroidBondForce.h\nindex 191817a..fae7270 100644\n--- a/tests/TestCustomCentroidBondForce.h\n+++ b/tests/TestCustomCentroidBondForce.h\n@@ -333,6 +333,43 @@ void testPeriodic() {\n     ASSERT_EQUAL_VEC(Vec3(2*0.5*(5.0/12.0), 0, 0), state.getForces()[4], TOL);\n }\n \n+void testPeriodicDistance() {\n+    System system;\n+    for (int i = 0; i < 6; i++)\n+        system.addParticle(1.0);\n+    system.setDefaultPeriodicBoxVectors(Vec3(2, 0, 0), Vec3(0, 3, 0), Vec3(0, 0, 3));\n+    CustomCentroidBondForce* force = new CustomCentroidBondForce(2, \"distance(g1,g2)\");\n+    vector<int> group1, group2;\n+    for (int i = 0; i < 3; i++) {\n+        group1.push_back(i);\n+        group2.push_back(i+3);\n+    }\n+    force->addGroup(group1);\n+    force->addGroup(group2);\n+    vector<int> groups;\n+    groups.push_back(0);\n+    groups.push_back(1);\n+    force->addBond(groups);\n+    force->setUsesPeriodicBoundaryConditions(true);\n+    system.addForce(force);\n+\n+    // The group centers are separated by 2.5 nm along x.  With a 2 nm\n+    // periodic box, distance(g1,g2) should therefore be 0.5 nm.\n+    vector<Vec3> positions(6);\n+    positions[0] = Vec3(1.4, 0, 0);\n+    positions[1] = Vec3(1.5, 0, 0);\n+    positions[2] = Vec3(1.6, 0, 0);\n+    positions[3] = Vec3(-1.1, 0, 0);\n+    positions[4] = Vec3(-1.0, 0, 0);\n+    positions[5] = Vec3(-0.9, 0, 0);\n+\n+    VerletIntegrator integrator(0.01);\n+    Context context(system, integrator, platform);\n+    context.setPositions(positions);\n+    State state = context.getState(State::Energy);\n+    ASSERT_EQUAL_TOL(0.5, state.getPotentialEnergy(), TOL);\n+}\n+\n void testEnergyParameterDerivatives() {\n     System system;\n     system.addParticle(1.0);\n@@ -402,6 +439,7 @@ int main(int argc, char* argv[]) {\n         testCustomWeights();\n         testIllegalVariable();\n         testPeriodic();\n+        testPeriodicDistance();\n         testEnergyParameterDerivatives();\n         runPlatformTests();\n     }\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "546887ad7b8720c7391de182cedd751931860facad11466713403203c56019cf",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "tests/TestCustomCentroidBondForce.h"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-2322.jsonl",
+      "trajectory_sha256": "2ba14913d6c3c442815254455eb7bcffdea7e2a38574a18335bdeecbef9ec80d",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "2ba14913d6c3c442815254455eb7bcffdea7e2a38574a18335bdeecbef9ec80d",
+    "metrics": {
+      "input_tokens": 583366,
+      "output_tokens": 5024,
+      "cache_read_input_tokens": 529152,
+      "total_tokens": 588390,
+      "wall_time_seconds": 179.509848
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-2322",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "tests/TestCustomCentroidBondForce.h"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-2322.jsonl",
+    "trajectory_sha256": "2ba14913d6c3c442815254455eb7bcffdea7e2a38574a18335bdeecbef9ec80d",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}

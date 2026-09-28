@@ -1,0 +1,47 @@
+{
+  "instance_id": "openmm__openmm-2255",
+  "finalized": true,
+  "imported": false,
+  "prediction": {
+    "instance_id": "openmm__openmm-2255",
+    "model_patch": "diff --git a/platforms/opencl/tests/TestOpenCLLocalEnergyMinimizer.cpp b/platforms/opencl/tests/TestOpenCLLocalEnergyMinimizer.cpp\nindex c7012c5..cb764fe 100644\n--- a/platforms/opencl/tests/TestOpenCLLocalEnergyMinimizer.cpp\n+++ b/platforms/opencl/tests/TestOpenCLLocalEnergyMinimizer.cpp\n@@ -31,6 +31,41 @@\n \n #include \"OpenCLTests.h\"\n #include \"TestLocalEnergyMinimizer.h\"\n+#include \"openmm/CustomCompoundBondForce.h\"\n+#include \"openmm/TabulatedFunction.h\"\n+\n+void testTabulatedMapForce() {\n+    System system;\n+    system.addParticle(1.0);\n+    CustomCompoundBondForce* force = new CustomCompoundBondForce(1,\n+            \"select(step(enabled-0.5), -map_k*individual_k*map_potential(i,j,k), 0);\"\n+            \"i=x1*rot00+trn0; j=y1*rot11+trn1; k=z1*rot22+trn2\");\n+    force->addPerBondParameter(\"enabled\");\n+    force->addPerBondParameter(\"individual_k\");\n+    force->addGlobalParameter(\"map_k\", 1.0);\n+    force->addGlobalParameter(\"rot00\", 1.0);\n+    force->addGlobalParameter(\"rot11\", 1.0);\n+    force->addGlobalParameter(\"rot22\", 1.0);\n+    force->addGlobalParameter(\"trn0\", 0.0);\n+    force->addGlobalParameter(\"trn1\", 0.0);\n+    force->addGlobalParameter(\"trn2\", 0.0);\n+    vector<double> values(8);\n+    for (int i = 0; i < 8; i++)\n+        values[i] = (i&1) == 0 ? 0.0 : 1.0;\n+    force->addTabulatedFunction(\"map_potential\", new Continuous3DFunction(2, 2, 2, values, 0, 1, 0, 1, 0, 1));\n+    vector<double> parameters(2, 1.0);\n+    force->addBond(vector<int>(1, 0), parameters);\n+    system.addForce(force);\n+\n+    VerletIntegrator integrator(0.001);\n+    Context context(system, integrator, platform);\n+    context.setPositions(vector<Vec3>(1, Vec3(0.25, 0.5, 0.5)));\n+    LocalEnergyMinimizer::minimize(context, 1.0, 10);\n+    State state = context.getState(State::Energy | State::Forces);\n+    ASSERT(isfinite(state.getPotentialEnergy()));\n+    ASSERT(isfinite(state.getForces()[0][0]));\n+}\n \n void runPlatformTests() {\n+    testTabulatedMapForce();\n }\n",
+    "model_name_or_path": "gpt-5.6-sol",
+    "agent_backend": "codex",
+    "eval_mode": "test_generation",
+    "inference_input_hash": "f6f0235ace967331382e6912807f7574c2b171466dd5fc36567b206968457f61",
+    "offline_audit": {
+      "status": "passed",
+      "network_isolation": "codex_workspace_write_network_disabled",
+      "network_findings": [],
+      "changed_paths": [
+        "platforms/opencl/tests/TestOpenCLLocalEnergyMinimizer.cpp"
+      ],
+      "disallowed_paths": [],
+      "trajectory_path": "trajectories/openmm__openmm-2255.jsonl",
+      "trajectory_sha256": "29fd02b2ba2f9fb8e82c7bbd946068ecc87302d62349388421b49189e17d5972",
+      "manual_review": "pending"
+    },
+    "trajectory_sha256": "29fd02b2ba2f9fb8e82c7bbd946068ecc87302d62349388421b49189e17d5972",
+    "metrics": {
+      "input_tokens": 445616,
+      "output_tokens": 5565,
+      "cache_read_input_tokens": 402688,
+      "total_tokens": 451181,
+      "wall_time_seconds": 203.001218
+    }
+  },
+  "audit": {
+    "instance_id": "openmm__openmm-2255",
+    "status": "passed",
+    "network_isolation": "codex_workspace_write_network_disabled",
+    "network_findings": [],
+    "changed_paths": [
+      "platforms/opencl/tests/TestOpenCLLocalEnergyMinimizer.cpp"
+    ],
+    "disallowed_paths": [],
+    "trajectory_path": "trajectories/openmm__openmm-2255.jsonl",
+    "trajectory_sha256": "29fd02b2ba2f9fb8e82c7bbd946068ecc87302d62349388421b49189e17d5972",
+    "manual_review": "pending",
+    "exit_code": 0
+  }
+}
