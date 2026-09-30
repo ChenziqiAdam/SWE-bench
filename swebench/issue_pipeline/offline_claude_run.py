@@ -641,10 +641,10 @@ def _recover_checkpoint(
     if not patch.strip():
         raise ValueError("recovered patch is empty")
     # Scope-check terminal fallback and protect against malformed capture output.
-    for path in patch_paths:
-        lowered = path.lower().split("/")
-        filename = lowered[-1]
-        testish = (
+    _build_registration_files = {"cmakelists.txt", "meson.build"}
+
+    def _is_testish(lowered: list[str], filename: str) -> bool:
+        return (
             "tests" in lowered[:-1]
             or "test" in lowered[:-1]
             or "unittest" in lowered[:-1]
@@ -655,6 +655,21 @@ def _recover_checkpoint(
             # shared source files named catch_*.cpp rather than a separate
             # tests/ directory (e.g. Code/GraphMol/catch_graphmol.cpp).
             or (filename.startswith("catch_") and len(lowered) > 1)
+        )
+
+    _path_parts = [(path, path.lower().split("/")) for path in patch_paths]
+    # LAMMPS (and similar CMake C/C++ projects) register a new ctest target
+    # from a single top-level cmake/CMakeLists.txt rather than a per-test-
+    # directory one; allow that build-registration edit when it ships
+    # alongside genuine test files in the same patch.
+    _has_sibling_test_edit = any(
+        lowered[-1] not in _build_registration_files and _is_testish(lowered, lowered[-1])
+        for _, lowered in _path_parts
+    )
+    for path, lowered in _path_parts:
+        filename = lowered[-1]
+        testish = _is_testish(lowered, filename) or (
+            filename in _build_registration_files and _has_sibling_test_edit
         )
         if not testish:
             raise ValueError(f"recovered diff path is outside test scope: {path}")
