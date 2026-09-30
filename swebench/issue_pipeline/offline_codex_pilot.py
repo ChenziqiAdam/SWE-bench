@@ -488,14 +488,17 @@ def _run_one(
         error = "attempted_network"
     elif disallowed_paths:
         error = "disallowed_patch_scope"
-    elif not error and turn_limit_exceeded("codex", metrics):
-        error = "turn_limit_exceeded"
-    # A timeout, failed Codex process, network/tool attempt, scope violation, or
-    # turn-limit breach is a finalized empty prediction. Partial patches are
-    # retained only in the isolated checkout/trajectory evidence and are never
-    # scored.
-    if error:
-        patch = ""
+    # Turn-cap breach is only flagged for post-hoc budget analysis; the patch
+    # must still be kept and scored.
+    if turn_limit_exceeded("codex", metrics):
+        metrics["turn_limit_exceeded"] = True
+    # A failed Codex process, network/tool attempt, or scope violation is a
+    # finalized empty prediction; the cleared patch is kept unscored in
+    # ``discarded_patch``. A timeout keeps its patch (as the Claude pilot does)
+    # and stays flagged by ``error == "timeout"``.
+    discarded_patch = ""
+    if error and error != "timeout":
+        discarded_patch, patch = patch, ""
 
     audit = {
         "status": "failed" if error else "passed",
@@ -520,6 +523,10 @@ def _run_one(
     }
     if error:
         record["error"] = error
+    if discarded_patch:
+        # Never lose the agent's work: a patch cleared by an audit/error rule
+        # stays on the record for review and post-hoc recovery, unscored.
+        record["discarded_patch"] = discarded_patch
     return record, {"instance_id": instance_id, **audit, "exit_code": exit_code}
 
 

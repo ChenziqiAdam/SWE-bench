@@ -115,6 +115,7 @@ def test_metrics_recovers_observed_claude_usage_without_terminal_event():
 
     assert metrics_from_stream_json(stream) == {
         "usage_incomplete": True,
+        "output_tokens_undercounted": True,
         "input_tokens": 14,
         "output_tokens": 4,
         "cache_read_input_tokens": 20,
@@ -237,3 +238,13 @@ def test_turn_limit_exceeded_uses_backend_specific_metric_and_cap():
 def test_turn_limit_exceeded_ignores_missing_metric_or_unknown_backend():
     assert turn_limit_exceeded("codex", {}) is False
     assert turn_limit_exceeded("unknown_backend", {"turns": 10_000}) is False
+
+
+def test_terminal_result_records_permission_denial_count():
+    stream = json.dumps({
+        "type": "result",
+        "usage": {"input_tokens": 1, "output_tokens": 2},
+        "permission_denials": [{"tool_name": "Bash"}, {"tool_name": "Bash"}],
+    })
+
+    assert metrics_from_stream_json(stream)["permission_denial_count"] == 2

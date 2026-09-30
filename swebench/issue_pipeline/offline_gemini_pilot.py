@@ -558,10 +558,15 @@ def _run_one(
         error = "attempted_network"
     elif disallowed_paths and error != "quota_limit":
         error = "disallowed_patch_scope"
-    elif not error and turn_limit_exceeded(AGENT_BACKEND, metrics):
-        error = "turn_limit_exceeded"
-    if error:
-        patch = ""
+    # Turn-cap breach is only flagged for post-hoc budget analysis; the patch
+    # must still be kept and scored.
+    if turn_limit_exceeded(AGENT_BACKEND, metrics):
+        metrics["turn_limit_exceeded"] = True
+    # Cleared patches stay unscored in ``discarded_patch``; a timeout keeps its
+    # patch and stays flagged by ``error == "timeout"``.
+    discarded_patch = ""
+    if error and error != "timeout":
+        discarded_patch, patch = patch, ""
 
     audit = {
         "status": "failed" if error else "passed",
@@ -587,4 +592,8 @@ def _run_one(
     }
     if error:
         record["error"] = error
+    if discarded_patch:
+        # Never lose the agent's work: a patch cleared by an audit/error rule
+        # stays on the record for review and post-hoc recovery, unscored.
+        record["discarded_patch"] = discarded_patch
     return record, {"instance_id": instance_id, **audit, "exit_code": exit_code}

@@ -89,6 +89,9 @@ def metrics_from_stream_json(text: str) -> dict:
             observed.get("output_tokens", 0)
         )
         observed["turns"] = len(messages)
+        # Per-message output_tokens in a stream are mid-stream snapshots (about
+        # 1-5% of the final value), so this figure is only a floor.
+        observed["output_tokens_undercounted"] = True
         return observed
 
     obj = candidates[-1]
@@ -97,6 +100,8 @@ def metrics_from_stream_json(text: str) -> dict:
     stats = obj.get("stats") if isinstance(obj.get("stats"), dict) else {}
     usage = obj.get("usage") if isinstance(obj.get("usage"), dict) else stats
     metrics = _usage_metrics(usage)
+    if isinstance(obj.get("permission_denials"), list):
+        metrics["permission_denial_count"] = len(obj["permission_denials"])
     reasoning_tokens = _number(usage.get("reasoning_output_tokens"))
     if reasoning_tokens is not None:
         metrics["reasoning_output_tokens"] = int(reasoning_tokens)

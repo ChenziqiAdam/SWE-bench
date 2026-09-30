@@ -169,3 +169,101 @@ def test_process_launch_error_is_a_final_auditable_result(tmp_path):
     assert prediction["error"] == "process_error"
     assert prediction["model_patch"] == ""
     assert audit["status"] == "failed"
+
+
+def test_turn_limit_breach_is_flagged_but_patch_is_kept(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "--quiet"], cwd=repo, check=True)
+    (repo / "tests").mkdir()
+    (repo / "tests" / "test_x.py").write_text("pass\n")
+    subprocess.run(["git", "add", "."], cwd=repo, check=True)
+    subprocess.run(
+        [
+            "git", "-c", "user.name=Test", "-c", "user.email=test@example.com",
+            "commit", "--quiet", "-m", "base",
+        ],
+        cwd=repo,
+        check=True,
+    )
+    output = tmp_path / "output"
+    (output / "trajectories").mkdir(parents=True)
+
+    events = [{"type": "thread.started"}] + [
+        {"type": "item.completed", "item": {"id": f"m{i}", "type": "agent_message"}}
+        for i in range(61)
+    ] + [{"type": "turn.completed", "usage": {"input_tokens": 10, "output_tokens": 5}}]
+    stdout = "\n".join(json.dumps(event) for event in events) + "\n"
+
+    def over_the_cap(command, **kwargs):
+        (repo / "tests" / "test_x.py").write_text("def test_x():\n    assert True\n")
+        return subprocess.CompletedProcess(command, 0, stdout=stdout, stderr="")
+
+    from swebench.issue_pipeline.offline_codex_pilot import _run_one
+
+    prediction, audit = _run_one(
+        _instance("openmm__openmm-1", "openmm/openmm"),
+        repo,
+        output,
+        "gpt-5.6-sol",
+        1,
+        runner=over_the_cap,
+    )
+    assert prediction["metrics"]["turn_limit_exceeded"] is True
+    assert "error" not in prediction
+    assert "test_x" in prediction["model_patch"]
+    assert audit["status"] == "passed"
+
+
+def _committed_repo(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "--quiet"], cwd=repo, check=True)
+    (repo / "tests").mkdir()
+    (repo / "tests" / "test_x.py").write_text("pass\n")
+    (repo / "source.cpp").write_text("old\n")
+    subprocess.run(["git", "add", "."], cwd=repo, check=True)
+    subprocess.run(
+        [
+            "git", "-c", "user.name=Test", "-c", "user.email=test@example.com",
+            "commit", "--quiet", "-m", "base",
+        ],
+        cwd=repo,
+        check=True,
+    )
+    output = tmp_path / "output"
+    (output / "trajectories").mkdir(parents=True)
+    return repo, output
+
+
+def test_timeout_keeps_patch_and_scope_violation_archives_it(tmp_path):
+    from swebench.issue_pipeline.offline_codex_pilot import _run_one
+
+    repo, output = _committed_repo(tmp_path)
+
+    def timed_out(command, **kwargs):
+        (repo / "tests" / "test_x.py").write_text("def test_x():\n    assert True\n")
+        raise subprocess.TimeoutExpired(command, 1, output="", stderr="")
+
+    prediction, _ = _run_one(
+        _instance("openmm__openmm-1", "openmm/openmm"), repo, output,
+        "gpt-5.6-sol", 1, runner=timed_out,
+    )
+    assert prediction["error"] == "timeout"
+    assert "test_x" in prediction["model_patch"]
+    assert "discarded_patch" not in prediction
+
+    (tmp_path / "second").mkdir()
+    repo2, output2 = _committed_repo(tmp_path / "second")
+
+    def edits_source(command, **kwargs):
+        (repo2 / "source.cpp").write_text("new\n")
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    prediction, _ = _run_one(
+        _instance("openmm__openmm-2", "openmm/openmm"), repo2, output2,
+        "gpt-5.6-sol", 1, runner=edits_source,
+    )
+    assert prediction["error"] == "disallowed_patch_scope"
+    assert prediction["model_patch"] == ""
+    assert "source.cpp" in prediction["discarded_patch"]
