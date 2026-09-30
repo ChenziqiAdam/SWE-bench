@@ -22,7 +22,11 @@ from typing import Any, Callable
 
 from swebench.eval_pipeline.claude_code_inference import _capture_patch
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
-from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json, with_wall_time
+from swebench.eval_pipeline.inference_metrics import (
+    metrics_from_stream_json,
+    turn_limit_exceeded,
+    with_wall_time,
+)
 from swebench.eval_pipeline.inference_security import inference_input_hash
 from swebench.eval_pipeline.prompt_builder import _test_generation_instruction
 
@@ -547,10 +551,15 @@ def _run_one(
         _clean_patch(_strip_artifact_diff_blocks(_capture_patch(repo_dir), scratch_paths))
     )
     changed_paths, disallowed_paths = audit_patch_paths(repo_dir, scratch_paths)
+    metrics = with_wall_time(
+        metrics_from_stream_json(stdout), time.perf_counter() - started
+    )
     if findings and error != "quota_limit":
         error = "attempted_network"
     elif disallowed_paths and error != "quota_limit":
         error = "disallowed_patch_scope"
+    elif not error and turn_limit_exceeded(AGENT_BACKEND, metrics):
+        error = "turn_limit_exceeded"
     if error:
         patch = ""
 
@@ -574,9 +583,7 @@ def _run_one(
         "inference_input_hash": inference_input_hash(instance),
         "offline_audit": audit,
         "trajectory_sha256": trajectory_hash,
-        "metrics": with_wall_time(
-            metrics_from_stream_json(stdout), time.perf_counter() - started
-        ),
+        "metrics": metrics,
     }
     if error:
         record["error"] = error

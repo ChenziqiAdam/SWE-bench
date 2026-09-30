@@ -1,2 +1,0 @@
-task_id,model,status,failure_type,score,full_success,valid_execution,public_score,hidden_score,input_tokens,output_tokens,total_tokens,cost_usd,agent_wall_seconds
-scibench_replication_0008,deepseek-v4-flash,infrastructure_failure,execution,0.0,False,False,0.0,0.0,79941,91297,171238,5.963314999999999,1088.741932

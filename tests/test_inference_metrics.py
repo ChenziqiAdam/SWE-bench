@@ -1,6 +1,9 @@
 import json
 
-from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json
+from swebench.eval_pipeline.inference_metrics import (
+    metrics_from_stream_json,
+    turn_limit_exceeded,
+)
 
 
 def test_metrics_from_claude_result_event():
@@ -220,3 +223,17 @@ def test_metrics_from_antigravity_terminal_result_and_tool_steps():
         "turns": 2,
         "tool_calls": 1,
     }
+
+
+def test_turn_limit_exceeded_uses_backend_specific_metric_and_cap():
+    assert turn_limit_exceeded("claude_code", {"turns": 141}) is True
+    assert turn_limit_exceeded("claude_code", {"turns": 140}) is False
+    assert turn_limit_exceeded("codex", {"model_response_steps_observed": 61}) is True
+    assert turn_limit_exceeded("codex", {"model_response_steps_observed": 60}) is False
+    assert turn_limit_exceeded("agy", {"tool_calls": 351}) is True
+    assert turn_limit_exceeded("agy", {"tool_calls": 350}) is False
+
+
+def test_turn_limit_exceeded_ignores_missing_metric_or_unknown_backend():
+    assert turn_limit_exceeded("codex", {}) is False
+    assert turn_limit_exceeded("unknown_backend", {"turns": 10_000}) is False

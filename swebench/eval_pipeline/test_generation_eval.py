@@ -71,6 +71,59 @@ def _failed(status: str | None) -> bool:
     return status in {TestStatus.FAILED.value, TestStatus.ERROR.value}
 
 
+_ADDED_TEST_NAME_PATTERNS = (
+    re.compile(r"^\+\s*(?:async\s+)?def\s+(test\w*)\s*\("),  # pytest / unittest
+    re.compile(r"^\+\s*class\s+(Test\w*)\b"),
+    re.compile(r"^\+\s*(?:static\s+)?(?:inline\s+)?void\s+(test\w+)\s*\("),  # OpenMM
+    re.compile(r"^\+\s*TEST(?:_F|_P)?\s*\(\s*(\w+)\s*,\s*(\w+)"),  # gtest
+    re.compile(r"^\+\s*TEST_CASE\s*\(\s*\"([^\"]+)\""),  # Catch2
+)
+
+
+def _added_test_names(patch: str) -> frozenset[str]:
+    """Identifiers of tests introduced by a generated patch (best effort)."""
+    names: set[str] = set()
+    for line in (patch or "").splitlines():
+        if line.startswith("+++"):
+            continue
+        for pattern in _ADDED_TEST_NAME_PATTERNS:
+            match = pattern.match(line)
+            if match:
+                for group in match.groups():
+                    names.update(re.findall(r"\w+", group))
+    return frozenset(names)
+
+
+def _mentions_added_test(test_id: str, added_names: frozenset[str]) -> bool:
+    return any(token in added_names for token in re.findall(r"\w+", test_id))
+
+
+def _credit_ctest_wrapped_cases(
+    base_failed: list[str],
+    gold_passed: list[str],
+    gold_status_map: dict[str, str],
+) -> list[str]:
+    """Credit gtest cases hidden behind a passing CTest wrapper.
+
+    ``ctest --output-on-failure`` prints per-case gtest lines only for a
+    failing target. On base the failing target lists ``Suite.case`` names plus
+    the CTest name; on gold the target passes and only the CTest name is
+    recorded, so the ``Suite.case`` names would look "not passed". When gold
+    has a passed wrapper and no failure at all, the target's own cases all
+    passed, so cases missing from the gold map are credited as passed.
+    """
+    if not any(_passed(s) for s in gold_status_map.values()) or any(
+        _failed(s) for s in gold_status_map.values()
+    ):
+        return gold_passed
+    hidden = [
+        t
+        for t in base_failed
+        if t not in gold_status_map and "." in t and "::" not in t
+    ]
+    return sorted(set(gold_passed) | set(hidden))
+
+
 def classify_test_generation_result(
     base_status_map: dict[str, str],
     gold_status_map: dict[str, str],
@@ -90,8 +143,16 @@ def classify_test_generation_result(
     base_build_failed: bool = False,
     gold_build_failed: bool = False,
     unsupported_generated_test: bool = False,
+    added_test_names: frozenset[str] | None = None,
 ) -> dict:
-    """Classify strict SWT-Bench-style test-generation results."""
+    """Classify strict SWT-Bench-style test-generation results.
+
+    When ``added_test_names`` is given, only base failures that belong to tests
+    authored in the generated patch are scored. Pre-existing tests that fail
+    for environment reasons (and fail identically with the gold patch) no
+    longer veto an otherwise valid fail-to-pass test. If no failing test can
+    be attributed to the patch, every base failure is scored as before.
+    """
     failure_reason = ""
     if non_evaluable:
         status = "excluded"
@@ -180,10 +241,20 @@ def classify_test_generation_result(
         failure_reason = "no_parseable_test_status"
     else:
         base_failed = sorted(t for t, s in base_status_map.items() if _failed(s))
-        gold_passed = sorted(t for t in base_failed if _passed(gold_status_map.get(t)))
+        scored = base_failed
+        if added_test_names:
+            authored = [
+                t for t in base_failed if _mentions_added_test(t, added_test_names)
+            ]
+            if authored:
+                scored = authored
+        gold_passed = sorted(t for t in scored if _passed(gold_status_map.get(t)))
+        gold_passed = _credit_ctest_wrapped_cases(
+            scored, gold_passed, gold_status_map
+        )
         status = (
             "resolved"
-            if base_failed and len(gold_passed) == len(base_failed)
+            if scored and len(gold_passed) == len(scored)
             else "unresolved"
         )
         failure_reason = "" if status == "resolved" else (
@@ -194,6 +265,7 @@ def classify_test_generation_result(
             "failure_reason": failure_reason,
             "base_failed_tests": base_failed,
             "gold_passed_tests": gold_passed,
+            "scored_tests": scored,
         }
     return {
         "status": status,
@@ -229,6 +301,10 @@ def _infrastructure_failure_output(output: str) -> bool:
             "pocl_llvm_build.cc:",
             "LLVM ERROR: Cannot select:",
             "error: cannot convert ‘PyObject*’",
+            # Compiler process killed by the kernel (out of memory) during
+            # the whole-project build, unrelated to the generated test.
+            "Killed signal terminated program cc1",
+            "internal compiler error: Killed",
         )
     )
     pocl_runtime_failure = (
@@ -1709,6 +1785,11 @@ def _run_script(container, script_text: str, log_dir: Path, name: str, timeout: 
         timeout,
     )
     (log_dir / f"{name}.log").write_text(output)
+    if len(output) > 200_000:
+        # Long build logs push the actual test output to the end. Some log
+        # copies were cut at 256 KiB (verdicts were fine, but unauditable), so
+        # keep the tail, where results live, in a separate small file.
+        (log_dir / f"{name}.tail.log").write_text(output[-100_000:])
     return output, timed_out
 
 
@@ -1992,6 +2073,7 @@ def _evaluate_one(
                 UNSUPPORTED_GENERATED_TEST in base_output
                 or UNSUPPORTED_GENERATED_TEST in gold_output
             ),
+            added_test_names=_added_test_names(generated_patch),
         )
         report = {
             instance_id: {

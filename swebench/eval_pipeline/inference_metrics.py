@@ -200,3 +200,27 @@ def with_wall_time(metrics: dict | None, elapsed_seconds: float) -> dict:
     result = dict(metrics or {})
     result["wall_time_seconds"] = round(max(0.0, elapsed_seconds), 6)
     return result
+
+
+# Per-backend turn caps. Different CLIs report agent effort under different
+# metric names and at different scales (Claude Code's num_turns, Codex's
+# model_response_steps_observed proxy, antigravity/Gemini's tool_calls, since
+# its "turns" field is always 1), so a single global threshold is not
+# comparable across backends. Each entry was set from the p95 of that
+# backend's Issues_No_Tests final-run trajectories, rounded up with headroom
+# so normally-converging runs are not misclassified as runaway loops.
+TURN_LIMITS: dict[str, tuple[str, int]] = {
+    "claude_code": ("turns", 140),
+    "codex": ("model_response_steps_observed", 60),
+    "agy": ("tool_calls", 350),
+}
+
+
+def turn_limit_exceeded(agent_backend: str, metrics: dict) -> bool:
+    """Return True if metrics show the agent exceeded its backend's turn cap."""
+    limit = TURN_LIMITS.get(agent_backend)
+    if limit is None:
+        return False
+    metric_name, cap = limit
+    value = metrics.get(metric_name)
+    return isinstance(value, (int, float)) and value > cap

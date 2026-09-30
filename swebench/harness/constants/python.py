@@ -1584,7 +1584,10 @@ _ASTROPY_PRE4_GEN_SPEC = {
 }
 _ASTROPY_4X_GEN_SPEC = {
     "python": "3.8",
-    "install": "python -m pip install -e .[test] --verbose",
+    # Build against the pinned numpy 1.19.5 from pre_install. With PEP 517
+    # build isolation pip pulls a newer numpy for the C extensions, which then
+    # fail at import ("compiled against API version 0x10 ... numpy is 0xd").
+    "install": "python -m pip install -e .[test] --verbose --no-build-isolation",
     "pre_install": [
         "python -m pip install 'setuptools<60' 'setuptools_scm<7' wheel "
         "'Cython<3' 'numpy==1.19.5'",
@@ -1957,7 +1960,10 @@ _MNE_LEGACY_SPEC = {
         "pytest-cov",
         "numpy==1.22.4",
         "scipy==1.8.1",
-        "matplotlib==3.5.3",
+        # mne 0.24 widgets still pass SpanSelector(rectprops=...); matplotlib
+        # >=3.5 emits a MatplotlibDeprecationWarning for it, which mne's
+        # filterwarnings=error turns into failures of otherwise valid tests.
+        "matplotlib==3.4.3",
         "scikit-learn==1.1.3",
         "pooch==1.7.0",
         "decorator==5.1.1",

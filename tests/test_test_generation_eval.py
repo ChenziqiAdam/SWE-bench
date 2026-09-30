@@ -1,6 +1,8 @@
 import json
 import sys
 
+import pytest
+
 from swebench.eval_pipeline.prompt_builder import build_agent_prompt
 from swebench.harness.constants.c import SPECS_OPENMM
 from swebench.eval_pipeline.test_generation_eval import (
@@ -32,6 +34,15 @@ from swebench.eval_pipeline.test_generation_eval import (
     run_test_generation_evaluation,
 )
 from swebench.eval_pipeline.run_pipeline import parse_args
+
+
+# These tests pin curated specs of OpenMM PRs (1382, 2255, 2829, 3872, 3923)
+# that were dropped from the evaluated set (commit 42c5705); the current
+# SPECS_OPENMM entries for them are generic defaults, so the assertions no
+# longer describe anything that is run.
+_STALE_OPENMM_PR = pytest.mark.skip(
+    reason="OpenMM PR spec was removed from the curated instance set"
+)
 
 
 def test_test_generation_prompt_requests_tests_only():
@@ -343,6 +354,7 @@ def test_openmm_opencl_specs_apply_portable_pocl_cpu_compatibility():
     )
 
 
+@_STALE_OPENMM_PR
 def test_openmm_opencl_specs_supply_cl_make_version_compatibility():
     spec = SPECS_OPENMM["3872"]
 
@@ -356,6 +368,7 @@ def test_openmm_opencl_specs_supply_cl_make_version_compatibility():
     )
 
 
+@_STALE_OPENMM_PR
 def test_openmm_gpu_only_specs_request_real_gpu_runtime():
     for pr in ("2255",):
         spec = SPECS_OPENMM[pr]
@@ -365,6 +378,7 @@ def test_openmm_gpu_only_specs_request_real_gpu_runtime():
         assert "NVIDIA" in spec_text or "CUDA" in spec_text
 
 
+@_STALE_OPENMM_PR
 def test_openmm_real_gpu_specs_request_gpu_docker_run_args():
     for pr in ("1640", "2152", "2829", "4364", "5302"):
         spec = SPECS_OPENMM[pr]
@@ -373,6 +387,7 @@ def test_openmm_real_gpu_specs_request_gpu_docker_run_args():
         assert spec["docker_specs"]["run_args"]["gpu"] is True, pr
 
 
+@_STALE_OPENMM_PR
 def test_openmm_native_python_specs_pin_numpy_one_x():
     commands = "\n".join(SPECS_OPENMM["3923"]["pre_install"])
 
@@ -407,6 +422,7 @@ def test_every_openmm_opencl_spec_has_runtime_and_header_compatibility():
             )
 
 
+@_STALE_OPENMM_PR
 def test_openmm_opencl_retarget_writes_compat_header_before_configure():
     # SPECS_OPENMM["1382"] declares the compat-header printf before its cmake
     # configure line, but the patch-driven retargeting used to reorder
@@ -1553,6 +1569,7 @@ def test_openmm_cuda_only_generated_test_without_cuda_spec_is_non_evaluable():
     assert plan.failure_reason == "non_evaluable_spec"
 
 
+@_STALE_OPENMM_PR
 def test_openmm_opencl_retarget_preserves_runtime_prefix():
     patch = """diff --git a/platforms/opencl/tests/TestOpenCLCustomExternalForce.cpp b/platforms/opencl/tests/TestOpenCLCustomExternalForce.cpp
 --- a/platforms/opencl/tests/TestOpenCLCustomExternalForce.cpp
@@ -1571,6 +1588,7 @@ def test_openmm_opencl_retarget_preserves_runtime_prefix():
     assert "NVIDIA_OPENCL_UNAVAILABLE" in plan.commands[0]
 
 
+@_STALE_OPENMM_PR
 def test_openmm_gpu_opencl_spec_pins_and_validates_nvidia_icd():
     spec = SPECS_OPENMM["1382"]
 
@@ -1707,6 +1725,7 @@ def test_openmm_gold_fix_touching_reference_platform_is_still_evaluable():
     assert plan.build_targets == ("TestReferenceNonbondedForce",)
 
 
+@_STALE_OPENMM_PR
 def test_openmm_native_python_spec_patches_swig_source_not_build_copy():
     # CMake copies wrappers/python/src/swig_doxygen/swig_lib/python/extend.i
     # fresh into the build tree on every configure/build. The old sed target
@@ -1917,3 +1936,118 @@ def test_evaluation_rejects_runaway_cached_patch(monkeypatch, tmp_path):
     assert result["status"] == "errored"
     assert result["failure_reason"] == "prediction_patch_too_large"
     assert "11 bytes" in result["error"]
+
+
+def test_passing_ctest_wrapper_credits_hidden_gtest_cases():
+    # lammps-4407: base prints gtest cases for the failing target, gold only
+    # records the passing CTest wrapper name.
+    result = classify_test_generation_result(
+        {
+            "FixDeform": "FAILED",
+            "FixDeformTest.RemapVTiltStaysBoundedAndFlips": "FAILED",
+        },
+        {"FixDeform": "PASSED"},
+        True,
+        True,
+    )
+    assert result["status"] == "resolved"
+    assert result["failure_reason"] == ""
+
+
+def test_ctest_wrapper_credit_requires_no_gold_failure():
+    # lammps-4861: one gtest case still fails on gold, so no credit.
+    result = classify_test_generation_result(
+        {
+            "FixRHEO": "FAILED",
+            "FixRHEOTest.RhoSumSelfMass": "FAILED",
+            "FixRHEOTest.RhoSumSelfMassFollowedByKeyword": "FAILED",
+        },
+        {
+            "FixRHEO": "FAILED",
+            "FixRHEOTest.RhoSumSelfMass": "FAILED",
+            "FixRHEOTest.RhoSumSelfMassFollowedByKeyword": "PASSED",
+        },
+        True,
+        True,
+    )
+    assert result["status"] == "unresolved"
+    assert result["failure_reason"] == "gold_did_not_pass"
+
+
+def test_ctest_wrapper_credit_does_not_apply_to_pytest_ids():
+    result = classify_test_generation_result(
+        {"tests/test_a.py::test_x": "FAILED"},
+        {"other": "PASSED"},
+        True,
+        True,
+    )
+    assert result["status"] == "unresolved"
+
+
+def test_added_test_names_cover_pytest_gtest_openmm_and_catch2():
+    from swebench.eval_pipeline.test_generation_eval import _added_test_names
+
+    patch = (
+        "+++ b/x\n"
+        "+def test_plot_epochs_drop():\n"
+        "+    class TestFoo:\n"
+        "+TEST_F(FixPourTest, TimestepChanged) {\n"
+        "+void testEnergyAfterRejection() {\n"
+        '+TEST_CASE("mmff force field") {\n'
+    )
+    names = _added_test_names(patch)
+    assert {"test_plot_epochs_drop", "FixPourTest", "TimestepChanged"} <= names
+    assert "testEnergyAfterRejection" in names and "mmff" in names
+
+
+def test_preexisting_env_failures_do_not_veto_a_valid_new_test():
+    # mne-9459 pattern: three old tests fail identically on base and gold
+    # (environment), the newly authored test fails on base and passes on gold.
+    base = {f"t.py::old_{i}": "FAILED" for i in range(3)}
+    gold = dict(base)
+    base["t.py::test_new_behaviour"] = "FAILED"
+    gold["t.py::test_new_behaviour"] = "PASSED"
+    kwargs = dict(test_patch_applied=True, gold_patch_applied=True)
+    strict = classify_test_generation_result(base, gold, **kwargs)
+    assert strict["status"] == "unresolved"
+    scored = classify_test_generation_result(
+        base, gold, added_test_names=frozenset({"test_new_behaviour"}), **kwargs
+    )
+    assert scored["status"] == "resolved"
+    assert scored["scored_tests"] == ["t.py::test_new_behaviour"]
+
+
+def test_authored_test_failing_on_gold_still_unresolved_with_scoring():
+    base = {"t.py::test_new": "FAILED", "t.py::test_new_b": "FAILED"}
+    gold = {"t.py::test_new": "PASSED", "t.py::test_new_b": "FAILED"}
+    result = classify_test_generation_result(
+        base,
+        gold,
+        True,
+        True,
+        added_test_names=frozenset({"test_new", "test_new_b"}),
+    )
+    assert result["status"] == "unresolved"
+    assert result["failure_reason"] == "gold_did_not_pass"
+
+
+def test_unattributable_failures_fall_back_to_strict_scoring():
+    result = classify_test_generation_result(
+        {"AtomicPairStyle:foo": "FAILED"},
+        {"AtomicPairStyle:foo": "FAILED"},
+        True,
+        True,
+        added_test_names=frozenset({"unrelated"}),
+    )
+    assert result["status"] == "unresolved"
+
+
+def test_ctest_credit_still_applies_when_only_gtest_cases_are_scored():
+    result = classify_test_generation_result(
+        {"FixPour": "FAILED", "FixPourTest.TimestepChanged": "FAILED"},
+        {"FixPour": "PASSED"},
+        True,
+        True,
+        added_test_names=frozenset({"FixPourTest", "TimestepChanged"}),
+    )
+    assert result["status"] == "resolved"

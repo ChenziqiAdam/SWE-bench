@@ -26,6 +26,27 @@ def test_final_selection_maps_88_rows_to_84_unique_instances():
     assert Counter(item["repo"] for item in instances) == full.DATASET_PROFILES["final"]["repos"]
 
 
+def test_quota_attempt_is_archived_and_left_pending(tmp_path):
+    trajectory = tmp_path / "trajectories"
+    trajectory.mkdir()
+    instance_id = "example-1"
+    (trajectory / f"{instance_id}.jsonl").write_text(
+        json.dumps({"type": "error", "message": "You've hit your usage limit."}) + "\n"
+    )
+    (trajectory / f"{instance_id}.stderr.log").write_text("stderr\n")
+    (trajectory / f"{instance_id}.command.json").write_text("[]\n")
+    prediction = {
+        "instance_id": instance_id,
+        "error": "codex_exit_1",
+        "offline_audit": {"trajectory_path": f"trajectories/{instance_id}.jsonl"},
+    }
+    assert full._is_quota_failure(tmp_path, prediction)
+    full._archive_quota_trajectory(tmp_path, instance_id)
+    archive = next((tmp_path / "quota_attempt_archive" / instance_id).iterdir())
+    assert len(list(archive.iterdir())) == 3
+    assert not list(trajectory.iterdir())
+
+
 def test_real_v1_selection_maps_37_rows_to_35_unique_instances():
     instances = full.select_full_instances(
         ROOT / "Issues_No_Tests_v1.xlsx",
@@ -377,3 +398,34 @@ def test_manual_rejection_empties_final_patch_without_overwriting_checkpoint(tmp
     assert full._load_checkpoints(tmp_path, ["case"])["case"]["prediction"][
         "model_patch"
     ] == "raw patch"
+
+
+def test_rejected_review_preserves_failed_network_check(tmp_path):
+    (tmp_path / "checkpoints").mkdir()
+    (tmp_path / "trajectories").mkdir()
+    instances = [{"instance_id": "case"}]
+    trajectory = "trajectory\n"
+    (tmp_path / "trajectories/case.jsonl").write_text(trajectory)
+    digest = hashlib.sha256(trajectory.encode()).hexdigest()
+    prediction, audit = _result("case", digest)
+    checkpoints = {"case": {
+        "instance_id": "case", "finalized": True, "imported": False,
+        "prediction": prediction, "audit": audit,
+    }}
+    full._write_review_files(tmp_path, instances, checkpoints, review_all=True)
+    review = json.loads((tmp_path / "manual_review.json").read_text())
+    review["cases"][0].update({
+        "review_status": "rejected",
+        "no_network_attempt_verified": False,
+        "no_prohibited_inputs_verified": True,
+        "patch_scope_verified": True,
+        "review_notes": "CMake attempted a network download.",
+    })
+    full._atomic_json(tmp_path / "manual_review.json", review)
+    finalized = full._finalize_manual_reviews(
+        tmp_path, instances, checkpoints, model="gpt-6-sol", timeout=900
+    )
+    assert finalized[0]["error"] == "manual_review_rejected"
+    assert finalized[0]["offline_audit"]["manual_review_checks"][
+        "no_network_attempt_verified"
+    ] is False

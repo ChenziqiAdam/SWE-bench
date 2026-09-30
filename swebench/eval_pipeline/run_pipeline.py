@@ -1788,7 +1788,10 @@ def main():
         logger.info(f"Loaded {len(instances)} instances")
 
         # Backfill file_contents for instances that were ingested before this field existed
-        missing_fc = [i for i in instances if not i.get("file_contents")]
+        missing_fc = (
+            [i for i in instances if not i.get("file_contents")]
+            if not args.skip_inference else []
+        )
         if missing_fc:
             logger.info(f"Backfilling file_contents for {len(missing_fc)} instances...")
             from swebench.eval_pipeline.instance_builder import _fetch_file_contents, write_instances_jsonl
@@ -1945,36 +1948,39 @@ def main():
             f"non-empty FAIL_TO_PASS"
         )
 
-    # ── Stage 2.8: Issue media download ──────────────────────────────────────
-    from swebench.eval_pipeline.media_assets import attach_issue_media
-    from swebench.eval_pipeline.instance_builder import write_instances_jsonl
+    if not args.skip_inference:
+        # ── Stage 2.8: Issue media download ──────────────────────────────────
+        from swebench.eval_pipeline.media_assets import attach_issue_media
+        from swebench.eval_pipeline.instance_builder import write_instances_jsonl
 
-    instances = attach_issue_media(instances, output_dir=output_dir, github_token=github_token)
-    if Path(instances_path).exists():
-        full_on_disk = []
-        with open(instances_path) as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    full_on_disk.append(json.loads(line))
-        by_id = {i["instance_id"]: i for i in instances}
-        merged = [by_id.get(i["instance_id"], i) for i in full_on_disk]
-        on_disk_ids = {i["instance_id"] for i in full_on_disk}
-        for i in instances:
-            if i["instance_id"] not in on_disk_ids:
-                merged.append(i)
-        write_instances_jsonl(merged, instances_path)
+        instances = attach_issue_media(instances, output_dir=output_dir, github_token=github_token)
+        if Path(instances_path).exists():
+            full_on_disk = []
+            with open(instances_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        full_on_disk.append(json.loads(line))
+            by_id = {i["instance_id"]: i for i in instances}
+            merged = [by_id.get(i["instance_id"], i) for i in full_on_disk]
+            on_disk_ids = {i["instance_id"] for i in full_on_disk}
+            for i in instances:
+                if i["instance_id"] not in on_disk_ids:
+                    merged.append(i)
+            write_instances_jsonl(merged, instances_path)
 
-    # ── Stage 3: Prompt Building ──────────────────────────────────────────────
-    logger.info("=== Stage 3: Building prompts ===")
-    from swebench.eval_pipeline.prompt_builder import build_all_prompts
-    all_prompts = build_all_prompts(instances, eval_mode=args.eval_mode)
+        # ── Stage 3: Prompt Building ──────────────────────────────────────────
+        logger.info("=== Stage 3: Building prompts ===")
+        from swebench.eval_pipeline.prompt_builder import build_all_prompts
+        all_prompts = build_all_prompts(instances, eval_mode=args.eval_mode)
 
-    prompts_path = output_dir / "agent_prompts.jsonl"
-    prompt_count = _write_prompts_preserving_unselected(
-        prompts_path, all_prompts, preserve_existing=bool(filter_ids)
-    )
-    logger.info(f"Wrote {prompt_count} agent prompts → {prompts_path}")
+        prompts_path = output_dir / "agent_prompts.jsonl"
+        prompt_count = _write_prompts_preserving_unselected(
+            prompts_path, all_prompts, preserve_existing=bool(filter_ids)
+        )
+        logger.info(f"Wrote {prompt_count} agent prompts → {prompts_path}")
+    else:
+        logger.info("Skipping media, source-content backfill, and prompt preparation with inference")
 
     # ── Stage 4: Inference (agent-only) ───────────────────────────────────────
     if not args.skip_inference and not evaluation_failure:

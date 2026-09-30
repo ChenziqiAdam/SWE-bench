@@ -991,6 +991,10 @@ for _spec in SPECS_RDKIT.values():
 
 def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
     """Build LAMMPS after applying an agent-generated regression-test patch."""
+    # Agents register new tests next to existing ones in unittest/*/CMakeLists.txt,
+    # which are largely gated by ``if(PKG_MOLECULE)``; always enable MOLECULE so
+    # a correctly written registration is not silently skipped (unknown target).
+    packages = tuple(dict.fromkeys(("MOLECULE", *packages)))
     package_flags = " ".join(f"-D PKG_{package}=ON" for package in packages)
     kokkos_flags = "-D BUILD_KOKKOS=ON -D Kokkos_ENABLE_SERIAL=ON" if kokkos else ""
     # Generated regressions frequently use add_mpi_test() even when the issue
@@ -1006,6 +1010,9 @@ def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
             f"ocl-icd-opencl-dev{mpi_packages}",
         ],
         "build_after_test_patch": [
+            # The container runs as root; Open MPI's mpiexec refuses that
+            # unless overridden, which fails every add_mpi_test() target.
+            "export OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1",
             *(["git submodule update --init --recursive lib/kokkos"] if kokkos else []),
             "cmake -S cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=Release "
             f"-D BUILD_MPI=ON -D ENABLE_TESTING=ON "
@@ -1047,7 +1054,6 @@ SPECS_LAMMPS = {
     "4507": _lammps_test_generation_spec("REAXFF", "OPENMP"),
     "4485": _lammps_test_generation_spec("EXTRA-PAIR"),
     "3129": _lammps_test_generation_spec("GPU"),
-    "597": _lammps_test_generation_spec("GPU"),
     "4319": _lammps_test_generation_spec("GPU"),
     "4370": _lammps_test_generation_spec("BPM", "GRANULAR", "SPH"),
     "4152": _lammps_test_generation_spec(),
@@ -1135,6 +1141,13 @@ SPECS_QGIS.update(
 # fenics/dolfinx: PR 1264 (2020) touches cpp/dolfinx/fem/assemble_vector_impl.h.
 # DOLFINx needs the full FEniCS stack (basix, ufl, ffcx, PETSc/MPI); use the
 # upstream dolfinx dev image once pinned.
+# lammps#597: 2017 commit has no cmake/ or unittest/ tree ("CMake Error: The
+# source directory /testbed/cmake does not exist"), so no generated test can be
+# built by the generic spec. Excluded until a make-based build is curated.
+SPECS_LAMMPS["597"] = _not_evaluable_c(
+    "lammps", "597", "commit predates cmake/ and unittest/; needs make-based build"
+)
+
 SPECS_DOLFINX = {
     "1264": _not_evaluable_c(
         "dolfinx", "1264",

@@ -21,6 +21,8 @@ import json
 import logging
 from pathlib import Path
 
+from swebench.eval_pipeline.known_env_issues import env_note, ignored_reason
+
 logger = logging.getLogger(__name__)
 
 AGENT = "agent"
@@ -310,7 +312,9 @@ def render_test_generation_table(
     build_validation = build_validation or {}
     nonempty = _load_nonempty_prediction_ids(predictions_path)
     predictions = _load_predictions(predictions_path)
-    statuses = ("resolved", "unresolved", "excluded", "not_exercised", "errored", "no-pred")
+    statuses = (
+        "resolved", "unresolved", "excluded", "ignored", "not_exercised", "errored", "no-pred"
+    )
 
     rows = []
     for instance_id in sorted(meta.keys()):
@@ -342,6 +346,11 @@ def render_test_generation_table(
         infrastructure_failure = not buildable
         if infrastructure_failure:
             status = "excluded"
+        # Known environment limitations are never charged to the model; a real
+        # "resolved" is kept as is.
+        ignored = ignored_reason(instance_id)
+        if ignored and status != "resolved":
+            status = "ignored"
         metrics = prediction.get("metrics") or info.get(
             "inference_metrics"
         ) or {}
@@ -358,7 +367,9 @@ def render_test_generation_table(
             "base_failed_tests": len(info.get("base_failed_tests") or []),
             "gold_passed_tests": len(info.get("gold_passed_tests") or []),
             "failure_reason": (
-                "base_image_not_buildable"
+                "known_env_limitation"
+                if status == "ignored"
+                else "base_image_not_buildable"
                 if infrastructure_failure
                 else info.get("failure_reason", "")
                 or ("inference_error" if empty_inference_failed else "")
@@ -384,6 +395,8 @@ def render_test_generation_table(
             "evaluation_wall_time_seconds": info.get("evaluation_wall_time_seconds", ""),
             "base_test_wall_time_seconds": info.get("base_test_wall_time_seconds", ""),
             "gold_test_wall_time_seconds": info.get("gold_test_wall_time_seconds", ""),
+            "ignored_reason": ignored if status == "ignored" else "",
+            "env_note": env_note(instance_id),
         })
 
     Path(output_csv).parent.mkdir(parents=True, exist_ok=True)
@@ -416,6 +429,8 @@ def render_test_generation_table(
         "evaluation_wall_time_seconds",
         "base_test_wall_time_seconds",
         "gold_test_wall_time_seconds",
+        "ignored_reason",
+        "env_note",
     ]
     with open(output_csv, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -459,7 +474,8 @@ def render_test_generation_table(
         print(f"  PIPELINE FAILURE: {pipeline_failure}")
     print(
         f"  resolved={counts['resolved']}  unresolved={counts['unresolved']}  "
-        f"excluded={counts['excluded']}  not_exercised={counts['not_exercised']}  "
+        f"excluded={counts['excluded']}  ignored={counts['ignored']}  "
+        f"not_exercised={counts['not_exercised']}  "
         f"errored={counts['errored']}  no-pred={counts['no-pred']}"
     )
     def _sum(field: str) -> float:
