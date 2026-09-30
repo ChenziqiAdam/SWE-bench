@@ -113,3 +113,24 @@ def test_nested_patch_fixture_is_not_treated_as_root_scratch(tmp_path, pilot):
     assert scratch_paths == set()
     assert filtered == captured
     assert "diff --git a/tests/fixtures/expected.patch" in filtered
+
+
+@pytest.mark.parametrize("pilot", PILOT_MODULES)
+def test_untracked_scratch_noise_is_dropped_but_source_files_still_veto(
+    tmp_path, pilot
+):
+    _init_repo(tmp_path)
+    (tmp_path / "tests" / "test_science.py").write_text("old\nnew assertion\n")
+    hidden = tmp_path / ".regrbuild"
+    hidden.mkdir()
+    (hidden / "Makefile").write_text("x\n")
+    (tmp_path / "rigid-restart-repro.in").write_text("units lj\n")
+    (tmp_path / "helper_impl.cpp").write_text("int main(){}\n")
+
+    noise = pilot._untracked_scratch_noise_paths(tmp_path)
+    assert noise == {".regrbuild/Makefile", "rigid-restart-repro.in"}
+    captured = pilot._capture_patch(tmp_path)
+    filtered = pilot._strip_build_artifact_diff_blocks(captured, scratch_paths=noise)
+    assert ".regrbuild" not in filtered and "repro.in" not in filtered
+    _paths, disallowed = pilot.audit_patch_paths(tmp_path, scratch_paths=noise)
+    assert disallowed == ["helper_impl.cpp"]

@@ -498,3 +498,28 @@ def test_coverage_no_prediction_reports_repository_scope_and_inference_error(tmp
         row = next(csv.DictReader(handle))
     assert row["coverage_scope"] == "repository"
     assert row["failure_reason"] == "claude exited with code 1: missing prompt"
+
+
+def test_known_env_limitation_is_ignored_not_scored(tmp_path):
+    import csv
+
+    output_csv = tmp_path / "out.csv"
+    instances = [
+        {"instance_id": "lammps__lammps-597", "repo": "lammps/lammps"},
+        {"instance_id": "qutip__qutip-1195", "repo": "qutip/qutip"},
+        {"instance_id": "a__a-1", "repo": "a/a"},
+    ]
+    results = {
+        "lammps__lammps-597": {"status": "unresolved", "failure_reason": "generated_test_did_not_build_on_gold"},
+        "qutip__qutip-1195": {"status": "unresolved", "failure_reason": "gold_did_not_pass"},
+        "a__a-1": {"status": "resolved"},
+    }
+    render_test_generation_table(results, instances, str(output_csv))
+    rows = {r["instance_id"]: r for r in csv.DictReader(open(output_csv))}
+    assert rows["lammps__lammps-597"]["status"] == "ignored"
+    assert rows["lammps__lammps-597"]["failure_reason"] == "known_env_limitation"
+    assert "cmake" in rows["lammps__lammps-597"]["ignored_reason"]
+    # noted but still scored
+    assert rows["qutip__qutip-1195"]["status"] == "unresolved"
+    assert "half-integer" in rows["qutip__qutip-1195"]["env_note"]
+    assert rows["a__a-1"]["status"] == "resolved"

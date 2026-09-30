@@ -176,5 +176,6 @@ outputs/
 scripts/
 
 paper_replication_tasks/
+.sanitizer_eval_workspace/
 AGENTS.md
 CLAUDE.md

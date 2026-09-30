@@ -106,6 +106,40 @@ ABNORMAL_FILE_COUNT = 3
 MANIFEST_VERSION = 2
 
 
+class QuotaLimitStop(RuntimeError):
+    """Leave quota-limited instances pending so a later resume can retry them."""
+
+
+def _is_quota_failure(output_dir: Path, prediction: dict) -> bool:
+    if prediction.get("error") != "codex_exit_1":
+        return False
+    path = output_dir / prediction["offline_audit"]["trajectory_path"]
+    for line in path.read_text().splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if event.get("type") not in {"error", "turn.failed"}:
+            continue
+        error = event.get("error")
+        message = event.get("message") or (
+            error.get("message", "") if isinstance(error, dict) else str(error or "")
+        )
+        if "usage limit" in message.lower() or "quota" in message.lower():
+            return True
+    return False
+
+
+def _archive_quota_trajectory(output_dir: Path, instance_id: str) -> None:
+    parent = output_dir / "quota_attempt_archive" / instance_id
+    parent.mkdir(parents=True, exist_ok=True)
+    archive = Path(tempfile.mkdtemp(prefix="attempt_", dir=parent))
+    for suffix in (".jsonl", ".stderr.log", ".command.json"):
+        source = output_dir / "trajectories" / f"{instance_id}{suffix}"
+        if source.exists():
+            shutil.move(str(source), archive / source.name)
+
+
 def _sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -617,19 +651,25 @@ def _finalize_manual_reviews(
         status = review.get("review_status")
         if status not in {"approved", "rejected"}:
             raise ValueError(f"manual review pending for {instance_id}")
-        for field in (
+        check_fields = (
             "no_network_attempt_verified",
             "no_prohibited_inputs_verified",
             "patch_scope_verified",
-        ):
-            if review.get(field) is not True:
-                raise ValueError(f"manual review {field} is not verified for {instance_id}")
+        )
+        for field in check_fields:
+            if not isinstance(review.get(field), bool):
+                raise ValueError(f"manual review {field} is missing for {instance_id}")
+            if status == "approved" and review[field] is not True:
+                raise ValueError(f"approved manual review {field} is false for {instance_id}")
         expected_hash = checkpoint["prediction"]["trajectory_sha256"]
         if review.get("trajectory_sha256") != expected_hash:
             raise ValueError(f"manual review trajectory hash mismatch for {instance_id}")
 
         prediction = json.loads(json.dumps(checkpoint["prediction"]))
         prediction["offline_audit"]["manual_review"] = status
+        prediction["offline_audit"]["manual_review_checks"] = {
+            field: review[field] for field in check_fields
+        }
         prediction["manual_review"] = {
             "status": status,
             "notes": review.get("review_notes", ""),
@@ -645,6 +685,9 @@ def _finalize_manual_reviews(
         finalized.append(prediction)
         audit = json.loads(json.dumps(checkpoint["audit"]))
         audit["manual_review"] = status
+        audit["manual_review_checks"] = {
+            field: review[field] for field in check_fields
+        }
         audit["manual_review_notes"] = review.get("review_notes", "")
         audit_cases.append(audit)
 
@@ -719,6 +762,7 @@ def run_full(
     try:
         for start in range(0, len(pending), wave_size):
             wave = pending[start : start + wave_size]
+            quota_ids: list[str] = []
             for prediction, audit in _run_wave(
                 wave,
                 checkout_root,
@@ -728,6 +772,10 @@ def run_full(
                 workers=workers,
                 github_token=github_token,
             ):
+                if _is_quota_failure(output_dir, prediction):
+                    _archive_quota_trajectory(output_dir, prediction["instance_id"])
+                    quota_ids.append(prediction["instance_id"])
+                    continue
                 _save_checkpoint(
                     output_dir,
                     prediction,
@@ -736,6 +784,11 @@ def run_full(
                     ordered_ids,
                     model=model,
                     timeout=timeout,
+                )
+            if quota_ids:
+                raise QuotaLimitStop(
+                    f"Codex usage limit hit for {quota_ids}; attempts archived. "
+                    "Resume after quota is available."
                 )
     finally:
         shutil.rmtree(checkout_root, ignore_errors=True)

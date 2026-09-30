@@ -33,7 +33,11 @@ from typing import Any, Callable, Iterable
 from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
 from swebench.eval_pipeline.claude_code_inference import _capture_patch, _claude_bin
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
-from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json, with_wall_time
+from swebench.eval_pipeline.inference_metrics import (
+    metrics_from_stream_json,
+    turn_limit_exceeded,
+    with_wall_time,
+)
 from swebench.eval_pipeline.inference_security import (
     inference_input_hash,
     inference_worktree_root,
@@ -97,6 +101,26 @@ _NETWORK_COMMAND_PATTERNS = (
 # WebSearch/WebFetch are Claude Code's built-in web tools; disallow them
 # explicitly via --disallowedTools in addition to auditing for their use.
 DISALLOWED_TOOLS = ("WebSearch", "WebFetch")
+
+# In noninteractive ``-p`` mode ``--permission-mode acceptEdits`` denies every
+# Bash command outside a small read-only allowlist, so the agent could not run
+# cmake/make/g++/pytest to check its own test, while codex (``--sandbox
+# workspace-write`` + ``approval_policy=never``) could. Mirror codex: enable
+# Claude Code's OS sandbox and auto-allow Bash inside it (writes limited to the
+# working directory, network blocked). Verified with a probe: cmake runs,
+# writes outside the workspace are refused, curl gets 403. Set
+# SWEBENCH_CLAUDE_SANDBOX=0 to reproduce the old no-Bash behaviour.
+SANDBOX_ENV = "SWEBENCH_CLAUDE_SANDBOX"
+SANDBOX_SETTINGS = json.dumps(
+    {
+        "sandbox": {
+            "enabled": True,
+            "autoAllowBashIfSandboxed": True,
+            "allowUnsandboxedCommands": False,
+        }
+    },
+    separators=(",", ":"),
+)
 
 
 @dataclass(frozen=True)
@@ -174,6 +198,8 @@ def claude_command(model: str = MODEL, effort: str | None = None) -> list[str]:
         "--disallowedTools",
         ",".join(DISALLOWED_TOOLS),
     ]
+    if os.environ.get(SANDBOX_ENV, "1") != "0":
+        command += ["--settings", SANDBOX_SETTINGS]
     if effort is not None:
         command += ["--effort", effort]
     return command
@@ -257,6 +283,39 @@ def _untracked_root_scratch_paths(repo_dir: Path) -> set[str]:
         and "/" not in path
         and path.lower().endswith(_SCRATCH_PATCH_EXTENSIONS)
     }
+
+
+# Files an agent leaves behind while experimenting: hidden top-level build or
+# scratch directories (e.g. ".regrbuild/") and root-level data/log/restart
+# files that are not source code (e.g. "rigid-restart-repro.in"). They are
+# neither a test nor a production change, so they are dropped from the
+# submitted patch instead of voiding the whole prediction as
+# disallowed_patch_scope. Untracked source files outside test locations still
+# fail the scope audit.
+_SOURCE_SUFFIXES = (
+    ".c", ".cc", ".cpp", ".cxx", ".cu", ".h", ".hh", ".hpp", ".hxx", ".py",
+    ".pyx", ".f", ".f90", ".f95", ".jl", ".rs", ".java", ".cmake", ".sh",
+)
+
+
+def _untracked_scratch_noise_paths(repo_dir: Path) -> set[str]:
+    result = subprocess.run(
+        ["git", "ls-files", "--others", "--exclude-standard", "-z"],
+        cwd=repo_dir,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    noise = set()
+    for path in result.stdout.split("\0"):
+        if not path:
+            continue
+        parts = path.split("/")
+        if parts[0].startswith("."):
+            noise.add(path)
+        elif len(parts) == 1 and not path.lower().endswith(_SOURCE_SUFFIXES):
+            noise.add(path)
+    return noise
 
 
 def _is_build_artifact_path(parts: list[str], filename: str) -> bool:
@@ -378,6 +437,11 @@ def _write_jsonl(path: Path, rows: Iterable[dict]) -> None:
     path.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows))
 
 
+# 429 plus transient server-side rejections (529 "Overloaded" ended several
+# opus5 instances as a permanent claude_exit_1 with an empty prediction).
+_TRANSIENT_API_STATUSES = frozenset({"429", "500", "502", "503", "529"})
+
+
 def detect_rate_limit(stdout: str) -> bool:
     """Detect a subscription session-limit rejection in a Claude CLI stream.
 
@@ -403,7 +467,8 @@ def detect_rate_limit(stdout: str) -> bool:
             if isinstance(info, dict) and info.get("status") == "rejected":
                 saw_rejected_status = True
         if event.get("type") == "result" and (
-            event.get("error") == "rate_limit" or event.get("api_error_status") == 429
+            event.get("error") == "rate_limit"
+            or str(event.get("api_error_status")) in _TRANSIENT_API_STATUSES
         ):
             saw_result_rate_limit = True
     return saw_rejected_status or saw_result_rate_limit
@@ -460,7 +525,9 @@ def _run_one(
     if error and detect_rate_limit(stdout):
         error = "rate_limit"
     findings = audit_trajectory(stdout)
-    scratch_paths = _untracked_root_scratch_paths(repo_dir)
+    scratch_paths = _untracked_root_scratch_paths(repo_dir) | _untracked_scratch_noise_paths(
+        repo_dir
+    )
     patch = _repair_patch(
         _clean_patch(
             _strip_build_artifact_diff_blocks(
@@ -472,11 +539,18 @@ def _run_one(
         repo_dir, scratch_paths=scratch_paths
     )
 
+    metrics = with_wall_time(
+        metrics_from_stream_json(stdout), time.perf_counter() - started
+    )
+
     if findings:
         error = "attempted_network"
         patch = ""
     elif disallowed_paths:
         error = "disallowed_patch_scope"
+        patch = ""
+    elif not error and turn_limit_exceeded(AGENT_BACKEND, metrics):
+        error = "turn_limit_exceeded"
         patch = ""
 
     audit = {
@@ -498,9 +572,7 @@ def _run_one(
         "inference_input_hash": inference_input_hash(instance),
         "offline_audit": audit,
         "trajectory_sha256": trajectory_hash,
-        "metrics": with_wall_time(
-            metrics_from_stream_json(stdout), time.perf_counter() - started
-        ),
+        "metrics": metrics,
     }
     if error:
         record["error"] = error

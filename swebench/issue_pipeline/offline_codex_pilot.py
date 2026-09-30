@@ -20,7 +20,11 @@ import openpyxl
 from swebench.eval_pipeline.agent_inference import _clone_repo_at_commit
 from swebench.eval_pipeline.codex_inference import _capture_patch, _codex_bin
 from swebench.eval_pipeline.inference import _clean_patch, _repair_patch
-from swebench.eval_pipeline.inference_metrics import metrics_from_stream_json, with_wall_time
+from swebench.eval_pipeline.inference_metrics import (
+    metrics_from_stream_json,
+    turn_limit_exceeded,
+    with_wall_time,
+)
 from swebench.eval_pipeline.inference_security import (
     inference_input_hash,
     inference_worktree_root,
@@ -289,6 +293,39 @@ def _untracked_root_scratch_paths(repo_dir: Path) -> set[str]:
     }
 
 
+# Files an agent leaves behind while experimenting: hidden top-level build or
+# scratch directories (e.g. ".regrbuild/") and root-level data/log/restart
+# files that are not source code (e.g. "rigid-restart-repro.in"). They are
+# neither a test nor a production change, so they are dropped from the
+# submitted patch instead of voiding the whole prediction as
+# disallowed_patch_scope. Untracked source files outside test locations still
+# fail the scope audit.
+_SOURCE_SUFFIXES = (
+    ".c", ".cc", ".cpp", ".cxx", ".cu", ".h", ".hh", ".hpp", ".hxx", ".py",
+    ".pyx", ".f", ".f90", ".f95", ".jl", ".rs", ".java", ".cmake", ".sh",
+)
+
+
+def _untracked_scratch_noise_paths(repo_dir: Path) -> set[str]:
+    result = subprocess.run(
+        ["git", "ls-files", "--others", "--exclude-standard", "-z"],
+        cwd=repo_dir,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    noise = set()
+    for path in result.stdout.split("\0"):
+        if not path:
+            continue
+        parts = path.split("/")
+        if parts[0].startswith("."):
+            noise.add(path)
+        elif len(parts) == 1 and not path.lower().endswith(_SOURCE_SUFFIXES):
+            noise.add(path)
+    return noise
+
+
 def _is_build_artifact_path(parts: list[str], filename: str) -> bool:
     """Recognize generated build-directory/bytecode noise from running or
     compiling the codebase (e.g. `cmake -B build-regression`, `__pycache__`),
@@ -447,7 +484,9 @@ def _run_one(
     stderr_path.write_text(stderr)
     trajectory_hash = hashlib.sha256(stdout.encode()).hexdigest()
     findings = audit_trajectory(stdout)
-    scratch_paths = _untracked_root_scratch_paths(repo_dir)
+    scratch_paths = _untracked_root_scratch_paths(repo_dir) | _untracked_scratch_noise_paths(
+        repo_dir
+    )
     patch = _repair_patch(
         _clean_patch(
             _strip_build_artifact_diff_blocks(
@@ -461,13 +500,20 @@ def _run_one(
         repo_dir, scratch_paths=scratch_paths
     )
 
+    metrics = with_wall_time(
+        metrics_from_stream_json(stdout), time.perf_counter() - started
+    )
+
     if findings:
         error = "attempted_network"
     elif disallowed_paths:
         error = "disallowed_patch_scope"
-    # A timeout, failed Codex process, network/tool attempt, or scope violation is
-    # a finalized empty prediction. Partial patches are retained only in the
-    # isolated checkout/trajectory evidence and are never scored.
+    elif not error and turn_limit_exceeded("codex", metrics):
+        error = "turn_limit_exceeded"
+    # A timeout, failed Codex process, network/tool attempt, scope violation, or
+    # turn-limit breach is a finalized empty prediction. Partial patches are
+    # retained only in the isolated checkout/trajectory evidence and are never
+    # scored.
     if error:
         patch = ""
 
@@ -490,9 +536,7 @@ def _run_one(
         "inference_input_hash": inference_input_hash(instance),
         "offline_audit": audit,
         "trajectory_sha256": trajectory_hash,
-        "metrics": with_wall_time(
-            metrics_from_stream_json(stdout), time.perf_counter() - started
-        ),
+        "metrics": metrics,
     }
     if error:
         record["error"] = error
