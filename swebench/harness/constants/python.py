@@ -1507,20 +1507,48 @@ _QISKIT_CYTHON_SPEC = {
         "retworkx==0.11.0",
         "python-constraint>=1.4",
         "python-dateutil",
+        # requirements-optional.txt's 'visualization' extra
+        # (matplotlib>=2.1) is never installed by the plain `pip install
+        # -e .` above, so qiskit.visualization.bloch's unconditional
+        # `from matplotlib import get_backend` raises ModuleNotFoundError
+        # for any test that imports visualization code at all (4803/5166).
+        # Pin to the same 3.5.3 used elsewhere for this numpy==1.21.6 era.
+        "matplotlib==3.5.3",
+        # requirements.txt at this era pins only "networkx>=2.2" (no upper
+        # bound); this DAG code still uses the pre-2.4 G.node alias for
+        # G.nodes, which networkx removed in 2.4 (Dec 2019, after this PR).
+        # Unpinned resolves to networkx 3.x -> AttributeError: 'MultiDiGraph'
+        # object has no attribute 'node'.
+        "networkx<2.4",
+        # qiskit.test.decorators (imported transitively by
+        # qiskit.test.QiskitTestCase, which many of this era's test files
+        # subclass) imports qiskit.test.http_recorder -> vcr.persisters at
+        # module load time; without it collection fails on any test file
+        # touching QiskitTestCase, not just ones using the recorder.
+        "vcrpy",
     ],
     "validation_cmd": "python -c 'import ddt; import qiskit'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
+# qiskit#845 (2018, terra 0.6.0): setup.py.in is normally turned into setup.py
+# by a CMake configure step that also builds the optional C++ QASM simulator.
+# But `setup.py.in`'s own `QasmSimulatorCppBuild.run()` wraps that cmake/make
+# invocation in try/except and only warns on failure -- the C++ simulator was
+# always best-effort, never required for `pip install`. The only real CMake
+# templating is `${QISKIT_VERSION}` -> the contents of qiskit/VERSION.txt, so
+# substitute that by hand and skip CMake/a C++ toolchain entirely.
 SPECS_QISKIT["845"] = {
-    "python": "3.8",
-    "install": "true",
-    "test_cmd": (
-        "echo 'qiskit#845 not evaluable: terra 0.6.0 setup.py.in + CMake "
-        "C++ simulator build needs curation' && false"
+    "python": "3.6",
+    "install": (
+        "sed \"s/\\${QISKIT_VERSION}/$(cat qiskit/VERSION.txt)/\" "
+        "setup.py.in > setup.py && "
+        "python -m pip install -e . --no-build-isolation"
     ),
-    "_curation_todo": "terra 0.6.0 CMake C++ simulator build",
+    "pip_packages": ["pytest"],
+    "validation_cmd": "python -c 'import qiskit'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
@@ -1530,9 +1558,34 @@ SPECS_QISKIT.update(
 SPECS_QISKIT.update(
     {
         pr: dict(_QISKIT_TEST_GENERATION_SPEC)  # setuptools-rust / PyO3 era
-        for pr in ("8447", "10866", "15604", "16103")
+        for pr in ("10866", "15604")
     }
 )
+# 8447 (2022-2023) still requires the legacy C++ `tweedledum` QASM3-import
+# backend (removed in later Terra releases); tweedledum's last PyPI release
+# (1.1.1) ships wheels only up to cp310, so building it from source under
+# the shared spec's Python 3.11 needs `skbuild`/cmake and isn't worth it --
+# just use Python 3.10, which has a prebuilt wheel (verified via
+# `pip download tweedledum==1.1.1 --python-version 310/311
+# --only-binary=:all:`: 310 succeeds, 311 has no matching distribution).
+# qiskit's own setup.py at this commit only requires python_requires=">=3.7".
+SPECS_QISKIT["8447"] = {**_QISKIT_TEST_GENERATION_SPEC, "python": "3.10"}
+# 16103 (2026, newest PyO3 core) is the only one of the four whose
+# pyproject.toml pins `setuptools-rust==1.12.0` exactly and whose setup.py
+# monkeypatches `setuptools_rust.build.build_rust.install_extension` with a
+# wrapper matching that version's 2-arg (self, ext, dylib_paths) signature
+# (see https://github.com/PyO3/setuptools-rust/pull/574, cited in the
+# repo's own setup.py comment). The shared spec's unpinned `setuptools-rust`
+# resolves to a newer release whose internal `install_extension` call site
+# passes a 3rd `artifact_dir` argument, so the patched method raises
+# `TypeError: install_extension() takes 3 positional arguments but 4 were
+# given`. 8447/10866/15604 leave setuptools-rust unpinned in their own
+# pyproject.toml and have no such monkeypatch, so they still use the
+# shared (unpinned) spec above.
+SPECS_QISKIT["16103"] = {
+    **_QISKIT_TEST_GENERATION_SPEC,
+    "pip_packages": ["pytest", "setuptools-rust==1.12.0", "ddt==1.7.2"],
+}
 
 # qutip:
 #  - 1058 (2019, QuTiP 4.4): Cython at setup import; reuse the legacy 4.x
@@ -1582,9 +1635,46 @@ _ASTROPY_PRE4_GEN_SPEC = {
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
+# 5612/6045/6400 predate the pytest-astropy-header/pytest-astropy/
+# pytest-remotedata split off of astropy core (that family only starts
+# matching astropy's own APIs again at ~8111): at these three base commits
+# astropy/conftest.py still does `from .tests.pytest_plugins import *`,
+# which itself registers --remote-data/--open-files/--doctest-plus and the
+# doctest_plus/open_files_ignore ini options read from setup.cfg's [pytest]
+# section. Installing the external packages on top duplicates that
+# registration (pytest_astropy_header 0.1's display.py imports the
+# nonexistent `astropy.tests.plugins.display` -> ModuleNotFoundError; pluggy
+# then raises "option names {'--remote-data'} already added" once the
+# duplicate loads far enough). Verified via `git show <base_commit>:...` on
+# all three commits: no astropy/tests/plugins/ package, no [tool:pytest]/
+# [pytest] ini keys beyond what the bundled plugin itself provides.
+_ASTROPY_PRE_PLUGIN_SPLIT_GEN_SPEC = {
+    **_ASTROPY_PRE4_GEN_SPEC,
+    "pip_packages": [
+        pkg
+        for pkg in _ASTROPY_PRE4_GEN_SPEC["pip_packages"]
+        if pkg.split("==")[0]
+        not in {
+            "pytest-arraydiff",
+            "pytest-astropy",
+            "pytest-astropy-header",
+            "pytest-doctestplus",
+            "pytest-filter-subpackage",
+            "pytest-openfiles",
+            "pytest-remotedata",
+        }
+    ],
+}
 _ASTROPY_4X_GEN_SPEC = {
     "python": "3.8",
-    "install": "python -m pip install -e .[test] --verbose",
+    # `.[test]` pulls in hypothesis/pytest-mpl/matplotlib with no numpy
+    # upper bound, which silently upgrades numpy past 1.19.5 and breaks
+    # astropy.units.quantity_helper's `np.asscalar` usage (removed in
+    # numpy>=1.24). Re-pin numpy back down immediately afterward.
+    "install": (
+        "python -m pip install -e .[test] --verbose "
+        "&& python -m pip install 'numpy==1.19.5'"
+    ),
     "pre_install": [
         "python -m pip install 'setuptools<60' 'setuptools_scm<7' wheel "
         "'Cython<3' 'numpy==1.19.5'",
@@ -1617,9 +1707,12 @@ _ASTROPY_5X_GEN_SPEC = {
 }
 SPECS_ASTROPY.update(
     {
-        pr: dict(_ASTROPY_PRE4_GEN_SPEC)
-        for pr in ("5612", "6045", "6400", "8108", "8111")
+        pr: dict(_ASTROPY_PRE_PLUGIN_SPLIT_GEN_SPEC)
+        for pr in ("5612", "6045", "6400")
     }
+)
+SPECS_ASTROPY.update(
+    {pr: dict(_ASTROPY_PRE4_GEN_SPEC) for pr in ("8108", "8111")}
 )
 SPECS_ASTROPY["9079"] = dict(_ASTROPY_4X_GEN_SPEC)
 SPECS_ASTROPY.update(
@@ -1628,8 +1721,30 @@ SPECS_ASTROPY.update(
 
 # pyscf: setup.py runs CMake at install to build/download libcint + libxc
 # (needs a compiler, gfortran, cmake, BLAS and network). PRs touch only
-# Python.  551 = pyscf 1.7.1 (2020); 794/1143/1164/1219 = 2021-2022
-# (classifiers py3.6-3.9).
+# Python.
+#  - 551 (pyscf 1.7.1, 2020) & 794 (pyscf 1.7.5, 2021 -- verified via
+#    `git show <base_commit>:pyscf/__init__.py`; despite the PR merge year,
+#    794 is the *same* pre-2.0 generation as 551, not "2021-2022 (2X)" as
+#    previously assumed) never auto-fetch libcint/libxc at `pip install`
+#    time -- that only starts in pyscf 2.x's pyscf/lib/CMakeLists.txt-driven
+#    ExternalProject build. Their own README's documented install path is
+#    `cd pyscf/lib; mkdir build; cd build; cmake ..; make` first (which
+#    downloads+builds libcint/libxc/xcfun under pyscf/lib/deps), then
+#    `pip install -e .`; setup.py's search_lib_path() already checks
+#    pyscf/lib/deps/lib for libcint, but for BLAS it only ever checks
+#    numpy's (empty, for a PyPI wheel) blas_opt library_dirs plus
+#    $LD_LIBRARY_PATH/$PYSCF_INC_DIR -- never default system paths -- so
+#    apt's libblas.so/liblapack.so (real files, confirmed via `dpkg -L
+#    libblas-dev`) still need to be pointed to explicitly.
+#  - 1143/1164/1219 (pyscf 2.0.1, 2021-2022) use the newer
+#    pyscf/lib/CMakeLists.txt auto-fetch at `pip install -e .` time.
+# Both eras' bundled CMakeLists.txt declare `cmake_minimum_required(VERSION
+# 2.8)`, which CMake >=4.0 refuses outright ("Compatibility with CMake < 3.5
+# has been removed"). The previous `pip install ... cmake` pulled in
+# whatever the latest PyPI `cmake` wheel is (4.4.3 as of this run) ahead of
+# apt's older cmake (3.22.1, still fully compatible with VERSION 2.8) on
+# PATH -- dropping it from pip_packages/pre_install fixes both eras without
+# needing a `-DCMAKE_POLICY_VERSION_MINIMUM=` workaround.
 _PYSCF_BASE_PRE_INSTALL = [
     "apt-get update -q",
     "apt-get install -y --no-install-recommends "
@@ -1638,8 +1753,54 @@ _PYSCF_BASE_PRE_INSTALL = [
 _PYSCF_17_GEN_SPEC = {
     "python": "3.8",
     "pre_install": _PYSCF_BASE_PRE_INSTALL
-    + ["python -m pip install 'numpy==1.21.6' 'setuptools<60' wheel cmake"],
-    "install": "python -m pip install -e . --no-build-isolation",
+    + [
+        "python -m pip install 'numpy==1.21.6' 'setuptools<60' wheel",
+        # pyscf/lib's own CMakeLists.txt fetches libxc 4.3.4 from
+        # http://www.sunqm.net/pyscf/files/src/libxc-4.3.4.tar.gz, which
+        # is dead (verified: connects then Cloudflare 522s -- origin
+        # unreachable). GitLab's tag archive for the same release is
+        # live, but (verified) lacks the autotools-generated `configure`
+        # script pyscf's ExternalProject_Add shells out to, and libxc's
+        # own CMakeLists.txt builds fine standalone (verified locally).
+        # Prebuild+install it once here, outside /testbed, to a location
+        # `git clean -fdx` in `install` below won't touch; `install`
+        # copies it into pyscf/lib/deps (pyscf's own expected prefix for
+        # bundled C deps: pyscf/lib/CMakeLists.txt adds deps/{include,lib}
+        # to its include/link dirs) and sets -DBUILD_LIBXC=OFF so pyscf's
+        # cmake skips its own (dead) download and picks up ours instead.
+        "mkdir -p /opt/libxc-src && cd /opt/libxc-src && "
+        "curl -sL https://gitlab.com/libxc/libxc/-/archive/4.3.4/libxc-4.3.4.tar.gz "
+        "-o libxc.tar.gz && tar xzf libxc.tar.gz --strip-components=1 && "
+        "mkdir -p build && cd build && cmake .. -DBUILD_SHARED_LIBS=1 "
+        "-DENABLE_FORTRAN=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 "
+        "-DCMAKE_INSTALL_PREFIX=/opt/libxc-prebuilt && "
+        "make -j$(nproc) && make install",
+    ],
+    # Must happen here, in `install` (which test_generation_eval.py's
+    # `_build_script` re-runs fresh for every base/gold attempt), not in
+    # `pre_install` (which only runs once while building the instance
+    # image): `_build_script` does `git reset --hard <base_commit> &&
+    # git clean -fdx` before every attempt, and `-x` deletes untracked
+    # files even when git-ignored -- which would wipe out pyscf/lib/build
+    # and pyscf/lib/deps (both untracked, inside /testbed) built during
+    # pre_install, reproducing the original build failure anyway.
+    #
+    # `make -j$(nproc) || make -j$(nproc)`: pyscf/lib/CMakeLists.txt's
+    # own ExternalProject_Add(libcint) isn't declared as a dependency of
+    # the gto/cgto compile targets that #include its generated cint.h, so
+    # under very high parallelism (this host: 128 cores) cgto's compile
+    # can race ahead of libcint's install step and fail with "cint.h: No
+    # such file or directory" (verified live). Retrying resumes the
+    # incremental build with libcint now installed and only needs to
+    # redo the objects that lost the race.
+    "install": (
+        "mkdir -p pyscf/lib/deps && cp -r /opt/libxc-prebuilt/* pyscf/lib/deps/ && "
+        "cd pyscf/lib && mkdir -p build && cd build && "
+        "cmake .. -DBUILD_LIBXC=OFF "
+        "&& (make -j$(nproc) || make -j$(nproc)) && cd /testbed && "
+        "export PYSCF_INC_DIR=/usr/lib/x86_64-linux-gnu && "
+        "python -m pip install -e . --no-build-isolation"
+    ),
     "pip_packages": ["pytest", "numpy==1.21.6", "scipy==1.7.3", "h5py==3.1.0"],
     "validation_cmd": "python -c 'import pyscf'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
@@ -1649,7 +1810,7 @@ _PYSCF_17_GEN_SPEC = {
 _PYSCF_2X_GEN_SPEC = {
     "python": "3.9",
     "pre_install": _PYSCF_BASE_PRE_INSTALL
-    + ["python -m pip install 'numpy==1.23.5' setuptools wheel cmake"],
+    + ["python -m pip install 'numpy==1.23.5' setuptools wheel"],
     "install": "python -m pip install -e . --no-build-isolation",
     "pip_packages": ["pytest", "numpy==1.23.5", "scipy==1.9.3", "h5py==3.7.0"],
     "validation_cmd": "python -c 'import pyscf'",
@@ -1657,30 +1818,40 @@ _PYSCF_2X_GEN_SPEC = {
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
-SPECS_PYSCF = {"551": dict(_PYSCF_17_GEN_SPEC)}
+SPECS_PYSCF = {pr: dict(_PYSCF_17_GEN_SPEC) for pr in ("551", "794")}
 SPECS_PYSCF.update(
-    {pr: dict(_PYSCF_2X_GEN_SPEC) for pr in ("794", "1143", "1164", "1219")}
+    {pr: dict(_PYSCF_2X_GEN_SPEC) for pr in ("1143", "1164", "1219")}
 )
 
 # obspy: verified python classifiers at base commits.
 #  - 956 (2015, obspy 0.10): Python 2.6/2.7/3.3/3.4 only -> cannot build on
 #    any harness Python. Non-evaluable.
-#  - 2560 / 2570 (2020, obspy 1.1/1.2): Python 3.4-3.8, setup.py uses
-#    numpy.distutils (removed in numpy>=1.26 / py3.12). Build on Python 3.8
-#    with numpy pinned and installed before the editable build.
+#  - 2560 / 2570 (2020, obspy 1.1/1.2): Python 3.4-3.8, setup.py does
+#    `from numpy.distutils.core import DistutilsSetupError, setup`.
+#    Verified directly (installed each numpy release into a real py3.8
+#    venv and tried the import): numpy.distutils.core stopped exporting
+#    DistutilsSetupError between 1.18.5 (works) and 1.19.5 (ImportError) --
+#    1.21.6 (the previous pin) always failed. Pin 1.18.5, still within
+#    scipy 1.7.3 / matplotlib 3.5.3's supported numpy range.
 _OBSPY_GEN_SPEC = {
     "python": "3.8",
     "pre_install": [
         "apt-get update -q",
         "apt-get install -y --no-install-recommends gcc gfortran",
         # numpy.distutils must exist and NumPy must be importable before
-        # `pip install -e .` runs setup.py.
-        "python -m pip install 'numpy==1.21.6' 'setuptools<60' wheel",
+        # `pip install -e .` runs setup.py. obspy's setup.py also still
+        # subclasses the long-deprecated `setuptools.Feature` class, which
+        # setuptools actually removed at 58.0.0 (verified: setuptools<60
+        # alone still resolves to 59.8.0, which already lacks it and fails
+        # with "module 'setuptools' has no attribute 'Feature'") -- pin
+        # below that.
+        "python -m pip install 'numpy==1.18.5' 'setuptools<58' wheel",
     ],
     "install": "python -m pip install -e . --no-build-isolation",
     "pip_packages": [
         "pytest",
-        "numpy==1.21.6",
+        "numpy==1.18.5",
+        "setuptools<58",
         "scipy==1.7.3",
         "matplotlib==3.5.3",
         "lxml==4.9.2",
@@ -1712,7 +1883,17 @@ SPECS_OBSPY["956"] = {
 _PSI4_GEN_SPEC = {
     "python": "3.9",
     "conda_channels": ["conda-forge"],
-    "install": "conda install -y -c conda-forge psi4 && python -m pip install -e . --no-deps --no-build-isolation || true",
+    # `conda install psi4` pulls in an MKL-backed BLAS, whose
+    # activate.d/deactivate.d hooks reactivate the env as a side effect;
+    # the generated deactivate script reads
+    # $CONDA_MKL_INTERFACE_LAYER_BACKUP, which was never exported in this
+    # shell, tripping the harness script's `set -u` ("unbound variable").
+    # Relax -u only around the conda call, matching conda's own hooks
+    # (which aren't `set -u`-safe).
+    "install": (
+        "set +u && conda install -y -c conda-forge psi4; set -u && "
+        "python -m pip install -e . --no-deps --no-build-isolation || true"
+    ),
     "pip_packages": ["pytest", "numpy==1.23.5"],
     "validation_cmd": "python -c 'import psi4'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
@@ -1800,16 +1981,31 @@ _SCANPY_198_SPEC = {
 _SCANPY_111_SPEC = {  # 3771 (2025, scanpy 1.11, py3.11-3.13)
     "python": "3.11",
     "install": "python -m pip install -e .[test]",
-    "pip_packages": ["pytest", "numpy<2.2", "scipy", "pandas", "anndata", "scikit-learn", "numba", "matplotlib", "legacy-api-wrap", "session-info", "h5py", "natsort", "joblib"],
+    # matplotlib<3.11: scanpy's pyproject.toml elevates all warnings to
+    # errors (filterwarnings = ["error", ...allowlist...]); that allowlist
+    # predates matplotlib 3.11's new Colormap.set_bad/set_over/set_under
+    # PendingDeprecationWarning, so an unpinned matplotlib resolves to 3.11+
+    # and turns every plotting test into a failure regardless of the
+    # generated test's own content.
+    "pip_packages": ["pytest", "numpy<2.2", "scipy", "pandas", "anndata", "scikit-learn", "numba", "matplotlib<3.11", "legacy-api-wrap", "session-info", "h5py", "natsort", "joblib"],
     "validation_cmd": "python -c 'import scanpy'",
-    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    # Not "-p no:cacheprovider" (the repo default elsewhere): scanpy's own
+    # autouse fixture (src/testing/scanpy/_pytest/__init__.py) requires
+    # pytest's built-in `cache` fixture, which that plugin flag disables,
+    # crashing every test at collection with "fixture 'cache' not found".
+    "test_cmd": "pytest -rA --tb=long",
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
 _SCANPY_112_SPEC = {  # 4231 (2026, scanpy >=1.12 dev, requires-python>=3.12)
     **_SCANPY_111_SPEC,
     "python": "3.12",
-    "pip_packages": ["pytest", "numpy>=2.1", "scipy>=1.15", "pandas", "anndata", "scikit-learn", "numba", "matplotlib", "legacy-api-wrap", "session-info2", "h5py", "natsort", "joblib"],
+    # scanpy's own pytest plugin (src/testing/scanpy/_pytest/__init__.py,
+    # loaded via its [project.entry-points.pytest11]) imports `pooch` at
+    # module load time; without it every test errors at collection with
+    # "ImportError: Error importing plugin 'testing.scanpy._pytest': No
+    # module named 'pooch'", regardless of the generated test's content.
+    "pip_packages": ["pytest", "numpy>=2.1", "scipy>=1.15", "pandas", "anndata", "scikit-learn", "numba", "matplotlib", "legacy-api-wrap", "session-info2", "h5py", "natsort", "joblib", "pooch"],
 }
 SPECS_SCANPY = {
     "1464": dict(_SCANPY_16_SPEC),
@@ -1821,12 +2017,24 @@ SPECS_SCANPY = {
 # sunpy:
 #  - 1505 (2015, sunpy 0.6): Python 2.7 / early 3.x, numpy.distutils era.
 #    Non-evaluable on harness Pythons.
-#  - 4260 (2020, sunpy 2.0, py3.6-3.8): modern setuptools_scm build.
+#  - 4260 (2020, sunpy 2.0, py3.6-3.8): modern setuptools_scm build. Its own
+#    sunpy/tests/helpers.py imports numpy.distutils.system_info, whose
+#    import chain (system_info -> distutils.command.config ->
+#    mingw32ccompiler) does `from distutils.msvccompiler import
+#    get_build_version` unconditionally, even on Linux. Without pinning
+#    setuptools, an unpinned modern setuptools activates its own vendored
+#    "local" distutils (SETUPTOOLS_USE_DISTUTILS=local, the default since
+#    setuptools ~60), whose fork dropped the Windows-only msvccompiler
+#    submodule -> ModuleNotFoundError on every test, base and gold alike.
+#    Pinning setuptools<60 keeps stdlib distutils (which still ships
+#    msvccompiler.py cross-platform) active instead.
 _SUNPY_GEN_SPEC = {
     "python": "3.8",
+    "pre_install": ["python -m pip install 'setuptools<60'"],
     "install": "python -m pip install -e .[all,tests]",
     "pip_packages": [
         "pytest",
+        "setuptools<60",
         "numpy==1.21.6",
         "scipy==1.7.3",
         "astropy==4.3.1",
@@ -1853,13 +2061,82 @@ SPECS_SUNPY["1505"] = {
 }
 
 # yt: pure-Python + Cython C extensions built at install.
-#  - 2128 (2019) / 2485 (2020): yt 3.5/3.6, classifiers only 3.4/3.5,
-#    setup.py hard-checks Cython>=0.24 / numpy>=1.10; builds fail on a
-#    modern toolchain. Non-evaluable pending a curated py3.7 + old-numpy env.
+#  - 2128 (2019-01) / 2485 (2020-03): yt 3.5/3.6 era, no unyt dependency yet.
+#    setup.py itself only requires Cython>=0.24 / numpy>=1.10.4, but the
+#    bundled .pyx files use numpy C-API spellings removed by numpy>=1.20 and
+#    Cython>=3, so a modern toolchain fails to compile the extensions. Pin to
+#    the CI versions recorded in each commit's tests/test_requirements.txt.
 #  - 3532 / 3556 (2021): yt 4.0, py3.6-3.9.
 #  - 5221 (2025): yt 4.4+, py>=3.10, numpy 2.
+_YT_2128_GEN_SPEC = {
+    "python": "3.6",
+    "pre_install": [
+        "apt-get update -q",
+        "apt-get install -y --no-install-recommends gcc g++",
+        "python -m pip install 'cython==0.29.21' 'numpy==1.15.3' 'setuptools<58' wheel",
+    ],
+    "install": "python -m pip install -e . --no-build-isolation",
+    "pip_packages": [
+        "pytest",
+        "cython==0.29.21",
+        "numpy==1.15.3",
+        "scipy==1.1.0",
+        "matplotlib==3.0.1",
+        "sympy==1.3",
+        "astropy==3.0.5",
+        "h5py==2.8.0",
+    ],
+    "validation_cmd": "python -c 'import yt'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
+_YT_2485_GEN_SPEC = {
+    "python": "3.6",
+    "pre_install": [
+        "apt-get update -q",
+        "apt-get install -y --no-install-recommends gcc g++",
+        "python -m pip install 'cython==0.29.21' 'numpy==1.18.5' 'setuptools<58' wheel",
+        # conftest.py's pytest_configure does os.mkdir(test_data_dir/answers);
+        # the yt default ('/does/not/exist') is a deliberate placeholder that
+        # crashes pytest_configure unless a real dir is configured first.
+        "mkdir -p /root/.config/yt /tmp/yt_test_data/answers && "
+        "printf '[yt]\\ntest_data_dir = /tmp/yt_test_data\\n"
+        "test_storage_dir = /tmp/yt_test_data\\n' > /root/.config/yt/ytrc",
+    ],
+    "install": "python -m pip install -e . --no-build-isolation",
+    "pip_packages": [
+        "pytest",
+        "cython==0.29.21",
+        "numpy==1.18.5",
+        "scipy==1.3.3",
+        "matplotlib==3.1.3",
+        "sympy==1.5",
+        "astropy==3.0.5",
+        "h5py==2.8.0",
+        # conftest.py (and yt.utilities.answer_testing.utils) import yaml directly.
+        "pyyaml",
+        # test_plotwindow.py imports nose.tools helpers.
+        "nose==1.3.7",
+    ],
+    "validation_cmd": "python -c 'import yt'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "oracle_kind": "generated_test",
+    "test_generation_capabilities": ("python",),
+}
 _YT_40_GEN_SPEC = {
     "python": "3.9",
+    # unyt==2.8.0's own wheel metadata has a malformed version specifier
+    # ("numpy (>="1.13.0")" with an unbalanced paren) that pip>=24.1's
+    # stricter PEP 508 parser refuses outright ("Please use pip<24.1 if
+    # you need to use this version."). This has to run before the shared
+    # env image's own `pip_packages` install below (which is what
+    # actually pulls unyt==2.8.0 in and fails) -- `pre_install` is too
+    # late, since it only runs afterward in the per-instance
+    # setup_repo.sh. Verified live: without this hook the env image build
+    # fails with the exact "Please use pip<24.1" error before the repo is
+    # even cloned.
+    "pip_pre_install": ["python -m pip install 'pip<24.1'"],
     "pre_install": [
         "apt-get update -q",
         "apt-get install -y --no-install-recommends gcc g++",
@@ -1890,26 +2167,18 @@ _YT_MODERN_GEN_SPEC = {
         "apt-get install -y --no-install-recommends gcc g++",
     ],
     "install": "python -m pip install -e . --no-build-isolation",
-    "pip_packages": ["pytest", "cython>=3.0.3", "numpy>=2.0", "setuptools>=61.2", "scipy", "matplotlib", "sympy", "unyt", "more-itertools", "packaging", "ewah-bool-utils"],
+    # conftest.py does `import yaml` directly (same as the legacy
+    # _YT_2485_GEN_SPEC below), which isn't a transitive dependency of a
+    # plain `pip install -e .`.
+    "pip_packages": ["pytest", "cython>=3.0.3", "numpy>=2.0", "setuptools>=61.2", "scipy", "matplotlib", "sympy", "unyt", "more-itertools", "packaging", "ewah-bool-utils", "pyyaml"],
     "validation_cmd": "python -c 'import yt'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
-_YT_NONEVAL = lambda pr: {
-    "python": "3.9",
-    "install": "true",
-    "test_cmd": (
-        f"echo 'yt#{pr} not evaluable: yt 3.x Cython build needs curated "
-        f"py3.7 + numpy<1.20 env' && false"
-    ),
-    "_curation_todo": "yt 3.x legacy Cython build",
-    "oracle_kind": "generated_test",
-    "test_generation_capabilities": ("python",),
-}
 SPECS_YT = {
-    "2128": _YT_NONEVAL("2128"),
-    "2485": _YT_NONEVAL("2485"),
+    "2128": dict(_YT_2128_GEN_SPEC),
+    "2485": dict(_YT_2485_GEN_SPEC),
     "3532": dict(_YT_40_GEN_SPEC),
     "3556": dict(_YT_40_GEN_SPEC),
     "5221": dict(_YT_MODERN_GEN_SPEC),
@@ -1964,16 +2233,48 @@ _MNE_LEGACY_SPEC = {
         "packaging==23.1",
         "tqdm",
         "jinja2",
+        # matplotlib 3.5.3's font-string parser calls pyparsing's
+        # setParseAction, deprecated (in favor of set_parse_action) in
+        # pyparsing 3.1. mne's pytest config turns that deprecation warning
+        # into a collection error, so an unpinned/newer pyparsing breaks
+        # every viz test at collection regardless of the generated test's
+        # own content.
+        "pyparsing<3.1",
     ],
     "validation_cmd": "python -c 'import mne'",
-    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    # mne/conftest.py:189 itself calls distutils.version.LooseVersion(...)
+    # to compare the pinned matplotlib version; newer Python 3.9.x patch
+    # releases made LooseVersion.__init__ emit its own DeprecationWarning,
+    # which mne's warnings-as-errors pytest config turns into a fixture-setup
+    # failure on every test regardless of the generated test's own content.
+    # Silence just that one message rather than reworking mne's own conftest.
+    #
+    # Separately, mne 0.24's own viz code (mne/viz/epochs.py etc.) passes
+    # matplotlib.patches.ConnectionPatch/Line2D a `lineprops=` kwarg that
+    # matplotlib itself started deprecating (in favor of `props=`) exactly
+    # at 3.5 -- the very release pinned above -- so even the "correct"
+    # pinned matplotlib still emits this warning on every plotting test,
+    # and mne's warnings-as-errors config turns it into a failure
+    # regardless of the generated test's content. Verified live: identical
+    # failure on base and gold before this filter was added.
+    "test_cmd": (
+        "pytest -rA --tb=long -p no:cacheprovider "
+        '-W "ignore:distutils Version classes are deprecated:DeprecationWarning" '
+        '-W "ignore:The \'lineprops\' parameter:matplotlib._api.deprecation.MatplotlibDeprecationWarning"'
+    ),
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
 _MNE_MODERN_SPEC = {
     "python": "3.12",
     "install": "python -m pip install -e . --config-settings editable_mode=compat",
-    "pip_packages": ["pytest", "pytest-cov", "numpy>=1.25,<3", "scipy>=1.11", "matplotlib", "scikit-learn", "pooch", "decorator", "packaging", "lazy-loader", "jinja2"],
+    # mne 1.9's own FIFF I/O code (mne/_fiff/tag.py) does `data.shape =
+    # dims` on a numpy array, which numpy started deprecating exactly at
+    # 2.5; the unpinned "<3" upper bound let it resolve there, and mne's
+    # warnings-as-errors pytest config turns that DeprecationWarning into a
+    # failure on every I/O-touching test. Verified live: identical failure
+    # on base and gold before this pin was added.
+    "pip_packages": ["pytest", "pytest-cov", "numpy>=1.25,<2.5", "scipy>=1.11", "matplotlib", "scikit-learn", "pooch", "decorator", "packaging", "lazy-loader", "jinja2"],
     "validation_cmd": "python -c 'import mne'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",

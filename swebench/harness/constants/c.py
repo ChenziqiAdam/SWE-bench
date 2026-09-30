@@ -837,6 +837,17 @@ def _qgis_spec(
         f"-DWITH_BINDINGS={'ON' if bindings else 'OFF'}",
         f"-DWITH_GRASS7={'ON' if grass else 'OFF'}",
         "-DWITH_GRASS8=OFF",
+        # QGIS's CMakeLists.txt defaults BUILD_WITH_QT6 to FALSE (i.e.
+        # find_package(Qt5 ...)) regardless of which Qt the base image
+        # actually ships. _QGIS_QT6_BUILD_IMAGE only installs Qt6 dev
+        # packages, so without this flag configure fails with "Could not
+        # find a package configuration file provided by Qt5".
+        "-DBUILD_WITH_QT6=ON",
+        # QtWebKit was a Qt5-only fork; QGIS's own CMakeLists.txt hard
+        # errors ("Qt WebKit support cannot be enabled on Qt 6 builds") if
+        # left at its default of auto-detecting/enabling it once
+        # BUILD_WITH_QT6 is on.
+        "-DWITH_QTWEBKIT=OFF",
     ]
     if grass:
         cmake_flags.append("-DGRASS_PREFIX7=$(grass --config path)")
@@ -1007,8 +1018,46 @@ def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
         ],
         "build_after_test_patch": [
             *(["git submodule update --init --recursive lib/kokkos"] if kokkos else []),
+            # Older LAMMPS releases (verified: base commit for PR 2181,
+            # 2020-06) still fetch/build their own GoogleTest via
+            # cmake/Modules/GTest.cmake, whose
+            # `set_target_properties(... IMPORTED_LINK_INTERFACE_LIBRARIES
+            # ${CMAKE_THREAD_LIBS_INIT})` is unquoted. On this host's glibc
+            # (>=2.34, pthread merged into libc), FindThreads correctly
+            # leaves CMAKE_THREAD_LIBS_INIT empty -- and CMake drops an
+            # unquoted empty variable as a token entirely, leaving that
+            # property with no value ("set_target_properties called with
+            # incorrect number of arguments"), on both base and gold.
+            # Reproduced directly with the repo's own cmake+ninja outside
+            # any container (this host's glibc has the same merge) and
+            # confirmed the fix: quoting the substitution preserves the
+            # (valid) empty string as its own argument. Applied as a sed
+            # against our own checkout, not upstream LAMMPS, since it's a
+            # test-infrastructure file, not the physics code under test.
+            # Must run here, in build_after_test_patch, not pre_install:
+            # test_generation_eval.py's `_build_script` does
+            # `git reset --hard {base_commit} && git clean -fdx` on every
+            # base/gold run, which discards an uncommitted pre_install-time
+            # edit to this tracked file before build_after_test_patch (and
+            # this sed) ever runs. `|| true` because newer LAMMPS releases
+            # (e.g. PR 3699, 2023) dropped this file for a system-GTest
+            # find_package call.
+            "sed -i 's/IMPORTED_LINK_INTERFACE_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})/"
+            'IMPORTED_LINK_INTERFACE_LIBRARIES "${CMAKE_THREAD_LIBS_INIT}")/\' '
+            "cmake/Modules/GTest.cmake || true",
+            # ENABLE_TESTING also unconditionally triggers
+            # cmake/Modules/Testing.cmake's FetchContent_Populate() of the
+            # separate lammps-testing repo (its own optional test-discovery
+            # corpus, unrelated to a generated regression test registered
+            # directly via add_test()/add_mpi_test()) -- that needs network,
+            # which the eval container doesn't have. Point
+            # LAMMPS_TESTING_SOURCE_DIR at a nonexistent path so Testing.cmake
+            # takes its documented "already have a local copy" branch and
+            # skips the fetch; the subsequent `if(EXISTS ...)` guard then
+            # naturally no-ops, leaving the agent's own add_test() call intact.
             "cmake -S cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=Release "
             f"-D BUILD_MPI=ON -D ENABLE_TESTING=ON "
+            "-D LAMMPS_TESTING_SOURCE_DIR=/nonexistent-lammps-testing "
             f"{kokkos_flags} {package_flags}",
             "cmake --build build --parallel $(nproc)",
         ],
@@ -1060,12 +1109,42 @@ SPECS_LAMMPS = {
     "1719": _lammps_test_generation_spec("KSPACE", "OPENMP"),
     "1746": _lammps_test_generation_spec("ASPHERE", "INTEL"),
     "1750": _lammps_test_generation_spec("GRANULAR"),
-    "1759": _lammps_test_generation_spec(),
-    "1928": _lammps_test_generation_spec("KIM", "MESSAGE", "INTEL"),
+    # Issue is about special_bonds exclusions with bonded (MOLECULE) topology;
+    # the codex-generated regression test uses bond_style harmonic and gates
+    # its add_test() on PKG_MOLECULE, so it silently registers zero tests
+    # ("No tests were found!!!") without this package enabled.
+    "1759": _lammps_test_generation_spec("MOLECULE"),
+    "1928": {
+        # At this base commit LAMMPS still names the Intel package
+        # PKG_USER-INTEL (renamed to PKG_INTEL only later) -- codex's own
+        # add_test() guard `if(PKG_USER-INTEL AND PKG_KSPACE)` uses the
+        # correct historical name (verified via `git show <base_commit>:
+        # cmake/CMakeLists.txt`), but our own -D flag was requesting the
+        # modern "INTEL", so the guard was always false ("No tests were
+        # found!!!"). Also needs KSPACE, which the guard also checks.
+        **_lammps_test_generation_spec("KIM", "MESSAGE", "USER-INTEL", "KSPACE"),
+        # cmake/Modules/Packages/KIM.cmake refuses to build a downloaded
+        # KIM-API with the Ninja generator ("Cannot build downloaded KIM-API
+        # library with Ninja build tool") -- that path only triggers when
+        # find_package(KIM-API) doesn't find one already installed. Installing
+        # the system package (>=2.1, the repo's own minimum) makes
+        # DOWNLOAD_KIM default OFF and skips that ExternalProject entirely.
+        "pre_install": [
+            *_lammps_test_generation_spec("KIM", "MESSAGE", "USER-INTEL", "KSPACE")["pre_install"],
+            "apt-get install -y --no-install-recommends libkim-api-dev",
+        ],
+    },
     "2010": _lammps_test_generation_spec("KSPACE"),
     "2181": _lammps_test_generation_spec("KSPACE"),
     "2187": _lammps_test_generation_spec("GPU"),
-    "3699": _lammps_test_generation_spec(),
+    # The generated test edits the existing unittest/commands/
+    # test_compute_chunk.cpp, whose add_executable(test_compute_chunk ...)
+    # registration (unittest/commands/CMakeLists.txt) is itself gated
+    # `if(PKG_MOLECULE)` -- verified via `git show <base_commit>:unittest/
+    # commands/CMakeLists.txt`. With no packages enabled the target simply
+    # doesn't exist ("ninja: error: unknown target 'test_compute_chunk'"),
+    # same class of bug already fixed for lammps-1759/1928.
+    "3699": _lammps_test_generation_spec("MOLECULE"),
 }
 
 # ---------------------------------------------------------------------------

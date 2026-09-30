@@ -1,7 +1,0 @@
-task_id,check_id,split,passed,critical,max_abs,rmse,structural_errors,error
-scibench_replication_0009,public:case_01,public,False,True,,,[],invalid JSON /runner/execution_report_case_outputs/public/case_01/output.json: [Errno 2] No such file or directory: '/runner/execution_report_case_outputs/public/case_01/output.json'
-scibench_replication_0009,hidden:case_01,hidden,False,True,,,[],invalid JSON /runner/execution_report_case_outputs/hidden/case_01/output.json: [Errno 2] No such file or directory: '/runner/execution_report_case_outputs/hidden/case_01/output.json'
-scibench_replication_0009,hidden:case_02,hidden,False,True,,,[],invalid JSON /runner/execution_report_case_outputs/hidden/case_02/output.json: [Errno 2] No such file or directory: '/runner/execution_report_case_outputs/hidden/case_02/output.json'
-scibench_replication_0009,hidden:case_03,hidden,False,True,,,[],invalid JSON /runner/execution_report_case_outputs/hidden/case_03/output.json: [Errno 2] No such file or directory: '/runner/execution_report_case_outputs/hidden/case_03/output.json'
-scibench_replication_0009,hidden:case_04,hidden,False,True,,,[],invalid JSON /runner/execution_report_case_outputs/hidden/case_04/output.json: [Errno 2] No such file or directory: '/runner/execution_report_case_outputs/hidden/case_04/output.json'
-scibench_replication_0009,hidden:case_05,hidden,False,True,,,[],invalid JSON /runner/execution_report_case_outputs/hidden/case_05/output.json: [Errno 2] No such file or directory: '/runner/execution_report_case_outputs/hidden/case_05/output.json'

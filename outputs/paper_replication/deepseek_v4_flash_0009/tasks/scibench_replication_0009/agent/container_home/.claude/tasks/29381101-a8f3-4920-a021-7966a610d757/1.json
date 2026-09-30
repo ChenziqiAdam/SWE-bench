@@ -1,9 +1,0 @@
-{
-  "id": "1",
-  "subject": "Implement exact DMD solution.py",
-  "description": "Write solution.py implementing exact DMD per task.md: pair adjacent columns per block, concatenate to X1/X2, rank-truncated exact DMD, output projected eigenvalues and predictions from final snapshot.",
-  "activeForm": "Implementing exact DMD solution.py",
-  "status": "completed",
-  "blocks": [],
-  "blockedBy": []
-}

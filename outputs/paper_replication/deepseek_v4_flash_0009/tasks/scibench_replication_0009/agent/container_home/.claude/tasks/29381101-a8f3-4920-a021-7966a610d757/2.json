@@ -1,9 +1,0 @@
-{
-  "id": "2",
-  "subject": "Test against public case and write submission.json",
-  "description": "Run solution.py on case_01, verify output.json matches reference within tolerance, and write submission.json at workspace root.",
-  "activeForm": "Testing against public case",
-  "status": "completed",
-  "blocks": [],
-  "blockedBy": []
-}

@@ -1,5 +1,0 @@
-{
-  "schema_version": 4,
-  "task_id": "scibench_replication_0009",
-  "entrypoint": ["python", "solution.py"]
-}

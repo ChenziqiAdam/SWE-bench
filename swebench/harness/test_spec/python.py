@@ -403,6 +403,15 @@ def make_env_script_list_py(instance, specs, env_name) -> list:
 
     reqs_commands.append(f"conda activate {env_name}")
 
+    # Commands that must run before the single `pip_packages` install below
+    # (e.g. downgrading pip itself so it tolerates a pinned package with
+    # malformed wheel metadata) -- `pre_install` runs later, in the
+    # per-instance setup_repo.sh after the repo is cloned, which is too
+    # late for anything that needs to affect this shared env image's own
+    # pip_packages install.
+    if "pip_pre_install" in specs:
+        reqs_commands.extend(specs["pip_pre_install"])
+
     # Install additional packages if specified
     if "pip_packages" in specs:
         pip_packages = " ".join(f'"{p}"' for p in specs["pip_packages"])

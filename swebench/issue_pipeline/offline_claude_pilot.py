@@ -322,11 +322,43 @@ def audit_patch_paths(
         text=True,
     )
     paths = [line for line in result.stdout.splitlines() if line]
-    disallowed = []
+    build_registration_files = {"cmakelists.txt", "meson.build"}
+
+    def _is_testish(parts: list[str], filename: str) -> bool:
+        # Require an actual tests-directory component, not just a "test"
+        # substring anywhere in the filename: a same-named scratch script
+        # sitting at repo root (e.g. validate_test.py) is not a test file
+        # just because the agent named it that way.
+        return (
+            "tests" in parts[:-1]
+            or "test" in parts[:-1]
+            or "unittest" in parts[:-1]
+            or "unittests" in parts[:-1]
+            or any(part in {"testdata", "test_data", "fixtures"} for part in parts[:-1])
+            or (("test" in filename or "tests" in filename) and len(parts) > 1)
+            # rdkit (and other Catch2 C++ projects) keep unit tests in
+            # shared source files named catch_*.cpp rather than a separate
+            # tests/ directory (e.g. Code/GraphMol/catch_graphmol.cpp).
+            or (filename.startswith("catch_") and len(parts) > 1)
+        )
+
+    entries = []
     for path in paths:
-        lowered = path.lower()
-        parts = lowered.split("/")
-        filename = parts[-1]
+        parts = path.lower().split("/")
+        entries.append((path, parts, parts[-1]))
+    # LAMMPS (and similar CMake C/C++ projects) register a new ctest target
+    # from a single top-level cmake/CMakeLists.txt rather than a per-test-
+    # directory one; allow that build-registration edit when it ships
+    # alongside genuine test files in the same patch.
+    has_sibling_test_edit = any(
+        filename not in build_registration_files
+        and path not in scratch_paths
+        and not _is_build_artifact_path(parts, filename)
+        and _is_testish(parts, filename)
+        for path, parts, filename in entries
+    )
+    disallowed = []
+    for path, parts, filename in entries:
         if path in scratch_paths:
             continue
         if _is_build_artifact_path(parts, filename):
@@ -334,24 +366,8 @@ def audit_patch_paths(
         if filename.endswith(_SCRATCH_PATCH_EXTENSIONS):
             disallowed.append(path)
             continue
-        # Require an actual tests-directory component, not just a "test"
-        # substring anywhere in the filename: a same-named scratch script
-        # sitting at repo root (e.g. validate_test.py) is not a test file
-        # just because the agent named it that way.
-        testish = (
-            "tests" in parts[:-1]
-            or "test" in parts[:-1]
-            or "unittest" in parts[:-1]
-            or "unittests" in parts[:-1]
-            or any(part in {"testdata", "test_data", "fixtures"} for part in parts[:-1])
-            or (
-                ("test" in filename or "tests" in filename)
-                and (len(parts) > 1 or filename in {"cmakelists.txt", "meson.build"})
-            )
-            # rdkit (and other Catch2 C++ projects) keep unit tests in
-            # shared source files named catch_*.cpp rather than a separate
-            # tests/ directory (e.g. Code/GraphMol/catch_graphmol.cpp).
-            or (filename.startswith("catch_") and len(parts) > 1)
+        testish = _is_testish(parts, filename) or (
+            filename in build_registration_files and has_sibling_test_edit
         )
         if not testish:
             disallowed.append(path)

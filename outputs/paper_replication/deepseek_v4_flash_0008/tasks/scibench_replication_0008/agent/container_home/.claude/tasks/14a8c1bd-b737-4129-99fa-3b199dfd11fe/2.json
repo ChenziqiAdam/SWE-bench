@@ -1,8 +1,0 @@
-{
-  "id": "2",
-  "subject": "Implement solution.py",
-  "description": "Write deterministic CLI solution implementing quantum/classical curves, plus low-T and high-T effective models for robustness.",
-  "status": "completed",
-  "blocks": [],
-  "blockedBy": []
-}

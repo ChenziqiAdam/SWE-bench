@@ -1124,6 +1124,16 @@ def _special_repo_execution_plan(
         # must not veto the accompanying Test*.cpp source as "unsupported".
         if repo == "openmm/openmm" and basename == "CMakeLists.txt":
             continue
+        # LAMMPS registers a new ".in" regression script as a ctest target
+        # from cmake/Modules/Testing.cmake's add_test() call site, not by
+        # writing a standalone test file. Its filename contains "test", so
+        # without this it is misread as a broken generated test and vetoes
+        # the accompanying, otherwise-accepted script (verified: lammps-1759,
+        # lammps-1928 both pair this exact file with a real cmake/Tests/ or
+        # tests/regression/ script and were wrongly marked
+        # unsupported_generated_test).
+        if repo == "lammps/lammps" and path == "cmake/Modules/Testing.cmake":
+            continue
         canonical = False
         if repo == "openmm/openmm":
             # Ignore CUDA test files only when this instance's curated build
@@ -1446,6 +1456,16 @@ def _test_command(instance: dict, generated_patch: str) -> str:
         str(instance.get("version", "")), {}
     )
     if instance["repo"] == "qgis/QGIS":
+        # A curated `_not_evaluable_c` placeholder spec (its test_cmd is
+        # `echo '<repo>#<pr> not evaluable: ...' && false`) must run as-is so
+        # classify_test_generation_result's "not evaluable:" text match can
+        # correctly report `excluded`/`non_evaluable_spec`. Without this
+        # check, every QGIS instance -- including intentional placeholders --
+        # falls into the isolated-command/veto logic below and gets
+        # misreported as `not_exercised`/`unsupported_generated_test`, which
+        # looks like a bad generated test rather than "not curated yet".
+        if any("not evaluable:" in command for command in commands):
+            return commands[0]
         isolated_command = _qgis_isolated_python_command(specs, generated_patch)
         if isolated_command:
             return isolated_command
