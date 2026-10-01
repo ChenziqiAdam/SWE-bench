@@ -2051,3 +2051,28 @@ def test_ctest_credit_still_applies_when_only_gtest_cases_are_scored():
         added_test_names=frozenset({"FixPourTest", "TimestepChanged"}),
     )
     assert result["status"] == "resolved"
+
+
+def test_provider_limit_error_detection():
+    from swebench.eval_pipeline.test_generation_eval import provider_limit_error
+
+    assert provider_limit_error("claude exited with code 1: You've hit your session limit · resets 8:40pm")
+    assert provider_limit_error("rate_limit")
+    assert not provider_limit_error("claude_exit_1")
+    assert not provider_limit_error("")
+
+
+def test_verbose_pytest_lines_give_per_test_status_for_old_pytest():
+    from swebench.eval_pipeline.test_generation_eval import _parse_pytest_verbose_lines
+
+    out = (
+        "astropy/modeling/tests/test_functional_models.py::test_Gaussian1D PASSED\n"
+        "astropy/modeling/tests/test_functional_models.py::test_new_case FAILED [ 50%]\n"
+        "astropy/x/tests/test_y.py::test_skip SKIPPED\n"
+        "=== 1 failed, 1 passed, 1 skipped in 0.4 seconds ===\n"
+    )
+    assert _parse_pytest_verbose_lines(out) == {
+        "astropy/modeling/tests/test_functional_models.py::test_Gaussian1D": "PASSED",
+        "astropy/modeling/tests/test_functional_models.py::test_new_case": "FAILED",
+        "astropy/x/tests/test_y.py::test_skip": "SKIPPED",
+    }

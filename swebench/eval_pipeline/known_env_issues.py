@@ -27,8 +27,9 @@ IGNORED_INSTANCES: dict[str, str] = {
 
 ENV_NOTES: dict[str, str] = {
     "astropy__astropy-9079": (
-        "numpy ABI mismatch in the built image; spec now uses --no-build-isolation "
-        "(unverified, re-run to confirm)"
+        "image builds with the current spec but the generated test run yields no "
+        "parseable pytest status on base and gold; cause unknown -- read "
+        "base_output_tail/gold_output_tail in report.json after re-running"
     ),
     "mne-tools__mne-python-9459": (
         "matplotlib >=3.5 raises MatplotlibDeprecationWarning (rectprops) in mne's "
@@ -43,10 +44,24 @@ ENV_NOTES: dict[str, str] = {
         "all required kernels' for one model but not another; cause not identified"
     ),
     "qgis__QGIS-64781": (
-        "saved logs are cut inside the build (256 KiB cap), verdict cannot be audited "
-        "from the log; check *.tail.log after re-running"
+        "full-project QGIS build; the downloaded copy of its log is cut at a "
+        "fixed size by the export (not by the harness), so audit the original "
+        "log on the server or report.json's base/gold_output_tail"
     ),
 }
+
+
+_LAMMPS_NO_UNITTEST = (
+    "base commit has no unittest/ tree (verified on GitHub); the only executable "
+    "test path is an add_test()/add_mpi_test() registration in "
+    "cmake/Modules/Testing.cmake, which the task prompt does not mention"
+)
+for _pr in ("1237", "1374", "1388", "1452", "1719", "1746", "1750", "1759", "1928", "2010"):
+    ENV_NOTES[f"lammps__lammps-{_pr}"] = _LAMMPS_NO_UNITTEST
+ENV_NOTES["qgis__QGIS-60631"] = (
+    "build fails in the pinned Qt6 build-deps image: CMake cannot find Qwt "
+    "(QWT_LIBRARY/QWT_INCLUDE_DIR NOTFOUND); needs a Qwt-enabled image"
+)
 
 
 def _extra() -> tuple[dict[str, str], dict[str, str]]:

@@ -70,6 +70,29 @@ def _validation_command(inst: dict) -> str | None:
     return command.strip() if isinstance(command, str) and command.strip() else None
 
 
+_IMAGE_RACE_MARKERS = (
+    "requested access to the resource is denied",
+    "image not known",
+    "no such image",
+    "image built successfully",
+    # Podman storage failures during `RUN`/commit; not a property of the repo.
+    "committing container for step",
+    "no space left on device",
+)
+
+
+def _is_image_race(detail: str) -> bool:
+    """True for infrastructure errors (vanished image, podman storage/commit).
+
+    Concurrent evaluations (or ``--clean_images`` cleanup) on one daemon can
+    delete ``sweb.eval.*`` between build and smoke test. Podman then tries to
+    pull the missing image (403 denied / 404 not known). That says nothing
+    about whether the instance is buildable, so it must not be cached as such.
+    """
+    lowered = detail.lower()
+    return any(marker in lowered for marker in _IMAGE_RACE_MARKERS)
+
+
 def _smoke_validate_image(client, image_name: str, command: str) -> tuple[bool, str]:
     """Run a lightweight readiness check inside a newly built instance image."""
     shell_command = (
@@ -132,6 +155,14 @@ def validate_buildable(
     if cache_path.exists():
         cache = json.loads(cache_path.read_text())
         logger.info(f"Loaded {len(cache)} cached build-validation results from {cache_path}")
+    transient = [iid for iid, v in cache.items() if v.get("transient")]
+    if transient:
+        logger.info(
+            f"{len(transient)} cached entr(ies) came from an image race and will be revalidated: "
+            f"{', '.join(transient[:5])}{'...' if len(transient) > 5 else ''}"
+        )
+        for iid in transient:
+            cache.pop(iid, None)
     if force:
         # Revalidate only the requested cohort while retaining results for
         # unselected instances in a shared output directory.
@@ -288,6 +319,37 @@ def validate_buildable(
                         ok, error = _smoke_validate_image(
                             client, built_spec.instance_image_key, validation_cmd
                         )
+                        # A concurrent evaluation sharing this daemon can remove
+                        # the image between build and smoke test (verified in
+                        # the 2026-09-30 logs: one run's "removed instance
+                        # image" lines land seconds before the other's 403).
+                        # Rebuild and retry before calling it a real failure.
+                        for _retry in range(2):
+                            if ok or not _is_image_race(error):
+                                break
+                            logger.warning(
+                                "Image for %s vanished before smoke validation; "
+                                "rebuilding (%d/2)",
+                                inst["instance_id"],
+                                _retry + 1,
+                            )
+                            build_instance_images(
+                                client=client,
+                                dataset=[inst],
+                                force_rebuild=False,
+                                max_workers=1,
+                                tag="latest",
+                                env_image_tag="latest",
+                                force_rebuild_env=False,
+                                nocache=False,
+                                build_timeout=build_timeout,
+                                build_no_output_timeout=build_no_output_timeout,
+                                build_memory=build_memory,
+                                build_cpus=build_cpus,
+                            )
+                            ok, error = _smoke_validate_image(
+                                client, built_spec.instance_image_key, validation_cmd
+                            )
                         if not ok:
                             smoke_failures[built_spec.instance_id] = error
                             logger.error(
@@ -340,6 +402,8 @@ def validate_buildable(
                 if iid in smoke_failures:
                     # Image built but failed the post-build smoke test: a real failure.
                     cache[iid] = {"buildable": False, "error": smoke_failures[iid], "spec_hash": spec_hashes[iid]}
+                    if _is_image_race(smoke_failures[iid]):
+                        cache[iid]["transient"] = True
                     continue
                 # The thread pool recorded a build failure for this instance, but
                 # build_image() logs "Image built successfully!" as soon as the
@@ -374,6 +438,11 @@ def validate_buildable(
                     }
                     if diagnostics:
                         cache[iid]["build_diagnostics"] = diagnostics
+                    evidence = cache[iid]["error"] + "\n" + "\n".join(
+                        diagnostics.get("last_log_lines", [])
+                    )
+                    if _is_image_race(evidence):
+                        cache[iid]["transient"] = True
 
         _write_cache(cache, cache_path)
         n_ok = sum(1 for v in cache.values() if v["buildable"])

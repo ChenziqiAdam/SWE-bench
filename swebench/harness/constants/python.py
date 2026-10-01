@@ -1507,6 +1507,17 @@ _QISKIT_CYTHON_SPEC = {
         "retworkx==0.11.0",
         "python-constraint>=1.4",
         "python-dateutil",
+        # qiskit/test/http_recorder.py (imported by `qiskit.test`, hence by
+        # every QiskitTestCase module) does `from vcr.persisters...`; vcrpy is
+        # only in requirements-dev.txt. Reproduced locally: collection fails
+        # with "No module named 'vcr'" without it.
+        "vcrpy",
+        # Visualization tests (4803, 5166) are @skipUnless(HAS_MATPLOTLIB): with
+        # matplotlib absent they are SKIPPED on base and gold alike, which reads
+        # as "test did not fail on base" whatever the model wrote (verified in
+        # the generated tests themselves).
+        "matplotlib==3.5.3",
+        "pillow",
     ],
     "validation_cmd": "python -c 'import ddt; import qiskit'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
@@ -1531,6 +1542,41 @@ SPECS_QISKIT.update(
     {
         pr: dict(_QISKIT_TEST_GENERATION_SPEC)  # setuptools-rust / PyO3 era
         for pr in ("8447", "10866", "15604", "16103")
+    }
+)
+# 8447 (terra 0.22) depends on `tweedledum`, which has no py3.11 wheel; under
+# --no-build-isolation its sdist build died with "No module named 'skbuild'"
+# (server build log). Python 3.10 has a prebuilt tweedledum wheel. Pin the
+# numeric stack to the era so pip does not resolve numpy 2.x (UNVERIFIED).
+# 16103's pyproject hard-pins `setuptools-rust==1.12.0` because setup.py
+# monkeypatches build_rust.install_extension(self, ext, dylib_paths); newer
+# setuptools-rust passes a 3rd argument ("takes 3 positional arguments but 4
+# were given" in the server build log). --no-build-isolation ignores the pin.
+SPECS_QISKIT["16103"].update(
+    {
+        "pip_packages": [
+            "pytest",
+            "setuptools>=77",
+            "setuptools-rust==1.12.0",
+            "ddt==1.7.2",
+            # its generated visualization test is @skipUnless(HAS_MATPLOTLIB)
+            "matplotlib",
+            "pillow",
+        ]
+    }
+)
+SPECS_QISKIT["8447"].update(
+    {
+        "python": "3.10",
+        "pip_packages": [
+            "pytest",
+            "setuptools-rust",
+            "ddt==1.7.2",
+            "numpy==1.23.5",
+            "scipy==1.9.3",
+            "matplotlib==3.6.3",  # generated visualization test skips without it
+            "pillow",
+        ],
     }
 )
 
@@ -1578,7 +1624,9 @@ SPECS_QUTIP.update(
 #    numpy>=1.23/build numpy>=2.0rc1): modern [test] extra.
 _ASTROPY_PRE4_GEN_SPEC = {
     **SPECS_ASTROPY["1.3"],  # py3.6 / setuptools 38.2.4 / numpy 1.16 / Cython 0.27.3
-    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    # pytest 3.3.1 ignores -rA (no PASSED lines); -v gives per-test lines that
+    # the evaluator parses, instead of one whole-file pass/fail pseudo-test.
+    "test_cmd": "pytest -v -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
@@ -1587,7 +1635,16 @@ _ASTROPY_4X_GEN_SPEC = {
     # Build against the pinned numpy 1.19.5 from pre_install. With PEP 517
     # build isolation pip pulls a newer numpy for the C extensions, which then
     # fail at import ("compiled against API version 0x10 ... numpy is 0xd").
-    "install": "python -m pip install -e .[test] --verbose --no-build-isolation",
+    # The [test] extra (matplotlib, skyfield, ipython, ...) makes pip replace
+    # numpy 1.19.5 by 1.24 and rebuild the C extensions against it; astropy 4.0
+    # then dies at conftest import (`np.asscalar` removed) before any test runs
+    # -> no_parseable_test_status. Reproduced locally; hold numpy with a
+    # constraint so extras resolve to era-compatible versions.
+    "install": (
+        "echo 'numpy==1.19.5' > /tmp/pip-constraints.txt && "
+        "python -m pip install -e .[test] --verbose --no-build-isolation "
+        "-c /tmp/pip-constraints.txt"
+    ),
     "pre_install": [
         "python -m pip install 'setuptools<60' 'setuptools_scm<7' wheel "
         "'Cython<3' 'numpy==1.19.5'",
@@ -1624,9 +1681,46 @@ SPECS_ASTROPY.update(
         for pr in ("5612", "6045", "6400", "8108", "8111")
     }
 )
+# 8111's setup.py requires `cython>=0.29.13` (8108: >=0.21). With the shared
+# pre-4 pin (0.27.3) setuptools fetched the latest Cython as a setup_requires
+# egg, which is Python>=3.8-only syntax and broke the py3.6 build (verified in
+# the server build log: SyntaxError in cython-3.3.0 Shadow.py). Pin 0.29.x.
+# The 5612 generated test is `skipif('not HAS_MATPLOTLIB')` and the shared pre-4
+# pin set has no matplotlib, so it would be SKIPPED on base and gold alike.
+for _pr in ("5612", "6045", "6400", "8108", "8111"):
+    SPECS_ASTROPY[_pr]["pip_packages"] = [
+        *SPECS_ASTROPY[_pr]["pip_packages"],
+        "matplotlib==3.0.3",
+    ]
+SPECS_ASTROPY["8111"]["pip_packages"] = [
+    "cython==0.29.36" if pkg.startswith("cython==") else pkg
+    for pkg in SPECS_ASTROPY["8111"]["pip_packages"]
+]
 SPECS_ASTROPY["9079"] = dict(_ASTROPY_4X_GEN_SPEC)
 SPECS_ASTROPY.update(
     {pr: dict(_ASTROPY_5X_GEN_SPEC) for pr in ("12525", "16529")}
+)
+# 12525: reproduced locally (py3.11, isolated build): astropy/wcs/setup_package.py
+# does `from setuptools.dep_util import newer_group`, which the latest
+# setuptools no longer ships -> "Getting requirements to build editable ...
+# No available output" (the server error). pyproject only says "setuptools",
+# so isolation always fetches the newest one. Build without isolation from
+# setuptools<70 (still has dep_util; verified that get_requires then passes).
+# The C-extension compile itself was only exercised on macOS clang, not on the
+# Linux image (UNVERIFIED there).
+SPECS_ASTROPY["12525"].update(
+    {
+        "pre_install": [
+            "python -m pip install 'setuptools>=61,<70' 'setuptools_scm>=6.2,<8' "
+            "wheel 'cython==0.29.36' 'numpy==1.26.4' extension-helpers "
+            "'jinja2==3.0.3' 'markupsafe==2.0.1'"
+        ],
+        "install": (
+            "echo 'numpy==1.26.4' > /tmp/pip-constraints.txt && "
+            "python -m pip install -e .[test] --verbose --no-build-isolation "
+            "-c /tmp/pip-constraints.txt"
+        ),
+    }
 )
 
 # pyscf: setup.py runs CMake at install to build/download libcint + libxc
@@ -1676,16 +1770,19 @@ _OBSPY_GEN_SPEC = {
     "pre_install": [
         "apt-get update -q",
         "apt-get install -y --no-install-recommends gcc gfortran",
-        # numpy.distutils must exist and NumPy must be importable before
-        # `pip install -e .` runs setup.py.
-        "python -m pip install 'numpy==1.21.6' 'setuptools<60' wheel",
+        # setup.py does `from numpy.distutils.core import DistutilsSetupError`,
+        # which only works through numpy<=1.18 (`from distutils.core import *`
+        # in numpy/distutils/core.py; removed in 1.19 -- verified against the
+        # numpy tags). 1.21.6 failed the server build with exactly that
+        # ImportError. NumPy must also be importable before setup.py runs.
+        "python -m pip install 'numpy==1.18.5' 'setuptools<60' wheel",
     ],
     "install": "python -m pip install -e . --no-build-isolation",
     "pip_packages": [
         "pytest",
-        "numpy==1.21.6",
-        "scipy==1.7.3",
-        "matplotlib==3.5.3",
+        "numpy==1.18.5",
+        "scipy==1.5.4",
+        "matplotlib==3.3.4",
         "lxml==4.9.2",
         "sqlalchemy==1.4.46",
         "requests==2.28.2",
@@ -1715,7 +1812,11 @@ SPECS_OBSPY["956"] = {
 _PSI4_GEN_SPEC = {
     "python": "3.9",
     "conda_channels": ["conda-forge"],
-    "install": "conda install -y -c conda-forge psi4 && python -m pip install -e . --no-deps --no-build-isolation || true",
+    # The setup script runs with `set -u`; conda's MKL (de)activate hook reads
+    # an unset CONDA_MKL_INTERFACE_LAYER_BACKUP and aborts the whole shell
+    # ("unbound variable", seen in the server build log), which `|| true`
+    # cannot catch. Disable nounset around conda operations.
+    "install": "set +u; conda install -y -c conda-forge psi4 && python -m pip install -e . --no-deps --no-build-isolation || true; set -u",
     "pip_packages": ["pytest", "numpy==1.23.5"],
     "validation_cmd": "python -c 'import psi4'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
@@ -1876,7 +1977,7 @@ _YT_40_GEN_SPEC = {
         "scipy==1.7.3",
         "matplotlib==3.5.3",
         "sympy==1.9",
-        "unyt==2.8.0",
+        "unyt==2.9.5",
         "more-itertools==8.13.0",
         "packaging==21.3",
         "tomli==2.0.1",
@@ -1922,7 +2023,11 @@ SPECS_YT = {
 # install plainly and add test deps. py3.6-3.9 -> use 3.8.
 _NILEARN_GEN_SPEC = {
     "python": "3.8",
-    "install": "python -m pip install -e .",
+    # setup.py appends the deprecated PyPI `sklearn` shim to its requirements
+    # (nilearn/setup.py: `required_packages.append('sklearn')`), whose
+    # metadata step always errors; scikit-learn and all other dependencies
+    # are already installed via pip_packages, so skip dependency resolution.
+    "install": "python -m pip install -e . --no-deps",
     "pip_packages": [
         "pytest",
         "numpy==1.21.6",

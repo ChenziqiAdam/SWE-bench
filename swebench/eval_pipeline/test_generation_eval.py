@@ -124,6 +124,28 @@ def _credit_ctest_wrapped_cases(
     return sorted(set(gold_passed) | set(hidden))
 
 
+_REPORT_OUTPUT_TAIL_CHARS = 3000
+
+_PROVIDER_LIMIT_MARKERS = (
+    "hit your session limit",
+    "hit your usage limit",
+    "usage limit",
+    "rate_limit",
+    "rate limit",
+    "overloaded",
+)
+
+
+def provider_limit_error(error: str) -> bool:
+    """True when inference stopped because the provider refused/limited it.
+
+    The patch left in the working tree by such a run is an arbitrary prefix of
+    the agent's work, not a model result, so it must not be scored.
+    """
+    lowered = (error or "").lower()
+    return any(marker in lowered for marker in _PROVIDER_LIMIT_MARKERS)
+
+
 def classify_test_generation_result(
     base_status_map: dict[str, str],
     gold_status_map: dict[str, str],
@@ -1849,6 +1871,32 @@ def _parse_pytest_aggregate_summary(output: str) -> dict[str, str] | None:
     return {_GENERATED_TEST_SUMMARY_ID: status}
 
 
+_PYTEST_VERBOSE_LINE_RE = re.compile(
+    r"^(?P<id>\S+::\S.*?)\s+(?P<outcome>PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)\b"
+)
+
+
+def _parse_pytest_verbose_lines(output: str) -> dict[str, str]:
+    """Per-test statuses from ``-v`` lines ("path::test PASSED").
+
+    pytest < 5.4 (e.g. the 3.3.1 pinned for astropy < 3.2) ignores ``-rA`` and
+    prints no PASSED lines in the short summary, so the regular parser finds
+    nothing. Verbose lines exist in every version and let old-pytest runs be
+    scored per test instead of by one whole-file pseudo-test.
+    """
+    statuses: dict[str, str] = {}
+    for line in output.splitlines():
+        match = _PYTEST_VERBOSE_LINE_RE.match(line.strip())
+        if not match:
+            continue
+        outcome = match.group("outcome")
+        if outcome in ("XFAIL", "XPASS", "SKIPPED"):
+            statuses[match.group("id")] = outcome
+        else:
+            statuses[match.group("id")] = TestStatus[outcome].value
+    return statuses
+
+
 def _parse_status(output: str, instance: dict) -> dict[str, str]:
     parser = MAP_REPO_TO_PARSER.get(instance["repo"])
     if parser is None:
@@ -1863,6 +1911,9 @@ def _parse_status(output: str, instance: dict) -> dict[str, str]:
     parsed = parser(output, parse_spec)
     if parsed:
         return parsed
+    verbose = _parse_pytest_verbose_lines(test_output)
+    if verbose:
+        return verbose
     return _parse_pytest_aggregate_summary(test_output) or {}
 
 
@@ -1944,6 +1995,7 @@ def _evaluate_one(
         prediction is None
         or not (prediction.get("model_patch") or "").strip()
         or inference_timed_out
+        or provider_limit_error(inference_error)
     ):
         inference_failed = bool(inference_error and not inference_timed_out)
         report = {
@@ -2123,6 +2175,18 @@ def _evaluate_one(
                 "inference_metrics": prediction.get("metrics", {}),
             }
         }
+        if classified["status"] != "resolved":
+            # Keep the decisive end of each run in the report itself: saved
+            # logs have been lost or truncated in transfer before, which made
+            # e.g. `no_parseable_test_status` impossible to diagnose.
+            base_tail = base_output[-_REPORT_OUTPUT_TAIL_CHARS:]
+            gold_tail = gold_output[-_REPORT_OUTPUT_TAIL_CHARS:]
+            report[instance_id]["base_output_tail"] = base_tail
+            report[instance_id]["gold_output_tail"] = gold_tail
+            if classified["failure_reason"] == "no_parseable_test_status":
+                report[instance_id]["error"] = (
+                    f"[base tail] {base_tail[-800:]}\n[gold tail] {gold_tail[-800:]}"
+                )
     except Exception as e:
         inst_logger.exception("test-generation evaluation failed")
         failure_reason = (

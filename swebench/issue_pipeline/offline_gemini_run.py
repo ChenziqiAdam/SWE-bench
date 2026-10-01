@@ -181,13 +181,14 @@ def _manifest_config(
     workers: int,
     wave_size: int,
     review_all: bool,
+    effort: str | None = None,
 ) -> dict:
     prompts = [
         {"instance_id": item["instance_id"], "prompt": build_pilot_prompt(item)}
         for item in instances
     ]
     settings = safety_settings()
-    return {
+    manifest = {
         "manifest_version": MANIFEST_VERSION,
         "agent_backend": AGENT_BACKEND,
         "cli": {"name": "agy", "version": CLI_VERSION},
@@ -219,6 +220,9 @@ def _manifest_config(
         "abnormal_file_threshold": ABNORMAL_FILE_COUNT,
         "fetch_max_attempts": MAX_FETCH_ATTEMPTS,
     }
+    if effort is not None:
+        manifest["effort"] = effort
+    return manifest
 
 
 def _rebuild_outputs(
@@ -304,6 +308,7 @@ def _run_wave(
     workers: int,
     github_token: str | None,
     run_one: Callable[..., tuple[dict, dict]] = _run_one,
+    effort: str | None = None,
 ) -> Iterable[tuple[dict, dict]]:
     """Complete every network fetch before starting any Antigravity process."""
     worktrees: dict[str, Path] = {}
@@ -334,6 +339,7 @@ def _run_wave(
                 output_dir,
                 model,
                 timeout,
+                **({"effort": effort} if effort is not None else {}),
             ): item
             for item in wave
         }
@@ -429,6 +435,7 @@ def run_full(
     workers: int,
     wave_size: int,
     github_token: str | None,
+    effort: str | None = None,
 ) -> list[dict]:
     ordered_ids = [item["instance_id"] for item in instances]
     expected_prompts = [
@@ -472,6 +479,7 @@ def run_full(
                 timeout=timeout,
                 workers=workers,
                 github_token=github_token,
+                effort=effort,
             ):
                 if prediction.get("error") == "quota_limit":
                     raise QuotaLimitStop(prediction["instance_id"])
@@ -505,6 +513,7 @@ def make_parser() -> argparse.ArgumentParser:
     parser.add_argument("--instances", type=Path, action="append", required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--model", default=MODEL)
+    parser.add_argument("--effort", choices=["low", "medium", "high"], default=None)
     parser.add_argument("--timeout", type=int, default=TIMEOUT)
     parser.add_argument("--workers", type=int, default=3)
     parser.add_argument("--wave-size", type=int, default=3)
@@ -542,6 +551,7 @@ def main(argv: list[str] | None = None) -> int:
         workers=args.workers,
         wave_size=args.wave_size,
         review_all=args.review_all,
+        effort=args.effort,
     )
     if args.dry_run:
         print(json.dumps({**manifest, "pending_count": len(instances)}, indent=2))
@@ -560,6 +570,7 @@ def main(argv: list[str] | None = None) -> int:
             workers=args.workers,
             wave_size=args.wave_size,
             github_token=args.github_token,
+            effort=args.effort,
         )
     except QuotaLimitStop as exc:
         raise SystemExit(str(exc)) from exc

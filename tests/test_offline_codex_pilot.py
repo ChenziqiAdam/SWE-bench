@@ -267,3 +267,14 @@ def test_timeout_keeps_patch_and_scope_violation_archives_it(tmp_path):
     assert prediction["error"] == "disallowed_patch_scope"
     assert prediction["model_patch"] == ""
     assert "source.cpp" in prediction["discarded_patch"]
+
+
+def test_codex_command_effort_is_optional():
+    from pathlib import Path
+
+    from swebench.issue_pipeline.offline_codex_pilot import codex_command
+
+    assert 'model_reasoning_effort="high"' not in codex_command(Path("."), "p")
+    command = codex_command(Path("."), "p", effort="high")
+    assert command[command.index('model_reasoning_effort="high"') - 1] == "--config"
+    assert command[-1] == "p"

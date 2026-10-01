@@ -147,3 +147,32 @@ def test_read_build_diagnostics_returns_structured_timeout(monkeypatch, tmp_path
     )
 
     assert validate_base._read_build_diagnostics(spec) == expected
+
+
+def test_image_race_errors_are_marked_transient_and_revalidated(tmp_path):
+    from swebench.eval_pipeline.validate_base import _is_image_race
+
+    assert _is_image_race(
+        'post-build validation failed: 403 Client Error ... fromImage=sweb.eval.x: '
+        'Forbidden ("denied: requested access to the resource is denied")'
+    )
+    assert _is_image_race("... image not known")
+    assert not _is_image_race("ImportError: cannot import name 'NewCheckpointReader'")
+
+    import json
+
+    from swebench.eval_pipeline import validate_base
+
+    cache_path = tmp_path / "bv.json"
+    cache_path.write_text(json.dumps({"a__a-1": {"buildable": False, "error": "x", "transient": True, "spec_hash": "h"}}))
+    # Only the transient entry is dropped on load; nothing else in the cache.
+    result = validate_base.validate_buildable([], cache_path=cache_path)
+    assert "a__a-1" not in result
+
+
+def test_storage_failures_are_transient():
+    from swebench.eval_pipeline.validate_base import _is_image_race
+
+    assert _is_image_race("Error: committing container for step {Env:[...]}")
+    assert _is_image_race("ERROR: Could not install packages due to an OSError: [Errno 28] No space left on device")
+    assert not _is_image_race("gmake: *** [Makefile:91: all] Error 2")

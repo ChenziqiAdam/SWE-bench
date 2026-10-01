@@ -300,12 +300,13 @@ def _manifest_config(
     workers: int,
     wave_size: int,
     review_all: bool,
+    effort: str | None = None,
 ) -> dict:
     prompts = [
         {"instance_id": item["instance_id"], "prompt": build_pilot_prompt(item)}
         for item in instances
     ]
-    return {
+    manifest = {
         "manifest_version": MANIFEST_VERSION,
         "model": model,
         "timeout_seconds": timeout,
@@ -332,6 +333,9 @@ def _manifest_config(
         "abnormal_file_threshold": ABNORMAL_FILE_COUNT,
         "fetch_max_attempts": MAX_FETCH_ATTEMPTS,
     }
+    if effort is not None:
+        manifest["effort"] = effort
+    return manifest
 
 
 def _checkpoint_path(output_dir: Path, instance_id: str) -> Path:
@@ -495,6 +499,7 @@ def _run_wave(
     workers: int,
     github_token: str | None,
     run_one: Callable[..., tuple[dict, dict]] = _run_one,
+    effort: str | None = None,
 ) -> Iterable[tuple[dict, dict]]:
     """Fetch the entire wave first, then yield each finalized agent result."""
     worktrees: dict[str, Path] = {}
@@ -524,6 +529,7 @@ def _run_wave(
                 output_dir,
                 model,
                 timeout,
+                **({"effort": effort} if effort is not None else {}),
             ): item
             for item in wave
         }
@@ -720,6 +726,7 @@ def run_full(
     workers: int,
     wave_size: int,
     github_token: str | None,
+    effort: str | None = None,
 ) -> list[dict]:
     ordered_ids = [item["instance_id"] for item in instances]
     if resume:
@@ -771,6 +778,7 @@ def run_full(
                 timeout=timeout,
                 workers=workers,
                 github_token=github_token,
+                effort=effort,
             ):
                 if _is_quota_failure(output_dir, prediction):
                     _archive_quota_trajectory(output_dir, prediction["instance_id"])
@@ -819,6 +827,9 @@ def make_parser() -> argparse.ArgumentParser:
     parser.add_argument("--instances", type=Path, action="append", required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--model", default=MODEL)
+    parser.add_argument(
+        "--effort", choices=["low", "medium", "high", "xhigh"], default=None
+    )
     parser.add_argument("--timeout", type=int, default=TIMEOUT)
     parser.add_argument("--workers", type=int, default=3)
     parser.add_argument("--wave-size", type=int, default=3)
@@ -840,8 +851,10 @@ def make_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = make_parser().parse_args(argv)
-    if args.model not in {MODEL, "gpt-6-sol"}:
-        raise SystemExit(f"formal run requires --model {MODEL} or gpt-6-sol")
+    if args.model not in {MODEL, "gpt-6-sol", "gpt-6.1-sol"}:
+        raise SystemExit(
+            f"formal run requires --model {MODEL}, gpt-6-sol, or gpt-6.1-sol"
+        )
     if args.timeout <= 0 or args.timeout > TIMEOUT:
         raise SystemExit(f"timeout must be in 1..{TIMEOUT}")
     if args.workers < 1 or args.workers > 3:
@@ -864,6 +877,7 @@ def main(argv: list[str] | None = None) -> int:
         workers=args.workers,
         wave_size=args.wave_size,
         review_all=args.review_all,
+        effort=args.effort,
     )
     if args.dry_run:
         print(
@@ -888,6 +902,7 @@ def main(argv: list[str] | None = None) -> int:
         workers=args.workers,
         wave_size=args.wave_size,
         github_token=args.github_token,
+        effort=args.effort,
     )
     return 0
 

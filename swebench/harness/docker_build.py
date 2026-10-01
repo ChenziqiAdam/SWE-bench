@@ -112,7 +112,7 @@ def _write_build_diagnostics(
         memory_kib = {}
     log_path = build_dir / "build_image.log"
     try:
-        last_log_lines = log_path.read_text(errors="replace").splitlines()[-20:]
+        last_log_lines = log_path.read_text(errors="replace").splitlines()[-200:]
     except OSError:
         last_log_lines = []
     payload = {
@@ -722,6 +722,10 @@ def build_image(
                             "layer not known",
                             "identifier is not a container",
                             "deleting build container",
+                            # Storage-layer commit of a finished RUN step failed
+                            # (exit 125; seen on QGIS/qiskit builds running
+                            # alongside other builds). Not a build-script error.
+                            "committing container for step",
                         )
                     )
                     if attempt < max_attempts - 1 and is_transient:
@@ -1288,6 +1292,63 @@ def build_instance_image(
         close_logger(logger)
 
 
+def _is_missing_image_error(exc: BaseException) -> bool:
+    """True when container creation failed because the image vanished."""
+    text = str(exc).lower()
+    return isinstance(exc, docker.errors.ImageNotFound) or any(
+        marker in text
+        for marker in ("image not known", "no such image", "requested access to the resource is denied")
+    )
+
+
+def _build_container_local_image(
+    test_spec: TestSpec,
+    client: docker.DockerClient,
+    run_id: str,
+    logger: logging.Logger,
+    nocache: bool,
+    max_attempts: int = 3,
+):
+    """Build the instance image and create its container.
+
+    Another evaluation sharing this daemon (or a ``--clean_images`` cleanup)
+    can delete the shared ``sweb.eval.*`` image between the existence check in
+    ``build_instance_image`` and container creation; the failure then surfaces
+    as 404 "image not known" / 403 pull denied. That is an infrastructure race,
+    not a property of the instance, so rebuild and retry.
+    """
+    for attempt in range(1, max_attempts + 1):
+        build_instance_image(test_spec, client, logger, nocache)
+        try:
+            return _create_container_or_raise(test_spec, client, run_id, logger)
+        except BuildImageError as exc:
+            cause = exc.__cause__ or exc
+            if attempt < max_attempts and _is_missing_image_error(cause):
+                logger.warning(
+                    "Image %s vanished before container creation (attempt %d/%d): %s; rebuilding",
+                    test_spec.instance_image_key,
+                    attempt,
+                    max_attempts,
+                    cause,
+                )
+                continue
+            raise
+
+
+def _create_container_or_raise(test_spec, client, run_id, logger):
+    container = None
+    try:
+        logger.info(f"Creating container for {test_spec.instance_id}...")
+        container = _create_eval_container(client, test_spec, run_id, logger)
+        logger.info(f"Container for {test_spec.instance_id} created: {container.id}")
+        return container
+    except Exception as e:
+        logger.error(f"Error creating container for {test_spec.instance_id}: {e}")
+        logger.info(traceback.format_exc())
+        cleanup_container(client, container, logger)
+        raise BuildImageError(test_spec.instance_id, str(e), logger) from e
+
+
 def build_container(
     test_spec: TestSpec,
     client: docker.DockerClient,
@@ -1311,7 +1372,9 @@ def build_container(
     if force_rebuild:
         remove_image(client, test_spec.instance_image_key, "quiet")
     if not test_spec.is_remote_image:
-        build_instance_image(test_spec, client, logger, nocache)
+        return _build_container_local_image(
+            test_spec, client, run_id, logger, nocache
+        )
     else:
         try:
             client.images.get(test_spec.instance_image_key)

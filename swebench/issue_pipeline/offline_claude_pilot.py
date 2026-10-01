@@ -111,6 +111,7 @@ DISALLOWED_TOOLS = ("WebSearch", "WebFetch")
 # writes outside the workspace are refused, curl gets 403. Set
 # SWEBENCH_CLAUDE_SANDBOX=0 to reproduce the old no-Bash behaviour.
 SANDBOX_ENV = "SWEBENCH_CLAUDE_SANDBOX"
+ISOLATE_ENV = "SWEBENCH_CLAUDE_ISOLATE"
 SANDBOX_SETTINGS = json.dumps(
     {
         "sandbox": {
@@ -198,6 +199,11 @@ def claude_command(model: str = MODEL, effort: str | None = None) -> list[str]:
         "--disallowedTools",
         ",".join(DISALLOWED_TOOLS),
     ]
+    # Isolate from the researcher's ~/.claude and project settings (model,
+    # effortLevel, hooks, plugins, permissions) and from any MCP servers;
+    # --settings below still applies. SWEBENCH_CLAUDE_ISOLATE=0 opts out.
+    if os.environ.get(ISOLATE_ENV, "1") != "0":
+        command += ["--setting-sources", "", "--strict-mcp-config"]
     if os.environ.get(SANDBOX_ENV, "1") != "0":
         command += ["--settings", SANDBOX_SETTINGS]
     if effort is not None:

@@ -248,8 +248,13 @@ def safety_settings_hash(settings: dict[str, Any] | None = None) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def gemini_command(prompt: str, model: str = MODEL, timeout: int = TIMEOUT) -> list[str]:
-    return [
+def gemini_command(
+    prompt: str,
+    model: str = MODEL,
+    timeout: int = TIMEOUT,
+    effort: str | None = None,
+) -> list[str]:
+    command = [
         _antigravity_bin(),
         "--new-project",
         "--sandbox",
@@ -266,6 +271,9 @@ def gemini_command(prompt: str, model: str = MODEL, timeout: int = TIMEOUT) -> l
         "--print",
         prompt,
     ]
+    if effort is not None:
+        command[-2:-2] = ["--effort", effort]
+    return command
 
 
 def _gemini_env() -> dict[str, str]:
@@ -504,13 +512,14 @@ def _run_one(
     model: str,
     timeout: int,
     runner: Callable[..., subprocess.CompletedProcess] = subprocess.run,
+    effort: str | None = None,
 ) -> tuple[dict, dict]:
     instance_id = instance["instance_id"]
     trajectory_path = output_dir / "trajectories" / f"{instance_id}.jsonl"
     stderr_path = output_dir / "trajectories" / f"{instance_id}.stderr.log"
     command_path = output_dir / "trajectories" / f"{instance_id}.command.json"
     prompt = build_pilot_prompt(instance)
-    command = gemini_command(prompt, model=model, timeout=timeout)
+    command = gemini_command(prompt, model=model, timeout=timeout, effort=effort)
     settings = safety_settings()
     settings_hash = safety_settings_hash(settings)
     audited_command = list(command)

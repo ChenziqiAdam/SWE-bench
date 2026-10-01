@@ -193,7 +193,9 @@ def build_pilot_prompt(instance: dict) -> str:
     )
 
 
-def codex_command(repo_dir: Path, prompt: str, model: str = MODEL) -> list[str]:
+def codex_command(
+    repo_dir: Path, prompt: str, model: str = MODEL, effort: str | None = None
+) -> list[str]:
     command = [
         _codex_bin(),
         "exec",
@@ -214,6 +216,8 @@ def codex_command(repo_dir: Path, prompt: str, model: str = MODEL) -> list[str]:
         "--config",
         "mcp_servers={}",
     ]
+    if effort is not None:
+        command.extend(["--config", f'model_reasoning_effort="{effort}"'])
     for feature in DISABLED_FEATURES:
         command.extend(["--disable", feature])
     command.append(prompt)
@@ -445,13 +449,14 @@ def _run_one(
     model: str,
     timeout: int,
     runner: Callable[..., subprocess.CompletedProcess] = subprocess.run,
+    effort: str | None = None,
 ) -> tuple[dict, dict]:
     instance_id = instance["instance_id"]
     trajectory_path = output_dir / "trajectories" / f"{instance_id}.jsonl"
     stderr_path = output_dir / "trajectories" / f"{instance_id}.stderr.log"
     command_path = output_dir / "trajectories" / f"{instance_id}.command.json"
     prompt = build_pilot_prompt(instance)
-    command = codex_command(repo_dir, prompt, model=model)
+    command = codex_command(repo_dir, prompt, model=model, effort=effort)
     command_path.write_text(json.dumps(command[:-1] + ["<prompt>"], indent=2) + "\n")
     started = time.perf_counter()
     stdout = ""
