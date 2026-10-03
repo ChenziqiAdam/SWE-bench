@@ -393,6 +393,33 @@ def parse_log_openmm(log: str, test_spec: TestSpec) -> dict[str, str]:
     return status_map
 
 
+def parse_log_samtools(log: str, test_spec: TestSpec) -> dict[str, str]:
+    """Parse samtools `make test` regression output.
+
+    test/regression.sh prints ``=== Testing <file>.reg regressions ===`` and
+    ends each file with ``=> PASS`` / ``=> FAIL`` after the
+    ``Unexpected failures`` counters. One status per .reg file.
+    """
+    header_re = re.compile(r"^=== Testing (\S+) regressions ===")
+    result_re = re.compile(r"^=> (PASS|FAIL)\b")
+    test_status_map: dict[str, str] = {}
+    current = None
+    for line in log.splitlines():
+        match = header_re.match(line.strip())
+        if match:
+            current = match.group(1)
+            continue
+        match = result_re.match(line.strip())
+        if match and current:
+            test_status_map[current] = (
+                TestStatus.PASSED.value
+                if match.group(1) == "PASS"
+                else TestStatus.FAILED.value
+            )
+            current = None
+    return test_status_map
+
+
 MAP_REPO_TO_PARSER_C = {
     "redis/redis": parse_log_redis,
     "jqlang/jq": parse_log_jq,
@@ -406,4 +433,5 @@ MAP_REPO_TO_PARSER_C = {
     "qgis/QGIS": parse_log_qgis,
     "rdkit/rdkit": parse_log_catch2,
     "lammps/lammps": parse_log_qgis,
+    "samtools/samtools": parse_log_samtools,
 }

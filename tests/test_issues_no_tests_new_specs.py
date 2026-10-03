@@ -99,3 +99,37 @@ def test_real_specs_have_a_runnable_test_command():
         assert ("pytest" in text) or ("ctest" in text) or ("make test" in text), (
             f"{repo}#{pr} real spec test_cmd is not a recognised runner: {text!r}"
         )
+
+
+# Regression locks for build/import failures seen in the 2026-10-01 server run
+# (build_diagnostics tails). Each pins the pin that fixes the logged error.
+def test_astropy_12525_numpy_predates_asscalar_removal():
+    spec = _spec_for("astropy/astropy", "12525")
+    assert spec["python"] == "3.10"  # numpy<1.23 has no cp311 wheels
+    assert "numpy==1.22.4" in spec["pip_packages"]
+    assert "numpy==1.22.4" in spec["install"]
+
+
+def test_obspy_setuptools_keeps_feature_class():
+    for pr in ("2560", "2570"):
+        pre = " ".join(_spec_for("obspy/obspy", pr)["pre_install"])
+        assert "setuptools==45.3.0" in pre  # setuptools.Feature removed in 46
+
+
+def test_pyscf_cmake_below_4_and_17x_prebuild():
+    for pr in ("551", "794", "1143", "1164", "1219"):
+        assert "'cmake<4'" in " ".join(_spec_for("pyscf/pyscf", pr)["pre_install"])
+    for pr in ("551", "794"):
+        install = _spec_for("pyscf/pyscf", pr)["install"]
+        assert "cmake .. && make" in install and "-lblas" in install
+
+
+def test_nilearn_installs_requests_for_no_deps_build():
+    for pr in ("2431", "2706"):
+        assert "requests" in _spec_for("nilearn/nilearn", pr)["pip_packages"]
+
+
+def test_yt_40_spec_has_nose_for_plotwindow_tests():
+    for pr in ("3532", "3556"):
+        pkgs = _spec_for("yt-project/yt", pr)["pip_packages"]
+        assert "nose==1.3.7" in pkgs and "pytest==7.4.4" in pkgs

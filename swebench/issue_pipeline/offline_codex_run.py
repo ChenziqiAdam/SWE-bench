@@ -851,9 +851,9 @@ def make_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = make_parser().parse_args(argv)
-    if args.model not in {MODEL, "gpt-6-sol", "gpt-6.1-sol"}:
+    if args.model not in {MODEL, "gpt-6-sol", "gpt-6.1-sol", "gpt-6-astra"}:
         raise SystemExit(
-            f"formal run requires --model {MODEL}, gpt-6-sol, or gpt-6.1-sol"
+            f"formal run requires --model {MODEL}, gpt-6-sol, gpt-6.1-sol, or gpt-6-astra"
         )
     if args.timeout <= 0 or args.timeout > TIMEOUT:
         raise SystemExit(f"timeout must be in 1..{TIMEOUT}")

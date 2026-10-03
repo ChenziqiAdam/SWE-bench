@@ -2076,3 +2076,12 @@ def test_verbose_pytest_lines_give_per_test_status_for_old_pytest():
         "astropy/modeling/tests/test_functional_models.py::test_new_case": "FAILED",
         "astropy/x/tests/test_y.py::test_skip": "SKIPPED",
     }
+
+
+def test_provider_limit_markers_cover_cyber_refusal():
+    from swebench.eval_pipeline.test_generation_eval import provider_limit_error
+
+    assert provider_limit_error("You've hit your session limit")
+    assert provider_limit_error("flagged for possible cybersecurity risk")
+    assert not provider_limit_error("timeout")
+    assert not provider_limit_error("codex_exit_1")

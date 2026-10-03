@@ -85,6 +85,28 @@ def _effective_memory(value: str | None, default: str) -> str | None:
     return None if resolved.lower() in {"", "0", "none", "unlimited"} else resolved
 
 
+def _storage_disk_snapshot() -> dict:
+    """Free bytes on the filesystems podman/buildah really write to."""
+    paths = {"buildah_tmpdir": os.environ.get("TMPDIR") or "/var/tmp"}
+    try:
+        graphroot = subprocess.run(
+            ["podman", "info", "--format", "{{.Store.GraphRoot}}"],
+            capture_output=True, text=True, timeout=15,
+        ).stdout.strip()
+        if graphroot:
+            paths["podman_graphroot"] = graphroot
+    except (OSError, subprocess.SubprocessError):
+        pass
+    snapshot = {}
+    for name, path in paths.items():
+        try:
+            usage = shutil.disk_usage(path)
+            snapshot[name] = {"path": path, "total_bytes": usage.total, "free_bytes": usage.free}
+        except OSError:
+            snapshot[name] = {"path": path, "error": "unavailable"}
+    return snapshot
+
+
 def _write_build_diagnostics(
     build_dir: Path,
     *,
@@ -129,6 +151,10 @@ def _write_build_diagnostics(
             "disk_total_bytes": disk.total,
             "disk_used_bytes": disk.used,
             "disk_free_bytes": disk.free,
+            # build_dir is usually on a large shared mount; ENOSPC during a
+            # commit hits buildah's TMPDIR (/var/tmp) or the container storage
+            # graphroot, which are separate filesystems.
+            "storage_disks": _storage_disk_snapshot(),
         },
         "last_log_lines": last_log_lines,
     }
@@ -419,6 +445,11 @@ def _eval_container_options(run_args: dict | None = None) -> dict:
     cpus = float(run_args.get("cpus", os.environ.get("SWEBENCH_EVAL_CPUS", "8")))
     if cpus > 0:
         options["nano_cpus"] = int(cpus * 1_000_000_000)
+        # `--cpus` is a CFS quota, so `nproc` still reports every host core and
+        # `make -j$(nproc)` / `cmake --parallel $(nproc)` spawn hundreds of cc1
+        # that blow the memory limit (kernel OOM -> "Killed signal terminated
+        # program cc1"). GNU nproc honours OMP_THREAD_LIMIT.
+        options["environment"] = {"OMP_THREAD_LIMIT": str(max(1, int(cpus)))}
     pids_limit = int(
         run_args.get(
             "pids_limit", os.environ.get("SWEBENCH_EVAL_PIDS_LIMIT", "2048")
@@ -486,6 +517,8 @@ def _create_podman_gpu_container(
         )
     if "pids_limit" in boundary:
         command.extend(["--pids-limit", str(boundary["pids_limit"])])
+    for key, value in boundary.get("environment", {}).items():
+        command.extend(["--env", f"{key}={value}"])
     for capability in boundary.get("cap_add", []):
         command.extend(["--cap-add", capability])
     command.extend([test_spec.instance_image_key, "tail", "-f", "/dev/null"])

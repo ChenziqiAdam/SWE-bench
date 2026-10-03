@@ -904,6 +904,23 @@ SPECS_QGIS = {
     ),
 }
 
+# 60631 (2025-02) predates QGIS's vendored Qwt (`external/qwt-*`): CMake does
+# `find_package(Qwt REQUIRED)` and the Qt6 build-deps image ships none, so
+# configure dies with "QWT_INCLUDE_DIR/QWT_LIBRARY NOTFOUND" (server build
+# diagnostics). Build Qwt 6.3.0 (Qt6-capable) into /usr/local, where
+# cmake/FindQwt.cmake searches. UNVERIFIED (no Linux docker locally).
+SPECS_QGIS["60631"]["pre_install"] = [
+    "curl -fsSL -o /tmp/qwt.tar.bz2 "
+    "https://downloads.sourceforge.net/project/qwt/qwt/6.3.0/qwt-6.3.0.tar.bz2",
+    "tar xjf /tmp/qwt.tar.bz2 -C /tmp",
+    "cd /tmp/qwt-6.3.0 && "
+    "sed -i 's#^\\s*QWT_INSTALL_PREFIX\\s*=.*#    QWT_INSTALL_PREFIX = /usr/local#' qwtconfig.pri && "
+    # Skip the Designer plugin (needs Qt6 Designer headers), examples, tests.
+    "sed -i -E 's/^\\s*QWT_CONFIG\\s*\\+=\\s*Qwt(Designer|Examples|Playground|Tests)/#&/' qwtconfig.pri && "
+    "qmake6 qwt.pro && make -j4 && make install && ldconfig",
+]
+
+
 class _RDKitSpecs(dict):
     """Return a non-evaluable placeholder for uncurated numeric RDKit PR specs."""
 

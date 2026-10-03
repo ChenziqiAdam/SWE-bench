@@ -133,6 +133,7 @@ _PROVIDER_LIMIT_MARKERS = (
     "rate_limit",
     "rate limit",
     "overloaded",
+    "flagged for possible cybersecurity risk",
 )
 
 
@@ -2001,7 +2002,14 @@ def _evaluate_one(
         report = {
             instance_id: {
                 "status": "errored" if inference_failed else "no-pred",
-                "failure_reason": "inference_error" if inference_failed else "",
+                # provider limits/refusals are infrastructure, not model ability
+                "failure_reason": (
+                    "provider_limit"
+                    if provider_limit_error(inference_error)
+                    else "inference_error"
+                )
+                if inference_failed
+                else "",
                 "error": inference_error,
                 "test_patch_applied": False,
                 "gold_patch_applied": False,
@@ -2183,7 +2191,14 @@ def _evaluate_one(
             gold_tail = gold_output[-_REPORT_OUTPUT_TAIL_CHARS:]
             report[instance_id]["base_output_tail"] = base_tail
             report[instance_id]["gold_output_tail"] = gold_tail
-            if classified["failure_reason"] == "no_parseable_test_status":
+            if classified["failure_reason"] in {
+                "no_parseable_test_status",
+                "generated_test_collection_failed",
+                "generated_test_execution_failed",
+                "generated_test_did_not_build_on_gold",
+            }:
+                # surfaced in the results CSV (evaluation_error) so env faults
+                # such as a missing import are visible without server logs
                 report[instance_id]["error"] = (
                     f"[base tail] {base_tail[-800:]}\n[gold tail] {gold_tail[-800:]}"
                 )

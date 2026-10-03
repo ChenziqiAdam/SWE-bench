@@ -1708,15 +1708,23 @@ SPECS_ASTROPY.update(
 # setuptools<70 (still has dep_util; verified that get_requires then passes).
 # The C-extension compile itself was only exercised on macOS clang, not on the
 # Linux image (UNVERIFIED there).
+# Server result (2nd run): with numpy 1.26.4 the build succeeded but every
+# test died at import, `np.asscalar`/`np.alen` (astropy/units/quantity_helper/
+# function_helpers.py:116) were removed in numpy 1.23 -> no_parseable_test_status.
+# This commit needs numpy<=1.22 and therefore python<=3.10. Reproduced locally
+# (py3.10 + numpy 1.22.4: astropy.units imports, test_quantity runs; macOS clang
+# needed -Wno-error=incompatible-function-pointer-types, gcc on Linux does not).
 SPECS_ASTROPY["12525"].update(
     {
+        "python": "3.10",
+        "pip_packages": ["pytest", "numpy==1.22.4", "scipy==1.9.3", "pyparsing==3.1.1"],
         "pre_install": [
             "python -m pip install 'setuptools>=61,<70' 'setuptools_scm>=6.2,<8' "
-            "wheel 'cython==0.29.36' 'numpy==1.26.4' extension-helpers "
+            "wheel 'cython==0.29.36' 'numpy==1.22.4' extension-helpers "
             "'jinja2==3.0.3' 'markupsafe==2.0.1'"
         ],
         "install": (
-            "echo 'numpy==1.26.4' > /tmp/pip-constraints.txt && "
+            "echo 'numpy==1.22.4' > /tmp/pip-constraints.txt && "
             "python -m pip install -e .[test] --verbose --no-build-isolation "
             "-c /tmp/pip-constraints.txt"
         ),
@@ -1735,8 +1743,19 @@ _PYSCF_BASE_PRE_INSTALL = [
 _PYSCF_17_GEN_SPEC = {
     "python": "3.8",
     "pre_install": _PYSCF_BASE_PRE_INSTALL
-    + ["python -m pip install 'numpy==1.21.6' 'setuptools<60' wheel cmake"],
-    "install": "python -m pip install -e . --no-build-isolation",
+    + ["python -m pip install 'numpy==1.21.6' 'setuptools<60' wheel 'cmake<4'"],
+    # setup.py (1.7.x: 551, 794) only accepts BLAS if LDFLAGS names it (numpy's
+    # wheel BLAS has no library_dirs; server error "BLAS library not found"),
+    # and expects libcint/libxc prebuilt by pyscf/lib's CMake into
+    # pyscf/lib/deps (server error 794: "libcint library not found"). Build
+    # them first, the documented source-install route, then install.
+    # UNVERIFIED on Linux (no local docker).
+    "install": (
+        "cd /testbed/pyscf/lib && mkdir -p build && cd build && "
+        "cmake .. && make -j4 && cd /testbed && "
+        "LDFLAGS='-L/usr/lib/x86_64-linux-gnu -lblas' "
+        "python -m pip install -e . --no-build-isolation"
+    ),
     "pip_packages": ["pytest", "numpy==1.21.6", "scipy==1.7.3", "h5py==3.1.0"],
     "validation_cmd": "python -c 'import pyscf'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
@@ -1746,7 +1765,10 @@ _PYSCF_17_GEN_SPEC = {
 _PYSCF_2X_GEN_SPEC = {
     "python": "3.9",
     "pre_install": _PYSCF_BASE_PRE_INSTALL
-    + ["python -m pip install 'numpy==1.23.5' setuptools wheel cmake"],
+    # cmake>=4 rejects libxc's `cmake_minimum_required(<3.5)` (server error
+    # "Compatibility with CMake < 3.5 has been removed") while pyscf's CMake
+    # builds libxc from source.
+    + ["python -m pip install 'numpy==1.23.5' setuptools wheel 'cmake<4'"],
     "install": "python -m pip install -e . --no-build-isolation",
     "pip_packages": ["pytest", "numpy==1.23.5", "scipy==1.9.3", "h5py==3.7.0"],
     "validation_cmd": "python -c 'import pyscf'",
@@ -1754,9 +1776,9 @@ _PYSCF_2X_GEN_SPEC = {
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
-SPECS_PYSCF = {"551": dict(_PYSCF_17_GEN_SPEC)}
+SPECS_PYSCF = {pr: dict(_PYSCF_17_GEN_SPEC) for pr in ("551", "794")}
 SPECS_PYSCF.update(
-    {pr: dict(_PYSCF_2X_GEN_SPEC) for pr in ("794", "1143", "1164", "1219")}
+    {pr: dict(_PYSCF_2X_GEN_SPEC) for pr in ("1143", "1164", "1219")}
 )
 
 # obspy: verified python classifiers at base commits.
@@ -1775,7 +1797,10 @@ _OBSPY_GEN_SPEC = {
         # in numpy/distutils/core.py; removed in 1.19 -- verified against the
         # numpy tags). 1.21.6 failed the server build with exactly that
         # ImportError. NumPy must also be importable before setup.py runs.
-        "python -m pip install 'numpy==1.18.5' 'setuptools<60' wheel",
+        # setup.py also uses `setuptools.Feature`, removed in setuptools 46
+        # (server build 2nd run: "module 'setuptools' has no attribute
+        # 'Feature'" with setuptools 59.8). 45.x still has it.
+        "python -m pip install 'numpy==1.18.5' 'setuptools==45.3.0' wheel",
     ],
     "install": "python -m pip install -e . --no-build-isolation",
     "pip_packages": [
@@ -1971,7 +1996,14 @@ _YT_40_GEN_SPEC = {
     ],
     "install": "python -m pip install -e . --no-build-isolation",
     "pip_packages": [
-        "pytest",
+        # yt 4.0 tests (visualization/tests/test_plotwindow.py, the file both
+        # codex 3532 and 3556 tests live in) `from nose.tools import
+        # assert_true` and rely on nose-style module `setup()`: without nose
+        # collection fails on base and gold alike (server:
+        # generated_test_collection_failed). nose 1.3.7 needs py<3.10;
+        # pytest 8 dropped nose-style setup().
+        "pytest==7.4.4",
+        "nose==1.3.7",
         "cython<3",
         "numpy==1.21.6",
         "scipy==1.7.3",
@@ -2037,6 +2069,9 @@ _NILEARN_GEN_SPEC = {
         "nibabel==3.2.2",
         "matplotlib==3.5.3",
         "joblib==1.1.1",
+        # `--no-deps` install skips it; nilearn/version.py hard-requires it
+        # (server validation of 2706: "No module named 'requests'").
+        "requests",
     ],
     "validation_cmd": "python -c 'import nilearn'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",

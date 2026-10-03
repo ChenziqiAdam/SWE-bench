@@ -26,11 +26,6 @@ IGNORED_INSTANCES: dict[str, str] = {
 }
 
 ENV_NOTES: dict[str, str] = {
-    "astropy__astropy-9079": (
-        "image builds with the current spec but the generated test run yields no "
-        "parseable pytest status on base and gold; cause unknown -- read "
-        "base_output_tail/gold_output_tail in report.json after re-running"
-    ),
     "mne-tools__mne-python-9459": (
         "matplotlib >=3.5 raises MatplotlibDeprecationWarning (rectprops) in mne's "
         "widgets; spec pinned to matplotlib 3.4.3 (unverified, re-run to confirm)"

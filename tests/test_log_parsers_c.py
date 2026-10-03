@@ -257,3 +257,27 @@ def test_parse_log_openmm_binary_done_reads_process_crash():
     assert parse_log_openmm_binary_done(log, None) == {
         "TestCpuCustomNonbondedForce": TestStatus.FAILED.value,
     }
+
+
+def test_parse_log_samtools_reads_regression_verdicts():
+    from swebench.harness.log_parsers.c import parse_log_samtools
+
+    base = """
+=== Testing cram-size.reg regressions ===
+Unexpected failures: 0
+=> PASS
+cd test/consensus && AWK="mawk" ../regression.sh consensus.reg
+
+=== Testing consensus.reg regressions ===
+
+UNEXPECTED FAIL: Output mismatch
+Unexpected failures: 1
+=> FAIL
+make: *** [Makefile:248: test] Error 1
+"""
+    gold = base.replace("Unexpected failures: 1\n=> FAIL", "Unexpected failures: 0\n=> PASS")
+    assert parse_log_samtools(base, None) == {
+        "cram-size.reg": TestStatus.PASSED.value,
+        "consensus.reg": TestStatus.FAILED.value,
+    }
+    assert parse_log_samtools(gold, None)["consensus.reg"] == TestStatus.PASSED.value

@@ -647,3 +647,9 @@ def test_next_gpu_index_round_robins_across_gpu_count(monkeypatch):
     for i in range(0, 30, 3):
         batch = indices[i : i + 3]
         assert len(set(batch)) == 3, f"Batch {batch} does not contain all 3 indices"
+
+
+def test_eval_container_caps_nproc_to_cpu_quota(monkeypatch):
+    monkeypatch.setenv("SWEBENCH_EVAL_CPUS", "8")
+    options = docker_build._eval_container_options()
+    assert options["environment"] == {"OMP_THREAD_LIMIT": "8"}
