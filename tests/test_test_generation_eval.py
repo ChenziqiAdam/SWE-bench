@@ -14,6 +14,7 @@ from swebench.eval_pipeline.test_generation_eval import (
     _build_script,
     _exclude_gold_test_files,
     _evaluate_one,
+    _infrastructure_failure_marker,
     _infrastructure_failure_output,
     _lammps_generated_test_targets,
     _no_tests_selected,
@@ -1890,7 +1891,7 @@ def test_empty_prediction_with_inference_error_is_errored(monkeypatch, tmp_path)
     assert result["error"] == "provider: Insufficient Balance"
 
 
-def test_empty_prediction_timeout_is_no_pred(monkeypatch, tmp_path):
+def test_empty_prediction_timeout_is_scored_unresolved(monkeypatch, tmp_path):
     monkeypatch.setattr(
         "swebench.eval_pipeline.test_generation_eval.close_logger",
         lambda *_args: None,
@@ -1909,8 +1910,8 @@ def test_empty_prediction_timeout_is_no_pred(monkeypatch, tmp_path):
         1,
     )
 
-    assert result["status"] == "no-pred"
-    assert result["failure_reason"] == ""
+    assert result["status"] == "unresolved"
+    assert result["failure_reason"] == "inference_timeout"
     assert result["error"] == "timeout"
 
 
@@ -2085,3 +2086,88 @@ def test_provider_limit_markers_cover_cyber_refusal():
     assert provider_limit_error("flagged for possible cybersecurity risk")
     assert not provider_limit_error("timeout")
     assert not provider_limit_error("codex_exit_1")
+
+
+def test_infrastructure_marker_names_the_matched_failure():
+    assert (
+        _infrastructure_failure_marker("x\nKilled signal terminated program cc1\n")
+        == "Killed signal terminated program cc1"
+    )
+    assert _infrastructure_failure_marker("AssertionError: 3 != 2") == ""
+
+
+def test_trajectory_provider_errors_are_exposed_behind_exit_codes(tmp_path):
+    import json
+    from swebench.eval_pipeline.test_generation_eval import (
+        _prediction_map,
+        provider_limit_error,
+    )
+
+    (tmp_path / "trajectories").mkdir()
+    (tmp_path / "trajectories" / "a__a-1.jsonl").write_text(
+        json.dumps({"type": "turn.failed", "error": {"message": "This content was flagged for possible cybersecurity risk."}})
+    )
+    (tmp_path / "trajectories" / "b__b-2.jsonl").write_text(
+        json.dumps({"type": "result", "is_error": True, "api_error_status": 529, "result": "API Error: 529 Overloaded."})
+    )
+    (tmp_path / "trajectories" / "c__c-3.jsonl").write_text(
+        json.dumps({"type": "turn.failed", "error": {"message": "sandbox crashed"}})
+    )
+    rows = [
+        {"instance_id": "a__a-1", "error": "manual_review_rejected", "model_patch": ""},
+        {"instance_id": "b__b-2", "error": "claude_exit_1", "model_patch": ""},
+        {"instance_id": "c__c-3", "error": "codex_exit_1", "model_patch": ""},
+    ]
+    pred = tmp_path / "agent_predictions.jsonl"
+    pred.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+    mapped = _prediction_map(pred)
+    assert provider_limit_error(mapped["a__a-1"]["error"])
+    assert provider_limit_error(mapped["b__b-2"]["error"])
+    assert mapped["c__c-3"]["error"] == "codex_exit_1"  # not a provider limit
+
+
+def test_instance_non_evaluable_detects_placeholder_specs():
+    from swebench.eval_pipeline.test_generation_eval import instance_non_evaluable
+
+    assert instance_non_evaluable({"repo": "sunpy/sunpy", "version": "1505"})
+    assert not instance_non_evaluable({"repo": "yt-project/yt", "version": "3532"})
+    assert not instance_non_evaluable({"repo": "demo/repo", "version": "1"})
+
+
+def test_inference_outcome_scores_model_failures_and_spares_infrastructure():
+    from swebench.eval_pipeline.test_generation_eval import _inference_outcome
+
+    inst = {"repo": "demo/repo", "version": "1"}
+    placeholder = {"repo": "sunpy/sunpy", "version": "1505"}
+    patch = "diff --git a/t b/t\n"
+
+    assert _inference_outcome(None, inst) == ("no-pred", "")
+    assert _inference_outcome({"model_patch": patch}, inst) is None
+    # agent finished but submitted nothing -> model failure; placeholders excluded
+    assert _inference_outcome({"model_patch": ""}, inst) == ("unresolved", "no_prediction")
+    assert _inference_outcome({"model_patch": ""}, placeholder) == ("no-pred", "")
+    assert _inference_outcome({"model_patch": "", "error": "timeout"}, inst) == (
+        "unresolved", "inference_timeout")
+    assert _inference_outcome({"model_patch": "", "error": "codex_exit_1"}, inst) == (
+        "errored", "inference_error")
+    assert _inference_outcome(
+        {"model_patch": "", "error": "claude_exit_1: API Error: 529 Overloaded"}, inst
+    ) == ("errored", "provider_limit")
+
+    def rejected(paths):
+        return {
+            "model_patch": "",
+            "error": "manual_review_rejected",
+            "automatic_error": "disallowed_patch_scope",
+            "agent_backend": "codex",
+            "offline_audit": {"disallowed_paths": paths},
+        }
+
+    # genuinely out of scope under the current rule -> model failure
+    assert _inference_outcome(rejected(["examples/ASPHERE/in.x"]), inst) == (
+        "unresolved", "disallowed_patch_scope")
+    # the old rule wrongly voided an in-scope patch (rdkit catch_*.cpp) and a
+    # build dir; the patch was not kept, so it needs re-inference, not a score
+    assert _inference_outcome(
+        rejected(["Code/GraphMol/catch_graphmol.cpp", ".regrbuild/Makefile"]), inst
+    ) == ("errored", "stale_scope_rule")

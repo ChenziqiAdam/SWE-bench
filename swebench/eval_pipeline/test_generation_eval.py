@@ -137,6 +137,15 @@ _PROVIDER_LIMIT_MARKERS = (
 )
 
 
+def instance_non_evaluable(instance: dict) -> bool:
+    """True for deliberate placeholder specs (`test_cmd` echoes "not evaluable:")."""
+    try:
+        spec = MAP_REPO_VERSION_TO_SPECS[instance["repo"]][str(instance.get("version", ""))]
+    except (KeyError, TypeError):
+        return False
+    return "not evaluable:" in json.dumps(spec, default=str)
+
+
 def provider_limit_error(error: str) -> bool:
     """True when inference stopped because the provider refused/limited it.
 
@@ -308,11 +317,16 @@ def _non_evaluable_output(output: str) -> bool:
     )
 
 
-def _infrastructure_failure_output(output: str) -> bool:
-    """Recognize host/toolchain failures unrelated to a generated test oracle."""
-    direct_failure = any(
-        marker in output
-        for marker in (
+def _infrastructure_failure_marker(output: str) -> str:
+    """Return the host/toolchain failure marker found in ``output`` ('' if none).
+
+    These failures are unrelated to a generated test oracle; the marker is
+    kept in the report so the results CSV says *which* one fired.
+    """
+    direct_failure = next(
+        (
+            marker
+            for marker in (
             "fatal error: GL/gl.h: No such file or directory",
             "error: unknown target CPU 'generic'",
             "ninja: fatal: posix_spawn: Operation not permitted",
@@ -328,8 +342,13 @@ def _infrastructure_failure_output(output: str) -> bool:
             # the whole-project build, unrelated to the generated test.
             "Killed signal terminated program cc1",
             "internal compiler error: Killed",
-        )
+            )
+            if marker in output
+        ),
+        "",
     )
+    if direct_failure:
+        return direct_failure
     pocl_runtime_failure = (
         "WARNING: Using an unsupported OpenCL implementation" in output
         and any(
@@ -349,7 +368,15 @@ def _infrastructure_failure_output(output: str) -> bool:
             for marker in ("Segmentation fault", "Illegal instruction", "Aborted")
         )
     )
-    return direct_failure or pocl_runtime_failure or preload_failure
+    if pocl_runtime_failure:
+        return "pocl unsupported OpenCL runtime failure"
+    if preload_failure:
+        return "pocl cpu-compat preload failure"
+    return ""
+
+
+def _infrastructure_failure_output(output: str) -> bool:
+    return bool(_infrastructure_failure_marker(output))
 
 
 def _no_tests_selected(output: str) -> bool:
@@ -1918,9 +1945,66 @@ def _parse_status(output: str, instance: dict) -> dict[str, str]:
     return _parse_pytest_aggregate_summary(test_output) or {}
 
 
+def _trajectory_provider_message(trajectory_path: Path) -> str:
+    """Return the provider-side stop reason recorded in an agent trajectory.
+
+    Codex writes `error`/`turn.failed` events; Claude Code ends with a
+    `result` event carrying `api_error_status`. Predictions only keep an
+    opaque `codex_exit_1` / `claude_exit_1`, which hid content-filter
+    refusals, 529 overloads and session limits as ordinary failures.
+    """
+    try:
+        lines = trajectory_path.read_text(errors="replace").splitlines()
+    except OSError:
+        return ""
+    message = ""
+    for line in lines:
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(event, dict):
+            continue
+        kind = event.get("type")
+        if kind in {"error", "turn.failed"}:
+            err = event.get("error")
+            text = event.get("message") or (
+                err.get("message", "") if isinstance(err, dict) else str(err or "")
+            )
+        elif kind == "result" and (event.get("is_error") or event.get("api_error_status")):
+            text = str(event.get("result") or "")
+        else:
+            continue
+        if provider_limit_error(text):
+            message = text
+    return message
+
+
+def _annotate_provider_errors(rows: dict[str, dict], predictions_path: Path) -> None:
+    """Expose provider refusals/limits behind opaque exit-code errors."""
+    base = predictions_path.parent
+    for instance_id, row in rows.items():
+        error = row.get("error") or ""
+        if not error or provider_limit_error(error):
+            continue
+        candidates = []
+        recorded = (row.get("offline_audit") or {}).get("trajectory_path")
+        if isinstance(recorded, str):
+            candidates.append(base / recorded)
+        candidates.append(base / "trajectories" / f"{instance_id}.jsonl")
+        for path in candidates:
+            message = _trajectory_provider_message(path)
+            if message:
+                row["provider_error"] = message
+                row["error"] = f"{error}: {message}"
+                break
+
+
 def _prediction_map(predictions_path: str | Path) -> dict[str, dict]:
     rows = read_prediction_rows(predictions_path)
-    return {row["instance_id"]: row for row in rows if row.get("instance_id")}
+    mapped = {row["instance_id"]: row for row in rows if row.get("instance_id")}
+    _annotate_provider_errors(mapped, Path(predictions_path))
+    return mapped
 
 
 def _safe_model_dir(prediction: dict) -> str:
@@ -1973,6 +2057,68 @@ def _write_report_and_cleanup_instance_image(
         )
 
 
+_SCOPE_SOURCE_SUFFIXES = (
+    ".c", ".cc", ".cpp", ".cxx", ".cu", ".h", ".hh", ".hpp", ".hxx", ".py",
+    ".pyx", ".f", ".f90", ".f95", ".jl", ".rs", ".java", ".cmake", ".sh",
+)
+
+
+def _scope_noise(path: str) -> bool:
+    """Scratch the pilots now strip silently: hidden top-level dirs, root data files."""
+    parts = path.split("/")
+    return parts[0].startswith(".") or (
+        len(parts) == 1 and not path.lower().endswith(_SCOPE_SOURCE_SUFFIXES)
+    )
+
+
+def _still_out_of_scope(prediction: dict) -> list[str]:
+    """Re-judge the recorded `disallowed_paths` with the *current* scope rule."""
+    paths = (prediction.get("offline_audit") or {}).get("disallowed_paths") or []
+    backend = str(prediction.get("agent_backend") or "")
+    if backend.startswith("claude"):
+        from swebench.issue_pipeline.offline_claude_pilot import classify_scope_paths
+    elif backend in {"gemini", "agy"}:
+        from swebench.issue_pipeline.offline_gemini_pilot import classify_scope_paths
+    else:
+        from swebench.issue_pipeline.offline_codex_pilot import classify_scope_paths
+    return classify_scope_paths([p for p in paths if not _scope_noise(p)])
+
+
+def _inference_outcome(prediction: dict | None, instance: dict) -> tuple[str, str] | None:
+    """(status, failure_reason) when inference alone decides the result, else None.
+
+    Provider limits/refusals and infrastructure errors stay out of the score.
+    What the agent itself did (ran out of budget, returned nothing, left only
+    out-of-scope files) is a model failure and is scored `unresolved`.
+    """
+    if prediction is None:
+        return "no-pred", ""
+    error = prediction.get("error", "") or ""
+    underlying = error
+    if error == "manual_review_rejected":
+        underlying = prediction.get("automatic_error") or error
+    has_patch = bool((prediction.get("model_patch") or "").strip())
+    if provider_limit_error(error):
+        return "errored", "provider_limit"
+    placeholder = instance_non_evaluable(instance)
+    if underlying == "disallowed_patch_scope":
+        if _still_out_of_scope(prediction):
+            return ("excluded", "non_evaluable_spec") if placeholder else (
+                "unresolved", "disallowed_patch_scope"
+            )
+        # The recorded paths are in scope under the current rule: the old rule
+        # voided a valid patch that was not kept, so this needs re-inference.
+        return "errored", "stale_scope_rule"
+    if error.strip().lower() == "timeout":
+        return ("no-pred", "") if placeholder else ("unresolved", "inference_timeout")
+    if error:
+        return ("errored", "inference_error") if not has_patch else None
+    if not has_patch:
+        # The agent finished without error but submitted nothing.
+        return ("no-pred", "") if placeholder else ("unresolved", "no_prediction")
+    return None
+
+
 def _evaluate_one(
     instance: dict,
     prediction: dict | None,
@@ -1992,24 +2138,13 @@ def _evaluate_one(
 
     inference_error = (prediction or {}).get("error", "")
     inference_timed_out = inference_error.strip().lower() == "timeout"
-    if (
-        prediction is None
-        or not (prediction.get("model_patch") or "").strip()
-        or inference_timed_out
-        or provider_limit_error(inference_error)
-    ):
-        inference_failed = bool(inference_error and not inference_timed_out)
+    outcome = _inference_outcome(prediction, instance)
+    if outcome is not None:
+        status, failure_reason = outcome
         report = {
             instance_id: {
-                "status": "errored" if inference_failed else "no-pred",
-                # provider limits/refusals are infrastructure, not model ability
-                "failure_reason": (
-                    "provider_limit"
-                    if provider_limit_error(inference_error)
-                    else "inference_error"
-                )
-                if inference_failed
-                else "",
+                "status": status,
+                "failure_reason": failure_reason,
                 "error": inference_error,
                 "test_patch_applied": False,
                 "gold_patch_applied": False,
@@ -2191,11 +2326,18 @@ def _evaluate_one(
             gold_tail = gold_output[-_REPORT_OUTPUT_TAIL_CHARS:]
             report[instance_id]["base_output_tail"] = base_tail
             report[instance_id]["gold_output_tail"] = gold_tail
+            if classified["failure_reason"] == "infrastructure_failure":
+                marker = _infrastructure_failure_marker(
+                    base_output
+                ) or _infrastructure_failure_marker(gold_output)
+                report[instance_id]["infrastructure_marker"] = marker
+                report[instance_id]["error"] = f"[infrastructure marker] {marker}"
             if classified["failure_reason"] in {
                 "no_parseable_test_status",
                 "generated_test_collection_failed",
                 "generated_test_execution_failed",
                 "generated_test_did_not_build_on_gold",
+                "gold_did_not_pass",
             }:
                 # surfaced in the results CSV (evaluation_error) so env faults
                 # such as a missing import are visible without server logs

@@ -175,7 +175,7 @@ def test_deepchem_install_shims_missing_new_checkpoint_reader():
     at import time (unconditionally pulled in via deepchem/__init__.py),
     but that symbol is a TF1-era internal export the pinned
     tensorflow-cpu==2.13.1 never re-exposes there -- only as the public
-    `tensorflow.train.NewCheckpointReader`. The `install` step must patch
+    `tensorflow.python.training.py_checkpoint_reader`. The `install` step must patch
     the missing symbol back onto the installed module (idempotently, and
     only if it's actually missing) since none of these 4 PRs exercise
     TensorGraph and the import must simply not crash.
@@ -191,7 +191,8 @@ def test_deepchem_install_shims_missing_new_checkpoint_reader():
         "import NewCheckpointReader" in install
     )
     assert "if !" in install and "; fi" in install
-    assert "from tensorflow.train import NewCheckpointReader" in install
+    assert "tensorflow.python.training.py_checkpoint_reader import NewCheckpointReader" in install
+    assert "tensorflow.train import" not in install  # not exported in TF2
 
 
 def test_qutip_historical_specs_disable_isolated_build_dependencies():

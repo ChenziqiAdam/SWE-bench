@@ -7,8 +7,14 @@ instance gets a status derived from its harness report.json (NOT the raw
     resolved   FAIL_TO_PASS.success non-empty AND FAIL_TO_PASS.failure empty
     unresolved any FAIL_TO_PASS failed (a real, scored miss)
     excluded   non-scorable: empty FAIL_TO_PASS (placeholder PR) or non-buildable
-    errored    inference/evaluation failed (e.g. provider error or container 409)
-    no-pred    inference completed without an error but returned no/empty patch
+    errored    inference/evaluation failed for a non-model reason (provider
+               limit/refusal, harness error, stale scope rule needing re-inference)
+    no-pred    no prediction exists for the instance (never inferred), or a
+               placeholder spec that nothing could score
+
+Model-side inference failures are scored `unresolved`: inference timeout,
+an agent that finished with an empty patch (`no_prediction`), and a patch with
+nothing but out-of-scope files (`disallowed_patch_scope`).
 
 Only `resolved`/`unresolved` count toward the denominator. This neutralises the
 two integrity bugs from sci_agent_001: vacuous resolves (empty F2P) and swallowed
@@ -22,6 +28,7 @@ import logging
 from pathlib import Path
 
 from swebench.eval_pipeline.known_env_issues import env_note, ignored_reason
+from swebench.eval_pipeline.test_generation_eval import instance_non_evaluable
 
 logger = logging.getLogger(__name__)
 
@@ -333,7 +340,8 @@ def render_test_generation_table(
         if not status:
             status = "errored" if instance_id in nonempty else "no-pred"
         if inference_timed_out:
-            status = "no-pred"
+            # budget exhausted = model failure, scored (placeholders stay out)
+            status = "no-pred" if instance_non_evaluable(inst) else "unresolved"
         if status == "no-pred" and empty_inference_failed:
             status = "errored"
         if pipeline_failure and not info:
@@ -371,6 +379,8 @@ def render_test_generation_table(
                 if status == "ignored"
                 else "base_image_not_buildable"
                 if infrastructure_failure
+                else "inference_timeout"
+                if inference_timed_out and status == "unresolved"
                 else info.get("failure_reason", "")
                 or ("inference_error" if empty_inference_failed else "")
                 or (

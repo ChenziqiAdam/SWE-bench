@@ -278,3 +278,24 @@ def test_codex_command_effort_is_optional():
     command = codex_command(Path("."), "p", effort="high")
     assert command[command.index('model_reasoning_effort="high"') - 1] == "--config"
     assert command[-1] == "p"
+
+
+def test_out_of_scope_files_are_stripped_and_the_test_is_still_scored(tmp_path):
+    from swebench.issue_pipeline.offline_codex_pilot import _run_one
+
+    repo, output = _committed_repo(tmp_path)
+
+    def tests_and_source(command, **kwargs):
+        (repo / "tests" / "test_x.py").write_text("def test_x():\n    assert True\n")
+        (repo / "source.cpp").write_text("new\n")
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    prediction, audit = _run_one(
+        _instance("openmm__openmm-3", "openmm/openmm"), repo, output,
+        "gpt-5.6-sol", 1, runner=tests_and_source,
+    )
+    assert "error" not in prediction
+    assert "test_x" in prediction["model_patch"]
+    assert "source.cpp" not in prediction["model_patch"]
+    assert prediction["offline_audit"]["stripped_disallowed_paths"] == ["source.cpp"]
+    assert audit["disallowed_paths"] == ["source.cpp"]  # still flagged for review

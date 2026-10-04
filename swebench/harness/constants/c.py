@@ -913,11 +913,12 @@ SPECS_QGIS["60631"]["pre_install"] = [
     "curl -fsSL -o /tmp/qwt.tar.bz2 "
     "https://downloads.sourceforge.net/project/qwt/qwt/6.3.0/qwt-6.3.0.tar.bz2",
     "tar xjf /tmp/qwt.tar.bz2 -C /tmp",
-    "cd /tmp/qwt-6.3.0 && "
+    # Subshell: the QGIS configure step that follows is cwd-relative (/testbed).
+    "(cd /tmp/qwt-6.3.0 && "
     "sed -i 's#^\\s*QWT_INSTALL_PREFIX\\s*=.*#    QWT_INSTALL_PREFIX = /usr/local#' qwtconfig.pri && "
     # Skip the Designer plugin (needs Qt6 Designer headers), examples, tests.
     "sed -i -E 's/^\\s*QWT_CONFIG\\s*\\+=\\s*Qwt(Designer|Examples|Playground|Tests)/#&/' qwtconfig.pri && "
-    "qmake6 qwt.pro && make -j4 && make install && ldconfig",
+    "qmake6 qwt.pro && make -j4 && make install && ldconfig)",
 ]
 
 

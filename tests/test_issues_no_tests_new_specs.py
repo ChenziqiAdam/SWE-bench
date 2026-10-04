@@ -17,13 +17,10 @@ from swebench.harness.test_spec.test_spec import make_test_spec
 _INSTANCES = Path("outputs/issues_no_tests_new_ds/instances.jsonl")
 
 # PRs deliberately shipped as non-evaluable placeholders (base repo predates
-# any supported Python, or needs heavy C/C++ toolchain curation).
+# any supported Python, or needs heavy C/C++ toolchain curation). qiskit-845,
+# obspy-956, yt-2128/2485 were curated 2026-10-04 and are no longer here.
 EXPECTED_NON_EVALUABLE = {
-    ("qiskit/qiskit", "845"),
-    ("obspy/obspy", "956"),
     ("sunpy/sunpy", "1505"),
-    ("yt-project/yt", "2128"),
-    ("yt-project/yt", "2485"),
     ("psi4/psi4", "1244"),
     ("psi4/psi4", "3005"),
     ("qgis/QGIS", "52213"),
@@ -121,7 +118,9 @@ def test_pyscf_cmake_below_4_and_17x_prebuild():
         assert "'cmake<4'" in " ".join(_spec_for("pyscf/pyscf", pr)["pre_install"])
     for pr in ("551", "794"):
         install = _spec_for("pyscf/pyscf", pr)["install"]
-        assert "cmake .. && make" in install and "-lblas" in install
+        # `;` so a failed cmake/make aborts under `set -e` (an `&&` chain would not)
+        assert "cmake ..; make" in install and "-lblas" in install
+        assert "&&" not in install
 
 
 def test_nilearn_installs_requests_for_no_deps_build():
@@ -133,3 +132,47 @@ def test_yt_40_spec_has_nose_for_plotwindow_tests():
     for pr in ("3532", "3556"):
         pkgs = _spec_for("yt-project/yt", pr)["pip_packages"]
         assert "nose==1.3.7" in pkgs and "pytest==7.4.4" in pkgs
+
+
+def test_qgis_60631_qwt_build_runs_in_subshell():
+    # the cwd-relative `cmake -S .` that follows must still run from /testbed
+    pre = _spec_for("qgis/QGIS", "60631")["pre_install"]
+    qwt = [c for c in pre if "qwt-6.3.0" in c and "qmake6" in c]
+    assert len(qwt) == 1 and qwt[0].startswith("(cd /tmp/qwt-6.3.0") and qwt[0].endswith(")")
+
+
+def test_nilearn_2431_pins_matplotlib_before_cmap_reregister_error():
+    assert "matplotlib==3.3.4" in _spec_for("nilearn/nilearn", "2431")["pip_packages"]
+    assert "matplotlib==3.5.3" in _spec_for("nilearn/nilearn", "2706")["pip_packages"]
+
+
+def test_mne_legacy_pins_pyparsing_below_deprecation_warnings():
+    assert "pyparsing==3.0.9" in _spec_for("mne-tools/mne-python", "9459")["pip_packages"]
+
+
+def test_curated_former_placeholders_are_evaluable():
+    for repo, pr in (
+        ("yt-project/yt", "2128"),
+        ("yt-project/yt", "2485"),
+        ("obspy/obspy", "956"),
+        ("qiskit/qiskit", "845"),
+    ):
+        spec = _spec_for(repo, pr)
+        assert "not evaluable" not in str(spec) and spec["test_cmd"] != "false"
+
+
+def test_yt_36_spec_is_py37_with_nose_and_old_numpy():
+    spec = _spec_for("yt-project/yt", "2128")
+    assert spec["python"] == "3.7"
+    assert "nose==1.3.7" in spec["pip_packages"] and "numpy==1.17.5" in spec["pip_packages"]
+
+
+def test_qiskit_845_skips_cmake_build_with_pth():
+    spec = _spec_for("qiskit/qiskit", "845")
+    assert "testbed.pth" in spec["install"] and "cmake" not in spec["install"]
+
+
+def test_obspy_956_reuses_numpy_distutils_build_on_py37():
+    spec = _spec_for("obspy/obspy", "956")
+    assert spec["python"] == "3.7" and "future==0.18.3" in spec["pip_packages"]
+    assert "setuptools==45.3.0" in " ".join(spec["pre_install"])

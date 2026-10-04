@@ -169,12 +169,12 @@ def test_test_generation_report_exports_resource_metrics(tmp_path, capsys):
 
     with open(output_csv, newline="") as f:
         row = next(csv.DictReader(f))
-    assert row["status"] == "no-pred"
+    assert row["status"] == "unresolved"  # inference timeout is scored
     assert row["input_tokens"] == "100"
     assert row["cost_usd"] == "0.3"
     assert row["inference_wall_time_seconds"] == "12.5"
     assert row["inference_error"] == "timeout"
-    assert row["failure_reason"] == ""
+    assert row["failure_reason"] == "inference_timeout"
     assert row["inference_usage_incomplete"] == "yes"
     assert row["evaluation_wall_time_seconds"] == ""
     assert "tracked totals" in capsys.readouterr().out
@@ -207,7 +207,7 @@ def test_test_generation_report_reclassifies_failed_empty_prediction(tmp_path):
     assert row["inference_error"] == "provider: Insufficient Balance"
 
 
-def test_test_generation_report_keeps_empty_timeout_as_no_pred(tmp_path):
+def test_test_generation_report_scores_empty_timeout_as_unresolved(tmp_path):
     predictions = tmp_path / "predictions.jsonl"
     predictions.write_text(
         json.dumps(
@@ -229,8 +229,8 @@ def test_test_generation_report_keeps_empty_timeout_as_no_pred(tmp_path):
 
     with output_csv.open(newline="") as handle:
         row = next(csv.DictReader(handle))
-    assert row["status"] == "no-pred"
-    assert row["failure_reason"] == ""
+    assert row["status"] == "unresolved"
+    assert row["failure_reason"] == "inference_timeout"
     assert row["inference_error"] == "timeout"
 
 
@@ -263,7 +263,7 @@ def test_test_generation_report_discards_cached_verdict_for_timed_out_patch(tmp_
 
     with output_csv.open(newline="") as handle:
         row = next(csv.DictReader(handle))
-    assert row["status"] == "no-pred"
+    assert row["status"] == "unresolved"
     assert row["test_patch_applied"] == "no"
     assert row["base_failed_tests"] == "0"
     assert row["gold_passed_tests"] == "0"

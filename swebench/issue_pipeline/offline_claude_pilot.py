@@ -387,6 +387,14 @@ def audit_patch_paths(
         text=True,
     )
     paths = [line for line in result.stdout.splitlines() if line]
+    return paths, classify_scope_paths(paths, scratch_paths)
+
+
+def classify_scope_paths(
+    paths: list[str], scratch_paths: set[str] | None = None
+) -> list[str]:
+    """Return the paths of ``paths`` that fall outside the allowed test scope."""
+    scratch_paths = scratch_paths or set()
     build_registration_files = {"cmakelists.txt", "meson.build"}
 
     def _is_testish(parts: list[str], filename: str) -> bool:
@@ -436,7 +444,7 @@ def audit_patch_paths(
         )
         if not testish:
             disallowed.append(path)
-    return paths, disallowed
+    return disallowed
 
 
 def _write_jsonl(path: Path, rows: Iterable[dict]) -> None:
@@ -550,12 +558,26 @@ def _run_one(
     )
 
     discarded_patch = ""
+    stripped_disallowed_paths: list[str] = []
     if findings:
         error = "attempted_network"
         discarded_patch, patch = patch, ""
     elif disallowed_paths:
-        error = "disallowed_patch_scope"
-        discarded_patch, patch = patch, ""
+        # Drop the out-of-scope files and keep scoring whatever test code is
+        # left; only a patch with nothing in scope is a scope failure.
+        remaining = _repair_patch(
+            _clean_patch(
+                _strip_build_artifact_diff_blocks(
+                    patch, scratch_paths=set(disallowed_paths)
+                )
+            )
+        )
+        if remaining.strip():
+            patch = remaining
+            stripped_disallowed_paths = list(disallowed_paths)
+        else:
+            error = "disallowed_patch_scope"
+            discarded_patch, patch = patch, ""
     # Turn-cap breach is only flagged for post-hoc budget analysis; the patch
     # must still be kept and scored.
     if turn_limit_exceeded(AGENT_BACKEND, metrics):
@@ -567,6 +589,11 @@ def _run_one(
         "network_findings": [finding.as_dict() for finding in findings],
         "changed_paths": changed_paths,
         "disallowed_paths": disallowed_paths,
+        **(
+            {"stripped_disallowed_paths": stripped_disallowed_paths}
+            if stripped_disallowed_paths
+            else {}
+        ),
         "trajectory_path": str(trajectory_path.relative_to(output_dir)),
         "trajectory_sha256": trajectory_hash,
         "manual_review": "pending",

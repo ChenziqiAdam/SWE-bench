@@ -1300,8 +1300,10 @@ _DEEPCHEM_TEST_GENERATION_SPEC = {
     # deepchem.models.tensorgraph, same forced-import pattern as the
     # scipy.linalg.pinv2 issue below). That symbol was a TF1-era internal
     # export; TF2.x (including the pinned 2.13.1) never re-exposes it from
-    # pywrap_tensorflow_internal, only as the public, stable
-    # `tensorflow.train.NewCheckpointReader`. Since these 4 PRs never
+    # pywrap_tensorflow_internal. It lives in
+    # `tensorflow.python.training.py_checkpoint_reader` (the public alias is
+    # v1-only, `tf.compat.v1.train`, NOT `tensorflow.train`: a shim importing
+    # that failed deepchem-1769 post-build validation). Since these 4 PRs never
     # exercise TensorGraph, permanently append a re-export shim to the
     # installed pywrap_tensorflow_internal.py file after tensorflow-cpu is
     # installed (pip_packages install runs before this `install` step) --
@@ -1319,8 +1321,12 @@ _DEEPCHEM_TEST_GENERATION_SPEC = {
         "TF_INTERNAL=$(python -c 'import tensorflow.python.pywrap_tensorflow_internal as m; print(m.__file__)') && "
         "printf '%s\\n' "
         "'' "
-        "'# swebench shim: TF2 moved this symbol to tensorflow.train.NewCheckpointReader' "
-        "'from tensorflow.train import NewCheckpointReader' "
+        "'# swebench shim: TF2 keeps this symbol in training.py_checkpoint_reader' "
+        "'def __getattr__(name):' "
+        "'    if name == \"NewCheckpointReader\":' "
+        "'        from tensorflow.python.training.py_checkpoint_reader import NewCheckpointReader as r' "
+        "'        return r' "
+        "'    raise AttributeError(name)' "
         ">> \"$TF_INTERNAL\"; fi"
     ),
     # These old DeepChem setup.py files do not declare their runtime/test
@@ -1524,14 +1530,33 @@ _QISKIT_CYTHON_SPEC = {
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
+# terra 0.6.0 (2018-08): setup.py is generated from setup.py.in by CMake along
+# with the optional C++ qasm simulator. 845's fix is pure Python
+# (interactive/_iplot_qsphere.py), so skip the build: put /testbed on sys.path
+# with a .pth file; the C++ backend is simply not discovered. UNVERIFIED on
+# Linux (no local docker): relies on `import qiskit` tolerating the missing
+# simulator executable.
 SPECS_QISKIT["845"] = {
-    "python": "3.8",
-    "install": "true",
-    "test_cmd": (
-        "echo 'qiskit#845 not evaluable: terra 0.6.0 setup.py.in + CMake "
-        "C++ simulator build needs curation' && false"
+    "python": "3.6",
+    "install": (
+        "echo /testbed > \"$(python -c 'import site; "
+        "print(site.getsitepackages()[0])')/testbed.pth\""
     ),
-    "_curation_todo": "terra 0.6.0 CMake C++ simulator build",
+    "pip_packages": [
+        "pytest",
+        "numpy==1.16.6",
+        "scipy==1.2.3",
+        "matplotlib==3.0.3",
+        "networkx==2.5.1",
+        "ply==3.11",
+        "sympy==1.4",
+        "pillow==6.2.2",
+        "IBMQuantumExperience==2.0.3",
+        "vcrpy<4",
+        "ipython<8",
+    ],
+    "validation_cmd": "python -c 'import qiskit'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
@@ -1751,8 +1776,11 @@ _PYSCF_17_GEN_SPEC = {
     # them first, the documented source-install route, then install.
     # UNVERIFIED on Linux (no local docker).
     "install": (
-        "cd /testbed/pyscf/lib && mkdir -p build && cd build && "
-        "cmake .. && make -j4 && cd /testbed && "
+        # `;` not `&&`: under `set -e` a failed `&&` chain member does not abort
+        # the script, so a failed cmake/make was silently skipped (551/794 built
+        # "successfully" without libcgto.so).
+        "cd /testbed/pyscf/lib; mkdir -p build; cd build; "
+        "cmake ..; make -j4; cd /testbed; "
         "LDFLAGS='-L/usr/lib/x86_64-linux-gnu -lblas' "
         "python -m pip install -e . --no-build-isolation"
     ),
@@ -1819,17 +1847,15 @@ _OBSPY_GEN_SPEC = {
     "test_generation_capabilities": ("python",),
 }
 SPECS_OBSPY = {pr: dict(_OBSPY_GEN_SPEC) for pr in ("2560", "2570")}
-SPECS_OBSPY["956"] = {
-    "python": "3.8",
-    "install": "true",
-    "test_cmd": (
-        "echo 'obspy#956 not evaluable: obspy 0.10 supports only "
-        "Python 2.6-3.4' && false"
-    ),
-    "_curation_todo": "obspy 0.10 legacy Python",
-    "oracle_kind": "generated_test",
-    "test_generation_capabilities": ("python",),
-}
+# 956 (obspy 0.10, 2015): same numpy.distutils/setuptools.Feature/Fortran build
+# as 2560/2570 and a pure-Python fix (signal/array_analysis.py); py3.7 keeps
+# `time.clock` (removed in 3.8) and the `future` package it imports.
+# UNVERIFIED on Linux (no local docker).
+SPECS_OBSPY["956"] = dict(
+    _OBSPY_GEN_SPEC,
+    python="3.7",
+    pip_packages=[*_OBSPY_GEN_SPEC["pip_packages"], "future==0.18.3"],
+)
 
 # psi4: PR 2453 (2022) touches only psi4/driver/procrouting (pure Python).
 # The compiled core is heavy; install the conda-forge binary and run the
@@ -1983,8 +2009,8 @@ SPECS_SUNPY["1505"] = {
 
 # yt: pure-Python + Cython C extensions built at install.
 #  - 2128 (2019) / 2485 (2020): yt 3.5/3.6, classifiers only 3.4/3.5,
-#    setup.py hard-checks Cython>=0.24 / numpy>=1.10; builds fail on a
-#    modern toolchain. Non-evaluable pending a curated py3.7 + old-numpy env.
+#    setup.py hard-checks Cython>=0.24 / numpy>=1.10; curated as py3.7 +
+#    Cython 0.29 + numpy 1.17 (_YT_36_GEN_SPEC).
 #  - 3532 / 3556 (2021): yt 4.0, py3.6-3.9.
 #  - 5221 (2025): yt 4.4+, py>=3.10, numpy 2.
 _YT_40_GEN_SPEC = {
@@ -2032,20 +2058,38 @@ _YT_MODERN_GEN_SPEC = {
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
-_YT_NONEVAL = lambda pr: {
-    "python": "3.9",
-    "install": "true",
-    "test_cmd": (
-        f"echo 'yt#{pr} not evaluable: yt 3.x Cython build needs curated "
-        f"py3.7 + numpy<1.20 env' && false"
-    ),
-    "_curation_todo": "yt 3.x legacy Cython build",
+# yt 3.6.dev0 (2128 / 2485; Python 2.7/3.5+ era): Cython 0.29 + numpy<1.20 on
+# py3.7 builds the extensions in place. Its test suite is nose-style
+# (`from nose.tools import ...` in yt.testing), so nose is required; pytest 7
+# still runs nose-style setup(). UNVERIFIED on Linux (no local docker).
+_YT_36_GEN_SPEC = {
+    "python": "3.7",
+    "pre_install": [
+        "apt-get update -q",
+        "apt-get install -y --no-install-recommends gcc g++",
+        "python -m pip install 'cython==0.29.36' 'numpy==1.17.5' 'setuptools<66' wheel",
+    ],
+    "install": "python -m pip install -e . --no-build-isolation",
+    "pip_packages": [
+        "pytest==7.4.4",
+        "nose==1.3.7",
+        "cython==0.29.36",
+        "numpy==1.17.5",
+        "scipy==1.5.4",
+        "matplotlib==3.1.3",
+        "sympy==1.5.1",
+        "unyt==2.7.2",
+        "more-itertools==8.13.0",
+        "ipython==7.34.0",
+    ],
+    "validation_cmd": "python -c 'import yt'",
+    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
 SPECS_YT = {
-    "2128": _YT_NONEVAL("2128"),
-    "2485": _YT_NONEVAL("2485"),
+    "2128": dict(_YT_36_GEN_SPEC),
+    "2485": dict(_YT_36_GEN_SPEC),
     "3532": dict(_YT_40_GEN_SPEC),
     "3556": dict(_YT_40_GEN_SPEC),
     "5221": dict(_YT_MODERN_GEN_SPEC),
@@ -2079,6 +2123,13 @@ _NILEARN_GEN_SPEC = {
     "test_generation_capabilities": ("python",),
 }
 SPECS_NILEARN = {pr: dict(_NILEARN_GEN_SPEC) for pr in ("2431", "2706")}
+# 2431's nilearn/plotting/cm.py registers its cmaps unguarded, and matplotlib>=3.4
+# raises "Trying to re-register the builtin cmap 'bwr'" (new_codex server
+# collection_failed on base AND gold). 2706 already wraps it in try/except.
+SPECS_NILEARN["2431"]["pip_packages"] = [
+    "matplotlib==3.3.4" if p.startswith("matplotlib") else p
+    for p in _NILEARN_GEN_SPEC["pip_packages"]
+]
 
 # mne-python: pure-Python.
 #  - 9459 (2021-06, mne 0.24, py3.7-3.10): setup.py builds install_requires
@@ -2104,6 +2155,11 @@ _MNE_LEGACY_SPEC = {
         # >=3.5 emits a MatplotlibDeprecationWarning for it, which mne's
         # filterwarnings=error turns into failures of otherwise valid tests.
         "matplotlib==3.4.3",
+        # pyparsing>=3.3 warns on matplotlib 3.4's camelCase API; mne's
+        # filterwarnings=error turns it into a collection error (server
+        # new_codex 9459: "ERROR mne/viz/tests/test_epochs.py -
+        # PyparsingDeprecationWarning" on base and gold).
+        "pyparsing==3.0.9",
         "scikit-learn==1.1.3",
         "pooch==1.7.0",
         "decorator==5.1.1",
