@@ -176,6 +176,7 @@ def classify_test_generation_result(
     gold_build_failed: bool = False,
     unsupported_generated_test: bool = False,
     added_test_names: frozenset[str] | None = None,
+    registered_test_not_found: bool = False,
 ) -> dict:
     """Classify strict SWT-Bench-style test-generation results.
 
@@ -227,6 +228,11 @@ def classify_test_generation_result(
     elif unsupported_generated_test:
         status = "not_exercised"
         failure_reason = "unsupported_generated_test"
+    elif registered_test_not_found:
+        # The patch registered a ctest by name, yet ctest has no such test
+        # even with the packages it names enabled: the registration is broken.
+        status = "unresolved"
+        failure_reason = "generated_test_not_registered"
     elif no_tests_selected:
         status = "not_exercised"
         failure_reason = "no_tests_selected"
@@ -787,18 +793,18 @@ def _lammps_generated_test_targets(generated_patch: str) -> list[tuple[str, str]
     return sorted(targets)
 
 
-def _lammps_native_gtest_case_sources(generated_patch: str) -> set[str]:
-    """Return stems (source filename minus extension) of existing
-    .cc/.cpp/.cxx files patched with a new top-level `TEST(...)`/`TEST_F(...)`
-    case. A source's stem matches its CMake target/binary name for the
-    force-styles driver binaries (e.g. test_pair_style.cpp -> test_pair_style).
+def _lammps_native_gtest_cases(generated_patch: str) -> dict[str, list[str]]:
+    """Map stems of existing .cc/.cpp/.cxx files patched with a new top-level
+    ``TEST(...)``/``TEST_F(...)`` case to the ``Suite.Name`` of each new case.
 
-    gtest self-discovers compiled-in TEST()/TEST_F() cases in the binary
-    they're linked into -- extending an already-registered driver source
-    this way needs no YAML fixture or new add_test()/add_mpi_test()
-    registration to be invokable.
+    A source's stem matches its CMake target/binary name for the
+    force-styles driver binaries (e.g. test_pair_style.cpp -> test_pair_style).
+    gtest registers compiled-in cases itself, so extending an already
+    registered driver source needs no YAML fixture or new add_test() call.
+    The driver's main() still insists on a YAML file as its first argument
+    (it prints usage and exits otherwise), so callers must supply one.
     """
-    stems: set[str] = set()
+    cases: dict[str, list[str]] = {}
     for section in re.split(r"(?=^diff --git )", generated_patch, flags=re.MULTILINE):
         header = re.match(r"^diff --git a/(\S+) b/\S+", section)
         if not header:
@@ -813,9 +819,37 @@ def _lammps_native_gtest_case_sources(generated_patch: str) -> set[str]:
             for line in section.splitlines()
             if line.startswith("+") and not line.startswith("+++")
         )
-        if re.search(r"^\s*TEST(?:_F)?\s*\(", added, re.MULTILINE):
-            stems.add(PurePosixPath(path).stem)
-    return stems
+        names = [
+            f"{suite}.{name}"
+            for suite, name in re.findall(
+                r"^\s*TEST(?:_F)?\s*\(\s*(\w+)\s*,\s*(\w+)\s*\)",
+                added,
+                re.MULTILINE,
+            )
+        ]
+        if names or re.search(r"^\s*TEST(?:_F)?\s*\(", added, re.MULTILINE):
+            cases[PurePosixPath(path).stem] = names
+    return cases
+
+
+def _lammps_native_gtest_case_sources(generated_patch: str) -> set[str]:
+    """Stems of existing sources patched with a new top-level TEST()/TEST_F()."""
+    return set(_lammps_native_gtest_cases(generated_patch))
+
+
+def _lammps_driver_native_command(binary: str, case_names: list[str]) -> str:
+    """Run only the new gtest cases of a force-styles driver binary.
+
+    The driver reads ``argv[1]`` as a YAML fixture before RUN_ALL_TESTS(), so
+    pass any existing fixture and restrict gtest to the cases the patch added.
+    """
+    command = (
+        f"{binary} "
+        "$(ls -1 unittest/force-styles/tests/*.yaml | head -n 1)"
+    )
+    if case_names:
+        command += " --gtest_filter=" + ":".join(case_names)
+    return command
 
 
 # unittest/force-styles/CMakeLists.txt file(GLOB ... CONFIGURE_DEPENDS) rules:
@@ -912,12 +946,51 @@ def _lammps_added_ctest_names(generated_patch: str) -> tuple[str, ...]:
     names = {
         match.group(1)
         for match in re.finditer(
-            r"add_(?:mpi_)?test\s*\(\s*(?:NAME\s+)?([\w.:-]+)",
+            r"add_(?:mpi_)?test\s*\(\s*(?:NAME\s+)?([\w.:${}-]+)",
             added,
             re.IGNORECASE | re.DOTALL,
         )
+        # a name that is nothing but variables would match every test
+        if len(re.sub(r"\$\{[^}]*\}", "", match.group(1))) >= 3
     }
     return tuple(sorted(names))
+
+
+# Packages that need hardware or external libraries the eval image lacks;
+# naming one in a test must not turn the whole configure step into a failure.
+_LAMMPS_UNBUILDABLE_PACKAGES = frozenset(
+    "PKG_" + name
+    for name in (
+        "GPU KOKKOS PYTHON INTEL MSCG LATTE PLUMED VORONOI NETCDF H5MD ADIOS "
+        "ML-QUIP ML-PACE KIM MDI SCAFACOS QMMM"
+    ).split()
+)
+
+
+def _lammps_required_packages(generated_patch: str) -> tuple[str, ...]:
+    """``PKG_*`` options named in the lines the generated patch adds."""
+    added = "\n".join(
+        line[1:]
+        for line in generated_patch.splitlines()
+        if line.startswith("+") and not line.startswith("+++")
+    )
+    return tuple(
+        sorted(
+            set(re.findall(r"\bPKG_[A-Z0-9][A-Z0-9_-]*[A-Z0-9]\b", added))
+            - _LAMMPS_UNBUILDABLE_PACKAGES
+        )
+    )
+
+
+def _ctest_name_regex(name: str) -> str:
+    """Regex for a registered ctest name; ``${VAR}`` expands to ``.*``.
+
+    ``add_test(NAME Foo:${STYLE} ...)`` inside a foreach() registers several
+    tests whose real names only exist after CMake expands the variable.
+    """
+    return ".*".join(
+        re.escape(part) for part in re.split(r"\$\{[^}]*\}", name)
+    )
 
 
 def _lammps_ctest_referenced_paths(generated_patch: str) -> set[str]:
@@ -950,6 +1023,41 @@ def _lammps_generated_test_command(generated_patch: str) -> str | None:
             "-p no:cacheprovider " + " ".join(selected or test_files)
         )
     return " && ".join(commands) if commands else None
+
+
+# Environment of the ctest entries unittest/python/CMakeLists.txt registers for
+# the LAMMPS Python-module tests (they need liblammps.so, i.e. a
+# BUILD_SHARED_LIBS=ON build, and are run from the build directory).
+_LAMMPS_PYTHON_TEST_ENV = (
+    "PYTHONPATH=/testbed/python:${PYTHONPATH:-} "
+    "LD_LIBRARY_PATH=/testbed/build:${LD_LIBRARY_PATH:-} "
+    "LAMMPS_POTENTIALS=/testbed/potentials PYTHONUNBUFFERED=1 "
+    "PYTHONDONTWRITEBYTECODE=1 TEST_INPUT_DIR=/testbed/unittest/python "
+    "LAMMPS_CMAKE_CACHE=/testbed/build/CMakeCache.txt"
+)
+
+
+def _lammps_python_module_test_command(
+    generated_patch: str, python_paths: list[str]
+) -> str:
+    files, nodeids = _generated_python_test_nodeids(generated_patch)
+    selected = [
+        node for node in nodeids if node.split("::", 1)[0] in python_paths
+    ]
+    targets = [f"/testbed/{target}" for target in (selected or sorted(python_paths))]
+    added_test_names = sorted(
+        set(re.findall(r"^\+\s*def\s+(test[A-Za-z0-9_]*)\s*\(", generated_patch, re.MULTILINE))
+    )
+    pytest_filter = (
+        " -k '" + " or ".join(added_test_names) + "'"
+        if not selected and added_test_names
+        else ""
+    )
+    return (
+        "( cd /testbed/build && " + _LAMMPS_PYTHON_TEST_ENV
+        + " python3 -m pytest -rA --tb=long -p no:cacheprovider "
+        + " ".join(targets) + pytest_filter + " )"
+    )
 
 
 def _patch_paths(generated_patch: str) -> list[str]:
@@ -1307,7 +1415,10 @@ def _special_repo_execution_plan(
                     path.startswith(("unittest/", "python/tests/"))
                     or "/tests/" in path
                 )
-                and _is_test_path(path)
+                # LAMMPS's own Python-module tests are unittest/python/python-*.py
+                # (e.g. python-commands.py), which _is_test_path does not
+                # recognise by name.
+                and (_is_test_path(path) or path.startswith("unittest/python/"))
             )
         elif repo == "biopython/biopython":
             canonical = (
@@ -1427,7 +1538,21 @@ def _special_repo_execution_plan(
                     )
             build_targets = [target for target, _binary in targets]
             if not lammps_ctest_names:
-                selected_commands.extend(binary for _target, binary in targets)
+                native_cases = _lammps_native_gtest_cases(generated_patch)
+                for _target, binary in targets:
+                    binary_name = PurePosixPath(binary).name
+                    if (
+                        binary_name in _LAMMPS_FORCE_STYLE_DRIVER_BINARIES
+                        and binary_name in native_cases
+                        and not lammps_yaml_tests
+                    ):
+                        selected_commands.append(
+                            _lammps_driver_native_command(
+                                binary, native_cases[binary_name]
+                            )
+                        )
+                    else:
+                        selected_commands.append(binary)
             # YAML fixtures run through a shared driver binary (e.g.
             # test_pair_style) that CMake already builds; the fixture itself
             # needs no per-file build target, only the driver + a scoped
@@ -1446,7 +1571,7 @@ def _special_repo_execution_plan(
             )
             if selected_ctest_names:
                 pattern = "|".join(
-                    re.escape(name) for name in selected_ctest_names
+                    _ctest_name_regex(name) for name in selected_ctest_names
                 )
                 selected_commands.append(
                     f"ctest --test-dir build --output-on-failure -R '^({pattern})$'"
@@ -1503,6 +1628,14 @@ def _special_repo_execution_plan(
                 )
         elif repo == "biopython/biopython":
             selected_commands.append(_biopython_generated_test_command(generated_patch) or "")
+        elif repo == "lammps/lammps" and any(
+            path.startswith("unittest/python/") for path in accepted["python"]
+        ):
+            selected_commands.append(
+                _lammps_python_module_test_command(
+                    generated_patch, accepted["python"]
+                )
+            )
         else:
             files, nodeids = _generated_python_test_nodeids(generated_patch)
             selected = [
@@ -1544,6 +1677,15 @@ def _special_repo_execution_plan(
                 + " ".join(pytest_targets)
                 + pytest_filter
             )
+
+    if repo == "lammps/lammps":
+        # A registration guarded by `if(PKG_X)` is silently skipped when the
+        # package is not configured, which reads as "no tests found". The
+        # generated test states what it needs, so enable those packages on
+        # both the base and the gold run.
+        extra_packages = _lammps_required_packages(generated_patch)
+        if extra_packages:
+            evidence = {**evidence, "lammps_extra_packages": extra_packages}
 
     languages = tuple(language for language in ("cpp", "python") if accepted[language])
     return GeneratedTestExecutionPlan(
@@ -1626,15 +1768,34 @@ def _patch_driven_build_commands(
     if plan.failure_reason:
         return []
     if repo == "lammps/lammps":
-        return [
-            (
-                "cmake --build build --parallel $(nproc) --target "
-                + " ".join(plan.build_targets)
-            )
-            if command.startswith("cmake --build build") and plan.build_targets
-            else command
-            for command in original
+        needs_shared_lib = any(
+            path.startswith("unittest/python/") and path.endswith(".py")
+            for path in plan.paths
+        )
+        extra_flags = [
+            f"{package}=ON"
+            for package in plan.evidence.get("lammps_extra_packages", ())
         ]
+        if needs_shared_lib:
+            extra_flags.append("BUILD_SHARED_LIBS=ON")
+        build_targets = list(plan.build_targets)
+        if needs_shared_lib and build_targets:
+            build_targets = sorted({*build_targets, "lammps", "lmp"})
+        rewritten = []
+        for command in original:
+            if command.startswith("cmake -S cmake -B build"):
+                command += "".join(
+                    f" -D {flag}"
+                    for flag in extra_flags
+                    if f"{flag.split('=')[0]}=" not in command
+                )
+            elif command.startswith("cmake --build build") and build_targets:
+                command = (
+                    "cmake --build build --parallel $(nproc) --target "
+                    + " ".join(build_targets)
+                )
+            rewritten.append(command)
+        return rewritten
     if repo not in {"openmm/openmm", "rdkit/rdkit"}:
         return original
 
@@ -2111,6 +2272,10 @@ def _inference_outcome(prediction: dict | None, instance: dict) -> tuple[str, st
         return "errored", "stale_scope_rule"
     if error.strip().lower() == "timeout":
         return ("no-pred", "") if placeholder else ("unresolved", "inference_timeout")
+    if underlying == "turn_limit_exceeded" and not has_patch:
+        # Out of turns without submitting a test: the same budget exhaustion
+        # as a timeout, so the same (model-failure) treatment.
+        return ("no-pred", "") if placeholder else ("unresolved", "inference_turn_limit")
     if error:
         return ("errored", "inference_error") if not has_patch else None
     if not has_patch:
@@ -2289,6 +2454,18 @@ def _evaluate_one(
                 or UNSUPPORTED_GENERATED_TEST in gold_output
             ),
             added_test_names=_added_test_names(generated_patch),
+            registered_test_not_found=bool(
+                instance["repo"] == "lammps/lammps"
+                and selected_plan
+                and any(
+                    "ctest" in command and " -R " in command
+                    for command in selected_plan.commands
+                )
+                and (
+                    ("No tests were found!!!" in base_output and not base_status)
+                    or ("No tests were found!!!" in gold_output and not gold_status)
+                )
+            ),
         )
         report = {
             instance_id: {

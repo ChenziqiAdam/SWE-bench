@@ -70,7 +70,8 @@ _NETWORK_COMMAND_PATTERNS = (
         re.compile(
             r"(?:^|[;&|\s])(?:(?:python3?|/[^\s;&|]*/python3?)\s+-m\s+pip|"
             r"pip3?|uv\s+pip|conda|mamba|npm|pnpm|yarn|apt(?:-get)?|dnf|yum|"
-            r"brew|cargo|go)\s+(?:[^;&|\n]*\s)?(?:install|add)(?:\s|$)",
+            r"brew|cargo|go)\s+(?:[^;&|\n]*\s)?"
+            r"(?:install|add|download|wheel|get)(?:\s|$)",
             re.I,
         ),
     ),
