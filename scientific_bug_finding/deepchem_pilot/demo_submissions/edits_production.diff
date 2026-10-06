@@ -1,0 +1,10 @@
+diff --git a/deepchem/utils/geometry_utils.py b/deepchem/utils/geometry_utils.py
+index 6289f8219..f5f9d8cbf 100644
+--- a/deepchem/utils/geometry_utils.py
++++ b/deepchem/utils/geometry_utils.py
+@@ -274,3 +274,5 @@ def compute_pairwise_distances(first_coordinate: np.ndarray,
+                                                       second_coordinate,
+                                                       pairwise_distances)
+     return pairwise_distances
++
++# edit

@@ -1,0 +1,50 @@
+{
+  "patch": "/Users/adamchen/Desktop/VSCode/SWE-bench/scientific_bug_finding/deepchem_pilot/demo_submissions/legit.diff",
+  "violations": [],
+  "tests": [
+    {
+      "nodeid": "::test_water_dimer_hbonds_over_orientations",
+      "passed": true,
+      "triggers": [
+        "DC-NC-003"
+      ]
+    },
+    {
+      "nodeid": "::test_gaussian_log_density_with_full_shape_sigma",
+      "passed": true,
+      "triggers": [
+        "DC-ES-004"
+      ]
+    },
+    {
+      "nodeid": "::test_float32_spherical_harmonics_high_degree",
+      "passed": true,
+      "triggers": [
+        "DC-EQ-005"
+      ]
+    },
+    {
+      "nodeid": "::test_wigner_d_is_a_rotation",
+      "passed": true,
+      "triggers": []
+    }
+  ],
+  "triggered_ids": [
+    "DC-EQ-005",
+    "DC-ES-004",
+    "DC-NC-003"
+  ],
+  "triggered_families": [
+    "gaussian_log_density",
+    "hbond_geometry_symmetry",
+    "spherical_harmonic_normalization"
+  ],
+  "commit": "8d5a5501437db0aac4623e654cb7f8859b6d7459",
+  "pytest_returncode": 0,
+  "pytest_tail": "....                                                                     [100%]\n4 passed in 14.41s\n",
+  "wall_seconds": 16.4,
+  "n_tests": 4,
+  "n_passed": 4,
+  "ignored_triggers_from_failed_tests": [],
+  "status": "scored"
+}

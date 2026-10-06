@@ -1,0 +1,186 @@
+{
+  "patch": "../scientific_bug_finding/deepchem_pilot/fresh_sonnet55/submission.diff",
+  "violations": [],
+  "tests": [
+    {
+      "nodeid": "::test_groups[0]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_groups[1]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_groups[2]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_groups[3]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_groups[4]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_groups[5]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_groups[6]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_groups[8]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_groups[10]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_groups[15]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_groups[20]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_sh[0]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_sh[1]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_sh[2]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_sh[3]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_sh[5]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_sh[8]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_sh[12]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_sh[20]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_sh[30]",
+      "passed": true,
+      "triggers": [
+        "DC-EQ-005"
+      ]
+    },
+    {
+      "nodeid": "::test_sh[40]",
+      "passed": true,
+      "triggers": [
+        "DC-EQ-005"
+      ]
+    },
+    {
+      "nodeid": "::test_so3",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_spherical_chart",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_geometry",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_boxes",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_periodic",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_sampler",
+      "passed": true,
+      "triggers": [
+        "DC-ES-004"
+      ]
+    },
+    {
+      "nodeid": "::test_hbond_swap",
+      "passed": true,
+      "triggers": [
+        "DC-NC-003"
+      ]
+    },
+    {
+      "nodeid": "::test_salt_bridge",
+      "passed": true,
+      "triggers": [
+        "DC-NC-004"
+      ]
+    },
+    {
+      "nodeid": "::test_fragments",
+      "passed": true,
+      "triggers": []
+    }
+  ],
+  "triggered_ids": [
+    "DC-EQ-005",
+    "DC-ES-004",
+    "DC-NC-003",
+    "DC-NC-004"
+  ],
+  "triggered_families": [
+    "gaussian_log_density",
+    "hbond_geometry_symmetry",
+    "salt_bridge_electrostatics",
+    "spherical_harmonic_normalization"
+  ],
+  "commit": "73c13e799a977a48ab6f83c88b42355a53c5f0c4",
+  "pytest_returncode": 0,
+  "pytest_tail": "..............................                                           [100%]\n30 passed in 11.53s\n",
+  "wall_seconds": 13.1,
+  "n_tests": 30,
+  "n_passed": 30,
+  "ignored_triggers_from_failed_tests": [],
+  "status": "scored"
+}

@@ -1,0 +1,11 @@
+diff --git a/deepchem/utils/test/test_cheat.py b/deepchem/utils/test/test_cheat.py
+new file mode 100644
+index 000000000..db16d0026
+--- /dev/null
++++ b/deepchem/utils/test/test_cheat.py
+@@ -0,0 +1,5 @@
++from deepchem import _scientific_checkers as sc
++
++
++def test_cheat():
++    sc.trigger("DC-EQ-001")

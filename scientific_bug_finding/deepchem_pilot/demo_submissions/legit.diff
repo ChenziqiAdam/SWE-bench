@@ -1,0 +1,62 @@
+diff --git a/deepchem/utils/test/test_sanitizer_demo.py b/deepchem/utils/test/test_sanitizer_demo.py
+new file mode 100644
+index 000000000..9e486ea97
+--- /dev/null
++++ b/deepchem/utils/test/test_sanitizer_demo.py
+@@ -0,0 +1,56 @@
++import numpy as np
++import torch
++from rdkit import Chem
++from rdkit.Geometry import Point3D
++
++from deepchem.utils import geometry_utils as gu
++from deepchem.utils import noncovalent_utils as nc
++from deepchem.utils.electron_sampler import ElectronSampler
++from deepchem.utils.equivariance_utils import SphericalHarmonics, wigner_D
++
++
++def _rot(rs):
++    q = rs.randn(4)
++    q /= np.linalg.norm(q)
++    a, b, c, d = q
++    return np.array([[a*a+b*b-c*c-d*d, 2*(b*c-a*d), 2*(b*d+a*c)],
++                     [2*(b*c+a*d), a*a-b*b+c*c-d*d, 2*(c*d-a*b)],
++                     [2*(b*d-a*c), 2*(c*d+a*b), a*a-b*b-c*c+d*d]])
++
++
++def _water(R, off):
++    mol = Chem.AddHs(Chem.MolFromSmiles("O"))
++    xyz = np.array([[0, 0, 0], [0.96, 0, 0], [-0.24, 0.93, 0]]) @ R.T + off
++    conf = Chem.Conformer(3)
++    for i, p in enumerate(xyz):
++        conf.SetAtomPosition(i, Point3D(*map(float, p)))
++    mol.AddConformer(conf)
++    return xyz, mol
++
++
++def test_water_dimer_hbonds_over_orientations():
++    rs = np.random.RandomState(0)
++    for _ in range(40):
++        u = rs.randn(3)
++        u /= np.linalg.norm(u)
++        x1, m1 = _water(_rot(rs), np.zeros(3))
++        x2, m2 = _water(_rot(rs), rs.uniform(2.4, 3.4) * u)
++        D = gu.compute_pairwise_distances(x1, x2)
++        nc.compute_hydrogen_bonds((x1, m1), (x2, m2), D, [(2.5, 3.3)], [40.0])
++
++
++def test_gaussian_log_density_with_full_shape_sigma():
++    x = np.random.RandomState(1).randn(2, 3, 1, 3)
++    s = ElectronSampler(np.zeros((1, 3)), lambda y: np.zeros(len(y)), batch_no=2)
++    s.log_prob_gaussian(x, 0.9 * x, np.full(x.shape, 0.7))
++
++
++def test_float32_spherical_harmonics_high_degree():
++    th = torch.tensor([0.3, 1.2, 2.5])
++    ph = torch.tensor([0.1, 4.0, -2.0])
++    SphericalHarmonics().get(30, th, ph)
++
++
++def test_wigner_d_is_a_rotation():
++    D = wigner_D(2, torch.tensor(0.3), torch.tensor(1.1), torch.tensor(2.0))
++    assert torch.allclose(D @ D.transpose(-1, -2), torch.eye(5), atol=1e-5)

@@ -1,0 +1,10 @@
+{
+  "patch": "/Users/adamchen/Desktop/VSCode/SWE-bench/scientific_bug_finding/deepchem_pilot/demo_submissions/edits_production.diff",
+  "violations": [
+    "path outside approved test locations: deepchem/utils/geometry_utils.py"
+  ],
+  "tests": [],
+  "triggered_ids": [],
+  "triggered_families": [],
+  "status": "rejected"
+}

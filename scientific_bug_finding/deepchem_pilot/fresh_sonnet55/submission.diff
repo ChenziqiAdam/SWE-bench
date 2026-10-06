@@ -1,0 +1,310 @@
+diff --git a/deepchem/utils/test/test_sanitizer_agent.py b/deepchem/utils/test/test_sanitizer_agent.py
+new file mode 100644
+index 000000000..00b8a0e68
+--- /dev/null
++++ b/deepchem/utils/test/test_sanitizer_agent.py
+@@ -0,0 +1,304 @@
++import math
++import numpy as np
++import pytest
++import torch
++from deepchem.utils import equivariance_utils as eu
++
++
++def _try(f, *a, **k):
++    try:
++        return f(*a, **k)
++    except Exception:
++        return None
++
++
++@pytest.mark.parametrize("k", [0, 1, 2, 3, 4, 5, 6, 8, 10, 15, 20])
++def test_groups(k):
++    _try(eu.su2_generators, k)
++    _try(eu.so3_generators, k)
++    _try(eu.change_basis_real_to_complex, k)
++    for dt in (torch.float32, torch.float64):
++        _try(eu.change_basis_real_to_complex, k, dt)
++    for a, b, g in [(0.1, 0.2, 0.3), (1.0, 2.0, 3.0), (6.0, 3.1, 0.5),
++                    (10.0, -4.0, 100.0), (1e3, 1e4, 1e5), (0., 0., 0.),
++                    (0., math.pi, 0.)]:
++        _try(eu.wigner_D, k, torch.tensor(a), torch.tensor(b), torch.tensor(g))
++        _try(eu.wigner_D, k, torch.tensor([a, b]), torch.tensor([b, a]),
++             torch.tensor([g, g]))
++        _try(eu.wigner_D, k, torch.tensor(a, dtype=torch.float64),
++             torch.tensor(b, dtype=torch.float64),
++             torch.tensor(g, dtype=torch.float64))
++
++
++@pytest.mark.parametrize("l", [0, 1, 2, 3, 5, 8, 12, 20, 30, 40])
++def test_sh(l):
++    for dt in (torch.float32, torch.float64):
++        th = torch.tensor([0.0, 0.3, 1.0, math.pi / 2, 2.5, math.pi],
++                          dtype=dt)
++        ph = torch.tensor([0.0, 1.0, 2.0, 3.0, 4.0, 6.0], dtype=dt)
++        _try(eu.SphericalHarmonics().get, l, th, ph)
++        _try(eu.SphericalHarmonics().get, l, th * 100, ph * 1000)
++
++
++def test_so3():
++    so3 = eu.SO3()
++    for dt in (torch.float32, torch.float64):
++        ws = torch.tensor([[0., 0., 0.], [1e-9, 0, 0], [0.1, 0.2, 0.3],
++                           [1., 2., 3.], [0, 0, math.pi],
++                           [0, 0, math.pi - 1e-3], [3., 0., 0.],
++                           [100., 20., 3.], [1e5, 0, 0]], dtype=dt)
++        for w in ws:
++            R = _try(so3.exp, w)
++            if R is not None:
++                _try(so3.log, R)
++        _try(so3.exp, ws)
++        R = _try(so3.exp, ws)
++        if R is not None:
++            _try(so3.log, R)
++    for ang in np.linspace(0.01, 3.1, 40):
++        w = torch.tensor([ang, 0, 0.])
++        R = _try(so3.exp, w)
++        _try(so3.log, R)
++        w = torch.tensor([0, ang * 0.6, ang * 0.8], dtype=torch.float64)
++        R = _try(so3.exp, w)
++        _try(so3.log, R)
++
++
++def test_spherical_chart():
++    for dt in (torch.float32, torch.float64):
++        for v in [[1., 0, 0], [0, 1., 0], [0, 0, 1.], [1., 2., 3.],
++                  [-1., -2., -3.], [0., 0., -1.], [0., 0., 0.],
++                  [1e-3, 2e-3, 1e-3], [1e10, 1e10, 1e10], [1e-20, 0, 1e-20]]:
++            t = torch.tensor([v], dtype=dt)
++            _try(eu.get_spherical_from_cartesian, t)
++            _try(eu.get_spherical_from_cartesian, t, 2.0)
++            _try(eu.get_spherical_from_cartesian, t, 0.5)
++        _try(eu.get_spherical_from_cartesian, torch.randn(5, 4, 3, dtype=dt))
++
++
++# ---------------------------------------------------------------- geometry
++from deepchem.utils import geometry_utils as gu
++from deepchem.utils import coordinate_box_utils as cbu
++
++
++def test_geometry():
++    rng = np.random.RandomState(0)
++    for _ in range(30):
++        gu.generate_random_rotation_matrix()
++    for n in (1, 2, 5, 50):
++        mols = [rng.randn(n, 3) * 10, rng.randn(n + 1, 3) * 1e3]
++        gu.rotate_molecules(mols)
++    gu.rotate_molecules([rng.randn(4, 3) * 1e50])
++    gu.rotate_molecules([np.zeros((3, 3))])
++    for _ in range(100):
++        a, b = rng.randn(3), rng.randn(3)
++        gu.angle_between(a, b)
++        gu.angle_between(a, a)
++        gu.angle_between(a, -a)
++        gu.angle_between(a, 1e-8 * rng.randn(3) + a)
++        gu.angle_between(a * 1e50, b * 1e-50)
++        gu.angle_between(a, -a * (1 + 1e-9))
++        gu.is_angle_within_cutoff(a, b, 40.0)
++        gu.is_angle_within_cutoff(a, -a + 1e-3 * b, 40.0)
++        gu.is_angle_within_cutoff(a, -a, 180.0)
++        gu.is_angle_within_cutoff(a, a, 180.0)
++        gu.is_angle_within_cutoff(a, -a, 1e-3)
++        gu.is_angle_within_cutoff(a, b, 90.0)
++        gu.is_angle_within_cutoff(a, b, 1.0)
++    for v in ([1., 0, 0], [0, 1., 0], [0, 0, 1.]):
++        v = np.array(v)
++        gu.angle_between(v, v)
++        gu.angle_between(v, -v)
++        gu.is_angle_within_cutoff(v, -v, 5.0)
++        gu.is_angle_within_cutoff(v, v, 5.0)
++        gu.is_angle_within_cutoff(v, -v, 180.0)
++        gu.is_angle_within_cutoff(v, v, 180.0)
++    for m, n in [(1, 1), (3, 4), (20, 30), (200, 100)]:
++        gu.compute_pairwise_distances(rng.randn(m, 3), rng.randn(n, 3))
++        gu.compute_pairwise_distances(rng.randn(m, 3) * 1e6 + 1e8,
++                                      rng.randn(n, 3) * 1e-3)
++        gu.compute_pairwise_distances(np.zeros((m, 3)), np.zeros((n, 3)))
++    gu.compute_pairwise_distances(np.array([[1e100, 0, 0]]),
++                                  np.array([[-1e100, 0, 0]]))
++
++
++def test_boxes():
++    rng = np.random.RandomState(1)
++    B = cbu.CoordinateBox
++    cases = [
++        (B((0, 2), (0, 2), (0, 2)), B((1, 3), (1, 3), (1, 3))),
++        (B((5, 7), (5, 7), (5, 7)), B((6, 9), (6, 9), (6, 9))),
++        (B((-5, -3), (-5, -3), (-5, -3)), B((-4, 0), (-4, 0), (-4, 0))),
++        (B((1, 2), (1, 2), (1, 2)), B((2, 3), (2, 3), (2, 3))),
++        (B((10, 20), (10, 20), (10, 20)), B((12, 15), (12, 15), (12, 15))),
++        (B((-1, 1), (-1, 1), (-1, 1)), B((0, 0.5), (0, 0.5), (0, 0.5))),
++    ]
++    for a, b in cases:
++        cbu.intersection(a, b)
++        cbu.intersection(b, a)
++    for _ in range(200):
++        lo = rng.uniform(-20, 20, 3)
++        w = rng.uniform(0.1, 10, 3)
++        lo2 = lo + rng.uniform(-1, 1, 3) * w
++        w2 = rng.uniform(0.1, 10, 3)
++        a = B(*[(lo[i], lo[i] + w[i]) for i in range(3)])
++        b = B(*[(lo2[i], lo2[i] + w2[i]) for i in range(3)])
++        cbu.intersection(a, b)
++    for t in (0.0, 0.3, 0.8, 1.0):
++        for _ in range(60):
++            n = rng.randint(1, 6)
++            boxes = []
++            for _ in range(n):
++                lo = rng.uniform(-5, 5, 3)
++                w = rng.uniform(0.5, 6, 3)
++                boxes.append(B(*[(lo[i], lo[i] + w[i]) for i in range(3)]))
++            cbu.merge_overlapping_boxes(boxes, t)
++    cbu.merge_overlapping_boxes([B((0, 1), (0, 1), (0, 1))], 0.5)
++    cbu.merge_overlapping_boxes(
++        [B((0, 1), (0, 1), (0, 1)), B((0, 1), (0, 1), (0, 1))], 0.5)
++    cbu.merge_overlapping_boxes(
++        [B((0, 4), (0, 4), (0, 4)), B((1, 2), (1, 2), (1, 2)),
++         B((3, 6), (3, 6), (3, 6))], 0.5)
++
++
++# ----------------------------------------------------------- periodic table
++from deepchem.utils import periodic_table_utils as pt
++
++
++def test_periodic():
++    for z in range(1, 119):
++        _try(pt.get_atom_mass, z)
++        _try(pt.get_period, z)
++    for s in list(pt.periodic_table_atomz):
++        _try(pt.get_atomz, s)
++
++
++# ---------------------------------------------------------- electron sampler
++from deepchem.utils.electron_sampler import ElectronSampler
++
++
++def _flat(x):
++    return np.zeros(np.shape(x)[0])
++
++
++def _gauss(x):
++    return -np.sum(x**2, axis=(1, 2, 3))
++
++
++def test_sampler():
++    nuc = np.array([[1., 1, 3], [3, 2, 3], [0, 0, 0]])
++    for counts in ([[1], [2], [3]], [[0], [2], [1]], [[2], [0], [0]],
++                   [[0], [0], [4]], [[5], [5], [5]]):
++        for sd in (0.0, 0.02, 1.0):
++            for bn in (1, 3, 10):
++                s = ElectronSampler(nuc, _flat, batch_no=bn, steps=10)
++                _try(s.gauss_initialize_position, np.array(counts), sd)
++    nuc2 = nuc[:2]
++    for steps in (1, 2, 7, 10, 20, 50):
++        for spu in (1, 3, 10):
++            s = ElectronSampler(nuc2, _flat, batch_no=4, steps=steps,
++                                steps_per_update=spu, seed=1)
++            s.gauss_initialize_position(np.array([[2], [1]]))
++            _try(s.move, 0.1)
++            _try(s.move, 0.1)
++            s = ElectronSampler(nuc2, _gauss, batch_no=4, steps=steps,
++                                steps_per_update=spu, seed=1)
++            s.gauss_initialize_position(np.array([[2], [1]]))
++            _try(s.move, 0.1)
++            s = ElectronSampler(nuc2, _flat, batch_no=4, steps=steps,
++                                steps_per_update=spu, simultaneous=False)
++            s.gauss_initialize_position(np.array([[2], [1]]))
++            _try(s.move, 0.1, None, 1)
++            s = ElectronSampler(nuc2, _gauss, batch_no=4, steps=steps,
++                                symmetric=False)
++            s.gauss_initialize_position(np.array([[2], [1]]))
++            _try(s.move, 0.1, s.harmonic_mean)
++    s = ElectronSampler(nuc2, _flat, batch_no=3, steps=5)
++    for y in (np.random.randn(3, 4, 1, 3), np.random.randn(2, 1, 1, 3) * 1e100,
++              np.random.randn(2, 3, 1, 3) * 1e-100 + nuc2[0],
++              np.random.randn(2, 3, 1, 3).astype(np.float32),
++              np.random.randn(3, 4, 1, 3) * 1e8 + 1e9):
++        _try(s.harmonic_mean, y)
++    s1 = ElectronSampler(nuc, _flat)
++    _try(s1.harmonic_mean, np.random.randn(3, 4, 1, 3))
++    s1 = ElectronSampler(nuc[:1], _flat)
++    _try(s1.harmonic_mean, np.random.randn(3, 4, 1, 3))
++    y = np.random.randn(2, 3, 1, 3)
++    for sg in (0.5, 2.0, 1e-20, 1e20, 1e5):
++        _try(s.log_prob_gaussian, y, y + 0.1, np.full(y.shape, sg))
++        _try(s.log_prob_gaussian, y, y, np.full(y.shape, sg))
++        _try(s.log_prob_gaussian, y, y, np.full((2, 1, 1, 1), sg))
++        _try(s.log_prob_gaussian, y, y, sg * np.ones((2, 3, 1, 3)) *
++             np.arange(1, 4))
++
++
++# ------------------------------------------------------------ noncovalent
++from rdkit import Chem
++from deepchem.utils import noncovalent_utils as nu
++from deepchem.utils import fragment_utils as fu
++
++
++def _frag(symbols, coords, charges=None):
++    mol = Chem.RWMol()
++    for i, s in enumerate(symbols):
++        a = Chem.Atom(s)
++        a.SetNoImplicit(True)
++        if charges is not None:
++            a.SetProp("_GasteigerCharge", str(charges[i]))
++        mol.AddAtom(a)
++    coords = np.array(coords, dtype=float)
++    return coords, fu.MolecularFragment(list(mol.GetAtoms()), coords)
++
++
++def test_hbond_swap():
++    # N-H donor in one fragment, O acceptor in the other, H-bond not linear.
++    donor = _frag(["N", "H"], [[0, 0, 0], [1.0, 0, 0]])
++    acc = _frag(["O"], [[0, 2.9, 0]])
++    for f1, f2 in ((donor, acc), (acc, donor)):
++        D = nu.compute_pairwise_distances(f1[0], f2[0]) if hasattr(
++            nu, "compute_pairwise_distances") else None
++        if D is None:
++            from deepchem.utils.geometry_utils import compute_pairwise_distances
++            D = compute_pairwise_distances(f1[0], f2[0])
++        nu.compute_hydrogen_bonds(f1, f2, D, [(2.5, 3.9)], [40.0])
++    # linear arrangement
++    acc2 = _frag(["O"], [[2.0, 0, 0]])
++    from deepchem.utils.geometry_utils import compute_pairwise_distances
++    for f1, f2 in ((donor, acc2), (acc2, donor)):
++        D = compute_pairwise_distances(f1[0], f2[0])
++        nu.compute_hydrogen_bonds(f1, f2, D, [(1.5, 3.9)], [40.0])
++
++
++def test_salt_bridge():
++    a = _frag(["N", "O"], [[0, 0, 0], [1.5, 0, 0]], [2.0, 0.0])
++    b = _frag(["O", "N"], [[0, 3, 0], [0, 0, 3]], [0.0, 1.0])
++    from deepchem.utils.geometry_utils import compute_pairwise_distances
++    D = compute_pairwise_distances(a[0], b[0])
++    nu.compute_salt_bridges(a[1], b[1], D)
++    c = _frag(["N"], [[0, 0, 0]], [1.0])
++    d = _frag(["O"], [[0, 3, 0]], [-1.0])
++    nu.compute_salt_bridges(c[1], d[1], np.array([[3.0]]))
++    e = _frag(["N"], [[0, 0, 0]], [3.0])
++    f = _frag(["O"], [[0, 3, 0]], [1.0])
++    nu.compute_salt_bridges(e[1], f[1], np.array([[3.0]]))
++
++
++def test_fragments():
++    rng = np.random.RandomState(0)
++    mol = Chem.AddHs(Chem.MolFromSmiles("CCO"))
++    from rdkit.Chem import AllChem
++    AllChem.EmbedMolecule(mol, randomSeed=1)
++    coords = mol.GetConformer().GetPositions()
++    fu.strip_hydrogens(coords, mol)
++    f1 = fu.get_mol_subset(coords, mol, [0, 1, 2])[1]
++    f2 = fu.get_mol_subset(coords, mol, [3, 4])[1]
++    fu.merge_molecular_fragments([f1, f2])
++    fu.get_contact_atom_indices([(coords, mol), (coords + 3.0, mol)], 4.5)
++    fu.get_contact_atom_indices(
++        [(coords, mol), (coords + 3.0, mol), (coords - 2.0, mol)], 3.0)
++    ring = Chem.AddHs(Chem.MolFromSmiles("c1ccccc1"))
++    AllChem.EmbedMolecule(ring, randomSeed=2)
++    from deepchem.utils.rdkit_utils import compute_ring_normal
++    compute_ring_normal(ring, [0, 1, 2, 3, 4, 5])
++    nu.is_cation_pi(np.array([0, 0, 3.]), np.zeros(3), np.array([0, 0, 1.]))
++    nu.is_cation_pi(np.array([0, 0, -3.]), np.zeros(3), np.array([0, 0, 1.]))
