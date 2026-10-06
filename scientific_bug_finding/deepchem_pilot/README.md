@@ -88,16 +88,21 @@ python evaluate_submission.py --repo <fork checkout> --patch sub.diff \
   All 35 other IDs observed untriggered under the stated search.
 - Upstream tracker searched 2026-10-06 (no duplicates). Issues drafted for
   `DC-NC-003` and `DC-ES-004` in `issues/`; nothing filed.
+- Fresh-context audit 2 (Opus 5.5, `fresh_opus55/`): 17/17 tests passed, 5 IDs
+  (EQ-005, ES-004, NC-003, NC-004 again, plus `DC-EQ-008`). No checker defect.
+  `DC-EQ-008`: float64 exp/log round-trip error ~1.7e-11 just below the
+  documented 0.07 Taylor threshold (`sinc_inv`); a deliberate approximation,
+  not drafted. Union over both agents: 6 IDs; 32 IDs never triggered.
 - Fresh-context audit 1 (Sonnet 5.5, `fresh_sonnet55/`): 5 IDs triggered, 30/30
   tests passed; one checker defect (`DC-EQ-011` precondition) found and fixed.
   `DC-NC-004` is sound but weak in the library (contrived), not drafted.
 
 ## Known limits
 
-- One fresh-context audit so far. The curator read the code before writing
+- Two fresh-context audits (Sonnet 5.5, Opus 5.5). The curator read the code before writing
   the laws, and two spots (NC-002/003, ES-004) were noticed during that read;
-  both are flagged in `LAW_CANDIDATES.md` for an independent curator. The
-  Sonnet 5.5 agent never exercised `DC-EQ-012`, `DC-SP-001/002`, and reach of
+  both are flagged in `LAW_CANDIDATES.md` for an independent curator. Neither
+  agent triggered `DC-EQ-012`, `DC-SP-001/002`; reach of
   `DC-NC-001/002/005`, `DC-FR-*`, `DC-CM-*` is unconfirmed.
 - `DC-EQ-012` uses a fixed 1e-6 slack tied to the library's own kernel
   tolerance (1e-10 singular values); it is not derived per call.

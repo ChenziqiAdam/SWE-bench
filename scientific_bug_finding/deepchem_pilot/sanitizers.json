@@ -64,6 +64,15 @@
         "DC-EQ-011": "CHECKER DEFECT (P): real output dtype drops the imaginary part; precondition now requires a complex dtype"
       },
       "not_exercised_by_agent": "EQ-012, SP-001, SP-002 never exercised; NC-001/002/005, FR-001..003, CM-001..004 not confirmed reached"
+    },
+    "fresh_agent_opus55": {
+      "setup": "Opus 5.5, same prompt as the Sonnet run, clean git-archive export of 73c13e799, 17 tests, ~31 tool calls",
+      "scored": "17/17 tests passed; 5 IDs / 5 families: DC-EQ-005, DC-EQ-008, DC-ES-004, DC-NC-003, DC-NC-004 (scorer-confirmed, fresh_opus55/result.json)",
+      "adjudication": {
+        "DC-EQ-008": "checker sound, not a checker defect: SO3.log(SO3.exp(w)) round-trip error ~1.7e-11 in float64 for angle 0.065-0.0699 (sinc_inv Taylor truncation below documented 0.07 threshold; 0 above, ~2e-17 at 0.01). Deliberate documented approximation: precision tradeoff, not drafted",
+        "DC-EQ-005/ES-004/NC-003/NC-004": "same mechanisms and adjudication as the Sonnet run"
+      },
+      "not_exercised_by_agent": "33 IDs untriggered despite fuzzing; agent judged them negative controls. No checker flagged as wrong"
     }
   },
   "sanitizers": [

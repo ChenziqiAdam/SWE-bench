@@ -1,0 +1,123 @@
+{
+  "patch": "/Users/adamchen/Desktop/VSCode/SWE-bench/scientific_bug_finding/deepchem_pilot/fresh_opus55/submission.diff",
+  "violations": [],
+  "tests": [
+    {
+      "nodeid": "::test_spherical_harmonics_high_degree_float32",
+      "passed": true,
+      "triggers": [
+        "DC-EQ-005"
+      ]
+    },
+    {
+      "nodeid": "::test_spherical_harmonics_float64",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_so3_log_small_angles_float64",
+      "passed": true,
+      "triggers": [
+        "DC-EQ-008"
+      ]
+    },
+    {
+      "nodeid": "::test_so3_exp_float32_large",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_wigner_and_generators",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_spherical_chart",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_get_basis",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_electron_sampler",
+      "passed": true,
+      "triggers": [
+        "DC-ES-004"
+      ]
+    },
+    {
+      "nodeid": "::test_geometry",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_boxes",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_salt_bridge_divalent_cation_with_neutral_atom",
+      "passed": true,
+      "triggers": [
+        "DC-NC-004"
+      ]
+    },
+    {
+      "nodeid": "::test_hydrogen_bond_ammonia_water",
+      "passed": true,
+      "triggers": [
+        "DC-NC-003"
+      ]
+    },
+    {
+      "nodeid": "::test_cation_pi_and_ring_normal",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_fragments",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_coulomb",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_periodic_table",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_splitters",
+      "passed": true,
+      "triggers": []
+    }
+  ],
+  "triggered_ids": [
+    "DC-EQ-005",
+    "DC-EQ-008",
+    "DC-ES-004",
+    "DC-NC-003",
+    "DC-NC-004"
+  ],
+  "triggered_families": [
+    "gaussian_log_density",
+    "hbond_geometry_symmetry",
+    "salt_bridge_electrostatics",
+    "so3_exponential_map",
+    "spherical_harmonic_normalization"
+  ],
+  "commit": "73c13e799a977a48ab6f83c88b42355a53c5f0c4",
+  "pytest_returncode": 0,
+  "pytest_tail": ".................                                                        [100%]\n17 passed in 9.95s\n",
+  "wall_seconds": 11.4,
+  "n_tests": 17,
+  "n_passed": 17,
+  "ignored_triggers_from_failed_tests": [],
+  "status": "scored"
+}
