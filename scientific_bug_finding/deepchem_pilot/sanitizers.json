@@ -73,6 +73,15 @@
         "DC-EQ-005/ES-004/NC-003/NC-004": "same mechanisms and adjudication as the Sonnet run"
       },
       "not_exercised_by_agent": "33 IDs untriggered despite fuzzing; agent judged them negative controls. No checker flagged as wrong"
+    },
+    "independent_verification_20261006": {
+      "method": "each triggered ID re-checked against an external reference or an in-process fix, independent of the checker code",
+      "DC-NC-003": "real bug: water dimer with a linear O-H...O contact is False with the donor as frag1 and True swapped; with the stale index fixed and early return removed both orders give True; H pointing away gives False/False",
+      "DC-ES-004": "real bug: log_prob_gaussian matches scipy norm.logpdf (2*pi constant removed) to 2e-15 for sigma (b,n,1,1) but is off by 3.7-4.0 when sigma has y's own shape, which the docstring allows",
+      "DC-EQ-005": "real, extreme regime: float32 sum_m|Y_lm|^2 is inf at l=29..30 and nan at l=40 (semifactorial(57)=4.95e38 > float32 max 3.4e38), exact in float64 and at l<=28",
+      "DC-EQ-008": "real, low severity: float64 log(exp(w)) error 1.35e-11 at angle 0.0699 vs 8e-17 for scipy Rotation; two more Taylor terms in sinc_inv give 9e-17; checker sound",
+      "DC-NC-004": "real weakness, contrived: is_salt_bridge accepts (+1,+3), (-1,-3), (+2,0), (0,-2) and rejects (+1,+1); the test is |dq|~2, not opposite sign",
+      "DC-EQ-011": "checker defect (already fixed): real output dtype drops the imaginary part; same Sonnet patch now scores 4 IDs"
     }
   },
   "sanitizers": [
