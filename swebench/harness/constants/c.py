@@ -1025,6 +1025,12 @@ def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
     # a correctly written registration is not silently skipped (unknown target).
     packages = tuple(dict.fromkeys(("MOLECULE", *packages)))
     package_flags = " ".join(f"-D PKG_{package}=ON" for package in packages)
+    # The GPU package is built against OpenCL; without a device every GPU test
+    # fails on base and gold with "Could not find/initialize a specified
+    # accelerator device" (gpt-6 astra / opus 5.5 lammps-2026/3129/4887). Give
+    # these containers the host GPU through the NVIDIA ICD, as the OpenMM
+    # OpenCL specs do, and fail loudly (infrastructure) if it is not visible.
+    gpu = "GPU" in packages
     kokkos_flags = "-D BUILD_KOKKOS=ON -D Kokkos_ENABLE_SERIAL=ON" if kokkos else ""
     # Generated regressions frequently use add_mpi_test() even when the issue
     # is not in an MPI-named package. Keep MPI uniformly available so the
@@ -1036,12 +1042,22 @@ def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
             "apt-get update -q",
             "apt-get install -y --no-install-recommends cmake g++ make ninja-build "
             "python3 python3-pytest libfftw3-dev libjpeg-dev libpng-dev libgtest-dev "
-            f"ocl-icd-opencl-dev{mpi_packages}",
+            f"ocl-icd-opencl-dev{mpi_packages}{' clinfo' if gpu else ''}",
         ],
         "build_after_test_patch": [
             # The container runs as root; Open MPI's mpiexec refuses that
             # unless overridden, which fails every add_mpi_test() target.
             "export OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1",
+            *(
+                [
+                    _OPENMM_NVIDIA_ICD_SETUP,
+                    f"export OCL_ICD_VENDORS={_OPENMM_NVIDIA_ICD_DIR}",
+                    "clinfo -l 2>&1 | grep -qi NVIDIA || "
+                    "{ echo NVIDIA_OPENCL_UNAVAILABLE; exit 86; }",
+                ]
+                if gpu
+                else []
+            ),
             *(["git submodule update --init --recursive lib/kokkos"] if kokkos else []),
             # Older LAMMPS releases (verified: base commit for PR 2181,
             # 2020-06) still fetch/build their own GoogleTest via
@@ -1090,12 +1106,13 @@ def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
         "test_generation_use_spec_cmd": True,
         "oracle_kind": "generated_test",
         "test_generation_capabilities": ("cpp", "python"),
+        **({"docker_specs": {"run_args": {"gpu": True}}} if gpu else {}),
     }
 
 
 SPECS_LAMMPS = {
     "5042": _lammps_test_generation_spec("SPIN", "KSPACE"),
-    "4887": _lammps_test_generation_spec("GPU"),
+    "4887": _lammps_test_generation_spec("GPU", "CORESHELL", "KSPACE"),
     "4590": _lammps_test_generation_spec("SRD"),
     "4861": _lammps_test_generation_spec("RHEO"),
     "4768": _lammps_test_generation_spec("KOKKOS", kokkos=True),
@@ -1120,7 +1137,7 @@ SPECS_LAMMPS = {
     "4407": _lammps_test_generation_spec("EXTRA-FIX", "BPM", "GRANULAR"),
     "4507": _lammps_test_generation_spec("REAXFF", "OPENMP"),
     "4485": _lammps_test_generation_spec("EXTRA-PAIR"),
-    "3129": _lammps_test_generation_spec("GPU"),
+    "3129": _lammps_test_generation_spec("GPU", "MANYBODY"),
     "4319": _lammps_test_generation_spec("GPU"),
     "4370": _lammps_test_generation_spec("BPM", "GRANULAR", "SPH"),
     "4152": _lammps_test_generation_spec(),

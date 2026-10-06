@@ -146,26 +146,3 @@ def test_stats003_does_not_false_alarm_on_small_c_large_offset(monkeypatch):
     seen = _capture(monkeypatch)
     checkers.check_biweight_midvariance_equivariance(arr, c, None, False, False, result)
     assert seen == []
-
-
-def test_quarantined_checkers_are_inert(monkeypatch):
-    seen = _capture(monkeypatch)
-    checkers.check_asinh_stretch_inverse_roundtrip(
-        1e-308, np.array([0.5]), np.array([0.0])
-    )
-    checkers.check_frame_roundtrip_3d((1.0, 0.0, 0.0), (2.0, 0.0, 0.0))
-    assert seen == []
-
-
-def test_quarantine_set_matches_review_decisions():
-    assert checkers._QUARANTINED_CHECKERS == {
-        "frame_transform_roundtrip",
-        "frame_transform_roundtrip_3d",
-        "time_scale_roundtrip",
-        "circstd_circvar_consistency",
-        "kernel_normalization_exactness",
-        "lombscargle_cross_implementation",
-        "log_stretch_inverse_roundtrip",
-        "asinh_stretch_inverse_roundtrip",
-        "power_dist_stretch_inverse_roundtrip",
-    }

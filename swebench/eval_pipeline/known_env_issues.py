@@ -23,6 +23,12 @@ IGNORED_INSTANCES: dict[str, str] = {
         "2017 commit has no cmake/ or unittest/ tree, so no generated test can "
         "be built (CMake Error: source directory /testbed/cmake does not exist)"
     ),
+    "lammps__lammps-4768": (
+        "the bug needs separate host and device copies of the atom forces: the "
+        "issue builds Kokkos with CUDA, the image only has Kokkos Serial (a "
+        "Kokkos CUDA build needs the CUDA toolkit), so a CPU test passes on "
+        "base and gold alike"
+    ),
 }
 
 ENV_NOTES: dict[str, str] = {

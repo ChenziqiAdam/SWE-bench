@@ -156,6 +156,19 @@ def provider_limit_error(error: str) -> bool:
     return any(marker in lowered for marker in _PROVIDER_LIMIT_MARKERS)
 
 
+def _only_skipped(
+    status_map: dict[str, str], added_test_names: frozenset[str] | None = None
+) -> bool:
+    """True when every (authored, if known) test in ``status_map`` was skipped."""
+    relevant = list(status_map.items())
+    if added_test_names:
+        authored = [
+            (t, s) for t, s in relevant if _mentions_added_test(t, added_test_names)
+        ]
+        relevant = authored or relevant
+    return bool(relevant) and all(s == "SKIPPED" for _t, s in relevant)
+
+
 def classify_test_generation_result(
     base_status_map: dict[str, str],
     gold_status_map: dict[str, str],
@@ -277,6 +290,15 @@ def classify_test_generation_result(
     elif not base_status_map or not gold_status_map:
         status = "errored"
         failure_reason = "no_parseable_test_status"
+    elif _only_skipped(base_status_map, added_test_names) and _only_skipped(
+        gold_status_map, added_test_names
+    ):
+        # The generated test never ran (pytest/unittest skip, usually because
+        # the style or package it needs is missing from the image). Passing on
+        # base says nothing about the model, so it must not read as
+        # "base_did_not_fail".
+        status = "not_exercised"
+        failure_reason = "generated_test_skipped"
     else:
         base_failed = sorted(t for t, s in base_status_map.items() if _failed(s))
         scored = base_failed
@@ -473,9 +495,14 @@ def _openmm_generated_pytest_command(
     pytest_targets: list[str],
     pytest_filter: str | None = None,
 ) -> str:
+    # Pure-Python specs install OpenMM from PyPI and have no build/ directory;
+    # pointing OPENMM_PLUGIN_DIR at a missing directory stops the wheel from
+    # loading its own plugins (Drude, Amoeba, CPU), so a Context that needs them
+    # fails with "does not support all required kernels" on base and gold alike.
     command = (
+        'if [ -d "$PWD/build" ]; then '
         "export LD_LIBRARY_PATH=$PWD/build:${LD_LIBRARY_PATH:-} "
-        "OPENMM_PLUGIN_DIR=$PWD/build && "
+        "OPENMM_PLUGIN_DIR=$PWD/build; fi && "
         "cd wrappers/python/tests && python -m pytest -xvs "
         + " ".join(pytest_targets)
     )
@@ -1314,8 +1341,15 @@ def _special_repo_execution_plan(
         # LAMMPS also registers input decks and standalone CMake scripts with
         # add_test()/add_mpi_test(). They are complete tests even though their
         # extensions are not source languages; execute their CTest wrapper.
+        # A Python script the patch itself registers with add_test() is meant
+        # to run through that CTest entry (it often takes arguments such as
+        # ${CMAKE_CXX_COMPILER}); a bare pytest call mis-reads sys.argv.
         if repo == "lammps/lammps" and path in lammps_ctest_paths:
-            language = language or "cpp"
+            if language == "python" and not path.startswith("unittest/python/"):
+                # unittest/python/ has its own module-test command
+                language = "cpp"
+            else:
+                language = language or "cpp"
         # A force-styles YAML fixture's own `input_file: in.<name>` field
         # names a companion LAMMPS input deck shipped alongside it under the
         # same tests/ directory. That deck is read by the shared driver
@@ -1758,6 +1792,9 @@ def _test_command(instance: dict, generated_patch: str) -> str:
     return " && ".join(commands)
 
 
+_OPENMM_PLUGIN_OPTIONS = {"CPUPME": "PME"}
+
+
 def _patch_driven_build_commands(
     repo: str, specs: dict, plan: GeneratedTestExecutionPlan | None
 ) -> list[str]:
@@ -1891,7 +1928,11 @@ def _patch_driven_build_commands(
         and len(PurePosixPath(path).parts) > 1
     }
     for plugin_name in sorted(plugin_names):
-        flag = f"-DOPENMM_BUILD_{plugin_name}_PLUGIN="
+        # plugins/cpupme is switched by OPENMM_BUILD_PME_PLUGIN; the guessed
+        # OPENMM_BUILD_CPUPME_PLUGIN is ignored by CMake ("Manually-specified
+        # variables were not used"), so TestCpuPme had no rule to build
+        # (openmm-920, gpt-6 and opus 5.5).
+        flag = f"-DOPENMM_BUILD_{_OPENMM_PLUGIN_OPTIONS.get(plugin_name, plugin_name)}_PLUGIN="
         if flag in configure:
             configure = re.sub(flag + r"(?:ON|OFF)", flag + "ON", configure)
         else:
@@ -2086,7 +2127,40 @@ def _parse_pytest_verbose_lines(output: str) -> dict[str, str]:
     return statuses
 
 
+_SUBTEST_FAILURE_RES = (
+    # -v:  path::Class::test SUBFAILED(platform='CUDA')
+    re.compile(r"^(?P<id>\S+::\S+)\s+SUB(?:FAILED|ERROR)\b"),
+    # -rA: SUBFAILED(platform='CUDA') path::Class::test - message
+    re.compile(r"^SUB(?:FAILED|ERROR)\(.*?\)\s+(?P<id>\S+::\S+)"),
+)
+
+
+def _apply_subtest_failures(output: str, statuses: dict[str, str]) -> dict[str, str]:
+    """Mark a test FAILED when one of its pytest subtests failed.
+
+    pytest >= 9 reports the parent test as PASSED and each failing subtest on
+    its own SUBFAILED line, so the plain parser saw a green test on base
+    (gpt-6 openmm-3311: HarmonicBondForce raised on base, passed on gold, and
+    was scored base_did_not_fail).
+    """
+    failed: set[str] = set()
+    for line in output.splitlines():
+        for pattern in _SUBTEST_FAILURE_RES:
+            match = pattern.match(line.strip())
+            if match:
+                failed.add(match.group("id"))
+                break
+    if not failed:
+        return statuses
+    return {**statuses, **{test: TestStatus.FAILED.value for test in failed}}
+
+
 def _parse_status(output: str, instance: dict) -> dict[str, str]:
+    statuses = _parse_status_without_subtests(output, instance)
+    return _apply_subtest_failures(output, statuses) if statuses else statuses
+
+
+def _parse_status_without_subtests(output: str, instance: dict) -> dict[str, str]:
     parser = MAP_REPO_TO_PARSER.get(instance["repo"])
     if parser is None:
         return {}

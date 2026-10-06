@@ -48,7 +48,14 @@ MODEL = "claude-sonnet-5"
 TIMEOUT = 900
 EVAL_MODE = "test_generation"
 AGENT_BACKEND = "claude_code"
-NETWORK_ISOLATION_LABEL = "unrestricted_no_os_sandbox_history_isolated_only"
+# The audit label must describe what actually ran: Bash executes inside Claude
+# Code's OS sandbox unless SWEBENCH_CLAUDE_SANDBOX=0 (opus5.5 audits still said
+# "no_os_sandbox" although command.json shows sandbox.enabled).
+NETWORK_ISOLATION_LABEL = (
+    "unrestricted_no_os_sandbox_history_isolated_only"
+    if os.environ.get("SWEBENCH_CLAUDE_SANDBOX", "1") == "0"
+    else "claude_os_sandbox_bash_network_blocked_history_isolated"
+)
 
 _NETWORK_COMMAND_PATTERNS = (
     ("curl", re.compile(r"(?:^|[;&|\s])(?:/[^\s;&|]+/)?curl(?:\s|$)", re.I)),
@@ -207,6 +214,14 @@ def claude_command(model: str = MODEL, effort: str | None = None) -> list[str]:
         command += ["--setting-sources", "", "--strict-mcp-config"]
     if os.environ.get(SANDBOX_ENV, "1") != "0":
         command += ["--settings", SANDBOX_SETTINGS]
+        # autoAllowBashIfSandboxed still asks about commands whose paths or
+        # variables cannot be resolved before they run ("cd /tmp/x && ...",
+        # "$TMPDIR/..", compound commands); in noninteractive -p mode an ask is
+        # a denial. opus5.5 had 548 denied Bash calls over 84 instances, so it
+        # often could not build or run its own test. An allow rule only skips
+        # the prompt: allowUnsandboxedCommands=false keeps every command inside
+        # the OS sandbox (writes limited to the checkout, no network).
+        command += ["--allowedTools", "Bash"]
     if effort is not None:
         command += ["--effort", effort]
     return command

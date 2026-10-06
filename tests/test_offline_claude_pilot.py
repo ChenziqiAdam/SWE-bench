@@ -11,9 +11,11 @@ def test_claude_command_enables_sandboxed_bash_by_default(monkeypatch):
     assert settings["sandbox"]["enabled"] is True
     assert settings["sandbox"]["autoAllowBashIfSandboxed"] is True
     assert settings["sandbox"]["allowUnsandboxedCommands"] is False
-    assert "--allowedTools" not in command
+    # prompts become denials in -p mode; the OS sandbox is what limits Bash
+    assert command[command.index("--allowedTools") + 1] == "Bash"
     monkeypatch.setenv("SWEBENCH_CLAUDE_SANDBOX", "0")
     assert "--settings" not in claude_command()
+    assert "--allowedTools" not in claude_command()
 
 
 def test_overloaded_529_result_is_retryable():

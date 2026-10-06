@@ -60,3 +60,25 @@ def test_prediction_cache_requires_exact_inference_input_hash():
         eval_mode="test_generation",
         input_hash=fingerprint,
     )
+
+
+def test_hidden_paths_cover_stale_worktrees_and_neighbouring_checkouts(tmp_path, monkeypatch):
+    """opus5.5/astra: agents listed `.sanitizer_eval_workspace/*` and earlier
+    runs' checkouts under swebench-inference-<uid>/ and imported Biopython from
+    one of them."""
+    monkeypatch.setenv("SWE_AGENT_TMPDIR", str(tmp_path / "work"))
+    stale = tmp_path / "work" / "claude-offline-full" / "run_old"
+    stale.mkdir(parents=True)
+    config = tmp_path / "work" / "codex-config" / "codex_home_live"
+    config.mkdir(parents=True)
+    output = tmp_path / "outputs" / "run" / "agent_predictions.jsonl"
+    output.parent.mkdir(parents=True)
+
+    hidden = inference_hidden_paths(output)
+
+    assert str(stale.resolve()) in hidden
+    assert str(config.resolve()) not in hidden
+    # a worktree created after the list was computed is not hidden from its run
+    fresh = tmp_path / "work" / "codex" / "run_new"
+    fresh.mkdir(parents=True)
+    assert str(fresh.resolve()) not in hidden

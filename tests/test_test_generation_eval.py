@@ -1018,7 +1018,10 @@ def test_lammps_test_generation_runs_bare_driver_with_new_native_test_case(
     command = _test_command(instance, patch)
 
     assert "UNSUPPORTED_GENERATED_TEST" not in command
-    assert "build/test_pair_style" in command
+    # the driver's main() exits with a usage message unless argv[1] is a YAML
+    # file, so a fixture is passed and gtest is restricted to the new case
+    assert "build/test_pair_style $(ls -1 unittest/force-styles/tests/*.yaml" in command
+    assert "--gtest_filter=PairStyle.ExtraCase" in command
 
 
 def test_rdkit_test_generation_isolates_touched_cpp_target(monkeypatch):
@@ -2148,6 +2151,14 @@ def test_inference_outcome_scores_model_failures_and_spares_infrastructure():
     assert _inference_outcome({"model_patch": ""}, placeholder) == ("no-pred", "")
     assert _inference_outcome({"model_patch": "", "error": "timeout"}, inst) == (
         "unresolved", "inference_timeout")
+    # lammps-3129 (gpt-6): out of turns, nothing submitted -> same as a timeout
+    turn_limit = {
+        "model_patch": "",
+        "error": "manual_review_rejected",
+        "automatic_error": "turn_limit_exceeded",
+    }
+    assert _inference_outcome(turn_limit, inst) == ("unresolved", "inference_turn_limit")
+    assert _inference_outcome(turn_limit, placeholder) == ("no-pred", "")
     assert _inference_outcome({"model_patch": "", "error": "codex_exit_1"}, inst) == (
         "errored", "inference_error")
     assert _inference_outcome(
@@ -2171,3 +2182,217 @@ def test_inference_outcome_scores_model_failures_and_spares_infrastructure():
     assert _inference_outcome(
         rejected(["Code/GraphMol/catch_graphmol.cpp", ".regrbuild/Makefile"]), inst
     ) == ("errored", "stale_scope_rule")
+
+
+_LAMMPS_SPEC = {
+    "build_after_test_patch": [
+        "cmake -S cmake -B build -G Ninja -D ENABLE_TESTING=ON -D PKG_MOLECULE=ON",
+        "cmake --build build --parallel $(nproc)",
+    ],
+    "test_cmd": ["ctest --test-dir build --output-on-failure"],
+}
+
+
+def _lammps_plan(patch):
+    return _special_repo_execution_plan({"repo": "lammps/lammps"}, patch, [])
+
+
+def test_lammps_ctest_name_with_cmake_variable_becomes_prefix_pattern():
+    """lammps-2105/4346 (gpt-6.1) and 2367 (gpt-6): add_test(NAME Foo:${STYLE})
+    inside foreach() was truncated to `Foo:` and selected with an anchored
+    `^(Foo:)$`, which matches nothing."""
+    patch = """diff --git a/unittest/CMakeLists.txt b/unittest/CMakeLists.txt
+--- a/unittest/CMakeLists.txt
++++ b/unittest/CMakeLists.txt
+@@ -1,3 +1,8 @@
++foreach(STYLE rigid rigid/nve)
++  add_test(NAME RigidRotation:${STYLE}
++    COMMAND lmp -in ${CMAKE_CURRENT_SOURCE_DIR}/in.rigid_rotation)
++endforeach()
+diff --git a/unittest/in.rigid_rotation b/unittest/in.rigid_rotation
+new file mode 100644
+--- /dev/null
++++ b/unittest/in.rigid_rotation
+@@ -0,0 +1,1 @@
++units si
+"""
+    plan = _lammps_plan(patch)
+    assert plan.failure_reason is None
+    (command,) = plan.commands
+    assert "-R '^(RigidRotation:.*)$'" in command
+    import re as _re
+    assert _re.search(r"^(RigidRotation:.*)$", "RigidRotation:rigid/nve")
+
+
+def test_lammps_ctest_name_made_only_of_variables_is_not_a_wildcard():
+    from swebench.eval_pipeline.test_generation_eval import _lammps_added_ctest_names
+
+    patch = """diff --git a/unittest/CMakeLists.txt b/unittest/CMakeLists.txt
+--- a/unittest/CMakeLists.txt
++++ b/unittest/CMakeLists.txt
+@@ -1,3 +1,4 @@
++  add_test(NAME ${TEST_NAME} COMMAND lmp)
++  add_test(NAME Real_${TEST_NAME} COMMAND lmp)
+"""
+    assert _lammps_added_ctest_names(patch) == ("Real_${TEST_NAME}",)
+
+
+def test_lammps_python_module_test_is_recognised_and_run_with_shared_lib():
+    """gpt-6.1 wrote 11 tests into unittest/python/python-*.py; the name
+    does not look like a test to _is_test_path, so they were dropped as noise
+    and the instance was scored not_exercised/no_tests_selected."""
+    from swebench.eval_pipeline.test_generation_eval import _patch_driven_build_commands
+
+    patch = """diff --git a/unittest/python/python-commands.py b/unittest/python/python-commands.py
+--- a/unittest/python/python-commands.py
++++ b/unittest/python/python-commands.py
+@@ -661,3 +661,8 @@ class PythonCommands(unittest.TestCase):
++class PythonRigidRestart(unittest.TestCase):
++    def testRestartAfterPeriodicCrossings(self):
++        pass
+"""
+    plan = _lammps_plan(patch)
+    assert plan.failure_reason is None
+    assert plan.paths == ("unittest/python/python-commands.py",)
+    (command,) = plan.commands
+    assert "PYTHONPATH=/testbed/python" in command
+    assert "LD_LIBRARY_PATH=/testbed/build" in command
+    assert "/testbed/unittest/python/python-commands.py::PythonRigidRestart::testRestartAfterPeriodicCrossings" in command
+    builds = _patch_driven_build_commands("lammps/lammps", _LAMMPS_SPEC, plan)
+    assert builds[0].endswith("-D BUILD_SHARED_LIBS=ON")
+    assert builds[1] == "cmake --build build --parallel $(nproc)"
+
+
+def test_lammps_driver_native_gtest_case_gets_yaml_argument_and_filter():
+    """lammps-4760/4887 (gpt-6): the bare driver printed its usage text and the
+    instance was errored/no_parseable_test_status."""
+    patch = """diff --git a/unittest/force-styles/test_fix_timestep.cpp b/unittest/force-styles/test_fix_timestep.cpp
+--- a/unittest/force-styles/test_fix_timestep.cpp
++++ b/unittest/force-styles/test_fix_timestep.cpp
+@@ -300,3 +300,8 @@
++TEST(FixTimestep, rigid_small_regression)
++{
++}
++TEST_F(Fixture, other)
++{
++}
+"""
+    plan = _lammps_plan(patch)
+    assert plan.failure_reason is None
+    (command,) = plan.commands
+    assert command.startswith("build/test_fix_timestep $(ls -1 ")
+    assert command.endswith("--gtest_filter=FixTimestep.rigid_small_regression:Fixture.other")
+
+
+def test_lammps_packages_named_by_the_generated_test_are_enabled():
+    """lammps-2105/4370: the model guarded its registration with if(PKG_RIGID
+    AND ...) / if(PKG_PTM); the spec did not enable them so ctest found no
+    test. Packages needing hardware/external libraries are never auto-enabled."""
+    from swebench.eval_pipeline.test_generation_eval import _patch_driven_build_commands
+
+    patch = """diff --git a/unittest/commands/CMakeLists.txt b/unittest/commands/CMakeLists.txt
+--- a/unittest/commands/CMakeLists.txt
++++ b/unittest/commands/CMakeLists.txt
+@@ -14,3 +14,8 @@
++if(PKG_PTM AND PKG_MOLECULE AND PKG_GPU)
++  add_test(NAME ComputePTMMultiNeighbor COMMAND lmp -in ${CMAKE_CURRENT_SOURCE_DIR}/in.ptm_multi)
++endif()
+diff --git a/unittest/commands/in.ptm_multi b/unittest/commands/in.ptm_multi
+new file mode 100644
+--- /dev/null
++++ b/unittest/commands/in.ptm_multi
+@@ -0,0 +1,1 @@
++units lj
+"""
+    plan = _lammps_plan(patch)
+    assert plan.evidence["lammps_extra_packages"] == ("PKG_MOLECULE", "PKG_PTM")
+    builds = _patch_driven_build_commands("lammps/lammps", _LAMMPS_SPEC, plan)
+    assert builds[0].count("PKG_MOLECULE=ON") == 1  # already configured: not repeated
+    assert builds[0].endswith("-D PKG_PTM=ON")
+    assert "PKG_GPU" not in builds[0]
+
+
+def test_registered_ctest_missing_after_configuration_is_unresolved():
+    result = classify_test_generation_result(
+        {}, {}, True, True, registered_test_not_found=True
+    )
+    assert (result["status"], result["failure_reason"]) == (
+        "unresolved",
+        "generated_test_not_registered",
+    )
+
+
+def test_lammps_python_script_registered_with_add_test_runs_through_ctest():
+    """lammps-4319 (gpt-6 astra): the test took the compiler from sys.argv and was
+    registered with add_test(... ${CMAKE_CXX_COMPILER}); pytest ran it with argv
+    '-rA' and it failed on base and gold with FileNotFoundError."""
+    patch = """diff --git a/unittest/gpu/CMakeLists.txt b/unittest/gpu/CMakeLists.txt
+new file mode 100644
+--- /dev/null
++++ b/unittest/gpu/CMakeLists.txt
+@@ -0,0 +1,4 @@
++add_test(NAME GPUTransposeLaunch
++  COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_transpose_launch.py
++          ${CMAKE_CXX_COMPILER})
+diff --git a/unittest/gpu/test_transpose_launch.py b/unittest/gpu/test_transpose_launch.py
+new file mode 100644
+--- /dev/null
++++ b/unittest/gpu/test_transpose_launch.py
+@@ -0,0 +1,3 @@
++import sys
++COMPILER = sys.argv.pop(1)
+"""
+    plan = _lammps_plan(patch)
+    assert plan.failure_reason is None
+    (command,) = plan.commands
+    assert command == "ctest --test-dir build --output-on-failure -R '^(GPUTransposeLaunch)$'"
+
+
+def test_skipped_generated_test_is_not_exercised_not_base_did_not_fail():
+    """gpt-6 astra lammps-3129/4887: the python test skipped ("Missing pair
+    style sw") on base and gold; that is not a model failure to fail on base."""
+    skipped = {"[1]": "SKIPPED"}
+    result = classify_test_generation_result(skipped, skipped, True, True)
+    assert (result["status"], result["failure_reason"]) == (
+        "not_exercised", "generated_test_skipped")
+    # a real pass must still read as base_did_not_fail
+    passed = {"t.py::A::test": "PASSED"}
+    result = classify_test_generation_result(passed, passed, True, True)
+    assert result["failure_reason"] == "base_did_not_fail"
+
+
+def test_failed_pytest_subtest_marks_the_parent_test_failed():
+    """gpt-6 openmm-3311: pytest 9 prints the parent as PASSED and the failing
+    subtests as SUBFAILED, so base looked green and the instance was
+    base_did_not_fail although gold fixed it."""
+    from swebench.eval_pipeline.test_generation_eval import _apply_subtest_failures
+
+    node = "TestForceField.py::AmoebaTestForceField::test_FlexibleWaterContext"
+    verbose = (
+        f"{node} SUBFAILED(forcefield='amoeba2013.xml')\n"
+        f"{node} PASSED\n"
+        f"SUBFAILED(forcefield='amoeba2013.xml') {node} - boom\n"
+    )
+    assert _apply_subtest_failures(verbose, {node: "PASSED"}) == {node: "FAILED"}
+    green = f"{node} SUBPASSED(forcefield='amoeba2013.xml')\n{node} PASSED\n"
+    assert _apply_subtest_failures(green, {node: "PASSED"}) == {node: "PASSED"}
+
+
+def test_openmm_cpupme_plugin_test_enables_the_pme_option():
+    """openmm-920 (gpt-6 sol, opus 5.5): TestCpuPme had 'No rule to make target'
+    because the harness set the nonexistent OPENMM_BUILD_CPUPME_PLUGIN."""
+    spec = {
+        "build_after_test_patch": [
+            "cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DOPENMM_BUILD_CUDA_LIB=OFF",
+            "cmake --build build --parallel $(nproc) --target TestCpuPme",
+        ],
+    }
+    plan = GeneratedTestExecutionPlan(
+        languages=("cpp",),
+        paths=("plugins/cpupme/tests/TestCpuPme.cpp",),
+        build_targets=("TestCpuPme",),
+    )
+    commands = _patch_driven_build_commands("openmm/openmm", spec, plan)
+    configure = next(c for c in commands if c.startswith("cmake ") and " -B " in c)
+    assert "-DOPENMM_BUILD_PME_PLUGIN=ON" in configure
+    assert "CPUPME" not in configure
