@@ -80,6 +80,7 @@ python evaluate_submission.py --repo <fork checkout> --patch sub.diff --python <
   `Contrast.z_score(baseline)` reuses the cached `one_minus_pvalue_` of the previous baseline, giving wrong z, even
   sign-flipped). It also exposed a scorer false positive (tamper rule hit upstream's re-exported test helper), fixed.
   Across both agents 8 IDs / 7 families are triggered (SIG-001/002/003/005/008, GLM-003/008, THR-003).
-- **Not yet done:** independent audit of the laws flagged in the foreknowledge
-  disclosure (GLM-003/006/008, SIG-003/007, THR-001, CON-008), upstream tracker search, optional traditional bank,
-  tracker search / issue drafts (GLM-003/008 stale cache, SIG-005, THR-003, SIG-002).
+- **Independent law audit** (`INDEPENDENT_LAW_AUDIT.md`): fresh Opus agent re-derived the 7 foreknowledge-flagged laws on pristine
+  upstream; none exposes a library bug; wording/precondition notes recorded (frozen commit unchanged).
+- **Not yet done:** upstream tracker search / issue drafts (GLM-003/008 stale cache, SIG-005, THR-003, SIG-002); optional
+  traditional bank (SANITIZER.md 12).
