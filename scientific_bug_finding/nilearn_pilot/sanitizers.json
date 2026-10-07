@@ -5,7 +5,7 @@
   "base_tag": null,
   "fork_repository": "https://github.com/ChenziqiAdam/nilearn",
   "fork_branch": "scibench-scientific-checkers-pilot",
-  "instrumented_commit": "0b2557ea42b843a548b8b75cc347b3877130782d",
+  "instrumented_commit": "64afcdd72a4e3afb9c4817b2a3005bc6aad5e3bf",
   "note": "Scientific bank only (traditional reference bank not built). Laws were written before any checker code or execution (LAW_CANDIDATES.md) and frozen before triggerability analysis.",
   "audit": {
     "behaviour_parity": "sha256 over 65 deterministic public-API outputs plus the global NumPy RNG state is identical on the pristine base, instrumented with the logger unset, and instrumented with the logger on (no alarm in that run).",
@@ -27,8 +27,22 @@
         "NL-SIG-008",
         "NL-THR-003"
       ],
-      "after_fixes_same_patch": "5 IDs / 5 families (SIG-001/002/003/008, THR-003), 41/41 tests, at 0b2557ea4",
+      "after_fixes_same_patch": "5 IDs / 5 families (SIG-001/002/003/008, THR-003), 41/41 tests, at 64afcdd72",
       "note": "see LAW_CANDIDATES.md revision log items 11-19"
+    },
+    "fresh_agent_opus55": {
+      "scored_ids": 8,
+      "tests_passed": "7/7",
+      "checker_defects": 3,
+      "real": [
+        "NL-SIG-001",
+        "NL-SIG-002",
+        "NL-SIG-005",
+        "NL-GLM-003",
+        "NL-GLM-008"
+      ],
+      "after_fixes_same_patch": "5 IDs / 5 families at 64afcdd72",
+      "note": "also exposed a scorer false-positive (fixed); LAW_CANDIDATES.md items 20-22"
     }
   },
   "sanitizers": [
@@ -286,7 +300,7 @@
       "source": "nilearn/glm/first_level/hemodynamic_models.py",
       "symbol": "_generic_time_derivative",
       "scientific_quantity": "HRF time-derivative kernel",
-      "precondition": "`onset` arbitrary, grid spacing `Delta` and finite-difference step `delta = 0.1 s`, the kernel contains the response (|h(end)| <= 1e-2 max h)",
+      "precondition": "`onset` arbitrary, grid spacing `Delta` and finite-difference step `delta = 0.1 s`, the kernel contains the response (|h(end)|, |h(0)| <= 1e-2 max h)",
       "invariant": "the finite-difference derivative `d = (h(t) - h(t - delta)) / delta` of the response changes sign from positive to negative within `delta + 2 Delta` of the argmax of `h`",
       "observation_point": "return of `_generic_time_derivative` (both HRFs)",
       "alarm": "first `+ -> -` sign change of `d` after the start is further than `delta + 2 Delta` from `argmax(h)`",

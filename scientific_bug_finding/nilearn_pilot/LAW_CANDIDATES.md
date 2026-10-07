@@ -200,7 +200,7 @@ partition; same time grid) differ from the full result by more than
 scale-covariant). Fam `bold_homogeneity`.
 
 **HRF-004 The time-derivative kernel crosses zero at the HRF peak.** Pre: `onset` arbitrary,
-the kernel contains the response (`|h(end)| <= 1e-2 max h`), grid spacing `Delta` and finite-difference step `delta = 0.1 s`. Law: the finite-difference
+the kernel contains the whole response (`|h(end)|, |h(0)| <= 1e-2 max h`), grid spacing `Delta` and finite-difference step `delta = 0.1 s`. Law: the finite-difference
 derivative `d = (h(t) - h(t - delta)) / delta` of the response changes sign from positive to
 negative within `delta + 2 Delta` of the argmax of `h`. Obs: return of
 `_generic_time_derivative` (both HRFs). Alarm: first `+ -> -` sign change of `d` after the
@@ -457,3 +457,23 @@ Real after adjudication (checker kept): SIG-002 (std < eps guard, above), THR-00
 
 Verification after the fixes: isolated sensitivity 33/33, reachability 42/42, fuzz seeds 50-57 (896 cases) and
 stress 60-67 (896 cases, scales to +-30 decades) show only SIG-002 alarms at extreme scales.
+
+First fresh Opus 5.5 run (frozen commit `0b2557ea4`, 7 passing tests in 3 files, 8 IDs; `fresh_opus55/`). Scorer defect found
+first: `scibench_pytest_plugin` flagged every test as tampered because `nilearn._utils.data_gen.get_legal_confound`
+(upstream production code that re-exports a helper living in `fmriprep/tests/_testing.py`) matched the
+"function defined under /tests/" rule. The rule now applies only to functions defined in files added by the submission
+(`SCIBENCH_SUBMITTED`); the four demo submissions score as before.
+20. **GLM-007 (T)**: float32 effect/variance maps; tolerance used float64 eps. Now the largest input eps.
+21. **HRF-004 (P)**: negative onsets truncate the head of the response (`h(0) > 0`); same renormalisation artefact as
+    item 16. Precondition extended to `|h(0)| <= 1e-2 max h`.
+22. **CON-001 (P)**: float32 variances 1e-40 are subnormal in float32. `_scale_ok` now also skips magnitudes below
+    `1e4 * tiny` of the data's own dtype.
+
+Real after adjudication (checkers kept): SIG-001, SIG-002, and
+- **GLM-003/GLM-008, stale cache (strong)**: `Contrast.z_score(baseline)` recomputes `p_value_` when the baseline
+  changes but reuses the cached `one_minus_pvalue_` (`if self.one_minus_pvalue_ is None`), so `z_score()` followed by
+  `z_score(baseline=3.0)` mixes tails of two different nulls. On the pristine tree the second call returns
+  `[0.976, 1.886]` where a fresh object returns `[-1.886, -0.976]` (sign flipped).
+- **SIG-005, absolute cutoff in the confound QR**: confounds of amplitude 1e-18 are dropped (cutoff `100 eps` on the
+  unscaled columns, also with `standardize_confounds=True` because the z-scoring guard has the same absolute `eps`):
+  the cleaned signal keeps 95 % of its norm in the span of the confounds (1e-15 at amplitude 1 and 1e-10).

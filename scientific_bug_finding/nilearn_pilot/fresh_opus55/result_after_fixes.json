@@ -1,0 +1,74 @@
+{
+  "patch": "fresh_op55_nl_submission.diff",
+  "violations": [],
+  "tests": [
+    {
+      "nodeid": "::test_cov_to_corr_float32_tiny_variances",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_contrast_z_score_after_changing_baseline",
+      "passed": true,
+      "triggers": [
+        "NL-GLM-003",
+        "NL-GLM-008"
+      ]
+    },
+    {
+      "nodeid": "::test_fixed_effects_float32_images",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_hrf_time_derivative_with_negative_onset",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_standardize_signal_tiny_physical_units",
+      "passed": true,
+      "triggers": [
+        "NL-SIG-002"
+      ]
+    },
+    {
+      "nodeid": "::test_clean_with_tiny_scale_confounds",
+      "passed": true,
+      "triggers": [
+        "NL-SIG-002",
+        "NL-SIG-005"
+      ]
+    },
+    {
+      "nodeid": "::test_detrend_long_float32_recording",
+      "passed": true,
+      "triggers": [
+        "NL-SIG-001"
+      ]
+    }
+  ],
+  "triggered_ids": [
+    "NL-GLM-003",
+    "NL-GLM-008",
+    "NL-SIG-001",
+    "NL-SIG-002",
+    "NL-SIG-005"
+  ],
+  "triggered_families": [
+    "confound_regression_orthogonality",
+    "detrend_orthogonality",
+    "zscore_antisymmetry",
+    "zscore_moments",
+    "zscore_tail_consistency"
+  ],
+  "commit": "64afcdd72a4e3afb9c4817b2a3005bc6aad5e3bf",
+  "pytest_returncode": 0,
+  "pytest_tail": ".......                                                                  [100%]\n7 passed in 0.53s\n",
+  "wall_seconds": 3.1,
+  "tampered_tests": [],
+  "n_tests": 7,
+  "n_passed": 7,
+  "ignored_triggers_from_failed_tests": [],
+  "status": "scored"
+}

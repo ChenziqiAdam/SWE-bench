@@ -1,0 +1,164 @@
+diff --git a/nilearn/connectome/tests/test_cov_to_corr_small_float32.py b/nilearn/connectome/tests/test_cov_to_corr_small_float32.py
+new file mode 100644
+index 000000000..645641136
+--- /dev/null
++++ b/nilearn/connectome/tests/test_cov_to_corr_small_float32.py
+@@ -0,0 +1,18 @@
++"""Covariance to correlation for single-precision, very small variances."""
++
++import numpy as np
++
++from nilearn.connectome import cov_to_corr
++
++
++def test_cov_to_corr_float32_tiny_variances():
++    """Covariance of float32 signals in very small physical units."""
++    rng = np.random.default_rng(0)
++    signals = rng.standard_normal((50, 5))
++    cov = (np.cov(signals.T) * 1e-40).astype(np.float32)
++
++    corr = cov_to_corr(cov)
++
++    assert corr.shape == (5, 5)
++    np.testing.assert_array_equal(np.diag(corr), 1.0)
++    assert np.all(np.isfinite(corr))
+diff --git a/nilearn/glm/tests/test_contrast_baseline_and_fixed_effects.py b/nilearn/glm/tests/test_contrast_baseline_and_fixed_effects.py
+new file mode 100644
+index 000000000..f29209f68
+--- /dev/null
++++ b/nilearn/glm/tests/test_contrast_baseline_and_fixed_effects.py
+@@ -0,0 +1,63 @@
++"""Contrast z-scores with non-zero baselines, and float32 fixed effects."""
++
++import numpy as np
++from nibabel import Nifti1Image
++
++from nilearn.glm.contrasts import Contrast, compute_fixed_effects
++from nilearn.glm.first_level import glover_time_derivative, spm_time_derivative
++
++
++def test_contrast_z_score_after_changing_baseline():
++    """Test the same contrast against two successive baselines."""
++    con = Contrast(
++        effect=np.array([[1.0, 2.0]]),
++        variance=np.array([1.0, 1.0]),
++        dof=20,
++        stat_type="t",
++    )
++    z0 = con.z_score()
++    assert np.all(z0 > 0)
++
++    z1 = con.z_score(baseline=3.0)
++
++    assert z1.shape == (2,)
++    assert np.all(np.isfinite(z1))
++    # the t statistic is negative against the larger baseline
++    assert np.all(con.stat_ < 0)
++
++
++def test_fixed_effects_float32_images():
++    """Combine float32 contrast/variance maps of three runs."""
++    shape = (3, 3, 3)
++    affine = np.eye(4)
++    mask = Nifti1Image(np.ones(shape, dtype=np.int8), affine)
++    effects = [0.1, 0.1, 0.1]
++    variances = [0.7, 0.3, 1.1]
++    contrast_imgs = [
++        Nifti1Image(np.full(shape, e, dtype=np.float32), affine)
++        for e in effects
++    ]
++    variance_imgs = [
++        Nifti1Image(np.full(shape, v, dtype=np.float32), affine)
++        for v in variances
++    ]
++
++    for precision_weighted in (True, False):
++        con_img, var_img, _, z_img = compute_fixed_effects(
++            contrast_imgs,
++            variance_imgs,
++            mask,
++            precision_weighted=precision_weighted,
++        )
++        np.testing.assert_allclose(con_img.get_fdata(), 0.1, rtol=1e-5)
++        assert np.all(var_img.get_fdata() > 0)
++        assert np.all(np.isfinite(z_img.get_fdata()))
++
++
++def test_hrf_time_derivative_with_negative_onset():
++    """Time-derivative kernels for responses starting before t=0."""
++    for func in (spm_time_derivative, glover_time_derivative):
++        for onset in (-3.0, -5.0, -8.0):
++            dhrf = func(t_r=2.0, oversampling=50, time_length=32.0, onset=onset)
++            assert dhrf.ndim == 1
++            assert np.all(np.isfinite(dhrf))
+diff --git a/nilearn/tests/test_signal_numerical_scale.py b/nilearn/tests/test_signal_numerical_scale.py
+new file mode 100644
+index 000000000..22caf650a
+--- /dev/null
++++ b/nilearn/tests/test_signal_numerical_scale.py
+@@ -0,0 +1,65 @@
++"""Signal processing on data with extreme physical scales or lengths."""
++
++import numpy as np
++
++from nilearn import signal
++
++
++def test_standardize_signal_tiny_physical_units():
++    """Z-scoring signals expressed in very small physical units.
++
++    The standardized output must not depend on the unit in which the
++    signal is expressed.
++    """
++    rng = np.random.default_rng(0)
++    signals = rng.standard_normal((50, 3)) * 1e-18
++
++    out = signal.standardize_signal(signals, standardize="zscore_sample")
++
++    assert out.shape == signals.shape
++    assert np.all(np.isfinite(out))
++    np.testing.assert_allclose(out.mean(axis=0), 0, atol=1e-30)
++
++
++def test_clean_with_tiny_scale_confounds():
++    """Confound regression when confounds are in very small units."""
++    rng = np.random.default_rng(0)
++    n_samples = 60
++    confounds = rng.standard_normal((n_samples, 2)) * 1e-18
++    signals = rng.standard_normal((n_samples, 4))
++    signals += 1e18 * confounds @ rng.standard_normal((2, 4))
++
++    cleaned = signal.clean(
++        signals,
++        confounds=confounds,
++        detrend=False,
++        standardize=None,
++        standardize_confounds=True,
++    )
++
++    assert cleaned.shape == signals.shape
++    assert np.all(np.isfinite(cleaned))
++
++
++def test_detrend_long_float32_recording():
++    """Linear detrending of a long single-precision recording.
++
++    For example, 250 s of a physiological trace sampled at 1 kHz.
++    """
++    rng = np.random.default_rng(0)
++    n_samples = 250_000
++    t = np.arange(n_samples)
++    signals = np.stack(
++        [
++            t * 0.01 + rng.standard_normal(n_samples),
++            5.0 * t / n_samples + 100 + rng.standard_normal(n_samples),
++        ],
++        axis=1,
++    ).astype(np.float32)
++
++    cleaned = signal.clean(signals, detrend=True, standardize=None)
++
++    assert cleaned.dtype == np.float32
++    assert cleaned.shape == signals.shape
++    # the drift (several hundred units) is mostly removed
++    assert np.abs(cleaned.mean(axis=0)).max() < 1.0

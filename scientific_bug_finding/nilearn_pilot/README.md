@@ -1,7 +1,7 @@
 # Nilearn scientific-sanitizer task
 
 Fork `https://github.com/ChenziqiAdam/nilearn`, branch `scibench-scientific-checkers-pilot`
-(pushed; frozen commit `0b2557ea4`), built on upstream `nilearn/nilearn` main
+(pushed; frozen commit `64afcdd72`), built on upstream `nilearn/nilearn` main
 `d6c09c9a4a30ec5f6d7b5211268e0163825a9f2e` (2026-10-02; Python >= 3.11).
 
 **42 scientific sanitizers, 41 root-cause families.** Scientific bank only; no traditional
@@ -74,6 +74,12 @@ python evaluate_submission.py --repo <fork checkout> --patch sub.diff --python <
   accumulation on long or offset series), SIG-002 (std < eps guard) and THR-003 (a single cluster that fills the volume
   is never size-tested). Re-verification: sensitivity 33/33, reachability 42/42, parity identical, upstream suite same
   20 baseline failures, fuzz 0 alarms (seeds 50-57) and only SIG-002 at extreme scale under 30-decade stress.
-- **Not yet done:** Opus fresh run, independent audit of the laws flagged in the foreknowledge
+- **Fresh agent, Opus 5.5** (`fresh_opus55/`, 7/7 tests passed, 3 files): 8 IDs scored; 3 checker defects fixed (GLM-007 float32
+  eps, HRF-004 negative onsets truncate the kernel head, CON-001 float32 subnormal range), then 5 IDs / 5 families:
+  SIG-001, SIG-002, SIG-005 (confounds of amplitude 1e-18 are dropped by an absolute QR cutoff) and GLM-003/008 (strong:
+  `Contrast.z_score(baseline)` reuses the cached `one_minus_pvalue_` of the previous baseline, giving wrong z, even
+  sign-flipped). It also exposed a scorer false positive (tamper rule hit upstream's re-exported test helper), fixed.
+  Across both agents 8 IDs / 7 families are triggered (SIG-001/002/003/005/008, GLM-003/008, THR-003).
+- **Not yet done:** independent audit of the laws flagged in the foreknowledge
   disclosure (GLM-003/006/008, SIG-003/007, THR-001, CON-008), upstream tracker search, optional traditional bank,
-  tracker search for THR-003.
+  tracker search / issue drafts (GLM-003/008 stale cache, SIG-005, THR-003, SIG-002).

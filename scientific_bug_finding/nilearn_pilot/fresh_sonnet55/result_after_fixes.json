@@ -242,10 +242,10 @@
     "psc_scaling",
     "zscore_moments"
   ],
-  "commit": "0b2557ea42b843a548b8b75cc347b3877130782d",
+  "commit": "64afcdd72a4e3afb9c4817b2a3005bc6aad5e3bf",
   "pytest_returncode": 0,
-  "pytest_tail": ".........................................                                [100%]\n41 passed in 1.00s\n",
-  "wall_seconds": 3.3,
+  "pytest_tail": ".........................................                                [100%]\n41 passed in 3.62s\n",
+  "wall_seconds": 5.9,
   "tampered_tests": [],
   "n_tests": 41,
   "n_passed": 41,

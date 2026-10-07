@@ -14,6 +14,9 @@ _LOG = os.environ["SCIBENCH_TRIGGER_LOG"]
 _OUT = os.environ["SCIBENCH_RESULT_JSON"]
 _records = []
 _SEEN = {}
+# files added by the submission: only functions defined there count as test-defined production code
+# (upstream production modules legitimately re-export helpers that live in ``tests/`` directories)
+_SUBMITTED = {os.path.realpath(p) for p in os.environ.get("SCIBENCH_SUBMITTED", "").split(os.pathsep) if p}
 
 
 def _size():
@@ -68,7 +71,7 @@ def _tampering():
         for k, v in attrs.items():
             if isinstance(v, um.NonCallableMock):
                 found.append(f"{name}.{k} is a mock")
-            elif isinstance(v, types.FunctionType) and "/tests/" in v.__code__.co_filename.replace("\\", "/"):
+            elif isinstance(v, types.FunctionType) and os.path.realpath(v.__code__.co_filename) in _SUBMITTED:
                 found.append(f"{name}.{k} defined in {v.__code__.co_filename}")
             elif k in seen and seen[k] != id(v) and callable(v):
                 found.append(f"{name}.{k} was replaced")

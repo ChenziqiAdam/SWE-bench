@@ -124,6 +124,8 @@ def main() -> int:
         log.write_text("")
         env = dict(os.environ, SCIBENCH_TRIGGER_LOG=str(log),
                    SCIBENCH_RESULT_JSON=str(result_json),
+                   SCIBENCH_SUBMITTED=os.pathsep.join(
+                       str((work / f).resolve()) for f in patch_files(patch)),
                    PYTHONPATH=os.pathsep.join([str(work), str(HERE)]))
         env.pop("SCIBENCH_CHECKER_DEBUG", None)
         cmd = [args.python, "-W", "ignore", "-m", "pytest", "-q",
