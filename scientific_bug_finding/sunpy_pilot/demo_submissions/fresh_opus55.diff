@@ -1,0 +1,193 @@
+diff --git a/sunpy/coordinates/tests/test_antisolar_directions.py b/sunpy/coordinates/tests/test_antisolar_directions.py
+new file mode 100644
+index 000000000..413497af1
+--- /dev/null
++++ b/sunpy/coordinates/tests/test_antisolar_directions.py
+@@ -0,0 +1,38 @@
++"""
++Helioprojective lines of sight that point away from the Sun (e.g., from a wide-field
++or all-sky imager) never intersect the solar surface.
++"""
++import numpy as np
++
++import astropy.units as u
++from astropy.coordinates import SkyCoord
++
++from sunpy.coordinates import Helioprojective, get_earth
++from sunpy.map.maputils import coordinate_is_on_solar_disk
++from sunpy.physics.differential_rotation import solar_rotate_coordinate
++
++
++def _antisolar_coordinates():
++    obstime = '2020-01-01'
++    observer = get_earth(obstime)
++    return SkyCoord([179.9, 179.95] * u.deg, [0, 0.05] * u.deg,
++                    frame=Helioprojective(observer=observer, obstime=obstime))
++
++
++def test_make_3d_antisolar_direction():
++    coords = _antisolar_coordinates()
++    coords_3d = coords.make_3d()
++    assert coords_3d.distance.shape == (2,)
++
++
++def test_coordinate_is_on_solar_disk_antisolar_direction():
++    coords = _antisolar_coordinates()
++    on_disk = coordinate_is_on_solar_disk(coords)
++    assert not np.any(on_disk)
++
++
++def test_solar_rotate_antisolar_direction():
++    coords = _antisolar_coordinates()
++    new_observer = get_earth('2020-01-03')
++    rotated = solar_rotate_coordinate(coords, observer=new_observer)
++    assert rotated.obstime == new_observer.obstime
+diff --git a/sunpy/coordinates/tests/test_eclipse_umbral_apex.py b/sunpy/coordinates/tests/test_eclipse_umbral_apex.py
+new file mode 100644
+index 000000000..e5c4ba142
+--- /dev/null
++++ b/sunpy/coordinates/tests/test_eclipse_umbral_apex.py
+@@ -0,0 +1,54 @@
++"""
++Eclipse amount for observers near the apex of the Moon's umbral cone during the
++2023 April 20 hybrid eclipse, where the Sun and the Moon have nearly equal apparent
++sizes and are nearly concentric.
++"""
++import numpy as np
++
++import astropy.units as u
++from astropy.constants import R_earth
++from astropy.coordinates import CartesianRepresentation, SkyCoord, SphericalRepresentation
++
++from sunpy.coordinates import HeliographicStonyhurst, get_body_heliographic_stonyhurst, sun
++from sunpy.sun import constants
++
++OBSTIME = '2023-04-20 04:17'
++R_SUN = constants.radius.to_value(u.m)
++R_MOON = (0.2725076 * R_earth).to_value(u.m)  # IAU mean radius used by eclipse_amount
++
++
++def _hgs(points):
++    rep = CartesianRepresentation(*(np.asarray(points) * u.m))
++    return SkyCoord(rep.represent_as(SphericalRepresentation), frame=HeliographicStonyhurst(obstime=OBSTIME))
++
++
++def _umbral_apex():
++    # Where the Sun and the Moon subtend the same angle: on the Sun-Moon line, at
++    # R_sun / (R_sun - R_moon) times the Sun-Moon distance from Sun center. The apparent
++    # (light-time corrected) Moon position depends on the observer, so iterate.
++    moon = get_body_heliographic_stonyhurst('moon', OBSTIME)
++    apex = moon.cartesian.xyz.to_value(u.m) * R_SUN / (R_SUN - R_MOON)
++    for _ in range(4):
++        moon = get_body_heliographic_stonyhurst('moon', OBSTIME, observer=_hgs(apex), quiet=True)
++        moon_xyz = moon.cartesian.xyz.to_value(u.m)
++        apex = moon_xyz * R_SUN / (R_SUN - R_MOON)
++    axis = moon_xyz / np.linalg.norm(moon_xyz)
++    return apex, axis
++
++
++def test_eclipse_amount_near_umbral_apex():
++    apex, axis = _umbral_apex()
++    perp = np.cross(axis, [0, 0, 1.0])
++    perp /= np.linalg.norm(perp)
++    points = [apex + along * axis + across * perp
++              for along in np.linspace(-2000, 2000, 11)
++              for across in [30, 100, 300, 1000]]
++    observers = _hgs(np.array(points).T)
++
++    amount = sun.eclipse_amount(observers)
++
++    assert amount.shape == (44,)
++    finite = np.isfinite(amount)
++    assert np.all((amount[finite] >= 0 * u.percent) & (amount[finite] <= 100 * u.percent))
++    # Within ~2 km of the tip of the umbra the Sun is almost entirely covered
++    assert np.all(amount[finite] > 90 * u.percent)
+diff --git a/sunpy/coordinates/tests/test_screen_differential_rotation.py b/sunpy/coordinates/tests/test_screen_differential_rotation.py
+new file mode 100644
+index 000000000..5f642564c
+--- /dev/null
++++ b/sunpy/coordinates/tests/test_screen_differential_rotation.py
+@@ -0,0 +1,35 @@
++"""
++Off-disk coordinates from a near-Sun observer, interpreted on a planar screen and
++propagated with solar differential rotation to an Earth view one day earlier.
++"""
++import numpy as np
++import pytest
++
++import astropy.units as u
++from astropy.coordinates import SkyCoord
++
++from sunpy.coordinates import (
++    HeliographicStonyhurst,
++    Helioprojective,
++    PlanarScreen,
++    get_earth,
++    propagate_with_solar_surface,
++)
++from sunpy.util.exceptions import SunpyUserWarning
++
++
++def test_planar_screen_with_differential_rotation_wide_field():
++    earth = get_earth('2020-01-01')
++    # A spacecraft at ~0.11 AU (similar to a Parker Solar Probe perihelion pass)
++    near_sun_observer = SkyCoord(49.3 * u.deg, -27.6 * u.deg, 0.11 * u.AU,
++                                 frame=HeliographicStonyhurst(obstime='2020-01-02'))
++    wide_field = SkyCoord([4, 81.3, -31, -72.5, -29.2] * u.deg,
++                          [67.2, 66.3, 42.8, -46.6, 44.6] * u.deg,
++                          frame=Helioprojective(observer=near_sun_observer, obstime='2020-01-02'))
++
++    with pytest.warns(SunpyUserWarning, match="Failed to solve for the differentially rotated screen"):
++        with propagate_with_solar_surface(), PlanarScreen(earth):
++            seen_from_earth = wide_field.transform_to(Helioprojective(observer=earth, obstime=earth.obstime))
++
++    assert seen_from_earth.shape == (5,)
++    assert np.all(np.isfinite(seen_from_earth.distance))
+diff --git a/sunpy/map/sources/tests/test_gong_magnetogram_operations.py b/sunpy/map/sources/tests/test_gong_magnetogram_operations.py
+new file mode 100644
+index 000000000..075a06e16
+--- /dev/null
++++ b/sunpy/map/sources/tests/test_gong_magnetogram_operations.py
+@@ -0,0 +1,42 @@
++"""
++Geometric operations (resample, superpixel, scaled rotation) applied to a GONG
++magnetogram, whose plate scale is derived from the fitted limb rather than CDELTi.
++"""
++import numpy as np
++import pytest
++
++import astropy.units as u
++
++import sunpy.map
++from sunpy.data.test import get_dummy_map_from_header_obj, get_header_from_file, get_test_filepath
++from sunpy.map.sources.gong import GONGMagnetogramMap
++
++
++@pytest.fixture
++def gong_magnetogram():
++    header = get_header_from_file(get_test_filepath('gong_magnetogram.header'))
++    gong_map = get_dummy_map_from_header_obj(header)
++    # Use floating-point data so that rotation can pad with NaNs
++    return sunpy.map.Map(gong_map.data.astype(np.float64), gong_map.meta)
++
++
++def test_gong_resample_half_resolution(gong_magnetogram):
++    assert isinstance(gong_magnetogram, GONGMagnetogramMap)
++    nx, ny = (int(d.value) for d in gong_magnetogram.dimensions)
++    resampled = gong_magnetogram.resample([nx // 2, ny // 2] * u.pix)
++    assert resampled.data.shape == (ny // 2, nx // 2)
++    assert isinstance(resampled, GONGMagnetogramMap)
++
++
++def test_gong_superpixel_binning(gong_magnetogram):
++    nx, ny = (int(d.value) for d in gong_magnetogram.dimensions)
++    binned = gong_magnetogram.superpixel([4, 4] * u.pix, func=np.mean)
++    assert binned.data.shape == (ny // 4, nx // 4)
++    np.testing.assert_allclose(binned.data[0, 0], gong_magnetogram.data[:4, :4].mean())
++
++
++def test_gong_rotate_with_scale(gong_magnetogram):
++    rotated = gong_magnetogram.rotate(angle=10 * u.deg, scale=2.0)
++    # The image is enlarged by a factor of two, so the padded array grows
++    assert rotated.data.shape[0] > gong_magnetogram.data.shape[0]
++    assert rotated.data.shape[1] > gong_magnetogram.data.shape[1]

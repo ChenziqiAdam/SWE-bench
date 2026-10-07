@@ -1,0 +1,92 @@
+{
+  "patch": "/Users/adamchen/Desktop/VSCode/SWE-bench/.sanitizer_eval_workspace/fresh_op55_sp.diff",
+  "violations": [],
+  "tests": [
+    {
+      "nodeid": "::test_make_3d_antisolar_direction",
+      "passed": true,
+      "triggers": [
+        "SP-FRM-001"
+      ]
+    },
+    {
+      "nodeid": "::test_coordinate_is_on_solar_disk_antisolar_direction",
+      "passed": true,
+      "triggers": [
+        "SP-FRM-002"
+      ]
+    },
+    {
+      "nodeid": "::test_solar_rotate_antisolar_direction",
+      "passed": true,
+      "triggers": [
+        "SP-DRC-001",
+        "SP-FRM-001"
+      ]
+    },
+    {
+      "nodeid": "::test_eclipse_amount_near_umbral_apex",
+      "passed": true,
+      "triggers": [
+        "SP-EPH-010"
+      ]
+    },
+    {
+      "nodeid": "::test_planar_screen_with_differential_rotation_wide_field",
+      "passed": true,
+      "triggers": [
+        "SP-SCR-002"
+      ]
+    },
+    {
+      "nodeid": "::test_gong_resample_half_resolution",
+      "passed": true,
+      "triggers": [
+        "SP-MAP-001"
+      ]
+    },
+    {
+      "nodeid": "::test_gong_superpixel_binning",
+      "passed": true,
+      "triggers": [
+        "SP-MAP-002"
+      ]
+    },
+    {
+      "nodeid": "::test_gong_rotate_with_scale",
+      "passed": true,
+      "triggers": [
+        "SP-MAP-004"
+      ]
+    }
+  ],
+  "triggered_ids": [
+    "SP-DRC-001",
+    "SP-EPH-010",
+    "SP-FRM-001",
+    "SP-FRM-002",
+    "SP-MAP-001",
+    "SP-MAP-002",
+    "SP-MAP-004",
+    "SP-SCR-002"
+  ],
+  "triggered_families": [
+    "eclipse_overlap_area",
+    "hpc_make3d_surface",
+    "map_resample_footprint",
+    "map_rotate_center",
+    "map_superpixel_footprint",
+    "on_disk_vs_intersection",
+    "screen_iteration_convergence",
+    "solar_rotate_reversible"
+  ],
+  "commit": "74b7f5fb804897988a8fd7f47039b1ccef56be1c",
+  "pytest_returncode": 0,
+  "pytest_tail": "Internet access disabled\nCollected 0 items to run in parallel\n........                                                                                                                                                                     [100%]\n8 passed in 3.81s\n",
+  "wall_seconds": 6.2,
+  "tampered_tests": [],
+  "n_tests": 8,
+  "n_passed": 8,
+  "ignored_triggers_from_failed_tests": [],
+  "status": "scored"
+}

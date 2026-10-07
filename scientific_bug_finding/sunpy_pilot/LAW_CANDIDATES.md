@@ -368,3 +368,10 @@ re-entrancy of an already-stated law.
     non-CDELT keys, e.g. GONG magnetogram `SEMIDIAM/FNDLMB*`: `resample`, `superpixel`, `rotate(scale)` only rescale
     `cdelt`/`cd` keys in the meta, so the scale is unchanged while the pixel count changes and the footprint shrinks 4x);
     SCR-002 (natural, see item 10).
+19. **Fresh-agent audit (Opus 5.5, 8 tests, 8 IDs triggered, run at 74b7f5fb8); adjudication: 0 checker defects, 8 real.**
+    New real IDs beyond item 18: EPH-010 (`eclipse_amount` within about 2 km of the umbral apex, Sun and Moon nearly equal
+    and concentric: the library returns 99.87% where the planar two-disc overlap, accurate there, gives 99.998%, up to
+    0.5% difference measured; the agent saw about 97% at other points) and DRC-001 (a look direction pointing away from the
+    Sun is promoted to a negative distance by `make_3d`, see FRM-001, and the rotate-out/rotate-back round trip does not
+    return it). The agent's claim that WCS-002 "can never fire" was checked and is wrong: the checker fires on a shifted
+    reference pixel for TAN and MOL headers.

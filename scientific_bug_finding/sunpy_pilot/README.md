@@ -82,3 +82,6 @@ python evaluate_submission.py --repo <fork checkout> --patch sub.diff --python <
 30 tests, 11 IDs triggered (`demo_submissions/fresh_sonnet55.*`). Adjudication: 5 checker defects fixed (DRC-001/002,
 FRM-006, SCR-001, WCS-002; see `LAW_CANDIDATES.md` revision log items 12-18); 6 IDs real (FRM-001/002, MAP-001/002/004,
 SCR-002). Score after repair: 6 IDs. Frozen commit is now `74b7f5fb8` (`sanitizers.json`).
+
+Opus 5.5 run (`demo_submissions/fresh_opus55.*`): 8 tests, 8 IDs (DRC-001, EPH-010, FRM-001/002, MAP-001/002/004, SCR-002),
+all adjudicated real; no checker change. Union over both fresh runs: 14 distinct IDs triggered, 11 real after adjudication.
