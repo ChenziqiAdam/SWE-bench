@@ -1,0 +1,204 @@
+{
+  "patch": "/Users/adamchen/Desktop/VSCode/SWE-bench/.sanitizer_eval_workspace/fresh_sn55_sp.diff",
+  "violations": [],
+  "tests": [
+    {
+      "nodeid": "::test_hpc_look_directions_behind_observer",
+      "passed": true,
+      "triggers": [
+        "SP-FRM-001",
+        "SP-FRM-002"
+      ]
+    },
+    {
+      "nodeid": "::test_hpc_look_direction_antisolar_single",
+      "passed": true,
+      "triggers": [
+        "SP-FRM-001",
+        "SP-FRM-002"
+      ]
+    },
+    {
+      "nodeid": "::test_great_arc_around_surface_point[30]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_great_arc_around_surface_point[300]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_solar_rotate_coordinate_near_pole[-3-89.99]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_solar_rotate_coordinate_near_pole[-3-89.99999]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_solar_rotate_coordinate_near_pole[-3-89.9999999]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_solar_rotate_coordinate_near_pole[1-89.99]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_solar_rotate_coordinate_near_pole[1-89.99999]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_solar_rotate_coordinate_near_pole[1-89.9999999]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_solar_rotate_coordinate_near_pole[5-89.99]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_solar_rotate_coordinate_near_pole[5-89.99999]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_solar_rotate_coordinate_near_pole[5-89.9999999]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_planar_screen_long_propagation",
+      "passed": true,
+      "triggers": [
+        "SP-SCR-002"
+      ]
+    },
+    {
+      "nodeid": "::test_solar_rotate_coordinate_near_to_far_observer[1]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_solar_rotate_coordinate_near_to_far_observer[-40]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_small_spherical_screen",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_gong_resample",
+      "passed": true,
+      "triggers": [
+        "SP-MAP-001"
+      ]
+    },
+    {
+      "nodeid": "::test_gong_resample_nearest_upsample",
+      "passed": true,
+      "triggers": [
+        "SP-MAP-001",
+        "SP-MAP-002"
+      ]
+    },
+    {
+      "nodeid": "::test_gong_superpixel",
+      "passed": true,
+      "triggers": [
+        "SP-MAP-002"
+      ]
+    },
+    {
+      "nodeid": "::test_make_fitswcs_header_other_projections[PAR]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_make_fitswcs_header_other_projections[MOL]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_make_fitswcs_header_other_projections[TSC]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_make_fitswcs_header_other_projections[CSC]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_make_fitswcs_header_other_projections[QSC]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_make_fitswcs_header_other_projections[HPX]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_gong_rotate_with_scaling[30-0.7]",
+      "passed": true,
+      "triggers": [
+        "SP-MAP-004"
+      ]
+    },
+    {
+      "nodeid": "::test_gong_rotate_with_scaling[30-1.5]",
+      "passed": true,
+      "triggers": [
+        "SP-MAP-004"
+      ]
+    },
+    {
+      "nodeid": "::test_gong_rotate_with_scaling[-75-0.7]",
+      "passed": true,
+      "triggers": [
+        "SP-MAP-004"
+      ]
+    },
+    {
+      "nodeid": "::test_gong_rotate_with_scaling[-75-1.5]",
+      "passed": true,
+      "triggers": [
+        "SP-MAP-004"
+      ]
+    }
+  ],
+  "triggered_ids": [
+    "SP-FRM-001",
+    "SP-FRM-002",
+    "SP-MAP-001",
+    "SP-MAP-002",
+    "SP-MAP-004",
+    "SP-SCR-002"
+  ],
+  "triggered_families": [
+    "hpc_make3d_surface",
+    "map_resample_footprint",
+    "map_rotate_center",
+    "map_superpixel_footprint",
+    "on_disk_vs_intersection",
+    "screen_iteration_convergence"
+  ],
+  "commit": "74b7f5fb804897988a8fd7f47039b1ccef56be1c",
+  "pytest_returncode": 0,
+  "pytest_tail": "Internet access disabled\nCollected 0 items to run in parallel\n..............................                                                                                                                                               [100%]\n30 passed in 3.77s\n",
+  "wall_seconds": 8.0,
+  "tampered_tests": [],
+  "n_tests": 30,
+  "n_passed": 30,
+  "ignored_triggers_from_failed_tests": [],
+  "status": "scored"
+}

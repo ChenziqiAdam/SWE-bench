@@ -1,0 +1,33 @@
+diff --git a/sunpy/coordinates/tests/test_scibench_demo.py b/sunpy/coordinates/tests/test_scibench_demo.py
+new file mode 100644
+index 000000000..267dafd7b
+--- /dev/null
++++ b/sunpy/coordinates/tests/test_scibench_demo.py
+@@ -0,0 +1,27 @@
++import numpy as np
++import pytest
++
++import astropy.units as u
++from astropy.time import Time
++
++from sunpy.coordinates import (
++    HeliographicStonyhurst,
++    Helioprojective,
++    SphericalScreen,
++    propagate_with_solar_surface,
++)
++from sunpy.util.exceptions import SunpyUserWarning
++
++
++def test_differentially_rotated_screen_close_to_the_sun():
++    t = Time("2051-06-10T23:36:12.315")
++    observer = HeliographicStonyhurst(-160.79559754*u.deg, 8.33641813*u.deg, 0.48094135*u.AU, obstime=t)
++    center = HeliographicStonyhurst(110.94813762*u.deg, 65.79796463*u.deg, 4.80061877*u.R_sun, obstime=t)
++    tx = [90.99035437, 511.51038779, 537.50689746, -283.65778239, 455.53181746] * u.arcsec
++    ty = [14.43879213, -20.83605082, -0.04301183, 19.90527146, -18.73167151] * u.arcsec
++    coords = Helioprojective(tx, ty, observer=observer, obstime=Time("2051-06-03T17:18:31.519"))
++    with SphericalScreen(center), propagate_with_solar_surface():
++        with pytest.warns(SunpyUserWarning, match="Failed to solve"):
++            out = coords.transform_to(Helioprojective(observer=observer, obstime=t))
++    assert out.shape == (5,)
++    assert np.all(np.isfinite(out.Tx.to_value(u.arcsec)))

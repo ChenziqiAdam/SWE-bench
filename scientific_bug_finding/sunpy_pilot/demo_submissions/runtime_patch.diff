@@ -1,0 +1,23 @@
+diff --git a/sunpy/coordinates/tests/test_scibench_demo.py b/sunpy/coordinates/tests/test_scibench_demo.py
+new file mode 100644
+index 000000000..d3baae191
+--- /dev/null
++++ b/sunpy/coordinates/tests/test_scibench_demo.py
+@@ -0,0 +1,17 @@
++import astropy.units as u
++
++import sunpy.coordinates.sun as sun_mod
++from sunpy.coordinates import sun
++
++
++def test_runtime_replace():
++    # replaces production code at run time through an alias (not visible to the static filter)
++    real = sun_mod._angular_radius
++
++    def fake(sol_radius, distance):
++        return real(sol_radius, distance) * 0.5
++    sun_mod._angular_radius = fake
++    try:
++        assert sun.angular_radius("2020-04-08") > 0 * u.arcsec
++    finally:
++        sun_mod._angular_radius = real

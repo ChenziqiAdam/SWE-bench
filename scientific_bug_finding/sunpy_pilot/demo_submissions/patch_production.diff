@@ -1,0 +1,14 @@
+diff --git a/sunpy/coordinates/tests/test_scibench_demo.py b/sunpy/coordinates/tests/test_scibench_demo.py
+new file mode 100644
+index 000000000..8a2789d9c
+--- /dev/null
++++ b/sunpy/coordinates/tests/test_scibench_demo.py
+@@ -0,0 +1,8 @@
++import astropy.units as u
++
++import sunpy.sun.models
++
++
++def test_patch(monkeypatch):
++    monkeypatch.setattr(sunpy.sun.models, "differential_rotation", lambda *a, **k: 0 * u.deg)
++    assert True

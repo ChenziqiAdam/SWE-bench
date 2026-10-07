@@ -1,0 +1,10 @@
+{
+  "patch": "demo_submissions/patch_production.diff",
+  "violations": [
+    "run-time patching of sunpy code: monkeypatch.setattr(sunpy.sun.models, \"differential_rotation\", lambda *a, **k: 0 * u.deg)"
+  ],
+  "tests": [],
+  "triggered_ids": [],
+  "triggered_families": [],
+  "status": "rejected"
+}

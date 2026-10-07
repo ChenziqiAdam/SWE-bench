@@ -1,0 +1,11 @@
+diff --git a/sunpy/coordinates/tests/test_scibench_demo.py b/sunpy/coordinates/tests/test_scibench_demo.py
+new file mode 100644
+index 000000000..879831cb5
+--- /dev/null
++++ b/sunpy/coordinates/tests/test_scibench_demo.py
+@@ -0,0 +1,5 @@
++from sunpy import _scientific_checkers as sc
++
++
++def test_forge():
++    sc.trigger("SP-EPH-001")

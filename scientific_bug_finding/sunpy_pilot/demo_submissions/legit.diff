@@ -1,0 +1,16 @@
+diff --git a/sunpy/coordinates/tests/test_scibench_demo.py b/sunpy/coordinates/tests/test_scibench_demo.py
+new file mode 100644
+index 000000000..974a44f3f
+--- /dev/null
++++ b/sunpy/coordinates/tests/test_scibench_demo.py
+@@ -0,0 +1,10 @@
++import astropy.units as u
++from astropy.time import Time
++
++from sunpy.coordinates import sun
++
++
++def test_earth_distance_and_b0():
++    t = Time("2020-04-08 12:00:00")
++    assert 0.98 * u.AU < sun.earth_distance(t) < 1.02 * u.AU
++    assert abs(sun.B0(t)) < 7.3 * u.deg

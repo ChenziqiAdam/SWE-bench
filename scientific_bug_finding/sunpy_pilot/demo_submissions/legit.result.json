@@ -1,0 +1,22 @@
+{
+  "patch": "demo_submissions/legit.diff",
+  "violations": [],
+  "tests": [
+    {
+      "nodeid": "::test_earth_distance_and_b0",
+      "passed": true,
+      "triggers": []
+    }
+  ],
+  "triggered_ids": [],
+  "triggered_families": [],
+  "commit": "952967830054b68722c8ae3568da5f6f5360c9b8",
+  "pytest_returncode": 0,
+  "pytest_tail": "Internet access disabled\nCollected 0 items to run in parallel\n.                                                                                                                                                                            [100%]\n1 passed in 0.05s\n",
+  "wall_seconds": 1.8,
+  "tampered_tests": [],
+  "n_tests": 1,
+  "n_passed": 1,
+  "ignored_triggers_from_failed_tests": [],
+  "status": "scored"
+}

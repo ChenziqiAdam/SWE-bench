@@ -1,0 +1,230 @@
+diff --git a/sunpy/coordinates/tests/test_geometry_edge_cases.py b/sunpy/coordinates/tests/test_geometry_edge_cases.py
+new file mode 100644
+index 000000000..1a0437d65
+--- /dev/null
++++ b/sunpy/coordinates/tests/test_geometry_edge_cases.py
+@@ -0,0 +1,152 @@
++"""
++Tests of coordinate geometry for unusual, but valid, inputs.
++"""
++import warnings
++
++import numpy as np
++import pytest
++
++import astropy.units as u
++from astropy.coordinates import SkyCoord
++from astropy.time import Time
++
++from sunpy.coordinates import (
++    HeliographicStonyhurst,
++    Helioprojective,
++    PlanarScreen,
++    SphericalScreen,
++    get_earth,
++    propagate_with_solar_surface,
++)
++from sunpy.coordinates.utils import GreatArc
++from sunpy.map.maputils import coordinate_is_on_solar_disk
++from sunpy.physics.differential_rotation import solar_rotate_coordinate
++from sunpy.util.exceptions import SunpyUserWarning
++
++
++@pytest.fixture
++def observer():
++    return get_earth("2020-01-01")
++
++
++def test_hpc_look_directions_behind_observer(observer):
++    # Look directions pointing away from the Sun can never be on the solar disk
++    tx = [0, 90, 179.9, 180] * u.deg
++    coord = SkyCoord(tx, [0]*4*u.deg, frame=Helioprojective,
++                     observer=observer, obstime=observer.obstime)
++    on_disk = coordinate_is_on_solar_disk(coord)
++    assert on_disk.tolist() == [True, False, False, False]
++
++    # Promotion to 3D yields one distance per look direction
++    assert coord.make_3d().distance.shape == tx.shape
++
++
++def test_hpc_look_direction_antisolar_single(observer):
++    coord = SkyCoord(180*u.deg, 0*u.deg, frame=Helioprojective,
++                     observer=observer, obstime=observer.obstime)
++    assert not coordinate_is_on_solar_disk(coord)
++    assert coord.make_3d().distance.isscalar
++
++
++@pytest.mark.parametrize("offset", [30, 300])
++def test_great_arc_around_surface_point(offset):
++    # A small great arc on a sphere that is centered on a point on the solar surface
++    obstime = "2020-01-01"
++    observer = get_earth(obstime)
++    hgs = HeliographicStonyhurst(obstime=obstime)
++    frame = Helioprojective(observer=observer, obstime=obstime)
++    radius = 695700 * u.km
++
++    def point(lon, lat):
++        return SkyCoord(lon*u.deg, lat*u.deg, radius, frame=hgs).transform_to(frame)
++
++    step = (offset * u.km / radius).to_value(u.one) * u.rad.to(u.deg)
++    center = point(20, 10)
++    start = point(20 + step, 10)
++    end = point(20, 10 + step)
++
++    arc = GreatArc(start, end, center=center)
++    assert u.allclose(arc.radius, offset * u.km, rtol=0.05)
++    assert u.allclose(arc.inner_angle, 90 * u.deg, rtol=0.05)
++
++    points = np.linspace(0, 1, 11)
++    coords = arc.coordinates(points)
++    assert len(coords) == len(points)
++    assert coords.obstime == start.obstime
++
++
++@pytest.mark.parametrize("latitude", [89.99, 89.99999, 89.9999999])
++@pytest.mark.parametrize("days", [-3, 1, 5])
++def test_solar_rotate_coordinate_near_pole(latitude, days):
++    obstime = Time("2020-08-01")
++    observer = get_earth(obstime)
++    hgs = SkyCoord(10*u.deg, latitude*u.deg, 695700*u.km,
++                   frame=HeliographicStonyhurst, obstime=obstime)
++    coord = hgs.transform_to(Helioprojective(observer=observer, obstime=obstime))
++    new_time = obstime + days*u.day
++
++    with pytest.warns(SunpyUserWarning, match="Earth-based observer"):
++        result = solar_rotate_coordinate(coord, time=new_time)
++
++    assert result.obstime == new_time
++    # The rotation does not change the heliographic latitude
++    lat_after = result.transform_to(HeliographicStonyhurst).lat
++    assert u.allclose(lat_after, latitude*u.deg, atol=1e-5*u.deg)
++
++
++def test_planar_screen_long_propagation(observer):
++    obstime = observer.obstime
++    new_time = obstime + 200*u.day
++    coord = SkyCoord(np.linspace(-3000, 3000, 25)*u.arcsec,
++                     np.linspace(-2000, 2500, 25)*u.arcsec,
++                     frame=Helioprojective, observer=observer, obstime=obstime)
++
++    with warnings.catch_warnings():
++        # The iterative solution for the rotated screen may not converge
++        warnings.simplefilter("ignore", SunpyUserWarning)
++        with propagate_with_solar_surface(), PlanarScreen(get_earth(new_time)):
++            coord_3d = coord.make_3d()
++
++    assert coord_3d.shape == coord.shape
++
++
++@pytest.mark.parametrize("days", [1, -40])
++def test_solar_rotate_coordinate_near_to_far_observer(days):
++    # Rotate a coordinate seen by an observer close to the Sun to the perspective of a distant observer
++    obstime = Time("2020-08-01")
++    radius = 695700 * u.km
++    near_observer = SkyCoord(20*u.deg, 3*u.deg, 1.5*radius,
++                             frame=HeliographicStonyhurst, obstime=obstime)
++    far_observer = SkyCoord(100*u.deg, -5*u.deg, 50*u.AU,
++                            frame=HeliographicStonyhurst, obstime=obstime + days*u.day)
++    point = SkyCoord(80*u.deg, 30*u.deg, radius, frame=HeliographicStonyhurst, obstime=obstime)
++    coord = point.transform_to(Helioprojective(observer=near_observer, obstime=obstime))
++
++    result = solar_rotate_coordinate(coord, observer=far_observer)
++
++    assert result.obstime == far_observer.obstime
++    assert result.observer.radius == far_observer.radius
++    assert result.distance.shape == coord.shape
++    # The latitude of the point is preserved by solar rotation
++    lat_after = result.transform_to(HeliographicStonyhurst).lat
++    assert u.allclose(lat_after, 30*u.deg, atol=1e-6*u.deg)
++
++
++def test_small_spherical_screen():
++    # A small sphere centered on the line of sight, half way between Sun and Earth
++    obstime = "2020-01-01"
++    observer = get_earth(obstime)
++    center = SkyCoord(observer.lon, observer.lat, 0.5*u.AU,
++                      frame=HeliographicStonyhurst, obstime=obstime)
++    radius = 10000 * u.km
++    coord = SkyCoord(np.linspace(-60, 60, 41)*u.arcsec, np.linspace(-40, 50, 41)*u.arcsec,
++                     frame=Helioprojective, observer=observer, obstime=obstime)
++
++    with SphericalScreen(center, radius=radius):
++        distance = coord.make_3d().distance
++
++    finite = np.isfinite(distance)
++    assert finite.any()
++    # The far side of the screen is at most one diameter beyond the center
++    from_center = (distance[finite] - (observer.radius - center.radius))
++    assert np.all(np.abs(from_center) <= 1.01 * radius)
+diff --git a/sunpy/map/tests/test_footprint_edge_cases.py b/sunpy/map/tests/test_footprint_edge_cases.py
+new file mode 100644
+index 000000000..9a1b401d8
+--- /dev/null
++++ b/sunpy/map/tests/test_footprint_edge_cases.py
+@@ -0,0 +1,66 @@
++"""
++Tests of map footprint handling and FITS-WCS header generation for less common inputs.
++"""
++import numpy as np
++import pytest
++
++import astropy.units as u
++from astropy.coordinates import SkyCoord
++from astropy.wcs import WCS
++
++import sunpy.map
++from sunpy.coordinates import Helioprojective, get_earth
++from sunpy.data.test import get_header_from_file
++from sunpy.map.header_helper import make_fitswcs_header
++
++
++@pytest.fixture
++def gong_map():
++    header = get_header_from_file("gong_magnetogram.header")
++    data = np.random.default_rng(0).normal(size=(header['NAXIS2'], header['NAXIS1']))
++    return sunpy.map.Map(data, header)
++
++
++def test_gong_resample(gong_map):
++    new_map = gong_map.resample([100, 200] * u.pix)
++    assert new_map.data.shape == (200, 100)
++    assert new_map.dimensions.x == 100 * u.pix
++    assert new_map.dimensions.y == 200 * u.pix
++
++
++def test_gong_resample_nearest_upsample(gong_map):
++    small = gong_map.superpixel([4, 4] * u.pix)
++    new_map = small.resample([300, 310] * u.pix, method='nearest')
++    assert new_map.data.shape == (310, 300)
++
++
++def test_gong_superpixel(gong_map):
++    new_map = gong_map.superpixel([3, 2] * u.pix, offset=[1, 2] * u.pix)
++    assert new_map.data.shape == ((860 - 2) // 2, (860 - 1) // 3)
++    assert new_map.data.sum() == pytest.approx(gong_map.data[2:2 + 2 * new_map.data.shape[0],
++                                                             1:1 + 3 * new_map.data.shape[1]].sum())
++
++
++@pytest.mark.parametrize("projection", ["PAR", "MOL", "TSC", "CSC", "QSC", "HPX"])
++def test_make_fitswcs_header_other_projections(projection):
++    observer = get_earth("2020-01-01")
++    coord = SkyCoord(100*u.arcsec, 200*u.arcsec, frame=Helioprojective,
++                     observer=observer, obstime=observer.obstime)
++    header = make_fitswcs_header((100, 100), coord, scale=[2, 2]*u.arcsec/u.pix,
++                                 projection_code=projection)
++
++    assert header['ctype1'] == f'HPLN-{projection}'
++    assert header['ctype2'] == f'HPLT-{projection}'
++
++    # The reference pixel (zero-based) is at the reference coordinate
++    lon, lat = WCS(header).wcs_pix2world(49.5, 49.5, 0)
++    assert u.allclose(lon * u.deg, 100*u.arcsec, atol=1e-6*u.arcsec)
++    assert u.allclose(lat * u.deg, 200*u.arcsec, atol=1e-6*u.arcsec)
++
++
++@pytest.mark.parametrize("scale", [0.7, 1.5])
++@pytest.mark.parametrize("angle", [30, -75])
++def test_gong_rotate_with_scaling(gong_map, angle, scale):
++    new_map = gong_map.rotate(angle * u.deg, scale=scale, recenter=False)
++    assert new_map.data.ndim == 2
++    assert new_map.rotation_matrix.shape == (2, 2)
