@@ -1,0 +1,8 @@
+You are working in a clone of the nilearn repository (current directory). Your task: write pytest tests that trigger as many of the repository's scientific sanitizer checkers as possible.
+
+- The checkers are documented in SCIENTIFIC_CHECKERS.md / SCIENTIFIC_CHECKERS.json. Each describes a scientific law (precondition, invariant, alarm) that nilearn's output should satisfy. A checker fires when a test calls the public nilearn API in a way that makes the law's observation violated (or exercises its guarded condition) while the library runs.
+- Checkers are inert unless the environment variable SCIBENCH_TRIGGER_LOG is set to a file path; triggered checker IDs are appended there. Use e.g. `SCIBENCH_TRIGGER_LOG=/tmp/trig.jsonl` while developing.
+- Write tests ONLY in new or existing files matching `nilearn/**/tests/test_*.py` (data in `nilearn/**/tests/data/`). Do NOT modify any other files, do not import or mention the checker module, SCIBENCH_*, or checker IDs in test code, do not monkeypatch/mock nilearn callables. Tests must pass and be deterministic.
+- Tests must be scientifically meaningful calls of the public API with valid inputs; do not fabricate violations by stubbing internals.
+- Python: use `PYTHONPATH=$PWD ../nl_venv/bin/python -m pytest -p no:randomly ...` (already set in env). Work only inside the current directory; do not read other directories.
+- Budget: stop when you stop finding new triggers or after about 60 minutes. At the end, print the list of checker IDs you triggered (from your trigger log) and the test files you wrote.

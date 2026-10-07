@@ -1,0 +1,412 @@
+diff --git a/nilearn/tests/test_scientific_laws.py b/nilearn/tests/test_scientific_laws.py
+new file mode 100644
+index 000000000..808611a23
+--- /dev/null
++++ b/nilearn/tests/test_scientific_laws.py
+@@ -0,0 +1,406 @@
++"""Tests of scientific properties of the public nilearn API.
++
++They exercise numerically demanding but valid inputs: very small units,
++large offsets, single precision, long time series, integer images.
++"""
++
++import numpy as np
++import pytest
++from nibabel import Nifti1Image
++from sklearn.covariance import EmpiricalCovariance
++
++from nilearn import signal
++from nilearn.connectome import ConnectivityMeasure
++from nilearn.glm.first_level import (
++    glover_time_derivative,
++    spm_time_derivative,
++)
++from nilearn.image import resample_img
++
++
++def test_zscore_tiny_units():
++    rng = np.random.RandomState(0)
++    x = rng.standard_normal((50, 4)) * 1e-17
++    out = signal.clean(x, standardize="zscore_sample", detrend=False)
++    assert out.shape == x.shape
++    out = signal.clean(x, standardize="zscore_sample", detrend=True)
++    assert out.shape == x.shape
++
++
++@pytest.mark.parametrize("dtype", [np.float64, np.float32])
++def test_detrend_long_series(dtype):
++    rng = np.random.RandomState(1)
++    n = 100000
++    x = (rng.standard_normal((n, 3)) + 1e6 + 0.3 * np.arange(n)[:, None]).astype(
++        dtype
++    )
++    out = signal.clean(x, detrend=True, standardize=None)
++    assert out.shape == x.shape
++
++
++def test_psc_float32_long_series():
++    rng = np.random.RandomState(2)
++    x = (rng.standard_normal((100000, 3)) + 1e4).astype(np.float32)
++    out = signal.standardize_signal(x, standardize="psc", detrend=False)
++    assert out.shape == x.shape
++    out = signal.standardize_signal(
++        x, standardize="zscore_sample", detrend=True
++    )
++    assert out.shape == x.shape
++
++
++@pytest.mark.parametrize("offset", [100.0, 1e6])
++def test_clean_confounds_zscore_offset(offset):
++    rng = np.random.RandomState(3)
++    for n in (20, 100, 1000):
++        conf = rng.standard_normal((n, 5)) * 10 + offset
++        x = rng.standard_normal((n, 6)) * 3 + offset
++        out = signal.clean(
++            x,
++            confounds=conf,
++            detrend=False,
++            standardize="zscore_sample",
++            standardize_confounds=True,
++        )
++        assert out.shape == x.shape
++
++
++def test_high_variance_confounds_float32_offset():
++    rng = np.random.RandomState(4)
++    n = 2000
++    x = (
++        rng.standard_normal((n, 50))
++        + 1e6
++        + np.arange(n)[:, None] * rng.standard_normal((1, 50))
++    ).astype(np.float32)
++    comps = signal.high_variance_confounds(x, n_confounds=3, detrend=True)
++    assert comps.shape == (n, 3)
++
++
++@pytest.mark.parametrize(
++    "func", [spm_time_derivative, glover_time_derivative]
++)
++def test_hrf_time_derivative_coarse_grid(func):
++    for t_r in (0.1, 0.5, 2.0):
++        for oversampling in (1, 2, 10):
++            for onset in (0.0, 0.5):
++                kernel = func(t_r, oversampling, 8, onset)
++                assert kernel.size > 0
++
++
++def test_tangent_connectivity_small_units():
++    rng = np.random.RandomState(5)
++    for scale in (1e-8, 1e8):
++        for p in (2, 3, 6):
++            ts = [
++                rng.standard_normal((30, p)) @ rng.standard_normal((p, p)) * scale
++                for _ in range(4)
++            ]
++            cm = ConnectivityMeasure(
++                kind="tangent",
++                cov_estimator=EmpiricalCovariance(
++                    store_precision=False, assume_centered=True
++                ),
++            )
++            assert cm.fit_transform(ts).shape == (4, p, p)
++
++
++@pytest.mark.parametrize("interpolation", ["linear", "continuous", "nearest"])
++def test_resample_integer_image(interpolation):
++    rng = np.random.RandomState(6)
++    data = (rng.standard_normal((8, 8, 8)) * 100).astype(np.int16)
++    img = Nifti1Image(data, np.eye(4))
++    target_affine = np.diag([2.0, 2.0, 2.0, 1.0])
++    target_affine[:3, 3] = [1, -2, 0.5]
++    out = resample_img(
++        img,
++        target_affine=target_affine,
++        interpolation=interpolation,
++        force_resample=True,
++        copy_header=True,
++    )
++    assert out.ndim == 3
++
++
++def test_glm_single_precision():
++    from nilearn.glm.first_level import run_glm
++
++    rng = np.random.RandomState(7)
++    n = 100
++    X = np.c_[rng.standard_normal((n, 3)), np.ones(n)].astype(np.float32)
++    Y = (X @ rng.standard_normal((4, 6)) + rng.standard_normal((n, 6))).astype(
++        np.float32
++    )
++    for noise_model in ("ols", "ar1"):
++        labels, results = run_glm(Y, X, noise_model=noise_model)
++        assert len(results) >= 1
++
++
++def test_orthogonalize_single_precision():
++    from nilearn.glm.first_level.hemodynamic_models import orthogonalize
++
++    rng = np.random.RandomState(8)
++    X = rng.standard_normal((100, 4)).astype(np.float32)
++    X[:, 1] += X[:, 0]
++    out = orthogonalize(X.copy())
++    assert out.shape == X.shape
++
++
++def test_permuted_ols_single_precision():
++    from nilearn.mass_univariate import permuted_ols
++
++    rng = np.random.RandomState(9)
++    n = 40
++    tested = rng.standard_normal((n, 2)).astype(np.float32)
++    data = rng.standard_normal((n, 30)).astype(np.float32)
++    conf = rng.standard_normal((n, 2)).astype(np.float32)
++    permuted_ols(tested, data, confounding_vars=conf, n_perm=3, random_state=0)
++    permuted_ols(
++        tested, data, n_perm=3, random_state=0, model_intercept=False
++    )
++
++
++def test_signals_to_img_maps_single_precision():
++    from nilearn.regions import signals_to_img_maps
++
++    rng = np.random.RandomState(10)
++    maps = rng.uniform(size=(8, 8, 8, 3)).astype(np.float32)
++    signals = rng.standard_normal((5, 3)).astype(np.float32)
++    img = signals_to_img_maps(signals, Nifti1Image(maps, np.eye(4)))
++    assert img.shape == (8, 8, 8, 5)
++
++
++def test_connectivity_single_precision():
++    rng = np.random.RandomState(11)
++    scales = np.diag([1, 10, 100, 1e3, 1e4]).astype(np.float32)
++    for kind in ("partial correlation", "tangent", "covariance"):
++        ts = [
++            rng.standard_normal((50, 5)).astype(np.float32) @ scales
++            for _ in range(3)
++        ]
++        out = ConnectivityMeasure(kind=kind).fit_transform(ts)
++        assert out.shape == (3, 5, 5)
++
++
++def test_contrast_single_precision():
++    from nilearn.glm.contrasts import Contrast
++    from nilearn.glm._utils import z_score
++
++    rng = np.random.RandomState(12)
++    effect = rng.standard_normal(40).astype(np.float32)
++    variance = (rng.uniform(size=40) + 0.1).astype(np.float32)
++    con = Contrast(effect, variance, dim=1, dof=30, stat_type="t")
++    assert con.z_score().shape == (40,)
++    p = rng.uniform(size=30).astype(np.float32)
++    assert z_score(p).shape == (30,)
++
++
++def test_fixed_effects_single_precision():
++    from nilearn.glm import compute_fixed_effects
++
++    rng = np.random.RandomState(13)
++    shape = (4, 4, 4)
++    for precision_weighted in (True, False):
++        effects = [
++            Nifti1Image(rng.standard_normal(shape).astype(np.float32), np.eye(4))
++            for _ in range(3)
++        ]
++        variances = [
++            Nifti1Image(
++                (rng.uniform(size=shape) + 0.1).astype(np.float32), np.eye(4)
++            )
++            for _ in range(3)
++        ]
++        out = compute_fixed_effects(
++            effects, variances, precision_weighted=precision_weighted
++        )
++        assert len(out) == 4
++
++
++@pytest.mark.parametrize("scale", [1e-160, 1e-165, 1e-300, 1e-320])
++def test_tiny_units_glm_and_regressors(scale):
++    from nilearn.glm.first_level import compute_regressor, run_glm
++    from nilearn.glm.first_level.hemodynamic_models import orthogonalize
++
++    rng = np.random.RandomState(14)
++    X = np.c_[rng.standard_normal((50, 3)), np.ones(50)]
++    Y = rng.standard_normal((50, 4)) * scale
++    try:
++        labels, results = run_glm(Y, X)
++    except np.linalg.LinAlgError:
++        pass
++    else:
++        for res in results.values():
++            res.r_square
++    frame_times = np.arange(0, 60, 2.0)
++    for model in ("glover", "spm + derivative", "fir"):
++        kwargs = {"fir_delays": [0, 1]} if model == "fir" else {}
++        reg, _ = compute_regressor(
++            np.array(
++                [
++                    [4, 20, 33.0],
++                    [1, 1, 1],
++                    [1 * scale, 2 * scale, 3 * scale],
++                ]
++            ),
++            model,
++            frame_times,
++            **kwargs,
++        )
++        assert reg.shape[0] == frame_times.size
++    assert orthogonalize(rng.standard_normal((50, 3)) * scale).shape == (50, 3)
++
++
++@pytest.mark.parametrize("scale", [1e-155, 1e-160, 1e-165, 1e-250, 1e-310, 1e-320])
++def test_tiny_units_signals_and_images(scale):
++    from nilearn.image import smooth_img
++    from nilearn.mass_univariate import permuted_ols
++    from nilearn.regions import signals_to_img_maps
++
++    rng = np.random.RandomState(15)
++    x = rng.standard_normal((50, 3)) * scale
++    assert signal.clean(x, detrend=True, standardize=None).shape == x.shape
++    conf = rng.standard_normal((50, 2)) * scale
++    signal.clean(
++        x,
++        confounds=conf,
++        detrend=False,
++        standardize=None,
++        standardize_confounds=False,
++    )
++    signal.high_variance_confounds(
++        rng.standard_normal((60, 20)) * scale, n_confounds=2
++    )
++    smooth_img(Nifti1Image(rng.uniform(size=(10, 10, 10)) * scale, np.eye(4)), 4)
++    maps = Nifti1Image(rng.uniform(size=(8, 8, 8, 3)), np.eye(4))
++    signals_to_img_maps(rng.standard_normal((5, 3)) * scale, maps)
++    permuted_ols(
++        rng.standard_normal((30, 1)),
++        rng.standard_normal((30, 10)) * scale,
++        n_perm=3,
++        random_state=0,
++    )
++
++
++@pytest.mark.parametrize("scale", [1e-125, 1e-155, 1e-160])
++def test_tiny_units_connectivity(scale):
++    rng = np.random.RandomState(16)
++    ts = [rng.standard_normal((40, 4)) * scale for _ in range(3)]
++    for kind in ("covariance", "correlation", "partial correlation"):
++        try:
++            out = ConnectivityMeasure(kind=kind).fit_transform(ts)
++        except np.linalg.LinAlgError:
++            continue
++        assert out.shape == (3, 4, 4)
++
++
++def test_correlation_and_vectorization_extreme_magnitudes():
++    from nilearn.connectome import (
++        cov_to_corr,
++        sym_matrix_to_vec,
++        vec_to_sym_matrix,
++    )
++
++    rng = np.random.RandomState(17)
++    for scale in (1e-155, 1e-160):
++        b = rng.uniform(size=(4, 6)) * scale
++        assert cov_to_corr(b @ b.T).shape == (4, 4)
++    for scale in (1e-310, 1e-320):
++        b = rng.uniform(size=(4, 6)) * np.sqrt(scale)
++        assert cov_to_corr(b @ b.T).shape == (4, 4)
++    cov_to_corr(np.array([[4e-322, 1e-322], [1e-322, 9e-322]]))
++    for scale in (1e-158, 1e-160):
++        vec_to_sym_matrix(rng.standard_normal(10) * scale)
++    for scale in (1e-160, 1e-161, 1e-162):
++        for p in (3, 4, 6):
++            a = rng.standard_normal((p, p)) * scale
++            sym_matrix_to_vec(a + a.T)
++
++
++def test_r_square_tiny_units():
++    from nilearn.glm.first_level import run_glm
++
++    rng = np.random.RandomState(0)
++    X = np.c_[rng.standard_normal((50, 3)), np.ones(50)]
++    Y = rng.standard_normal((50, 4)) * 1e-160
++    _, results = run_glm(Y, X)
++    for res in results.values():
++        assert np.isfinite(res.r_square).all()
++
++
++def test_cosine_drift_slightly_jittered_frame_times():
++    from nilearn.glm.first_level.design_matrix import create_cosine_drift
++
++    for n_frames in (50, 100):
++        for k in (1, 3, 7):
++            frame_times = np.arange(n_frames) * 2.0
++            frame_times[-1] += 1e-6
++            dt = (frame_times[-1] - frame_times[0]) / (n_frames - 1)
++            high_pass = k / (2 * n_frames * dt) * (1 + 1e-12)
++            drift = create_cosine_drift(high_pass, frame_times)
++            assert drift.shape[0] == n_frames
++
++
++def test_regressor_subnormal_amplitudes():
++    from nilearn.glm.first_level import compute_regressor
++
++    rng = np.random.RandomState(0)
++    frame_times = np.arange(0, 100, 2.0)
++    unit = 4.94e-324
++    for model in ("glover", "spm"):
++        for k in (3, 50, 300, 5000):
++            for n_events in (2, 4, 10):
++                onsets = np.sort(rng.rand(n_events) * 80)
++                amplitudes = rng.randint(1, k + 2, n_events) * unit
++                durations = np.ones(n_events) * rng.choice([0, 3])
++                reg, _ = compute_regressor(
++                    np.array([onsets, durations, amplitudes]),
++                    model,
++                    frame_times,
++                )
++                assert reg.shape[0] == frame_times.size
++
++
++def test_fixed_effects_subnormal_contrasts():
++    from nilearn.glm import compute_fixed_effects
++
++    rng = np.random.RandomState(0)
++    shape = (4, 4, 4)
++    unit = 4.94e-324
++    for k in (3, 50, 1000):
++        for n_runs in (2, 3):
++            effect = rng.randint(1, k + 2, shape) * unit
++            effect[0, 0, 0] = 1e-3
++            effects = [Nifti1Image(effect.copy(), np.eye(4)) for _ in range(n_runs)]
++            variances = [
++                Nifti1Image(rng.uniform(size=shape) * 3 + 0.1, np.eye(4))
++                for _ in range(n_runs)
++            ]
++            out = compute_fixed_effects(
++                effects, variances, precision_weighted=True
++            )
++            assert len(out) == 4
++
++
++def test_butterworth_very_narrow_band():
++    rng = np.random.RandomState(0)
++    x = rng.standard_normal((400, 2))
++    for order in (5, 10):
++        out = signal.butterworth(
++            x,
++            sampling_rate=2.0,
++            low_pass=0.01 * (1 + 1e-8),
++            high_pass=0.01,
++            order=order,
++        )
++        assert out.shape == x.shape
++
++
++@pytest.mark.parametrize("shape", [(1, 1, 1), (2, 1, 1)])
++def test_cluster_extent_on_tiny_images(shape):
++    from nilearn.image import threshold_img
++
++    for sign in (1.0, -1.0):
++        img = Nifti1Image(np.full(shape, 3.0 * sign), np.eye(4))
++        out = threshold_img(img, 1, cluster_threshold=5)
++        assert out.shape == shape

@@ -5,7 +5,7 @@
   "base_tag": null,
   "fork_repository": "https://github.com/ChenziqiAdam/nilearn",
   "fork_branch": "scibench-scientific-checkers-pilot",
-  "instrumented_commit": "3f528ed524ba545b7a70f58694944a42d9afd2bb",
+  "instrumented_commit": "0b2557ea42b843a548b8b75cc347b3877130782d",
   "note": "Scientific bank only (traditional reference bank not built). Laws were written before any checker code or execution (LAW_CANDIDATES.md) and frozen before triggerability analysis.",
   "audit": {
     "behaviour_parity": "sha256 over 65 deterministic public-API outputs plus the global NumPy RNG state is identical on the pristine base, instrumented with the logger unset, and instrumented with the logger on (no alarm in that run).",
@@ -15,7 +15,21 @@
     "adversarial_rounds": "Fuzz batches over dtype, scale, offset, conditioning, geometry (8 areas x 100 case-sets per seed). 10 checker-side defects found and fixed (tolerance, conditioning, precondition and unit classes; revision log in LAW_CANDIDATES.md). The last three batches (seeds 20-27, stress 30-37, stress 40-47; 19,200 cases) are clean on the final code.",
     "natural_triggers": [
       "NL-SIG-002: standardize_signal replaces std < finfo(float64).eps by 1, so a numerically tiny but non-constant column is not scaled to unit variance; reached by upstream tests via columns left as rounding noise by detrend/confound removal (test_clean_finite_no_inplace_mod, test_clean_img_sample_mask). Scale-dependent; not filed."
-    ]
+    ],
+    "fresh_agent_sonnet55": {
+      "scored_ids": 28,
+      "tests_passed": "41/41",
+      "checker_defects": 23,
+      "real": [
+        "NL-SIG-001",
+        "NL-SIG-002",
+        "NL-SIG-003",
+        "NL-SIG-008",
+        "NL-THR-003"
+      ],
+      "after_fixes_same_patch": "5 IDs / 5 families (SIG-001/002/003/008, THR-003), 41/41 tests, at 0b2557ea4",
+      "note": "see LAW_CANDIDATES.md revision log items 11-19"
+    }
   },
   "sanitizers": [
     {
@@ -64,7 +78,7 @@
       "source": "nilearn/signal.py",
       "symbol": "butterworth",
       "scientific_quantity": "Butterworth cut-off gain",
-      "precondition": "`0 < f_c / nyq <= 1 - 1e-3` (and `f_c / nyq >= 1e-3`), `order <= 10`, edges not coerced by the Nyquist/zero guard",
+      "precondition": "`0 < f_c / nyq <= 1 - 1e-3` (and `f_c / nyq >= 1e-3`), `order <= 10`, edges not coerced by the Nyquist/zero guard, and for a band the edge separation is at least 0.1 % of the larger edge",
       "invariant": "the designed filter has `|H(f_c)| = 1/sqrt(2)` at each requested critical frequency (Hz, with the stated `sampling_rate`), for `low`, `high` and `band` filters",
       "observation_point": "after the `sos` is built in `butterworth`",
       "alarm": "`| |H(f_c)| - 1/sqrt(2) | > 1e-6` where `H` is evaluated with `scipy.signal.sosfreqz(..., fs=sampling_rate)` (second-order sections in float64: error `~ C * eps * order * (nyq/f_c)^order` stays below 1e-6 inside the precondition)",
@@ -272,7 +286,7 @@
       "source": "nilearn/glm/first_level/hemodynamic_models.py",
       "symbol": "_generic_time_derivative",
       "scientific_quantity": "HRF time-derivative kernel",
-      "precondition": "`onset` arbitrary, grid spacing `Delta` and finite-difference step `delta = 0.1 s`",
+      "precondition": "`onset` arbitrary, grid spacing `Delta` and finite-difference step `delta = 0.1 s`, the kernel contains the response (|h(end)| <= 1e-2 max h)",
       "invariant": "the finite-difference derivative `d = (h(t) - h(t - delta)) / delta` of the response changes sign from positive to negative within `delta + 2 Delta` of the argmax of `h`",
       "observation_point": "return of `_generic_time_derivative` (both HRFs)",
       "alarm": "first `+ -> -` sign change of `d` after the start is further than `delta + 2 Delta` from `argmax(h)`",
@@ -402,7 +416,7 @@
       "source": "nilearn/connectome/connectivity_matrices.py",
       "symbol": "ConnectivityMeasure._fit_transform",
       "scientific_quantity": "tangent-space embedding",
-      "precondition": "`kind=\"tangent\"`, `fit_transform` on the training group, `n >= 2`",
+      "precondition": "`kind=\"tangent\"`, `fit_transform` on the training group, `n >= 2`, the Frechet-mean iteration converged (nilearn warns when it stops at max_iter)",
       "invariant": "the mean over subjects of the embedded matrices is zero (the reference point is the Frechet mean)",
       "observation_point": "end of `ConnectivityMeasure._fit_transform`",
       "alarm": "`||mean_k T_k||_F / p^2 > 1e-6` (ten times the convergence tolerance of the fit)",
@@ -532,7 +546,7 @@
       "source": "nilearn/image/resampling.py",
       "symbol": "resample_img",
       "scientific_quantity": "resampled image geometry",
-      "precondition": "resampling actually performed, 3-D (or first volume of 4-D), sampled interior output voxels whose source coordinate lies at least one voxel inside the input (and `>= 1e-6` from a half-integer for `nearest`)",
+      "precondition": "resampling actually performed, 3-D (or first volume of 4-D), sampled interior output voxels whose source coordinate lies at least one voxel inside the input (and `>= 1e-6` from a half-integer for `nearest`), integer outputs are quantised by the cast (one unit allowed)",
       "invariant": "the value of output voxel `v` equals the input interpolated (same order) at `inv(A_in) A_out v` using the *returned* affine `A_out`",
       "observation_point": "return of `resample_img`",
       "alarm": "difference `> C * eps_d * max|x| * 8` (cubic spline conditioning) from `scipy.ndimage.map_coordinates`, with clipping and fill applied as documented",

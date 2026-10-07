@@ -1,0 +1,254 @@
+{
+  "patch": "fresh_sn55_nl_submission.diff",
+  "violations": [],
+  "tests": [
+    {
+      "nodeid": "::test_zscore_tiny_units",
+      "passed": true,
+      "triggers": [
+        "NL-SIG-002"
+      ]
+    },
+    {
+      "nodeid": "::test_detrend_long_series[float64]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_detrend_long_series[float32]",
+      "passed": true,
+      "triggers": [
+        "NL-SIG-001"
+      ]
+    },
+    {
+      "nodeid": "::test_psc_float32_long_series",
+      "passed": true,
+      "triggers": [
+        "NL-SIG-001",
+        "NL-SIG-003"
+      ]
+    },
+    {
+      "nodeid": "::test_clean_confounds_zscore_offset[100.0]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_clean_confounds_zscore_offset[1000000.0]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_high_variance_confounds_float32_offset",
+      "passed": true,
+      "triggers": [
+        "NL-SIG-001",
+        "NL-SIG-008"
+      ]
+    },
+    {
+      "nodeid": "::test_hrf_time_derivative_coarse_grid[spm_time_derivative]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_hrf_time_derivative_coarse_grid[glover_time_derivative]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_tangent_connectivity_small_units",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_resample_integer_image[linear]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_resample_integer_image[continuous]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_resample_integer_image[nearest]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_glm_single_precision",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_orthogonalize_single_precision",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_permuted_ols_single_precision",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_signals_to_img_maps_single_precision",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_connectivity_single_precision",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_contrast_single_precision",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_fixed_effects_single_precision",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_tiny_units_glm_and_regressors[1e-160]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_tiny_units_glm_and_regressors[1e-165]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_tiny_units_glm_and_regressors[1e-300]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_tiny_units_glm_and_regressors[1e-320]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_tiny_units_signals_and_images[1e-155]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_tiny_units_signals_and_images[1e-160]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_tiny_units_signals_and_images[1e-165]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_tiny_units_signals_and_images[1e-250]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_tiny_units_signals_and_images[1e-310]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_tiny_units_signals_and_images[1e-320]",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_tiny_units_connectivity[1e-125]",
+      "passed": true,
+      "triggers": [
+        "NL-SIG-002"
+      ]
+    },
+    {
+      "nodeid": "::test_tiny_units_connectivity[1e-155]",
+      "passed": true,
+      "triggers": [
+        "NL-SIG-002"
+      ]
+    },
+    {
+      "nodeid": "::test_tiny_units_connectivity[1e-160]",
+      "passed": true,
+      "triggers": [
+        "NL-SIG-002"
+      ]
+    },
+    {
+      "nodeid": "::test_correlation_and_vectorization_extreme_magnitudes",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_r_square_tiny_units",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_cosine_drift_slightly_jittered_frame_times",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_regressor_subnormal_amplitudes",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_fixed_effects_subnormal_contrasts",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_butterworth_very_narrow_band",
+      "passed": true,
+      "triggers": []
+    },
+    {
+      "nodeid": "::test_cluster_extent_on_tiny_images[shape0]",
+      "passed": true,
+      "triggers": [
+        "NL-THR-003"
+      ]
+    },
+    {
+      "nodeid": "::test_cluster_extent_on_tiny_images[shape1]",
+      "passed": true,
+      "triggers": [
+        "NL-THR-003"
+      ]
+    }
+  ],
+  "triggered_ids": [
+    "NL-SIG-001",
+    "NL-SIG-002",
+    "NL-SIG-003",
+    "NL-SIG-008",
+    "NL-THR-003"
+  ],
+  "triggered_families": [
+    "cluster_extent_semantics",
+    "compcor_trend_free",
+    "detrend_orthogonality",
+    "psc_scaling",
+    "zscore_moments"
+  ],
+  "commit": "0b2557ea42b843a548b8b75cc347b3877130782d",
+  "pytest_returncode": 0,
+  "pytest_tail": ".........................................                                [100%]\n41 passed in 1.00s\n",
+  "wall_seconds": 3.3,
+  "tampered_tests": [],
+  "n_tests": 41,
+  "n_passed": 41,
+  "ignored_triggers_from_failed_tests": [],
+  "status": "scored"
+}

@@ -1,7 +1,7 @@
 # Nilearn scientific-sanitizer task
 
 Fork `https://github.com/ChenziqiAdam/nilearn`, branch `scibench-scientific-checkers-pilot`
-(local commit in the workspace, **not pushed**), built on upstream `nilearn/nilearn` main
+(pushed; frozen commit `0b2557ea4`), built on upstream `nilearn/nilearn` main
 `d6c09c9a4a30ec5f6d7b5211268e0163825a9f2e` (2026-10-02; Python >= 3.11).
 
 **42 scientific sanitizers, 41 root-cause families.** Scientific bank only; no traditional
@@ -67,6 +67,13 @@ python evaluate_submission.py --repo <fork checkout> --patch sub.diff --python <
   variance, contrary to the documented "scaled to unit variance". Reached by upstream tests through internal
   rounding-noise columns. Root cause is the absolute guard at `signal.py` (`std[std < eps] = 1.0`); tracker not
   searched; nothing filed.
-- **Not yet done:** fresh-context agent runs, independent audit of the laws flagged in the foreknowledge
+- **Fresh agent, Sonnet 5.5** (`fresh_sonnet55/`, 41/41 tests passed): 28 IDs scored on the first commit; replay and
+  exact (mpmath) references showed 23 were checker defects (float32 with float64 eps, float64 underflow/overflow of the
+  checker's own products, four preconditions: Butterworth band width, truncated HRF kernel, unconverged Frechet mean,
+  integer resampling output). After repair the same patch scores 5 IDs / 5 families: SIG-001/003/008 (float32
+  accumulation on long or offset series), SIG-002 (std < eps guard) and THR-003 (a single cluster that fills the volume
+  is never size-tested). Re-verification: sensitivity 33/33, reachability 42/42, parity identical, upstream suite same
+  20 baseline failures, fuzz 0 alarms (seeds 50-57) and only SIG-002 at extreme scale under 30-decade stress.
+- **Not yet done:** Opus fresh run, independent audit of the laws flagged in the foreknowledge
   disclosure (GLM-003/006/008, SIG-003/007, THR-001, CON-008), upstream tracker search, optional traditional bank,
-  push of the fork.
+  tracker search for THR-003.

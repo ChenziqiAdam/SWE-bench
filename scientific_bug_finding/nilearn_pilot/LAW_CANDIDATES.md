@@ -11,6 +11,9 @@ Fields: **Pre** input family where the law holds; **Law**; **Obs** observation p
 (SANITIZER.md 5.8). `eps_d` is the machine epsilon of the dtype the production code
 actually rounds in; `C = 64`.
 
+Magnitude domain: checkers that form squares or products of the data are skipped when a non-zero
+magnitude lies outside `[1e-100, 1e100]` (float64 underflow/overflow of the checker's own arithmetic).
+
 Domain: neuroimaging (fMRI) statistics -- time-series cleaning, general linear model,
 hemodynamic regressors, multiple-comparison control, functional connectivity,
 permutation inference, spatial smoothing and resampling. This is a domain the existing
@@ -66,7 +69,8 @@ input coefficient of variation). Obs: return of `standardize_signal`. Alarm: eit
 violated by more than `C * eps_d * q`, `q = max|x| / std`. Fam `psc_scaling`.
 
 **SIG-004 Butterworth cut-off is the half-power point.** Pre: `0 < f_c / nyq <= 1 - 1e-3`
-(and `f_c / nyq >= 1e-3`), `order <= 10`, edges not coerced by the Nyquist/zero guard.
+(and `f_c / nyq >= 1e-3`), `order <= 10`, edges not coerced by the Nyquist/zero guard, and for a
+band the edge separation is at least 0.1 % of the larger edge.
 Law: the designed filter has `|H(f_c)| = 1/sqrt(2)` at each requested critical frequency
 (Hz, with the stated `sampling_rate`), for `low`, `high` and `band` filters. Obs: after the
 `sos` is built in `butterworth`. Alarm: `| |H(f_c)| - 1/sqrt(2) | > 1e-6` where `H` is
@@ -196,7 +200,7 @@ partition; same time grid) differ from the full result by more than
 scale-covariant). Fam `bold_homogeneity`.
 
 **HRF-004 The time-derivative kernel crosses zero at the HRF peak.** Pre: `onset` arbitrary,
-grid spacing `Delta` and finite-difference step `delta = 0.1 s`. Law: the finite-difference
+the kernel contains the response (`|h(end)| <= 1e-2 max h`), grid spacing `Delta` and finite-difference step `delta = 0.1 s`. Law: the finite-difference
 derivative `d = (h(t) - h(t - delta)) / delta` of the response changes sign from positive to
 negative within `delta + 2 Delta` of the argmax of `h`. Obs: return of
 `_generic_time_derivative` (both HRFs). Alarm: first `+ -> -` sign change of `d` after the
@@ -265,7 +269,8 @@ than `4 * tol_alg * size + C * eps * kappa * p * max_iter` relative to `||G||_F`
 within the algorithm's own tolerance). Fam `frechet_mean_equivariance`.
 
 **CON-007 The tangent-space embedding is centred at the mean.** Pre: `kind="tangent"`,
-`fit_transform` on the training group, `n >= 2`. Law: the mean over subjects of the embedded
+`fit_transform` on the training group, `n >= 2`, the Frechet-mean iteration converged (nilearn
+warns when it stops at `max_iter`). Law: the mean over subjects of the embedded
 matrices is zero (the reference point is the Frechet mean). Obs: end of
 `ConnectivityMeasure._fit_transform`. Alarm: `||mean_k T_k||_F / p^2 > 1e-6` (ten times the
 convergence tolerance of the fit). Fam `tangent_embedding_centering`.
@@ -333,6 +338,7 @@ per pass; sampling aliasing `e^{-2 pi^2} < 3e-9`). Fam `smoothing_fwhm_quadratur
 in millimetres must combine like Gaussian widths.
 
 **IMG-003 Resampling preserves world-space geometry.** Pre: resampling actually performed,
+(integer outputs are quantised by the cast, one unit is allowed),
 3-D (or first volume of 4-D), sampled interior output voxels whose source coordinate lies at
 least one voxel inside the input (and `>= 1e-6` from a half-integer for `nearest`). Law:
 the value of output voxel `v` equals the input interpolated (same order) at
@@ -414,3 +420,40 @@ Fuzz batches 3-4 (seeds 20-27 clean; stress seeds 30-37 with scales to +-14 deca
    (range 4e-3): rounding scales with `max|x|`, not `max - min`. Fixed.
 10. **IMG-004 (T, accumulation), 2 alarms**: `ndimage.mean` sums a region sequentially, error
     `~ n_voxels * eps`; the tolerance had no region-size factor. Fixed.
+
+First fresh-agent run (Sonnet 5.5, prompt-only isolation, 41 passing tests in one new file, 28 IDs scored;
+`fresh_sonnet55/`). Every trigger was replayed and adjudicated; 23 IDs were checker-side defects, 5 real:
+11. **Float32 data, tolerance in float64 eps (T)**: GLM-001/003/004/008, HRF-001, MU-001, IMG-005, CON-003
+    used `eps` of float64 while the library rounds in the dtype of its inputs. Now the largest input eps.
+12. **Underflow/overflow of the checker's own products (P)**: tests with amplitudes 1e-125..1e-320 made
+    squares and products subnormal (tolerance 0, `-inf` ratios). GLM-001/002/007, HRF-001..003, IMG-001/002/005,
+    CON-001/003/004/005, MU-001, SIG-001/005/008 and the SIG-002 upper range now skip magnitudes outside
+    `[1e-100, 1e100]`. SIG-002 keeps firing below `2.2e-16` (library guard, see natural trigger above).
+13. **CON-007 (P)**: the tangent embedding is centred only at a converged mean; nilearn warns
+    ("Maximum number of iterations 30 reached") and the vectors average to 8e-5 per entry. Gated through a flag
+    set at the warning.
+14. **SIG-005 (T)**: float64 centring of the confounds leaves a mean `eps * offset`; the signal's own offset
+    multiplies it. Verified against a 60-digit mpmath reference: library error `4e-5` at offset/std = 3e5,
+    `3e-13` at 30, i.e. `eps (offset/std)^2`. Tolerance multiplied by `1 + max |mean|/std` of the confounds.
+15. **SIG-007 (P)**: the library uses the mean frame step, the checker the median; a 1e-6 jitter moves the
+    boundary by 2e-8 relative, but the margin was 1e-9. Margin now `1e-9 + 4 * jitter / dt`.
+16. **HRF-004 (P)**: `time_length = 8` truncates the response; the sum-normalised shifted kernel is renormalised
+    differently, so the zero crossing moves 0.4 s before the peak. Precondition `|h(end)| <= 1e-2 max h`.
+17. **SIG-004 (P)**: band edges 1e-8 apart make an order-5 `sos` unable to resolve both edges (gain error 5e-6).
+    Precondition: edge separation >= 0.1 % of the larger edge.
+18. **IMG-003 (T)**: int16 output is quantised by the cast; one unit is allowed.
+19. **GLM-002 (P), found by the next stress batch**: spread below the rounding of a 1e30 offset leaves R^2
+    undetermined (tolerance > 1). Columns with tolerance >= 0.5 are skipped.
+
+Real after adjudication (checker kept): SIG-002 (std < eps guard, above), THR-003 (below), SIG-001/003/008:
+- **THR-003, library defect on valid input**: `_apply_cluster_size_threshold` takes `np.unique(label_map)[1:]`
+  assuming label 0 exists; when the whole volume is one cluster there is no background, so the only cluster is
+  never size-tested and survives (1x1x1 and 2x1x1 volumes with `cluster_threshold=5`). Contrived: needs a volume
+  with fewer voxels than the cluster threshold.
+- **SIG-001/003/008, float32 accumulation**: numpy sums float32 columns sequentially along axis 0, so detrend and
+  percent signal change on float32 series lose accuracy with length and offset: mean of the detrended output 0.16
+  (std 1) at n = 1e5, offset 1e4; `high_variance_confounds` returns the constant vector as first component at
+  offset >= 1e5 (n = 2000) (cos with float64 result 0.02). Not seen at n <= 2000 with offset <= 1e4.
+
+Verification after the fixes: isolated sensitivity 33/33, reachability 42/42, fuzz seeds 50-57 (896 cases) and
+stress 60-67 (896 cases, scales to +-30 decades) show only SIG-002 alarms at extreme scales.
