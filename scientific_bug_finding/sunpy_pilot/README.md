@@ -85,3 +85,6 @@ SCR-002). Score after repair: 6 IDs. Frozen commit is now `74b7f5fb8` (`sanitize
 
 Opus 5.5 run (`demo_submissions/fresh_opus55.*`): 8 tests, 8 IDs (DRC-001, EPH-010, FRM-001/002, MAP-001/002/004, SCR-002),
 all adjudicated real; no checker change. Union over both fresh runs: 14 distinct IDs triggered, 11 real after adjudication.
+- **Independent law audit** (`INDEPENDENT_LAW_AUDIT.md`): fresh Opus 5.5 agent re-derived the 7 foreknowledge-flagged laws
+  on pristine upstream; all 7 laws correct, library violations confirmed for FRM-001/002 and MAP-001/002/004 (plus new
+  facets of the metadata-rescaling bug), SCR-001 is a precision-level defect; wording notes recorded, frozen commit unchanged.
