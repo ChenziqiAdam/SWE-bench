@@ -30,6 +30,7 @@ BANKS = {
     "obspy": (ROOT / "obspy_pilot/sanitizers.json", "obspy/_scientific_checkers.py", "OB"),
     "deepchem": (ROOT / "deepchem_pilot/sanitizers.json", "deepchem/_scientific_checkers.py", "DC"),
     "scanpy": (ROOT / "scanpy_pilot/sanitizers.json", "src/scanpy/_scientific_checkers.py", "SC"),
+    "nilearn": (ROOT / "nilearn_pilot/sanitizers.json", "nilearn/_scientific_checkers.py", "NL"),
 }
 
 
@@ -134,6 +135,7 @@ def main() -> int:
     parser.add_argument("--obspy-repo", type=Path)
     parser.add_argument("--deepchem-repo", type=Path)
     parser.add_argument("--scanpy-repo", type=Path)
+    parser.add_argument("--nilearn-repo", type=Path)
     args = parser.parse_args()
     all_errors: list[str] = []
     for name in BANKS:

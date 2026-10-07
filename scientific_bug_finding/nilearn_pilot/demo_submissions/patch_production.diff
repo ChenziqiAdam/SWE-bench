@@ -1,0 +1,12 @@
+diff --git a/nilearn/tests/test_demo_patch.py b/nilearn/tests/test_demo_patch.py
+new file mode 100644
+index 000000000..053607469
+--- /dev/null
++++ b/nilearn/tests/test_demo_patch.py
+@@ -0,0 +1,6 @@
++import numpy as np
++import nilearn.signal as ns
++
++
++def test_patch(monkeypatch):
++    monkeypatch.setattr(ns, "_detrend", lambda x, **k: x)

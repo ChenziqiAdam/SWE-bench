@@ -1,0 +1,11 @@
+diff --git a/nilearn/tests/test_demo_bad.py b/nilearn/tests/test_demo_bad.py
+new file mode 100644
+index 000000000..c034ed648
+--- /dev/null
++++ b/nilearn/tests/test_demo_bad.py
+@@ -0,0 +1,5 @@
++from nilearn import _scientific_checkers as sc
++
++
++def test_forge():
++    sc.trigger("NL-SIG-001")

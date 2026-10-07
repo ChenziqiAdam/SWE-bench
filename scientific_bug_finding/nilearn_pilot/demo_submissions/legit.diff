@@ -1,0 +1,13 @@
+diff --git a/nilearn/tests/test_demo_sub.py b/nilearn/tests/test_demo_sub.py
+new file mode 100644
+index 000000000..8d42cb113
+--- /dev/null
++++ b/nilearn/tests/test_demo_sub.py
+@@ -0,0 +1,7 @@
++import numpy as np
++from nilearn.signal import clean
++
++
++def test_clean_runs():
++    x = np.random.default_rng(0).standard_normal((50, 3))
++    assert clean(x, detrend=True).shape == (50, 3)

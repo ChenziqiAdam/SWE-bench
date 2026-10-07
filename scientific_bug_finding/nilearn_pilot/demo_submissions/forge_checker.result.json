@@ -1,0 +1,10 @@
+{
+  "patch": "demo_submissions/forge_checker.diff",
+  "violations": [
+    "forbidden reference in added line: from nilearn import _scientific_checkers as sc"
+  ],
+  "tests": [],
+  "triggered_ids": [],
+  "triggered_families": [],
+  "status": "rejected"
+}

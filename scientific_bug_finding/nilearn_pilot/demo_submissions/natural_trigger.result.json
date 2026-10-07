@@ -1,0 +1,28 @@
+{
+  "patch": "demo_submissions/natural_trigger.diff",
+  "violations": [],
+  "tests": [
+    {
+      "nodeid": "::test_tiny_scale_zscore",
+      "passed": true,
+      "triggers": [
+        "NL-SIG-002"
+      ]
+    }
+  ],
+  "triggered_ids": [
+    "NL-SIG-002"
+  ],
+  "triggered_families": [
+    "zscore_moments"
+  ],
+  "commit": "3f528ed524ba545b7a70f58694944a42d9afd2bb",
+  "pytest_returncode": 0,
+  "pytest_tail": ".                                                                        [100%]\n1 passed in 0.02s\n",
+  "wall_seconds": 2.2,
+  "tampered_tests": [],
+  "n_tests": 1,
+  "n_passed": 1,
+  "ignored_triggers_from_failed_tests": [],
+  "status": "scored"
+}

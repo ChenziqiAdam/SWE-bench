@@ -1,0 +1,14 @@
+diff --git a/nilearn/tests/test_demo_trig.py b/nilearn/tests/test_demo_trig.py
+new file mode 100644
+index 000000000..8bd44478f
+--- /dev/null
++++ b/nilearn/tests/test_demo_trig.py
+@@ -0,0 +1,8 @@
++import numpy as np
++from nilearn.signal import standardize_signal
++
++
++def test_tiny_scale_zscore():
++    x = np.random.default_rng(0).standard_normal((40, 3)) * 1e-17
++    out = standardize_signal(x, standardize="zscore_sample")
++    assert out.shape == x.shape
