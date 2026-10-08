@@ -82,5 +82,7 @@ python evaluate_submission.py --repo <fork checkout> --patch sub.diff --python <
   Across both agents 8 IDs / 7 families are triggered (SIG-001/002/003/005/008, GLM-003/008, THR-003).
 - **Independent law audit** (`INDEPENDENT_LAW_AUDIT.md`): fresh Opus agent re-derived the 7 foreknowledge-flagged laws on pristine
   upstream; none exposes a library bug; wording/precondition notes recorded (frozen commit unchanged).
-- **Not yet done:** upstream tracker search / issue drafts (GLM-003/008 stale cache, SIG-005, THR-003, SIG-002); optional
-  traditional bank (SANITIZER.md 12).
+- **Issue drafts** (`issues/`, tracker searched 2026-10-08, not filed): ISSUE_1 `Contrast.z_score(baseline)` stale
+  `one_minus_pvalue_` (strong; GLM-003/008); ISSUE_2 absolute-eps thresholds in `clean` (SIG-002 + SIG-005, one root cause
+  family in the default path). THR-003 and the float32 accumulation findings (SIG-001/003/008) not drafted.
+- **Not yet done:** filing (needs user ok; re-search tracker first); optional traditional bank (SANITIZER.md 12).
