@@ -1,6 +1,12 @@
 import re
 from pathlib import Path
 
+from swebench.harness.constants.compat import (
+    prepare_gtest,
+    python_command,
+    use_cached_gtest,
+)
+
 # Constants - Task Instance Installation Environment
 SPECS_REDIS = {
     "13115": {
@@ -920,6 +926,17 @@ SPECS_QGIS["60631"]["pre_install"] = [
     "sed -i -E 's/^\\s*QWT_CONFIG\\s*\\+=\\s*Qwt(Designer|Examples|Playground|Tests)/#&/' qwtconfig.pri && "
     "qmake6 qwt.pro && make -j4 && make install && ldconfig)",
 ]
+# This Qt6 checkout relies on a transitive QQuaternion include that newer Qt6
+# no longer provides. Force-include the header at build time without changing
+# production source; the guard also lets CMake's compiler probe run without Qt.
+SPECS_QGIS["60631"]["build"].insert(
+    0,
+    "printf '#if __has_include(<QQuaternion>)\\n#include <QQuaternion>\\n#endif\\n' "
+    "> /tmp/swebench-qgis-qt6-compat.h",
+)
+SPECS_QGIS["60631"]["build"][1] += (
+    " '-DCMAKE_CXX_FLAGS=-include /tmp/swebench-qgis-qt6-compat.h'"
+)
 
 
 class _RDKitSpecs(dict):
@@ -969,9 +986,9 @@ SPECS_RDKIT = _RDKitSpecs({
         extra_cmake="-DRDK_TEST_MMFF_COMPLIANCE=ON ",
         new_boost=True,
     ),
-    "2021": _rdkit_cpp_targets_spec("graphmolMolOpsTest", legacy_boost_endian=True),
-    "3855": _rdkit_cpp_targets_spec("graphmolMolOpsTest", legacy_boost_endian=True),
-    "3176": _rdkit_cpp_targets_spec("testMolAlign", legacy_boost_endian=True),
+    "2021": _rdkit_cpp_targets_spec("graphmolMolOpsTest", legacy_boost_endian=True, extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE),
+    "3855": _rdkit_cpp_targets_spec("graphmolMolOpsTest", legacy_boost_endian=True, extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE),
+    "3176": _rdkit_cpp_targets_spec("testMolAlign", legacy_boost_endian=True, extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE),
     "3098": _rdkit_cpp_targets_spec(
         "rxnTestCatch", extra_cmake=_RDKIT_LEGACY_CATCH_CMAKE
     ),
@@ -1043,6 +1060,7 @@ def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
             "apt-get install -y --no-install-recommends cmake g++ make ninja-build "
             "python3 python3-pytest libfftw3-dev libjpeg-dev libpng-dev libgtest-dev "
             f"ocl-icd-opencl-dev{mpi_packages}{' clinfo' if gpu else ''}",
+            python_command(prepare_gtest, "/testbed", "/opt/swebench-googletest"),
         ],
         "build_after_test_patch": [
             # The container runs as root; Open MPI's mpiexec refuses that
@@ -1079,13 +1097,11 @@ def _lammps_test_generation_spec(*packages: str, kokkos: bool = False) -> dict:
             # test_generation_eval.py's `_build_script` does
             # `git reset --hard {base_commit} && git clean -fdx` on every
             # base/gold run, which discards an uncommitted pre_install-time
-            # edit to this tracked file before build_after_test_patch (and
-            # this sed) ever runs. `|| true` because newer LAMMPS releases
-            # (e.g. PR 3699, 2023) dropped this file for a system-GTest
-            # find_package call.
-            "sed -i 's/IMPORTED_LINK_INTERFACE_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})/"
-            'IMPORTED_LINK_INTERFACE_LIBRARIES "${CMAKE_THREAD_LIBS_INIT}")/\' '
-            "cmake/Modules/GTest.cmake || true",
+            # edit to this tracked file before build_after_test_patch runs.
+            # Cache the exact tagged source in the image, then replay the
+            # build metadata repair after every reset. Newer releases without
+            # this file use their existing system-GTest find_package call.
+            python_command(use_cached_gtest, "/testbed", "/opt/swebench-googletest"),
             # ENABLE_TESTING also unconditionally triggers
             # cmake/Modules/Testing.cmake's FetchContent_Populate() of the
             # separate lammps-testing repo (its own optional test-discovery
@@ -1187,6 +1203,14 @@ SPECS_LAMMPS = {
     # same class of bug already fixed for lammps-1759/1928.
     "3699": _lammps_test_generation_spec("MOLECULE"),
 }
+# This regression exercises dump/PBC geometry, not OpenMP. The old kspace.cpp
+# default(none) region does not declare nlocal/q for modern GCC. Select the
+# upstream-supported serial build instead of patching scientific source.
+SPECS_LAMMPS["1374"]["build_after_test_patch"] = [
+    command + " -D BUILD_OMP=OFF"
+    if command.startswith("cmake -S cmake -B build") else command
+    for command in SPECS_LAMMPS["1374"]["build_after_test_patch"]
+]
 
 # ---------------------------------------------------------------------------
 # Issues_No_Tests_new.xlsx additions (2026-09-09).

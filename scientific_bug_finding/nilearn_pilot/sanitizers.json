@@ -173,7 +173,7 @@
       "precondition": "OLS (`ARModel` with all `rho = 0` counts), the constant vector lies in the column space of `X` (least-squares residual of the ones vector `<= C eps n kappa`), `var(Y) > 0`",
       "invariant": "`R^2 = 1 - SSE / (n var(Y))` and `0 <= R^2 <= 1`",
       "observation_point": "`RegressionResults.r_square`",
-      "alarm": "`|R^2 - (1 - SSE/(n var Y))| > C * eps * (kappa_eff + mean(Y)^2 / var(Y))` or `R^2` outside `[-tol, 1+tol]` (up to 50 columns sampled)",
+      "alarm": "`|R^2 - (1 - SSE/(n var Y))| > C * eps * (kappa_eff + mean(Y)^2 / var(Y))` with `eps` the largest unit round-off among the design, data and residual dtypes or `R^2` outside `[-tol, 1+tol]` (up to 50 columns sampled)",
       "rationale": "R-squared obeys the variance decomposition."
     },
     {
@@ -459,7 +459,7 @@
       "precondition": "finite output",
       "invariant": "each `Omega[..., k]` is symmetric with `lambda_min > 0`",
       "observation_point": "end of `_group_sparse_covariance`",
-      "alarm": "asymmetry `> C eps ||Omega||` or `lambda_min <= C * eps * p * lambda_max`",
+      "alarm": "asymmetry `> C eps ||Omega||`, a non-positive diagonal, or `lambda_min <= C * eps * p * lambda_max` of the unit-diagonal rescaling `D^-1/2 Omega D^-1/2`",
       "rationale": "Estimated precision matrices are symmetric positive definite."
     },
     {

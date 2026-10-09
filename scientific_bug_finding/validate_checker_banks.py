@@ -32,6 +32,10 @@ BANKS = {
     "scanpy": (ROOT / "scanpy_pilot/sanitizers.json", "src/scanpy/_scientific_checkers.py", "SC"),
     "nilearn": (ROOT / "nilearn_pilot/sanitizers.json", "nilearn/_scientific_checkers.py", "NL"),
     "sunpy": (ROOT / "sunpy_pilot/sanitizers.json", "sunpy/_scientific_checkers.py", "SP"),
+    "yt": (ROOT / "yt_pilot/sanitizers.json", "yt/utilities/_scientific_checkers.py", "YT"),
+    "pymatgen": (ROOT / "pymatgen_pilot/sanitizers.json", "src/pymatgen/_scientific_checkers.py", "PM"),
+    "pyscf": (ROOT / "pyscf_pilot/sanitizers.json", "pyscf/_scientific_checkers.py", "PS"),
+    "qutip": (ROOT / "qutip_pilot/sanitizers.json", "qutip/_scientific_checkers.py", "QT"),
 }
 
 
@@ -60,7 +64,7 @@ def validate_bank(name: str, repo: Path | None) -> list[str]:
         missing = sorted(REQUIRED - item.keys())
         if missing:
             errors.append(f"{name}[{index}]: missing fields {missing}")
-        if not re.fullmatch(rf"{prefix}-[A-Z]+-\d{{3}}", str(item.get("id", ""))):
+        if not re.fullmatch(rf"{prefix}-[A-Z0-9]+-\d{{3}}", str(item.get("id", ""))):
             errors.append(f"{name}[{index}]: invalid ID {item.get('id')!r}")
         for field in REQUIRED:
             if field in item and not str(item[field]).strip():
@@ -82,7 +86,12 @@ def validate_bank(name: str, repo: Path | None) -> list[str]:
     checker = repo / checker_relpath
     if not checker.is_file():
         return errors + [f"{name}: missing {checker_relpath}"]
-    code_ids = set(re.findall(rf'["\']({prefix}-[A-Z]+-\d{{3}})["\']', checker.read_text()))
+    code_text = checker.read_text()
+    # An ID may be passed from the hook site instead of being hard-coded in the checker module.
+    code_text += subprocess.run(
+        ["git", "-C", str(repo), "grep", "-h", f"{prefix}-[A-Z0-9]*-[0-9][0-9][0-9]", "--", "*.py"],
+        text=True, capture_output=True).stdout
+    code_ids = set(re.findall(rf'["\']({prefix}-[A-Z0-9]+-\d{{3}})["\']', code_text))
     if code_ids != set(ids):
         errors.append(
             f"{name}: metadata/code ID mismatch; missing={sorted(set(ids)-code_ids)}, "
@@ -138,6 +147,10 @@ def main() -> int:
     parser.add_argument("--scanpy-repo", type=Path)
     parser.add_argument("--nilearn-repo", type=Path)
     parser.add_argument("--sunpy-repo", type=Path)
+    parser.add_argument("--yt-repo", type=Path)
+    parser.add_argument("--pymatgen-repo", type=Path)
+    parser.add_argument("--pyscf-repo", type=Path)
+    parser.add_argument("--qutip-repo", type=Path)
     args = parser.parse_args()
     all_errors: list[str] = []
     for name in BANKS:

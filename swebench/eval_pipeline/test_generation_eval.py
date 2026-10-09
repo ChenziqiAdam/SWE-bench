@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import shlex
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
@@ -438,7 +439,18 @@ def _test_execution_failed(output: str) -> bool:
     """Detect a generated test process that failed before a parser status."""
     if START_TEST_OUTPUT not in output:
         return False
-    test_output = output.split(START_TEST_OUTPUT, 1)[1]
+    test_output = output.split(START_TEST_OUTPUT, 1)[1].split(END_TEST_OUTPUT, 1)[0]
+    # Python's site.py prints this traceback, ignores the broken .pth line,
+    # and continues. It is not a failed test process (ObsPy-956/2560/2570
+    # already have explicit base failures and gold passes). Remove only the
+    # complete, explicitly nonfatal diagnostic; retain other tracebacks and
+    # crashes, including ones immediately following it.
+    test_output = re.sub(
+        r"^Error processing line [^\n]+\.pth:\n.*?^Remainder of file ignored\s*$",
+        "",
+        test_output,
+        flags=re.MULTILINE | re.DOTALL,
+    )
     return any(
         marker in test_output
         for marker in (
@@ -469,6 +481,21 @@ def _exclude_gold_test_files(gold_patch: str) -> tuple[str, list[str]]:
             if match
             else set()
         )
+        # RDKit-9228's gold changes only an existing rdkit_test() link list
+        # in UFF/CMakeLists.txt. That PR-test metadata conflicts with the
+        # independently added registration. Exclude only complete test-call
+        # hunks; production library/source declarations must remain in gold.
+        if match and all(PurePosixPath(path).name == "CMakeLists.txt" for path in match.groups()):
+            hunks = re.split(r"^@@[^\n]*\n", section, flags=re.MULTILINE)[1:]
+            snippets = [
+                "\n".join(line[1:] for line in hunk.splitlines()
+                          if line.startswith((" ", sign)))
+                for hunk in hunks for sign in ("-", "+")
+            ]
+            if (snippets and any("rdkit_test(" in snippet for snippet in snippets)
+                    and all(not re.sub(r"\brdkit_test\s*\([^()]*\)", "", snippet).strip()
+                            for snippet in snippets)):
+                test_paths.update(match.groups())
         if test_paths:
             excluded.update(test_paths)
         else:
@@ -818,6 +845,42 @@ def _lammps_generated_test_targets(generated_patch: str) -> list[tuple[str, str]
         if target is not None:
             targets.add((target, f"build/{target}"))
     return sorted(targets)
+
+
+def _lammps_standalone_project(generated_patch: str) -> str | None:
+    """Recognize a submitted standalone CMake test project (e.g. tests/rebo)."""
+    projects = []
+    for section in re.split(r"(?=^diff --git )", generated_patch, flags=re.MULTILINE):
+        header = re.match(r"diff --git a/(\S+) b/\S+", section)
+        if not header:
+            continue
+        path = PurePosixPath(header.group(1))
+        added = "\n".join(line[1:] for line in section.splitlines()
+                          if line.startswith("+") and not line.startswith("+++"))
+        if (str(path).startswith("tests/") and path.name == "CMakeLists.txt"
+                and re.search(r"\bproject\s*\(", added)
+                and re.search(r"add_subdirectory\s*\([^)]*cmake", added)):
+            projects.append(str(path.parent))
+    return projects[0] if len(projects) == 1 else None
+
+
+def _lammps_input_deck_command(path: str, generated_patch: str) -> str:
+    """Honor a deck's documented LAMMPS flags; report its actual exit status."""
+    args = ["-log", "none"]
+    for section in re.split(r"(?=^diff --git )", generated_patch, flags=re.MULTILINE):
+        if not section.startswith(f"diff --git a/{path} b/{path}\n"):
+            continue
+        match = re.search(r"^\+\s*#\s*Run with:\s*lmp\s+(.+)$", section, re.MULTILINE)
+        if match:
+            documented = shlex.split(match.group(1))
+            if "-in" in documented:
+                args = documented[:documented.index("-in")]
+    command = shlex.join(["/testbed/build/lmp", *args, "-in", path])
+    nodeid = shlex.quote(path + "::input_deck")
+    return (
+        f"if {command}; then echo PASSED {nodeid}; "
+        f"else echo FAILED {nodeid}; fi"
+    )
 
 
 def _lammps_native_gtest_cases(generated_patch: str) -> dict[str, list[str]]:
@@ -1262,6 +1325,14 @@ def _special_repo_execution_plan(
     rejected_noise: list[str] = []
     openmm_header_targets: dict[str, str] = {}
     lammps_yaml_tests: dict[str, tuple[str, str]] = {}
+    lammps_input_decks: set[str] = set()
+    standalone_project = (
+        _lammps_standalone_project(generated_patch) if repo == "lammps/lammps" else None
+    )
+    lammps_python_dirs = {
+        str(PurePosixPath(path).parent) for path in paths
+        if repo == "lammps/lammps" and path.endswith(".py") and _is_test_path(path)
+    }
     lammps_ctest_names = (
         _lammps_added_ctest_names(generated_patch)
         if repo == "lammps/lammps"
@@ -1350,6 +1421,16 @@ def _special_repo_execution_plan(
                 language = "cpp"
             else:
                 language = language or "cpp"
+        if (repo == "lammps/lammps" and path.startswith("tests/")
+                and (basename.startswith("in.") or suffix == ".in")
+                and path not in lammps_ctest_paths):
+            language = "cpp"
+            lammps_input_decks.add(path)
+        if (repo == "lammps/lammps" and language is None
+                and str(PurePosixPath(path).parent) in lammps_python_dirs
+                and suffix in {".data", ".molecule", ".json", ".txt"}
+                and not _is_test_path(basename)):
+            continue
         # A force-styles YAML fixture's own `input_file: in.<name>` field
         # names a companion LAMMPS input deck shipped alongside it under the
         # same tests/ directory. That deck is read by the shared driver
@@ -1402,6 +1483,8 @@ def _special_repo_execution_plan(
         # unsupported_generated_test).
         if repo == "lammps/lammps" and path == "cmake/Modules/Testing.cmake":
             continue
+        if repo == "lammps/lammps" and basename == "CMakeLists.txt":
+            continue
         canonical = False
         if repo == "openmm/openmm":
             # Ignore CUDA test files only when this instance's curated build
@@ -1442,11 +1525,14 @@ def _special_repo_execution_plan(
                     is not None
                     or path in lammps_yaml_tests
                     or path in lammps_ctest_paths
+                    or path in lammps_input_decks
+                    or (standalone_project is not None
+                        and path.startswith(standalone_project + "/"))
                 )
             ) or (
                 language == "python"
                 and (
-                    path.startswith(("unittest/", "python/tests/"))
+                    path.startswith(("unittest/", "python/tests/", "tests/"))
                     or "/tests/" in path
                 )
                 # LAMMPS's own Python-module tests are unittest/python/python-*.py
@@ -1608,8 +1694,16 @@ def _special_repo_execution_plan(
                     _ctest_name_regex(name) for name in selected_ctest_names
                 )
                 selected_commands.append(
-                    f"ctest --test-dir build --output-on-failure -R '^({pattern})$'"
+                    "ctest --test-dir "
+                    + ("build-generated-tests" if standalone_project else "build")
+                    + f" --output-on-failure -R '^({pattern})$'"
                 )
+            selected_commands.extend(
+                _lammps_input_deck_command(path, generated_patch)
+                for path in sorted(lammps_input_decks)
+            )
+            if lammps_input_decks:
+                build_targets.append("lmp")
         elif repo == "rdkit/rdkit":
             registrations = _cmake_registered_cpp_targets(generated_patch)
             configured = _configured_ctest_targets(commands)
@@ -1682,6 +1776,8 @@ def _special_repo_execution_plan(
                 if repo == "rdkit/rdkit"
                 else "PYTHONPATH=/testbed:${PYTHONPATH:-} "
             )
+            if repo == "lammps/lammps":
+                prefix += "LAMMPS_EXECUTABLE=/testbed/build/lmp PATH=/testbed/build:$PATH "
             # RDKit's CMake build places the compiled Python extension
             # (rdBase, etc.) under build/rdkit/; it must be copied into the
             # in-tree rdkit/ package before import, mirroring
@@ -1720,6 +1816,8 @@ def _special_repo_execution_plan(
         extra_packages = _lammps_required_packages(generated_patch)
         if extra_packages:
             evidence = {**evidence, "lammps_extra_packages": extra_packages}
+        if standalone_project:
+            evidence = {**evidence, "lammps_standalone_project": (standalone_project,)}
 
     languages = tuple(language for language in ("cpp", "python") if accepted[language])
     return GeneratedTestExecutionPlan(
@@ -1805,6 +1903,13 @@ def _patch_driven_build_commands(
     if plan.failure_reason:
         return []
     if repo == "lammps/lammps":
+        standalone = plan.evidence.get("lammps_standalone_project", ())
+        if standalone:
+            return [
+                "cmake -S " + shlex.quote(standalone[0])
+                + " -B build-generated-tests -G Ninja -DCMAKE_BUILD_TYPE=Release",
+                "cmake --build build-generated-tests --parallel $(nproc)",
+            ]
         needs_shared_lib = any(
             path.startswith("unittest/python/") and path.endswith(".py")
             for path in plan.paths
@@ -2034,7 +2139,13 @@ def _build_script(instance: dict, generated_patch: str, apply_gold: bool) -> str
     # tests and the gold pass rebuilds Cython/C/C++ changes from the gold patch.
     # Installing before patch application leaves stale base binaries in place.
     if "install" in specs:
-        lines.append(specs["install"])
+        # A separate errexit shell is necessary: the parent intentionally has
+        # no -e, and an install can contain several semicolon-separated builds.
+        # Without this, a failed native build can be hidden by a later pip step.
+        lines.append(
+            "bash -e -o pipefail -c " + shlex.quote(specs["install"])
+            + f" || {{ echo {BUILD_FAIL}; exit 13; }}"
+        )
     build_commands = _patch_driven_build_commands(instance["repo"], specs, plan)
     lines += [
         f"{cmd} || {{ echo {BUILD_FAIL}; exit 13; }}" for cmd in build_commands
@@ -2577,6 +2688,13 @@ def _evaluate_one(
             gold_tail = gold_output[-_REPORT_OUTPUT_TAIL_CHARS:]
             report[instance_id]["base_output_tail"] = base_tail
             report[instance_id]["gold_output_tail"] = gold_tail
+            # Keep the start too: long parametrized failure summaries used to
+            # discard the first traceback (Scanpy-3771, yt plotting cases).
+            for phase, output in (("base", base_output), ("gold", gold_output)):
+                test_output = output.split(START_TEST_OUTPUT, 1)[-1]
+                report[instance_id][f"{phase}_output_head"] = test_output[
+                    :_REPORT_OUTPUT_TAIL_CHARS
+                ]
             if classified["failure_reason"] == "infrastructure_failure":
                 marker = _infrastructure_failure_marker(
                     base_output

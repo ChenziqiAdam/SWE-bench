@@ -106,7 +106,7 @@
       "precondition": "Integer degree k >= 0 and finite Euler angles of magnitude <= 1e6.",
       "invariant": "D(alpha,beta,gamma) composed with D(-gamma,-beta,-alpha) is the identity (the inverse rotation).",
       "observation_point": "Before wigner_D returns; re-calls wigner_D with all three angles negated and reversed.",
-      "alarm": "max|D(a,b,g) D(-g,-b,-a) - I| exceeds twice the EQ-001 tolerance.",
+      "alarm": "max|D(a,b,g) D(-g,-b,-a) - I| exceeds twice the EQ-001 tolerance, scaled by eps(angle dtype)/eps(D) when the angles are coarser than D (range reduction runs in the angle dtype).",
       "rationale": "The representation must satisfy the group law; otherwise rotating and un-rotating a feature does not return it."
     },
     {
@@ -166,7 +166,7 @@
       "precondition": "Rotation matrices (orthogonality residual <= 1e-3) with rotation angle at least 0.05 rad below pi.",
       "invariant": "exp(log(R)) = R.",
       "observation_point": "Before SO3.log returns; re-calls SO3.exp on the result.",
-      "alarm": "max|exp(log R) - R| exceeds 64*eps_dtype*(1 + pi/gap^2) + 4*orthogonality residual, with gap = pi - angle (log conditioning near the cut locus).",
+      "alarm": "max|exp(log R) - R| exceeds 64*eps_dtype*(1 + pi/gap^2) + 4*orthogonality residual (floored at 1e-9), with gap = pi - angle (log conditioning near the cut locus).",
       "rationale": "log and exp are inverse charts of the same group; a mismatch changes the group element the model sees."
     },
     {
@@ -286,7 +286,7 @@
       "precondition": "Finite nonzero vectors of equal length with magnitudes between 1e-100 and 1e100.",
       "invariant": "The angle equals atan2(|a x b|, a.b), is symmetric in its arguments and is unchanged by scaling either vector.",
       "observation_point": "Before angle_between returns; re-calls it with swapped and with scaled (2a, 4b) arguments.",
-      "alarm": "Any of the three comparisons differs by more than 64*eps64/max(sin(theta), 1e-8) (arccos conditioning).",
+      "alarm": "Any of the three comparisons differs by more than 64*eps/max(sin(theta), 1e-8) (arccos conditioning), eps being that of the coarsest floating input dtype (eps64 for float64/non-array inputs).",
       "rationale": "Interaction geometry (hydrogen bonds, stacking) is defined through this angle."
     },
     {

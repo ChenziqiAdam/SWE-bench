@@ -1,3 +1,10 @@
+from swebench.harness.constants.compat import (
+    link_psi4_core,
+    prepare_pyscf_dependencies,
+    python_command,
+    use_cached_pyscf_dependencies,
+)
+
 # Constants - Testing Commands
 TEST_PYTEST = "pytest --no-header -rA --tb=no -p no:cacheprovider"
 TEST_PYTEST_VERBOSE = "pytest -rA --tb=long -p no:cacheprovider"
@@ -1474,6 +1481,10 @@ SPECS_QISKIT = {
     pr: dict(_QISKIT_TEST_GENERATION_SPEC)
     for pr in ("12387",)
 }
+SPECS_QISKIT["12387"]["pip_packages"] = [
+    *_QISKIT_TEST_GENERATION_SPEC["pip_packages"],
+    "qiskit-qasm3-import==0.5.1",
+]
 
 # ---------------------------------------------------------------------------
 # Issues_No_Tests_new.xlsx additions (2026-09-09).
@@ -1563,6 +1574,10 @@ SPECS_QISKIT["845"] = {
 SPECS_QISKIT.update(
     {pr: dict(_QISKIT_CYTHON_SPEC) for pr in ("1940", "3419", "4803", "5166")}
 )
+# DAGCircuit still uses MultiDiGraph.node, removed in NetworkX 2.4.
+SPECS_QISKIT["1940"]["pip_packages"] = [
+    *_QISKIT_CYTHON_SPEC["pip_packages"], "networkx==2.3",
+]
 SPECS_QISKIT.update(
     {
         pr: dict(_QISKIT_TEST_GENERATION_SPEC)  # setuptools-rust / PyO3 era
@@ -1721,6 +1736,14 @@ SPECS_ASTROPY["8111"]["pip_packages"] = [
     "cython==0.29.36" if pkg.startswith("cython==") else pkg
     for pkg in SPECS_ASTROPY["8111"]["pip_packages"]
 ]
+# These checkouts ship their own remote-data options and predate the external
+# header plugin's astropy.tests.plugins import. Block those entry points before
+# pytest 3.3 loads them; PYTEST_DISABLE_PLUGIN_AUTOLOAD is unsupported that early.
+for _pr in ("5612", "6045", "6400"):
+    SPECS_ASTROPY[_pr]["test_cmd"] += (
+        " -p no:remotedata -p no:astropy_header -p no:mpl"
+    )
+SPECS_ASTROPY["8111"]["pip_packages"] += ["importlib-metadata==4.8.3"]
 SPECS_ASTROPY["9079"] = dict(_ASTROPY_4X_GEN_SPEC)
 SPECS_ASTROPY.update(
     {pr: dict(_ASTROPY_5X_GEN_SPEC) for pr in ("12525", "16529")}
@@ -1768,7 +1791,11 @@ _PYSCF_BASE_PRE_INSTALL = [
 _PYSCF_17_GEN_SPEC = {
     "python": "3.8",
     "pre_install": _PYSCF_BASE_PRE_INSTALL
-    + ["python -m pip install 'numpy==1.21.6' 'setuptools<60' wheel 'cmake<4'"],
+    + [
+        "python -m pip install 'numpy==1.21.6' 'setuptools<60' wheel 'cmake<4'",
+        "apt-get install -y --no-install-recommends git autoconf automake libtool pkg-config",
+        python_command(prepare_pyscf_dependencies, "/testbed", "/opt/swebench-pyscf-deps", interpreter="python"),
+    ],
     # setup.py (1.7.x: 551, 794) only accepts BLAS if LDFLAGS names it (numpy's
     # wheel BLAS has no library_dirs; server error "BLAS library not found"),
     # and expects libcint/libxc prebuilt by pyscf/lib's CMake into
@@ -1776,11 +1803,17 @@ _PYSCF_17_GEN_SPEC = {
     # them first, the documented source-install route, then install.
     # UNVERIFIED on Linux (no local docker).
     "install": (
+        python_command(use_cached_pyscf_dependencies, "/testbed", "/opt/swebench-pyscf-deps", interpreter="python")
+        + "; "
         # `;` not `&&`: under `set -e` a failed `&&` chain member does not abort
         # the script, so a failed cmake/make was silently skipped (551/794 built
         # "successfully" without libcgto.so).
         "cd /testbed/pyscf/lib; mkdir -p build; cd build; "
-        "cmake ..; make -j4; cd /testbed; "
+        "cmake ..; "
+        "if [ ! -f ../deps/include/cint.h ]; then "
+        "cmake --build . --target libcint --parallel 4; fi; "
+        "cmake --build . --target libxc libxcfun --parallel 4; "
+        "cmake --build . --parallel 4; cd /testbed; "
         "LDFLAGS='-L/usr/lib/x86_64-linux-gnu -lblas' "
         "python -m pip install -e . --no-build-isolation"
     ),
@@ -1858,7 +1891,7 @@ SPECS_OBSPY["956"] = dict(
 )
 
 # psi4: PR 2453 (2022) touches only psi4/driver/procrouting (pure Python).
-# The compiled core is heavy; install the conda-forge binary and run the
+# The compiled core is heavy; install the official historical binary and run the
 # generated test against the Python driver layer.
 _PSI4_GEN_SPEC = {
     "python": "3.9",
@@ -1867,9 +1900,16 @@ _PSI4_GEN_SPEC = {
     # an unset CONDA_MKL_INTERFACE_LAYER_BACKUP and aborts the whole shell
     # ("unbound variable", seen in the server build log), which `|| true`
     # cannot catch. Disable nounset around conda operations.
-    "install": "set +u; conda install -y -c conda-forge psi4 && python -m pip install -e . --no-deps --no-build-isolation || true; set -u",
+    "pre_install": [
+        # The checkout identifies itself as 1.5; a current native core can
+        # remove APIs its driver needs. Install a matching binary, then expose
+        # only its core to the checkout, keeping base/gold Python code in use.
+        "set +u; conda install -y -c psi4 -c defaults 'psi4=1.5+e9f4d6d'; set -u",
+    ],
+    "install": python_command(link_psi4_core, "/testbed", interpreter="python"),
     "pip_packages": ["pytest", "numpy==1.23.5"],
-    "validation_cmd": "python -c 'import psi4'",
+    "validation_cmd": 'PSIDATADIR="$CONDA_PREFIX/share/psi4" python -c "import psi4; import psi4.core"',
+    "eval_commands": ['export PSIDATADIR="$CONDA_PREFIX/share/psi4"'],
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
@@ -1955,16 +1995,17 @@ _SCANPY_198_SPEC = {
 _SCANPY_111_SPEC = {  # 3771 (2025, scanpy 1.11, py3.11-3.13)
     "python": "3.11",
     "install": "python -m pip install -e .[test]",
-    "pip_packages": ["pytest", "numpy<2.2", "scipy", "pandas", "anndata", "scikit-learn", "numba", "matplotlib", "legacy-api-wrap", "session-info", "h5py", "natsort", "joblib"],
-    "validation_cmd": "python -c 'import scanpy'",
-    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    "pip_packages": ["pytest", "numpy<2.2", "scipy", "pandas", "anndata", "scikit-learn", "numba", "matplotlib", "legacy-api-wrap", "session-info", "h5py", "natsort", "joblib", "pooch", "pytest-mock", "seaborn"],
+    "validation_cmd": "python -c 'import testing.scanpy._pytest; import scanpy'",
+    # conftest's image comparison fixture needs pytest's cache fixture.
+    "test_cmd": "pytest -rA --tb=long -o cache_dir=/tmp/swebench-pytest-cache",
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }
 _SCANPY_112_SPEC = {  # 4231 (2026, scanpy >=1.12 dev, requires-python>=3.12)
     **_SCANPY_111_SPEC,
     "python": "3.12",
-    "pip_packages": ["pytest", "numpy>=2.1", "scipy>=1.15", "pandas", "anndata", "scikit-learn", "numba", "matplotlib", "legacy-api-wrap", "session-info2", "h5py", "natsort", "joblib"],
+    "pip_packages": ["pytest", "numpy>=2.1", "scipy>=1.15", "pandas", "anndata", "scikit-learn", "numba", "matplotlib", "legacy-api-wrap", "session-info2", "h5py", "natsort", "joblib", "pooch", "pytest-mock", "seaborn"],
 }
 SPECS_SCANPY = {
     "1464": dict(_SCANPY_16_SPEC),
@@ -1979,7 +2020,13 @@ SPECS_SCANPY = {
 #  - 4260 (2020, sunpy 2.0, py3.6-3.8): modern setuptools_scm build.
 _SUNPY_GEN_SPEC = {
     "python": "3.8",
-    "install": "python -m pip install -e .[all,tests]",
+    # numpy.distutils imports distutils.msvccompiler, removed from recent
+    # setuptools' vendored distutils. Keep the pin during the extras install.
+    "install": (
+        "printf 'setuptools==59.8.0\\n' > /tmp/sunpy-constraints.txt; "
+        "python -m pip install 'setuptools==59.8.0' 'setuptools_scm<7' wheel; "
+        "python -m pip install -e .[all,tests] --no-build-isolation -c /tmp/sunpy-constraints.txt"
+    ),
     "pip_packages": [
         "pytest",
         "numpy==1.21.6",
@@ -1988,6 +2035,7 @@ _SUNPY_GEN_SPEC = {
         "matplotlib==3.5.3",
         "pandas==1.3.5",
         "parfive==1.5.1",
+        "setuptools==59.8.0",
     ],
     "validation_cmd": "python -c 'import sunpy'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
@@ -2039,6 +2087,8 @@ _YT_40_GEN_SPEC = {
         "more-itertools==8.13.0",
         "packaging==21.3",
         "tomli==2.0.1",
+        "pyparsing==3.0.9",
+        "PyYAML==6.0.1",
     ],
     "validation_cmd": "python -c 'import yt'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
@@ -2052,7 +2102,7 @@ _YT_MODERN_GEN_SPEC = {
         "apt-get install -y --no-install-recommends gcc g++",
     ],
     "install": "python -m pip install -e . --no-build-isolation",
-    "pip_packages": ["pytest", "cython>=3.0.3", "numpy>=2.0", "setuptools>=61.2", "scipy", "matplotlib", "sympy", "unyt", "more-itertools", "packaging", "ewah-bool-utils"],
+    "pip_packages": ["pytest", "cython>=3.0.3", "numpy>=2.0", "setuptools>=61.2", "scipy", "matplotlib", "sympy", "unyt", "more-itertools", "packaging", "ewah-bool-utils", "PyYAML==6.0.2"],
     "validation_cmd": "python -c 'import yt'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
     "oracle_kind": "generated_test",
@@ -2081,6 +2131,7 @@ _YT_36_GEN_SPEC = {
         "unyt==2.7.2",
         "more-itertools==8.13.0",
         "ipython==7.34.0",
+        "PyYAML==6.0.1",
     ],
     "validation_cmd": "python -c 'import yt'",
     "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
@@ -2168,7 +2219,12 @@ _MNE_LEGACY_SPEC = {
         "jinja2",
     ],
     "validation_cmd": "python -c 'import mne'",
-    "test_cmd": "pytest -rA --tb=long -p no:cacheprovider",
+    # Matplotlib 3.4 uses LooseVersion; setuptools emits this deprecation at
+    # import. Suppress this one dependency warning, preserving other errors.
+    "test_cmd": (
+        "pytest -rA --tb=long -p no:cacheprovider "
+        "-W 'ignore:distutils Version classes are deprecated:DeprecationWarning'"
+    ),
     "oracle_kind": "generated_test",
     "test_generation_capabilities": ("python",),
 }

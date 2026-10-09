@@ -118,9 +118,9 @@ def test_pyscf_cmake_below_4_and_17x_prebuild():
         assert "'cmake<4'" in " ".join(_spec_for("pyscf/pyscf", pr)["pre_install"])
     for pr in ("551", "794"):
         install = _spec_for("pyscf/pyscf", pr)["install"]
-        # `;` so a failed cmake/make aborts under `set -e` (an `&&` chain would not)
-        assert "cmake ..; make" in install and "-lblas" in install
-        assert "&&" not in install
+        assert "cmake ..;" in install and "-lblas" in install
+        assert install.index("--target libcint") < install.index("--target libxc libxcfun")
+        assert install.index("--target libxc libxcfun") < install.index("pip install -e")
 
 
 def test_nilearn_installs_requests_for_no_deps_build():

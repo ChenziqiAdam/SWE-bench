@@ -17,7 +17,7 @@
    "precondition": "`0 < R/D < 1` for the physical radius `R` and distance `D` (any finite quantities)",
    "invariant": "with `x = R/D`, the angular radius `theta` of a sphere seen from distance `D` satisfies `x <= theta <= x/sqrt(1-x^2)` (arc vs chord vs tangent)",
    "observation_point": "return of `_angular_radius`",
-   "alarm": "`theta_rad < x*(1 - C*eps)` or `theta_rad > x/sqrt(1-x^2) * (1 + C*eps)`; the slack is a few ulps of `theta` (arcsin plus two unit conversions through arcsec)",
+   "alarm": "`theta_rad < x*(1 - C*eps)` or `theta_rad > x/sqrt(1-x^2) * (1 + C*eps)`; the slack is a few ulps of `theta` in the working precision of radius, distance and theta (float32 inputs give float32 slack) (arcsin plus two unit conversions through arcsec)",
    "rationale": "`sin(theta) = R/D` is the definition of the Sun's semi-diameter and every disk-limb test downstream relies on it."
   },
   {
@@ -274,7 +274,7 @@
    "source": "sunpy/coordinates/frames.py",
    "symbol": "Helioprojective.make_3d",
    "scientific_quantity": "distance to the solar surface",
-   "precondition": "2-D helioprojective input, finite result, no assumed screen, `D > rsun`",
+   "precondition": "2-D helioprojective input, finite result, no assumed screen, `D > rsun`, observer radius, `rsun` and Tx/Ty all float64 (float32 metadata is outside the precondition: the quadratic cancels at `eps32 D^2/rsun`)",
    "invariant": "the promoted point is at distance `rsun` from the Sun centre and on the visible hemisphere: `r^2 = D^2 + d^2 - 2 D d cos(alpha)` with `r = rsun` and `D - d cos(alpha) >= 0`",
    "observation_point": "return of `Helioprojective.make_3d`",
    "alarm": "`|r - rsun| > 1e-9 rsun + C*eps*D^2/rsun` or `D - d cos(alpha) < -tol`",
@@ -329,7 +329,7 @@
    "precondition": "`D > rsun`",
    "invariant": "every limb point seen from the observer has angular distance `arcsin(rsun/D)` from the disk centre",
    "observation_point": "return of `get_limb_coordinates`",
-   "alarm": "any point's angular distance (via `atan2` of the HPC Cartesian vector, no cancellation) differs by `> 1e-9 theta + C*eps`",
+   "alarm": "any point's angular distance (via `atan2` of the HPC Cartesian vector, no cancellation) differs by `> max(1e-9, C*eps_in) theta + C*eps`, `eps_in` the largest unit round-off of observer radius and `rsun`",
    "rationale": "ties the limb construction to the angular-radius law."
   },
   {
@@ -355,7 +355,7 @@
    "precondition": "no differential rotation, finite discriminant",
    "invariant": "the promoted point `d u` is at distance `R` from the sphere centre and `d >= C.u` (the far intersection)",
    "observation_point": "before the differential-rotation branch of `SphericalScreen.calculate_distance`",
-   "alarm": "`| |d u - C| - R | > 1e-9 R + C*eps*|C|` or `d < C.u - tol`",
+   "alarm": "`| |d u - C| - R | > 1e-9 R + C*eps*(|C| + |C|^2/R) + C*eps_in*(R + |C|)` (`eps_in` the largest unit round-off of centre, distance, radius) or `d < C.u - tol`",
    "rationale": "the defining geometry of the screen assumption."
   },
   {
