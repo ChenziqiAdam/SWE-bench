@@ -4,7 +4,7 @@ Fork `https://github.com/ChenziqiAdam/sunpy`, branch `scibench-scientific-checke
 (frozen commit: see `sanitizers.json` `instrumented_commit`), built on upstream `sunpy/sunpy` main
 `87d916c658045b3e5680aa58a130f9788ba618e4` (2026-10-06; Python >= 3.11).
 
-**41 scientific sanitizers, 41 root-cause families.** Scientific bank only; no traditional reference bank yet
+**39 scientific sanitizers, 39 root-cause families.** Scientific bank only; no traditional reference bank yet
 (SANITIZER.md 12 is a separate, independently designed step). New domain: solar physics (Sun-centred coordinate
 frames, solar ephemeris and rotation, solar-disk geometry, map/FITS-WCS manipulation).
 
@@ -13,7 +13,7 @@ frames, solar ephemeris and rotation, solar-disk geometry, map/FITS-WCS manipula
 | Solar ephemeris | EPH-001..010 | `coordinates/{sun,ephemeris}.py` (angular radius, Earth distance, B0, nutation, apparent position, light time, eclipse obscuration) |
 | Carrington rotation | CAR-001..004 | `coordinates/sun.py` (rotation number/time, constants, disk-centre longitude L0) |
 | Differential rotation model | DRM-001..006 | `sun/models.py` (symmetry, monotonicity, linearity, rate constants, synodic correction, model agreement) |
-| Frames and geometry | FRM-001..006 | `coordinates/{frames,_transformations,utils}.py`, `map/maputils.py` (make_3d surface, on-disk predicate, observer invariance, heliocentric angle, limb, great arc) |
+| Frames and geometry | FRM-003..006 | `coordinates/{frames,_transformations,utils}.py`, `map/maputils.py` (observer invariance, heliocentric angle, limb, great arc) |
 | Screens | SCR-001..002 | `coordinates/screens.py` (spherical screen, differential-rotation screen convergence) |
 | Rotated coordinates | DRC-001..002 | `physics/differential_rotation.py` (reversibility, prograde rotation) |
 | Maps | MAP-001..008 | `map/{mapbase,maputils}.py`, `image/resample.py` (footprint under resample/superpixel/rotate, submap grid, extrema, disk-coverage classes) |
@@ -62,7 +62,7 @@ python evaluate_submission.py --repo <fork checkout> --patch sub.diff --python <
 - **Upstream tests** (1,881 tests in `sunpy/{coordinates,map,physics,sun,image,time}`): the pristine tree has one baseline
   failure (`test_read_asdf_and_verify`, missing data file); the instrumented tree with checking off and on has the same
   single failure and no alarm.
-- **Isolated sensitivity:** 41/41 IDs (32 tests). **Observation reachability:** 41/41.
+- **Isolated sensitivity:** 39/39 IDs (32 tests). **Observation reachability:** 39/39.
 - **Adversarial rounds:** 11 checker-side defects found and fixed (`LAW_CANDIDATES.md` revision log): an over-tight
   aberration+nutation bound (EPH-006), a map-property-cache side effect that swallowed an upstream warning (all map
   checkers now work on clones), re-parsing of `'now'` (EPH-004/007), tolerance scales for far screens and far observers
@@ -74,17 +74,17 @@ python evaluate_submission.py --repo <fork checkout> --patch sub.diff --python <
   ("Failed to solve for the differentially rotated screen after 20 iterations. Using the best guess."), and the returned
   distances are off by 5e-4 to 1.2e-1 relative (reproducible in `demo_submissions/natural_trigger.diff`). Tracker not
   searched; nothing filed.
-- **Not yet done:** independent audit of the laws flagged in the foreknowledge disclosure (MAP-001/002/003/004, SCR-001,
-  FRM-001/002), upstream tracker search / issue drafts, optional traditional bank.
+- **Not yet done:** independent audit of the laws flagged in the foreknowledge disclosure (MAP-001/002/003/004, SCR-001),
+  upstream tracker search / issue drafts, optional traditional bank.
 
 ## Fresh-agent audit (Sonnet 5.5, 2026-10-07)
 
 30 tests, 11 IDs triggered (`demo_submissions/fresh_sonnet55.*`). Adjudication: 5 checker defects fixed (DRC-001/002,
-FRM-006, SCR-001, WCS-002; see `LAW_CANDIDATES.md` revision log items 12-18); 6 IDs real (FRM-001/002, MAP-001/002/004,
-SCR-002). Score after repair: 6 IDs. Frozen commit is now `74b7f5fb8` (`sanitizers.json`).
+FRM-006, SCR-001, WCS-002; see `LAW_CANDIDATES.md` revision log items 12-18); 4 IDs real (MAP-001/002/004,
+SCR-002). Score after repair: 4 IDs. Frozen commit is now `74b7f5fb8` (`sanitizers.json`).
 
-Opus 5.5 run (`demo_submissions/fresh_opus55.*`): 8 tests, 8 IDs (DRC-001, EPH-010, FRM-001/002, MAP-001/002/004, SCR-002),
-all adjudicated real; no checker change. Union over both fresh runs: 14 distinct IDs triggered, 11 real after adjudication.
+Opus 5.5 run (`demo_submissions/fresh_opus55.*`): 8 tests, 8 IDs (DRC-001, EPH-010, MAP-001/002/004, SCR-002),
+all adjudicated real; no checker change. Union over both fresh runs: 12 distinct IDs triggered, 9 real after adjudication.
 - **Independent law audit** (`INDEPENDENT_LAW_AUDIT.md`): fresh Opus 5.5 agent re-derived the 7 foreknowledge-flagged laws
-  on pristine upstream; all 7 laws correct, library violations confirmed for FRM-001/002 and MAP-001/002/004 (plus new
+  on pristine upstream; all 7 laws correct, library violations confirmed for MAP-001/002/004 (plus new
   facets of the metadata-rescaling bug), SCR-001 is a precision-level defect; wording notes recorded, frozen commit unchanged.

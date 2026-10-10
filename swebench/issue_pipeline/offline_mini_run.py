@@ -197,7 +197,14 @@ class _GatewayHandler(BaseHTTPRequestHandler):
             conn = None
             attempt_started = time.time()
             try:
-                conn = conn_cls(parsed.netloc, timeout=600)
+                upstream_proxy = os.environ.get("GATEWAY_UPSTREAM_PROXY")
+                if upstream_proxy and parsed.scheme == "https":
+                    # Optional CONNECT tunnel for the upstream hop only.
+                    proxy = urlparse(upstream_proxy)
+                    conn = conn_cls(proxy.hostname, proxy.port, timeout=600)
+                    conn.set_tunnel(parsed.hostname, parsed.port or 443)
+                else:
+                    conn = conn_cls(parsed.netloc, timeout=600)
                 conn.request(
                     self.command, prefix + self.path, body=body, headers=headers
                 )

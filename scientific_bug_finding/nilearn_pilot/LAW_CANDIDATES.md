@@ -55,12 +55,7 @@ span{1, t}). Obs: return of `_detrend`. Alarm: for any column, `|sum(out)|` or
 `|r_i| <= 1`; `eps_d` of the working dtype, float32 stays float32). Fam `detrend_orthogonality`.
 Why: linear detrending is defined as projecting out the drift.
 
-**SIG-002 Z-scoring yields zero mean and unit sample variance.** Pre:
-`standardize="zscore_sample"`, `n >= 2`, finite; column spread (after detrending, if any)
-`std >= 1e6 * eps_d * max|x_in|` with `x_in` the input before detrending (below that the column
-is numerically constant and the law does not apply). Law: `mean(out) = 0`, `var(out, ddof=1) = 1`. Obs: return of
-`standardize_signal`. Alarm: `|mean| > C * eps_d * q` or `|var - 1| > C * eps_d * q` with
-`q = max|x_in| / std` (output error is `eps_d * q` per element). Fam `zscore_moments`.
+**SIG-002** (retired 2026-10-10; z-score moments, only reachable at amplitude/confound scale below ~1e-13).
 
 **SIG-003 Percent signal change scales by the baseline.** Pre: `standardize="psc"`,
 `detrend=False`, column `|mean| >= 1e6 * eps_d * std`. Law: output has zero mean and
@@ -79,16 +74,7 @@ float64: error `~ C * eps * order * (nyq/f_c)^order` stays below 1e-6 inside the
 precondition). Fam `butterworth_cutoff_gain`. Why: a cut-off in Hz that is mapped through the
 wrong sampling rate or the wrong band type changes which frequencies survive.
 
-**SIG-005 Confound regression leaves the signal uncorrelated with the confounds.** Pre:
-`confounds` finite, `detrend=False`, no low/high-pass filter, `sample_mask=None`,
-`runs=None`, `standardize` not `psc`; if `standardize_confounds=False`, `standardize` in
-`{False, None}`. Law: the cleaned column is orthogonal to every confound column (centred if
-`standardize_confounds=True`, raw otherwise). Obs: return of `clean`. Alarm:
-`|c . out| > C * eps * kappa * ||c||_2 * ||out||_2` for any column, where `kappa` is the
-condition number of the retained confound subspace (singular values above `1e-8 s_max`);
-skipped when a singular value lies in `[1e-14 s_max, 1e-8 s_max]` (rank ambiguity, P). Fam
-`confound_regression_orthogonality`. Why: the purpose of `confounds=` is removing their linear
-contribution.
+**SIG-005** (retired 2026-10-10; confound orthogonality, only reachable at amplitude/confound scale below ~1e-13).
 
 **SIG-006 Cosine drift regressors form an orthonormal DCT-II basis.** Pre: any `n >= 2`
 frames, `high_pass > 0` producing at least one non-constant column. Law: the non-constant
@@ -290,13 +276,7 @@ output. Law: each `Omega[..., k]` is symmetric with `lambda_min > 0`. Obs: end o
 
 ## F. Mass-univariate inference -- `mass_univariate/`
 
-**MU-001 Permutation-test t scores equal GLM t scores.** Pre: finite data, `n > p + 2`,
-design `kappa <= 1e8`; up to 5 descriptors and all tested regressors sampled. Law: the
-original-data t score of regressor `r` equals the Wald t of column `r` of the OLS fit on
-`[tested_r, confounds (+ intercept)]`. Obs: `permuted_ols`, right after the original scores.
-Alarm: `|t_perm - t_glm| > C * eps * kappa * (1 + |t|) * (1 + t^2 / dof)`, where `1 + t^2/dof =
-1/(1 - R^2)` is the conditioning of `t`; entries with `1 + t^2/dof > 1e8` (exact or numerically
-exact fit: `t` infinite / rounding noise) are excluded. Fam `permuted_ols_vs_glm`.
+**MU-001** (retired 2026-10-10; permutation-test t equals OLS t, only reachable in a precision-level conditioning regime).
 
 **MU-002 Two-sided TFCE is odd in the statistic map.** Pre: `two_sided_test=True`. Law:
 `tfce(-X) = -tfce(X)`. Obs: return of `calculate_tfce` (calls sampled: 1, 2, 4, 8, ...).
@@ -455,7 +435,7 @@ Real after adjudication (checker kept): SIG-002 (std < eps guard, above), THR-00
   (std 1) at n = 1e5, offset 1e4; `high_variance_confounds` returns the constant vector as first component at
   offset >= 1e5 (n = 2000) (cos with float64 result 0.02). Not seen at n <= 2000 with offset <= 1e4.
 
-Verification after the fixes: isolated sensitivity 33/33, reachability 42/42, fuzz seeds 50-57 (896 cases) and
+Verification after the fixes: isolated sensitivity 33/33, reachability 42/42 (before the 2026-10-10 retirements; 39 IDs remain), fuzz seeds 50-57 (896 cases) and
 stress 60-67 (896 cases, scales to +-30 decades) show only SIG-002 alarms at extreme scales.
 
 First fresh Opus 5.5 run (frozen commit `0b2557ea4`, 7 passing tests in 3 files, 8 IDs; `fresh_opus55/`). Scorer defect found

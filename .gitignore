@@ -174,7 +174,7 @@ notebooks/
 PROGRESS.md
 outputs/
 scripts/
-
+overleaf/
 paper_replication_tasks/
 .sanitizer_eval_workspace/
 AGENTS.md

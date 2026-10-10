@@ -175,7 +175,8 @@ def run():
 
 def main():
     run()
-    ids = [f"NL-{a}-{i:03d}" for a, k in (("SIG", 8), ("GLM", 8), ("HRF", 4), ("THR", 3), ("CON", 9), ("MU", 5), ("IMG", 5)) for i in range(1, k + 1)]
+    retired = {"NL-SIG-002", "NL-SIG-005", "NL-MU-001"}
+    ids = [f"NL-{a}-{i:03d}" for a, k in (("SIG", 8), ("GLM", 8), ("HRF", 4), ("THR", 3), ("CON", 9), ("MU", 5), ("IMG", 5)) for i in range(1, k + 1) if f"NL-{a}-{i:03d}" not in retired]
     reached = {i: sc.REACHED.get(i, 0) for i in ids}
     alarms = {}
     for line in open(log):

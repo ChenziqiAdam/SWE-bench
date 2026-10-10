@@ -99,16 +99,6 @@ def test_eq004_casimir(log):
     assert fired(log) == {"DC-EQ-004"}
 
 
-def test_eq005_shell(log):
-    from deepchem.utils import equivariance_utils as eq
-    th, ph = torch.tensor([0.4, 1.9]), torch.tensor([0.2, 3.3])
-    Y = eq.SphericalHarmonics().get(3, th, ph)
-    sc.check_spherical_harmonics(3, th, ph, Y)
-    assert fired(log) == set()
-    sc.check_spherical_harmonics(3, th, ph, 1.05 * Y)
-    assert fired(log) == {"DC-EQ-005"}
-
-
 def test_eq007_eq008_exp_log(log):
     from deepchem.utils import equivariance_utils as eq
     G = eq.SO3()

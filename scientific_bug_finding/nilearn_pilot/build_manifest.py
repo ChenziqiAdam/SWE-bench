@@ -3,10 +3,8 @@ import json, re, sys
 doc = open("LAW_CANDIDATES.md").read()
 SRC = {  # id -> (source, symbol, quantity)
  "SIG-001": ("nilearn/signal.py", "_detrend", "linear-detrended time series"),
- "SIG-002": ("nilearn/signal.py", "standardize_signal", "z-scored time series"),
  "SIG-003": ("nilearn/signal.py", "standardize_signal", "percent signal change"),
  "SIG-004": ("nilearn/signal.py", "butterworth", "Butterworth cut-off gain"),
- "SIG-005": ("nilearn/signal.py", "clean", "confound-regressed time series"),
  "SIG-006": ("nilearn/signal.py", "create_cosine_drift", "DCT-II drift basis"),
  "SIG-007": ("nilearn/signal.py", "create_cosine_drift", "high-pass cut-off frequency"),
  "SIG-008": ("nilearn/signal.py", "high_variance_confounds", "CompCor components"),
@@ -34,7 +32,6 @@ SRC = {  # id -> (source, symbol, quantity)
  "CON-007": ("nilearn/connectome/connectivity_matrices.py", "ConnectivityMeasure._fit_transform", "tangent-space embedding"),
  "CON-008": ("nilearn/connectome/group_sparse_cov.py", "_group_sparse_covariance", "group-sparse precision graph"),
  "CON-009": ("nilearn/connectome/group_sparse_cov.py", "_group_sparse_covariance", "estimated precision matrices"),
- "MU-001": ("nilearn/mass_univariate/permuted_least_squares.py", "permuted_ols", "permutation-test t scores"),
  "MU-002": ("nilearn/mass_univariate/_utils.py", "calculate_tfce", "TFCE statistic"),
  "MU-003": ("nilearn/mass_univariate/_utils.py", "calculate_tfce", "TFCE statistic"),
  "MU-004": ("nilearn/mass_univariate/_utils.py", "null_to_p", "permutation p-value"),

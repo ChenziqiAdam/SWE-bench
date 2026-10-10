@@ -16,6 +16,11 @@ from swebench.harness.test_spec.test_spec import make_test_spec
 
 _INSTANCES = Path("outputs/issues_no_tests_new_ds/instances.jsonl")
 
+# These 8 were REMOVED from Issues_No_Tests_new.xlsx on 2026-10-10 (75 -> 67
+# rows) because no feasible curation exists (C++ source builds of psi4/dolfinx,
+# 2015 sunpy stack, QGIS Qt5 images with an unproven QGIS pipeline). Their
+# placeholder specs stay so older 75-row runs still build; a regenerated
+# 67-row instances.jsonl must contain none of them.
 # PRs deliberately shipped as non-evaluable placeholders (base repo predates
 # any supported Python, or needs heavy C/C++ toolchain curation). qiskit-845,
 # obspy-956, yt-2128/2485 were curated 2026-10-04 and are no longer here.
@@ -78,9 +83,8 @@ def test_non_evaluable_placeholder_set_is_exactly_as_expected():
         if _is_non_evaluable(spec):
             actual.add((repo, pr))
             assert spec.get("_curation_todo"), f"{repo}#{pr} placeholder lacks _curation_todo"
-    assert actual == EXPECTED_NON_EVALUABLE, (
+    assert actual <= EXPECTED_NON_EVALUABLE, (
         f"non-evaluable set drifted.\n  unexpected: {actual - EXPECTED_NON_EVALUABLE}"
-        f"\n  missing: {EXPECTED_NON_EVALUABLE - actual}"
     )
 
 

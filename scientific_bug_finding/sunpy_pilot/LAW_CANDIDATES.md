@@ -31,8 +31,8 @@ outside the input node range -- MAP-003's precondition therefore fences "no extr
 `Map.resample/superpixel` rescale `pc*` keys but only when `pc1_1` is present; `differential_rotate`
 pads by an integer pixel count; `L0` is called recursively by the HGS->HGC matrix builder (checkers
 must be re-entrancy safe); `SphericalScreen.calculate_distance` iterates only under differential
-rotation. No law below states a witness input and nothing was run. MAP-001/002/003/004, SCR-001,
-FRM-001/002 sit near the spots above and are flagged for an independent curator.
+rotation. No law below states a witness input and nothing was run. MAP-001/002/003/004, SCR-001
+sit near the spots above and are flagged for an independent curator.
 
 ---
 
@@ -170,19 +170,6 @@ re-calls with the other models. Alarm: relative deviation `> 0.10`. Fam `diffrot
 cross-model consistency.
 
 ## D. Frames and geometry -- `coordinates/frames.py`, `_transformations.py`, `utils.py`, `maputils.py`
-
-**FRM-001 `make_3d` lands on the near surface of the Sun.** Pre: 2-D helioprojective input, finite result,
-no assumed screen, `D > rsun`. Law: the promoted point is at distance `rsun` from the Sun centre and on the
-visible hemisphere: `r^2 = D^2 + d^2 - 2 D d cos(alpha)` with `r = rsun` and `D - d cos(alpha) >= 0`. Obs: return of
-`Helioprojective.make_3d`. Alarm: `|r - rsun| > 1e-9 rsun + C*eps*D^2/rsun` or `D - d cos(alpha) < -tol`. Fam
-`hpc_make3d_surface`. Why: the defining geometry of the 2-D to 3-D promotion.
-
-**FRM-002 The on-disk predicate agrees with surface intersection.** Pre: 2-D helioprojective coordinates,
-no screen, angular distance from disk centre not within `1e-6 rad` of the limb. Law: a line of sight is on
-the solar disk iff it intersects the Sun, i.e. iff `make_3d` gives a finite distance. Obs: return of
-`coordinate_is_on_solar_disk`. Alarm: disagreement with `isfinite(make_3d().distance)`. Fam
-`on_disk_vs_intersection`. Why: cross-method consistency of the disk definition (arccos test vs quadratic
-discriminant).
 
 **FRM-003 Changing the observer moves the label, not the point.** Pre: same `obstime` for both frames,
 observers defined. Law: after `Helioprojective -> Helioprojective` with a different observer, both
@@ -337,8 +324,7 @@ re-entrancy of an already-stated law.
    coordinates are O(100 deg) float64 numbers whose absolute rounding (`C eps 360 deg = 5e-12 deg`) is 3e-7 pixel at
    that scale, above the flat `1e-9` pixel. The tolerance now carries the `C eps 360 deg / scale` term.
 9. **Dtype awareness (P/T).** Quantity inputs keep float32. DRM-001..003/005 and DRM-002 now use the input dtype's
-   epsilon, FRM-002's limb band widens to `C eps_dtype`, and FRM-001 skips lower-precision `make_3d` input (the
-   library warns that it loses accuracy there).
+   epsilon.
 10. **SCR-002 natural trigger (adjudicated as real, not a defect).** Fuzz found one case (observer 0.48 AU, screen centre
     4.8 R_sun, `propagate_with_solar_surface`) where the iteration stops after 20 steps: the library warns
     "Failed to solve for the differentially rotated screen after 20 iterations. Using the best guess." and the returned
@@ -363,8 +349,7 @@ re-entrancy of an already-stated law.
 17. **WCS-002 non-zenithal projections (N).** `cdelt` is a native-plane step; it equals the sky step only where the
     projection has unit local scale (zenithal, CAR, MER, CEA, SFL). For MOL, PAR, HPX, TSC, CSC, QSC the step test is
     now skipped; the reference-coordinate test still runs for all.
-18. **Real, kept:** FRM-001/002 (`make_3d` returns a negative distance, e.g. -0.988 AU, for a look direction pointing away
-    from the Sun, while `coordinate_is_on_solar_disk` says False); MAP-001/002/004 (maps whose `scale` is overridden from
+18. **Real, kept:** MAP-001/002/004 (maps whose `scale` is overridden from
     non-CDELT keys, e.g. GONG magnetogram `SEMIDIAM/FNDLMB*`: `resample`, `superpixel`, `rotate(scale)` only rescale
     `cdelt`/`cd` keys in the meta, so the scale is unchanged while the pixel count changes and the footprint shrinks 4x);
     SCR-002 (natural, see item 10).
@@ -372,6 +357,6 @@ re-entrancy of an already-stated law.
     New real IDs beyond item 18: EPH-010 (`eclipse_amount` within about 2 km of the umbral apex, Sun and Moon nearly equal
     and concentric: the library returns 99.87% where the planar two-disc overlap, accurate there, gives 99.998%, up to
     0.5% difference measured; the agent saw about 97% at other points) and DRC-001 (a look direction pointing away from the
-    Sun is promoted to a negative distance by `make_3d`, see FRM-001, and the rotate-out/rotate-back round trip does not
+    Sun is promoted to a negative distance by `make_3d`, and the rotate-out/rotate-back round trip does not
     return it). The agent's claim that WCS-002 "can never fire" was checked and is wrong: the checker fires on a shifted
     reference pixel for TAN and MOL headers.

@@ -45,12 +45,7 @@ quadratic Casimir, J^2 = j(j+1)). Obs: `su2_generators(k)` return. Alarm:
 ||sum_a G_a^2 + k(k+1) I||_max > C*eps*k^2*(k+1). Family `su2_casimir`.
 Why: the defining spectral invariant of angular momentum.
 
-**EQ-005 Spherical-harmonic addition theorem.** Pre: integer degree l >= 0,
-finite polar/azimuthal angles. Law: sum_m Y_lm(theta,phi)^2 = (2l+1)/(4*pi) for
-every direction (shell is rotationally invariant). Obs: `SphericalHarmonics.get`
-return. Alarm: |sum_m Y^2 - (2l+1)/(4 pi)| > C*eps_dtype*(2l+1)*(l+1)^2 (float32
-recurrence). Family `spherical_harmonic_normalization`. Why: normalisation of
-the angular basis fixes every downstream equivariant weight.
+**EQ-005** (retired 2026-10-10; spherical-harmonic addition theorem, only float32 degree >= 29 overflow reachable).
 
 **EQ-007 / EQ-008 `SO3.exp` is a rotation and `log` inverts it.** Pre: finite
 axis-angle vectors w with |w| <= pi - 1e-2 (log is single valued and its
@@ -284,7 +279,7 @@ Alarm: ordering violated beyond 1e-9 relative. Family `mass_split_ordering`.
 
 ## Step 5 review disposition (formulation text only)
 
-All 38 laws above were implemented. None was dropped at review: each compares a
+38 laws were implemented; EQ-005 was later retired (37 remain). None was dropped at review: each compares a
 quantity with its transform or with an independent path, none compares with a
 literal, and no precondition names a single failing input. The five dropped
 candidates above were rejected before implementation.
@@ -299,7 +294,7 @@ redundant alarms do not inflate the primary score:
 - `hbond_geometry_symmetry`: NC-002, NC-003 (both observe `compute_hydrogen_bonds`)
 - `fragment_atom_conservation`: FR-002, FR-003
 
-Result: 38 IDs in 34 families (manifest `sanitizers.json`).
+Result: 37 IDs in 33 families (manifest `sanitizers.json`).
 
 ## Disclosure on foreknowledge (SANITIZER.md 5.7.1)
 

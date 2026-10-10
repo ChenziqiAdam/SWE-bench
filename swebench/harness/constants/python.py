@@ -1814,6 +1814,12 @@ _PYSCF_17_GEN_SPEC = {
         "cmake --build . --target libcint --parallel 4; fi; "
         "cmake --build . --target libxc libxcfun --parallel 4; "
         "cmake --build . --parallel 4; cd /testbed; "
+        # Fail the image build loudly (with the lib listing) instead of
+        # producing an image whose `import pyscf` dies on a missing libcint.
+        "find /testbed/pyscf/lib -name 'libc*.so*' 2>&1 | head -40; "
+        "test -f /testbed/pyscf/lib/libcgto.so "
+        "&& find /testbed/pyscf/lib -name 'libcint.so*' | grep -q . "
+        "|| { echo 'pyscf native libs (libcgto/libcint) were not built' >&2; exit 1; }; "
         "LDFLAGS='-L/usr/lib/x86_64-linux-gnu -lblas' "
         "python -m pip install -e . --no-build-isolation"
     ),

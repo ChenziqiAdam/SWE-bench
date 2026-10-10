@@ -5,13 +5,13 @@
   "base_tag": null,
   "fork_repository": "https://github.com/ChenziqiAdam/deepchem",
   "fork_branch": "scibench-scientific-checkers-pilot",
-  "instrumented_commit": "73c13e799a977a48ab6f83c88b42355a53c5f0c4",
+  "instrumented_commit": "f9ee3b31b812277a922b2b33ddb4c907e3709acb",
   "note": "Scientific bank only (traditional reference bank not built). Laws were written before any checker code or execution (LAW_CANDIDATES.md) and frozen before triggerability analysis.",
   "audit": {
     "normal_suite": "15 instrumented-module test targets: 147 passed, 42 failed with checking off and the identical 42 fail with checking on (all missing optional dependencies: DGL in the equivariance setUp, vina, etc.); one alarm, DC-ES-004, from upstream's own test_log_prob (sigma shaped like y)",
     "behaviour_parity": "sha256 over ~90 deterministic public-API outputs is identical on pristine base 455d07f3e, instrumented with logger unset, and instrumented with logger enabled",
-    "isolated_sensitivity": "38/38 IDs (36 tests: injected violating state or fault injection alarms exactly the expected IDs; valid state silent; no swallowed exception; global numpy RNG state and torch default dtype restored)",
-    "public_hook_reachability": "38/38 IDs reached through valid public-API calls; zero swallowed exceptions",
+    "isolated_sensitivity": "37/37 IDs (35 tests: injected violating state or fault injection alarms exactly the expected IDs; valid state silent; no swallowed exception; global numpy RNG state and torch default dtype restored)",
+    "public_hook_reachability": "37/37 IDs reached through valid public-API calls; zero swallowed exceptions",
     "adversarial_rounds": {
       "seeds_and_size": {
         "0": 12,
@@ -134,18 +134,6 @@
       "rationale": "J^2 = j(j+1) is the defining spectral invariant of angular momentum."
     },
     {
-      "id": "DC-EQ-005",
-      "family": "spherical_harmonic_normalization",
-      "source": "deepchem/utils/equivariance_utils.py",
-      "symbol": "SphericalHarmonics.get",
-      "scientific_quantity": "real spherical harmonics of degree l",
-      "precondition": "Integer degree 0 <= l <= 40 and finite angles of magnitude <= 1e8.",
-      "invariant": "For every direction, sum over m of Y_lm^2 equals (2l+1)/(4 pi) (addition theorem).",
-      "observation_point": "Before SphericalHarmonics.get returns.",
-      "alarm": "max|sum_m Y^2 - (2l+1)/(4 pi)| exceeds 16*eps_dtype*(l+1)^2*(2l+1)/(4 pi), or the sum is non-finite.",
-      "rationale": "The normalisation of the angular basis fixes the scale of every equivariant weight built on it."
-    },
-    {
       "id": "DC-EQ-007",
       "family": "so3_exponential_map",
       "source": "deepchem/utils/equivariance_utils.py",
@@ -175,7 +163,7 @@
       "source": "deepchem/utils/equivariance_utils.py",
       "symbol": "get_spherical_from_cartesian",
       "scientific_quantity": "spherical coordinates of a vector",
-      "precondition": "Finite vectors whose norms keep squares representable in the working dtype; positive divide_radius_by.",
+      "precondition": "Finite vectors whose norms keep squares representable in the working dtype; positive divide_radius_by; the output radius |v|/divide_radius_by (and its double) is a normal number of the dtype.",
       "invariant": "The radial output equals |v|/divide_radius_by; scaling v by 2 doubles the radial output and leaves both angles unchanged.",
       "observation_point": "Before get_spherical_from_cartesian returns; re-calls the function on 2v.",
       "alarm": "Relative radial error, relative error of the doubled radial output, or any angle change exceeds 16*eps_dtype.",
@@ -226,7 +214,7 @@
       "precondition": "Electron positions with all electron-nucleus distances positive and finite.",
       "invariant": "For each electron the harmonic mean over nuclei lies in [min distance, max distance].",
       "observation_point": "Before harmonic_mean returns.",
-      "alarm": "The result is non-finite, below min d*(1 - 64*eps*n_nuclei), or above max d*(1 + 64*eps*n_nuclei).",
+      "alarm": "The result is non-finite, below min d*(1 - 64*eps*n_nuclei), or above max d*(1 + 64*eps*n_nuclei), eps being that of the coarsest floating dtype among the electron positions and the nucleus positions (eps64 for float64/non-array inputs).",
       "rationale": "It sets the width of the asymmetric proposal; a value outside the distance range is not a length scale of the system."
     },
     {
@@ -271,7 +259,7 @@
       "source": "deepchem/utils/geometry_utils.py",
       "symbol": "rotate_molecules",
       "scientific_quantity": "rotated molecular coordinates",
-      "precondition": "Finite coordinate arrays (n,3), n <= 300, magnitudes <= 1e100.",
+      "precondition": "Finite coordinate arrays (n,3), n <= 300, with 1e-100 <= max|coordinate| <= 1e100.",
       "invariant": "Rotation preserves all intra-molecule distances and every atom's distance from the origin.",
       "observation_point": "Before rotate_molecules returns.",
       "alarm": "A pairwise-distance or origin-radius change exceeds 192*eps64*max|coordinate|, or the shapes differ.",
@@ -283,7 +271,7 @@
       "source": "deepchem/utils/geometry_utils.py",
       "symbol": "angle_between",
       "scientific_quantity": "angle between two vectors",
-      "precondition": "Finite nonzero vectors of equal length with magnitudes between 1e-100 and 1e100.",
+      "precondition": "Finite nonzero vectors of equal length with magnitudes between 1e-100 and 1e100; for floating input dtypes the squared norms are normal numbers of that dtype (no overflow or underflow).",
       "invariant": "The angle equals atan2(|a x b|, a.b), is symmetric in its arguments and is unchanged by scaling either vector.",
       "observation_point": "Before angle_between returns; re-calls it with swapped and with scaled (2a, 4b) arguments.",
       "alarm": "Any of the three comparisons differs by more than 64*eps/max(sin(theta), 1e-8) (arccos conditioning), eps being that of the coarsest floating input dtype (eps64 for float64/non-array inputs).",
@@ -295,7 +283,7 @@
       "source": "deepchem/utils/geometry_utils.py",
       "symbol": "compute_pairwise_distances",
       "scientific_quantity": "interatomic distance matrix",
-      "precondition": "Finite coordinate arrays (m,3) and (n,3) with magnitudes <= 1e100.",
+      "precondition": "Finite coordinate arrays (m,3) and (n,3) with 1e-100 <= max|coordinate| <= 1e100.",
       "invariant": "Distances are invariant under a common rigid motion and D(A,B) equals D(B,A) transposed.",
       "observation_point": "Before compute_pairwise_distances returns; re-calls it on a rigidly moved copy (translation scaled to the cloud) and on swapped arguments.",
       "alarm": "Moved-copy difference exceeds 256*eps64*(max|coordinate| + |translation|), or transpose difference exceeds 8*eps64*max distance.",
@@ -355,7 +343,7 @@
       "source": "deepchem/utils/noncovalent_utils.py",
       "symbol": "compute_hydrogen_bonds",
       "scientific_quantity": "hydrogen-bond contacts between two fragments",
-      "precondition": "Fragments with coordinates consistent with the supplied distance matrix; no distance, hydrogen distance or angle within rounding of its threshold.",
+      "precondition": "Fragments with coordinates consistent with the supplied distance matrix; no distance, hydrogen distance or angle within rounding of its threshold, rounding being taken at the eps of the coarsest floating coordinate dtype (angle margin 1e3*eps*scale/|v|).",
       "invariant": "The contact set is unchanged by a common rigid motion of both fragments.",
       "observation_point": "Before compute_hydrogen_bonds returns; re-calls it on rigidly moved copies with all arguments forwarded.",
       "alarm": "The contact sets differ in any distance bin.",
@@ -391,7 +379,7 @@
       "source": "deepchem/utils/noncovalent_utils.py",
       "symbol": "is_cation_pi",
       "scientific_quantity": "cation-pi contact",
-      "precondition": "Finite 3-vectors, positive distance cutoff, angle cutoff in (0,90); no distance or angle within rounding of its threshold.",
+      "precondition": "Finite 3-vectors, positive distance cutoff, angle cutoff in (0,90); no distance or angle within rounding of its threshold, rounding being taken at the eps of the coarsest floating input dtype (angle margin 1e3*eps*scale/|v|).",
       "invariant": "The result is unchanged by a common rotation+translation and by flipping the ring normal.",
       "observation_point": "Before is_cation_pi returns; re-calls it on a rigidly moved copy and with the normal negated.",
       "alarm": "Either re-call returns a different boolean.",
@@ -556,5 +544,12 @@
     "flaky": "installed",
     "pdbfixer+openmm": "8.6.1",
     "not_available": "dqclibs (no cp312 wheel; libcint-backed dft_utils unusable), a working dgl wheel on macOS (graph-NN code and equivariance unit-test setUp unusable), vina, matminer, mordred, transformers"
-  }
+  },
+  "retired": [
+    {
+      "id": "DC-EQ-005",
+      "date": "2026-10-10",
+      "reason": "only reachable trigger is precision-level and extreme: float32 SphericalHarmonics returns non-finite values for degree >= 29 (semifactorial(2m-1) exceeds the float32 maximum); float64 and degrees <= 28 are exact; not scientifically meaningful in realistic use"
+    }
+  ]
 }

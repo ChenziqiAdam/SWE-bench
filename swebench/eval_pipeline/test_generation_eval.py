@@ -2545,6 +2545,33 @@ def _evaluate_one(
         close_logger(inst_logger)
         return report[instance_id]
 
+    if instance_non_evaluable(instance):
+        # Deliberate placeholder spec: its test command is `echo ... && false`,
+        # so building an image only risks an infrastructure error (e.g. a
+        # podman commit failure) overwriting the excluded verdict.
+        report = {
+            instance_id: {
+                "status": "excluded",
+                "failure_reason": "non_evaluable_spec",
+                "test_patch_applied": False,
+                "gold_patch_applied": False,
+                "base_failed_tests": [],
+                "gold_passed_tests": [],
+                "selected_test_languages": [],
+                "selected_test_paths": [],
+                "selected_test_commands": [],
+                "inference_metrics": prediction.get("metrics", {}),
+                "evaluation_wall_time_seconds": round(
+                    time.perf_counter() - evaluation_started, 6
+                ),
+            }
+        }
+        _write_report_and_cleanup_instance_image(
+            report_path, report, instance, client, clean_images
+        )
+        close_logger(inst_logger)
+        return report[instance_id]
+
     container = None
     base_duration = None
     gold_duration = None

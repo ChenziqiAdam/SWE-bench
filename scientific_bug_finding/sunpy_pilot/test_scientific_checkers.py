@@ -199,22 +199,6 @@ def _hpc(tx=(300, 600, 900), ty=(100, -200, 300)):
     return SkyCoord(list(tx) * u.arcsec, list(ty) * u.arcsec, frame=Helioprojective, observer="earth", obstime=T)
 
 
-def test_frm_001():
-    c = _hpc()
-    c3 = c.make_3d()
-    f = c.frame
-    args = (f, f.Tx, f.Ty, c3.distance)
-    assert not run(sc.check_make3d, *args)
-    assert "SP-FRM-001" in run(sc.check_make3d, f, f.Tx, f.Ty, c3.distance * 1.001)
-
-
-def test_frm_002():
-    c = _hpc((0, 300, 1500), (0, 100, 0))
-    res = sunpy.map.coordinate_is_on_solar_disk(c)
-    assert not run(sc.check_on_disk, c, res)
-    assert "SP-FRM-002" in run(sc.check_on_disk, c, ~res)
-
-
 def test_frm_003():
     c = _hpc((0, 300, 600), (0, 100, 0))
     other = get_body_heliographic_stonyhurst("mars", T)

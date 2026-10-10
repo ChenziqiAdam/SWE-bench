@@ -352,7 +352,17 @@ def render_test_generation_table(
         # validation is therefore authoritative even if a later test command
         # happens to emit parseable output.
         infrastructure_failure = not buildable
-        if infrastructure_failure:
+        # A podman storage/commit race (flagged `transient` by validate_base)
+        # says nothing about the repo, so it must neither exclude the instance
+        # nor veto a real evaluation verdict; it is revalidated on rerun.
+        transient_build_failure = infrastructure_failure and bool(
+            validation.get("transient")
+        )
+        if transient_build_failure:
+            infrastructure_failure = False
+            if status not in {"resolved", "unresolved"}:
+                status = "errored"
+        elif infrastructure_failure:
             status = "excluded"
         # Known environment limitations are never charged to the model; a real
         # "resolved" is kept as is.
@@ -386,6 +396,7 @@ def render_test_generation_table(
                 or (
                     "docker_infrastructure_failure" if pipeline_failure else ""
                 )
+                or ("build_infrastructure_failure" if transient_build_failure else "")
             ),
             "evaluation_error": info.get("error", "") or (pipeline_failure or ""),
             "build_validation_error": validation.get("error", ""),

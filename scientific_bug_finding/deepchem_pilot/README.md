@@ -5,7 +5,9 @@ Fork `https://github.com/ChenziqiAdam/deepchem`, branch
 built on upstream master `455d07f3e17e880a4d980b5b0365e4a02b417e14`
 (2.8.1.dev, 2026-08-21). The fork's `master` equals that commit.
 
-**38 scientific sanitizers, 34 root-cause families.** Scientific bank only; no
+**37 scientific sanitizers, 33 root-cause families** (`DC-EQ-005` retired 2026-10-10:
+its only reachable trigger is float32 non-finite output for degree >= 29, a
+precision-level extreme). Scientific bank only; no
 traditional reference bank yet (SANITIZER.md 12 is a separate, independently
 designed step). Domain: chemistry/physics ML infrastructure, which complements
 the existing banks (biology, astronomy, seismology, materials, quantum
@@ -76,7 +78,7 @@ python evaluate_submission.py --repo <fork checkout> --patch sub.diff \
   on ~90 deterministic public-API outputs (sha256 equal in all three modes).
 - Upstream tests of the 15 instrumented-module targets: 147 pass / 42 fail with
   checking off, the same 42 with it on (missing optional dependencies).
-- Isolated sensitivity 38/38 IDs; observation reachability 38/38 IDs.
+- Isolated sensitivity 37/37 IDs; observation reachability 37/37 IDs.
 - Six adversarial fuzz rounds + a static T/X/P/N derivation: 6 checker-side
   defects found and fixed (tolerance, transform, precondition classes); the last
   four rounds (seeds 3-6) were clean.

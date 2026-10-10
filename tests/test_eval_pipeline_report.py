@@ -523,3 +523,26 @@ def test_known_env_limitation_is_ignored_not_scored(tmp_path):
     assert rows["qutip__qutip-1195"]["status"] == "unresolved"
     assert "half-integer" in rows["qutip__qutip-1195"]["env_note"]
     assert rows["a__a-1"]["status"] == "resolved"
+
+
+def test_test_generation_report_transient_build_failure_keeps_verdict(tmp_path):
+    output_csv = tmp_path / "results.csv"
+    render_test_generation_table(
+        results={
+            "demo__repo-1": {"status": "resolved"},
+            "demo__repo-2": {"status": "errored"},
+        },
+        instances=[
+            {"instance_id": f"demo__repo-{i}", "repo": "demo/repo"} for i in (1, 2)
+        ],
+        output_csv=str(output_csv),
+        build_validation={
+            i: {"buildable": False, "error": "committing container", "transient": True}
+            for i in ("demo__repo-1", "demo__repo-2")
+        },
+    )
+    with open(output_csv, newline="") as handle:
+        rows = {r["instance_id"]: r for r in csv.DictReader(handle)}
+    assert rows["demo__repo-1"]["status"] == "resolved"
+    assert rows["demo__repo-2"]["status"] == "errored"
+    assert rows["demo__repo-2"]["failure_reason"] == "build_infrastructure_failure"

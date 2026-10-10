@@ -268,32 +268,6 @@
    "rationale": "cross-model consistency."
   },
   {
-   "id": "SP-FRM-001",
-   "category": "scientific",
-   "family": "hpc_make3d_surface",
-   "source": "sunpy/coordinates/frames.py",
-   "symbol": "Helioprojective.make_3d",
-   "scientific_quantity": "distance to the solar surface",
-   "precondition": "2-D helioprojective input, finite result, no assumed screen, `D > rsun`, observer radius, `rsun` and Tx/Ty all float64 (float32 metadata is outside the precondition: the quadratic cancels at `eps32 D^2/rsun`)",
-   "invariant": "the promoted point is at distance `rsun` from the Sun centre and on the visible hemisphere: `r^2 = D^2 + d^2 - 2 D d cos(alpha)` with `r = rsun` and `D - d cos(alpha) >= 0`",
-   "observation_point": "return of `Helioprojective.make_3d`",
-   "alarm": "`|r - rsun| > 1e-9 rsun + C*eps*D^2/rsun` or `D - d cos(alpha) < -tol`",
-   "rationale": "the defining geometry of the 2-D to 3-D promotion."
-  },
-  {
-   "id": "SP-FRM-002",
-   "category": "scientific",
-   "family": "on_disk_vs_intersection",
-   "source": "sunpy/map/maputils.py",
-   "symbol": "coordinate_is_on_solar_disk",
-   "scientific_quantity": "on-disk classification",
-   "precondition": "2-D helioprojective coordinates, no screen, angular distance from disk centre not within `1e-6 rad` of the limb",
-   "invariant": "a line of sight is on the solar disk iff it intersects the Sun, i.e. iff `make_3d` gives a finite distance",
-   "observation_point": "return of `coordinate_is_on_solar_disk`",
-   "alarm": "disagreement with `isfinite(make_3d().distance)`",
-   "rationale": "cross-method consistency of the disk definition (arccos test vs quadratic discriminant)."
-  },
-  {
    "id": "SP-FRM-003",
    "category": "scientific",
    "family": "hpc_observer_invariance",
@@ -316,7 +290,7 @@
    "precondition": "a 3-D coordinate with observer, radius `r > 0`, point not on the Sun-observer line",
    "invariant": "`sin(theta) = (D/r) sin(alpha)`, where `alpha` is the angle at the observer between the disk centre and the point (triangle observer-Sun centre-point)",
    "observation_point": "return of `get_heliocentric_angle`",
-   "alarm": "relative difference `> 1e-8` of `sin(theta)`",
+   "alarm": "relative difference `> 1e-8` of `sin(theta)` (position evaluated in float64)",
    "rationale": "relates the limb-darkening angle `mu` to the observed disk position."
   },
   {
@@ -342,7 +316,7 @@
    "precondition": "`sin(inner angle) >= 1e-6`",
    "invariant": "the point at parameter `p` makes angle `p*Theta` with the start vector and `(1-p)*Theta` with the end vector (angles measured from the arc centre), independent of radius",
    "observation_point": "before the return of `GreatArc.coordinates`",
-   "alarm": "any angle error `> 64 eps / sin(Theta)`",
+   "alarm": "any angle error `> 64 eps / sin(Theta)`, `eps` the largest floating epsilon among the start, end and centre coordinates",
    "rationale": "a great-circle path is a constant-speed geodesic."
   },
   {
@@ -368,7 +342,7 @@
    "precondition": "differential-rotation branch, finite starting distance",
    "invariant": "at the returned distance the 3D->2D->3D shift is below the solver tolerance (documented 1e-11, accepted 1e-9)",
    "observation_point": "return of `_iterate_calculate_distance`",
-   "alarm": "residual `|delta/distance| > 1e-9` for any element",
+   "alarm": "residual `|delta/distance| > 1e-9` for an element for which the residual changes sign continuously (a root, not a pole) on a log grid 0.05-20 x the returned distance, i.e. a root exists that the solver failed to reach",
    "rationale": "convergence of the numerical solve at its end state."
   },
   {
@@ -381,7 +355,7 @@
    "precondition": "coordinate with an HGS observer at its own `obstime`, on-disk (finite HGS), `observer` supplied",
    "invariant": "rotating to a new observer/time and back to the original observer/time recovers the 3-D input",
    "observation_point": "return of `solar_rotate_coordinate`; the checker rotates back",
-   "alarm": "`|dTx|,|dTy|` `> 1e-6 arcsec` or `|d distance| > 1e-12 D`",
+   "alarm": "`|dTx|,|dTy|` `> 1e-6 arcsec` plus a round-off allowance (`64 eps` relative to the angular offset and to `L/d`, `eps` the largest floating epsilon among the input components and observer radii), or `|d distance| > 1e-12 D` plus `64 eps L`",
    "rationale": "differential rotation changes longitude as a function of latitude only. N: blind to a global sign error, hence DRC-002."
   },
   {
@@ -446,7 +420,7 @@
    "precondition": "`recenter=False`, celestial WCS",
    "invariant": "the array-centre pixel has the same world coordinate before and after `rotate` (padding and cropping are symmetric)",
    "observation_point": "return of `GenericMap.rotate`",
-   "alarm": "centre moves by `> 1e-6` old pixel scales",
+   "alarm": "centre moves by `> 1e-6` old pixel scales plus `64 eps d`, `d` the pixel distance of the reference pixel from the array centre and `eps` the epsilon of the rotation matrix dtype",
    "rationale": "rotation about the centre must not shift the image."
   },
   {
@@ -495,7 +469,7 @@
    "source": "sunpy/map/maputils.py",
    "symbol": "is_all_off_disk",
    "scientific_quantity": "disk-coverage class",
-   "precondition": "as MAP-007 and disk angular radius `>= 2` pixels",
+   "precondition": "as MAP-007, and disk angular radius `>= 2` pixel steps, a step being the longest lattice vector of the full pixel-to-sky linear map (`PC` scaled by `CDELT`)",
    "invariant": "when the edge test says all off disk, no pixel centre is on the disk",
    "observation_point": "return of `is_all_off_disk`",
    "alarm": "result true but some pixel centre is on disk",
@@ -522,9 +496,9 @@
    "symbol": "solar_frame_to_wcs_mapping",
    "scientific_quantity": "WCS observer metadata",
    "precondition": "Sun-fixed frame with an HGS/HGC observer frame",
-   "invariant": "converting a frame to a WCS and back recovers frame class, `obstime` (to 1 ms, FITS precision), `rsun` and observer lon/lat/radius",
+   "invariant": "converting a frame to a WCS and back recovers frame class, `obstime` (to the resolution of the written time string: 1 ms or the frame time's `precision`, whichever is coarser), `rsun` and observer lon/lat/radius",
    "observation_point": "return of `solar_frame_to_wcs_mapping`",
-   "alarm": "any differs by `> 1e-12` relative (`1 ms` for time)",
+   "alarm": "any differs by `> 1e-12` relative (time: beyond that resolution)",
    "rationale": "serialization must be lossless."
   },
   {
@@ -541,12 +515,12 @@
    "rationale": "FITS 1-based vs 0-based pixel conventions and units."
   }
  ],
- "instrumented_commit": "74b7f5fb804897988a8fd7f47039b1ccef56be1c",
+ "instrumented_commit": "0c0adfce48189d920d5d0f1607c2d59972eb6d99",
  "audit": {
   "behaviour_parity": "sha256 over 64 deterministic public-API outputs plus the global NumPy RNG state is identical on the pristine base, instrumented with the logger unset, and instrumented with the logger on (no alarm in that run).",
   "upstream_tests": "1,881 tests (sunpy/{coordinates,map,physics,sun,image,time}); the pristine tree has 1 baseline failure (test_read_asdf_and_verify, missing data file), the instrumented tree with checking off and on has the same single failure; zero alarms with checking on.",
-  "isolated_sensitivity": "41/41 IDs (32 tests, fault injection or a synthetic violating state).",
-  "observation_reachability": "41/41 IDs evaluated by valid public-API calls (probe_reachability.py).",
+  "isolated_sensitivity": "39/39 IDs (32 tests, fault injection or a synthetic violating state).",
+  "observation_reachability": "39/39 IDs evaluated by valid public-API calls (probe_reachability.py).",
   "adversarial_rounds": "11 checker-side defects found and fixed (tolerance conditioning, transform neutrality, precondition, dtype, re-entrancy and a cache side effect; see LAW_CANDIDATES.md revision log); the last two fuzz batches (16 seeds x 12 cases, stress 1 and 3) are clean.",
   "natural_triggers": "SP-SCR-002 (library warns 'Failed to solve for the differentially rotated screen after 20 iterations' and returns residuals up to 1.2e-1 relative); no other natural trigger in upstream tests, probes or fuzzing."
  },
@@ -558,5 +532,17 @@
   "scikit-image": "0.26.0",
   "reproject": "0.21.0",
   "install": "uv pip install -e \".[tests,map,physics,timeseries,image,coordinates]\""
- }
+ },
+ "retired": [
+  {
+   "id": "SP-FRM-001",
+   "date": "2026-10-10",
+   "reason": "only reachable trigger is an antisolar line of sight (|Tx| > 90 deg, cos(alpha) < 0), where make_3d returns a negative distance instead of NaN; no real observation points there. For sunward rays (3200 fuzzed samples, observers 0.046-30 AU, limb-adjacent and off-disk) both roots are positive and the near root lies on the visible hemisphere, so no regime remains that detects a library defect"
+  },
+  {
+   "id": "SP-FRM-002",
+   "date": "2026-10-10",
+   "reason": "disagreement between the on-disk predicate and isfinite(make_3d) only occurs for antisolar rays (cos(alpha) < 0), which are not physically realistic; for sunward rays the two agree everywhere sampled (3200 samples, observers 0.046-30 AU, limb band included)"
+  }
+ ]
 }

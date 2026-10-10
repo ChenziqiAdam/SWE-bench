@@ -54,17 +54,14 @@ def test_sig001(fired):
     assert fired() == ["NL-SIG-001"]
 
 
-def test_sig002_003(fired):
+def test_sig003(fired):
     x = RNG.standard_normal((100, 4)) * 3 + 5
-    z = (x - x.mean(0)) / x.std(0, ddof=1)
-    sc.check_standardize(x, z, "zscore_sample", False)
     pm = x.mean(0)
     psc = (x - pm) / np.abs(pm) * 100
     sc.check_standardize(x, psc, "psc", False)
     assert fired() == []
-    sc.check_standardize(x, z * 1.01, "zscore_sample", False)
     sc.check_standardize(x, psc * 1.05, "psc", False)
-    assert fired() == ["NL-SIG-002", "NL-SIG-003"]
+    assert fired() == ["NL-SIG-003"]
 
 
 def test_sig004(fired):
@@ -72,17 +69,6 @@ def test_sig004(fired):
     assert fired() == []
     sc.check_butterworth_cutoff(butter(5, 0.1, "low", output="sos", fs=1.0), 0.1, 2.0, 5)
     assert fired() == ["NL-SIG-004"]
-
-
-def test_sig005(fired):
-    x = RNG.standard_normal((100, 6))
-    c = RNG.standard_normal((100, 3))
-    snap = sc.snap_clean(x, c, None, None, False, False, "zscore_sample", True)
-    good = signal.clean(x, confounds=c, detrend=False, filter=False, standardize="zscore_sample")
-    sc.check_clean_orthogonality(snap, good)
-    assert fired() == []
-    sc.check_clean_orthogonality(snap, good + 0.3 * (c[:, [0]] - c[:, 0].mean()))
-    assert fired() == ["NL-SIG-005"]
 
 
 def test_sig006_007(fired):
@@ -396,22 +382,6 @@ def test_con008_009(fired):
 
 
 # ------------------------------------------------------------------------- MU
-def test_mu001(fired):
-    from nilearn.mass_univariate._utils import t_score_with_covars_and_normalized_design  # noqa: F401
-
-    x = RNG.standard_normal((30, 1))
-    y = RNG.standard_normal((30, 12))
-    cv = np.hstack([RNG.standard_normal((30, 1)), np.ones((30, 1))])
-    from nilearn.glm.regression import OLSModel
-
-    design = np.hstack([x, cv])
-    ref = np.atleast_1d(OLSModel(design).fit(y).Tcontrast(np.array([1.0, 0, 0])).t)
-    sc.check_permuted_ols_vs_glm(x, y, cv, ref[:, None])
-    assert fired() == []
-    sc.check_permuted_ols_vs_glm(x, y, cv, ref[:, None] * 1.05)
-    assert fired() == ["NL-MU-001"]
-
-
 def test_mu002_003_005(fired, monkeypatch):
     from nilearn.mass_univariate import _utils as mu
     from scipy.ndimage import generate_binary_structure

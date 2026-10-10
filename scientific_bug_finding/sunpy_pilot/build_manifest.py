@@ -25,8 +25,6 @@ SRC = {  # id -> (source, symbol, quantity)
  "DRM-004": ("sunpy/sun/models.py", "differential_rotation", "equatorial rotation rate"),
  "DRM-005": ("sunpy/sun/models.py", "differential_rotation", "synodic correction"),
  "DRM-006": ("sunpy/sun/models.py", "differential_rotation", "differential rotation rate"),
- "FRM-001": ("sunpy/coordinates/frames.py", "Helioprojective.make_3d", "distance to the solar surface"),
- "FRM-002": ("sunpy/map/maputils.py", "coordinate_is_on_solar_disk", "on-disk classification"),
  "FRM-003": ("sunpy/coordinates/_transformations.py", "hpc_to_hpc", "helioprojective coordinates"),
  "FRM-004": ("sunpy/coordinates/utils.py", "get_heliocentric_angle", "heliocentric angle"),
  "FRM-005": ("sunpy/coordinates/utils.py", "get_limb_coordinates", "solar limb"),
